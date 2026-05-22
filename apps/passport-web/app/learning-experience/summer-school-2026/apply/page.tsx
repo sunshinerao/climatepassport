@@ -14,17 +14,17 @@ export default function SummerSchoolApplyPublicPage({ searchParams }: PageProps)
 
   return (
     <main className="page">
-      <div className="section-header">
+      <div className="section-header ss-public-header">
         <div>
           <span className="label">{isZh ? "公开申请" : "Open Application"}</span>
-          <h1>{isZh ? "GCA × 云谷 2026 可持续夏校" : "GCA × Yungu 2026 Sustainability Summer School"}</h1>
+          <h1>{isZh ? "可持续夏校2026" : "Sustainability Summer School 2026"}</h1>
         </div>
-        <p>
+        <p className="ss-public-header-copy">
           {isZh
-            ? "这是临时公开申请入口。提交后系统将自动创建或关联 Climate Passport ID，并在正式注册后自动完成账号关联。"
-            : "This is a temporary open application entry. After submission, the system auto-creates or links a Climate Passport ID and will bind it to your formal account after registration."}
+            ? "请提交您的申请，提交后系统将自动创建Climate Passport ID。"
+            : "Please submit your application. A Climate Passport ID will be created automatically after submission."}
         </p>
-        <div className="top-gap-sm">
+        <div className="ss-public-header-switcher">
           <SummerSchoolLocaleSwitcher locale={locale} label={isZh ? "语言切换" : "Language switch"} />
         </div>
       </div>

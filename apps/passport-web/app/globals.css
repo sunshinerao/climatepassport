@@ -3198,17 +3198,22 @@ textarea:focus-visible {
   font-weight: 500;
   color: var(--cp-text-secondary);
   cursor: pointer;
-  transition: background-color 0.14s ease;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 20px rgba(11, 61, 46, 0.08);
+  transition: background-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
 }
 
 .ss-progress-item:hover {
   background: var(--cp-bg-soft);
+  box-shadow: 0 12px 28px rgba(11, 61, 46, 0.12);
+  transform: translateY(-1px);
 }
 
 .ss-progress-item.active {
   background: var(--cp-bg-soft);
   color: var(--cp-ink);
   font-weight: 600;
+  box-shadow: 0 12px 28px rgba(11, 61, 46, 0.12);
 }
 
 .ss-progress-item.done {
@@ -3245,6 +3250,34 @@ textarea:focus-visible {
   border: 1px solid var(--cp-line);
   background: var(--cp-white);
   box-shadow: var(--shadow);
+}
+
+.ss-public-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(420px, 1.3fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.ss-public-header h1 {
+  font-size: clamp(20px, 2.5vw, 24px);
+  line-height: 1.08;
+  margin: 8px 0 0;
+  max-width: 10ch;
+}
+
+.ss-public-header-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.ss-public-header-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .ss-section-header {
@@ -4613,6 +4646,16 @@ body {
   .proto-event-card.is-featured {
     grid-column: span 1;
     grid-template-columns: 1fr;
+  }
+  .ss-public-header {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .ss-public-header-copy {
+    white-space: normal;
+  }
+  .ss-public-header-switcher {
+    justify-content: flex-start;
   }
   .proto-how-it-works-steps {
     grid-template-columns: 1fr;
