@@ -4,14 +4,13 @@ import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getDictionary, type Locale } from "@/lib/site-content";
-import { LogoutButton } from "@/components/logout-button";
+import { UserAccountMenu } from "@/components/user-account-menu";
 import { getCurrentUser } from "@/lib/server/auth";
 
 export async function SiteShell({ children, locale }: { children: ReactNode; locale: Locale }) {
   noStore();
   const dictionary = getDictionary(locale);
   const user = await getCurrentUser();
-  const isAdminUser = user?.role === "ADMIN" || user?.role === "EVENT_MANAGER";
 
   // Minimal shell: hide nav + footer main content on focused pages
   const pathname = headers().get("x-pathname") ?? "";
@@ -39,20 +38,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
           <div className="header-actions">
             {!isMinimal && (
               user ? (
-                <>
-                  <Link className="button-outline nav-action" href={`/${locale}/dashboard/summer-school`}>
-                    {dictionary.shell.actions.summerSchool}
-                  </Link>
-                  {isAdminUser ? (
-                    <Link className="button-outline nav-action" href={`/${locale}/admin/events`}>
-                      {dictionary.shell.actions.admin}
-                    </Link>
-                  ) : null}
-                  <Link className="button-outline nav-action" href={`/${locale}/dashboard`}>
-                    {dictionary.shell.actions.dashboard}
-                  </Link>
-                  <LogoutButton label={dictionary.shell.actions.logout} locale={locale} />
-                </>
+                <UserAccountMenu locale={locale} user={user} />
               ) : (
                 <>
                   <Link className="button-outline nav-action" href={`/${locale}/auth/login`}>

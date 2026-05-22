@@ -14,6 +14,7 @@ export type AuthenticatedUser = {
   id: string;
   email: string;
   name: string;
+  avatar: string | null;
   role: UserRole;
   title: string | null;
   climatePassportId: string | null;
@@ -120,6 +121,7 @@ export async function getCurrentSession(): Promise<{
           id: true,
           email: true,
           name: true,
+          avatar: true,
           role: true,
           title: true,
           climatePassportId: true,

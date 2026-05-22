@@ -188,6 +188,203 @@ textarea:focus-visible {
   font-size: 14px;
 }
 
+.account-menu {
+  position: relative;
+}
+
+.account-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 240px;
+  min-height: 44px;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid var(--cp-line-strong);
+  border-radius: 999px;
+  background: var(--cp-white);
+  color: var(--cp-text);
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(18, 40, 34, 0.08);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.account-menu-trigger:hover,
+.account-menu-trigger[aria-expanded="true"] {
+  border-color: var(--cp-forest);
+  box-shadow: 0 14px 28px rgba(18, 40, 34, 0.12);
+}
+
+.account-menu-trigger:focus-visible {
+  outline: 3px solid rgba(236, 177, 76, 0.36);
+  outline-offset: 2px;
+}
+
+.account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--cp-forest);
+  background-position: center;
+  background-size: cover;
+  color: var(--cp-white);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.account-avatar-large {
+  width: 42px;
+  height: 42px;
+  font-size: 16px;
+}
+
+.account-trigger-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
+.account-trigger-copy strong {
+  overflow: hidden;
+  max-width: 130px;
+  font-size: 14px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-trigger-copy span {
+  color: var(--cp-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.account-menu-chevron {
+  color: var(--cp-text-muted);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.account-menu-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 80;
+  width: min(320px, calc(100vw - 28px));
+  padding: 8px;
+  border: 1px solid var(--cp-line);
+  border-radius: 14px;
+  background: var(--cp-white);
+  box-shadow: 0 24px 60px rgba(15, 38, 31, 0.18);
+}
+
+.account-menu-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid var(--cp-line);
+}
+
+.account-menu-profile div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.account-menu-profile strong,
+.account-menu-profile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-profile strong {
+  font-size: 14px;
+}
+
+.account-menu-profile span {
+  color: var(--cp-text-muted);
+  font-size: 12px;
+}
+
+.account-menu-section {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cp-line);
+}
+
+.account-menu-section-final {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.account-menu-section-title {
+  padding: 4px 10px 6px;
+  color: var(--cp-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cp-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.account-menu-item:hover,
+.account-menu-item:focus-visible {
+  background: var(--cp-bg-soft);
+  color: var(--cp-forest);
+  outline: none;
+}
+
+.account-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(31, 90, 78, 0.1);
+  color: var(--cp-forest);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.account-menu-logout {
+  color: #9f2f22;
+}
+
+.account-menu-logout .account-menu-icon {
+  background: rgba(159, 47, 34, 0.1);
+  color: #9f2f22;
+}
+
 /* ── Locale dropdown switcher ── */
 .locale-switcher {
   position: relative;
