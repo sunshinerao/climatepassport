@@ -24,7 +24,6 @@ export default async function SummerSchoolPage({ params }: { params: { locale: L
 
       <SummerSchoolForm
         locale={params.locale}
-        userId={user.id}
         climatePassportId={user.climatePassportId}
       />
     </>

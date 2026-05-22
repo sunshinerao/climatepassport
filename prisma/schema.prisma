@@ -216,6 +216,7 @@ model User {
   managedLearningExperiencePrograms LearningExperienceProgram[] @relation("LearningExperienceManager")
   learningExperienceApplications LearningExperienceApplication[]
   learningExperienceParticipations LearningExperienceParticipation[]
+  summerSchoolApplications SummerSchoolApplication[]
 
   @@index([email])
   @@index([passCode])
@@ -992,6 +993,7 @@ model LearningExperienceProgram {
   applications          LearningExperienceApplication[]
   participations        LearningExperienceParticipation[]
   eventLinks            LearningExperienceProgramEventLink[]
+  summerSchoolApplications SummerSchoolApplication[]
 
   @@index([categoryId, status])
   @@index([managerUserId])
@@ -1038,6 +1040,7 @@ model LearningExperienceApplication {
   user           User                               @relation(fields: [userId], references: [id], onDelete: Cascade)
   currentStage   LearningExperienceStage?           @relation("LearningExperienceCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
   participation  LearningExperienceParticipation?
+  summerSchoolApplications SummerSchoolApplication[]
 
   @@unique([programId, userId])
   @@index([userId, status])
@@ -1091,4 +1094,38 @@ model LearningExperienceProgramEventLink {
   @@index([eventId])
   @@index([programId, order])
   @@map("learning_experience_program_event_links")
+}
+
+model SummerSchoolApplication {
+  id                             String  @id @default(uuid())
+  projectSlug                    String
+  projectType                    String?
+  applicationStatus              String?
+  locale                         String   @default("en")
+  email                          String
+  fullName                       String
+  preferredName                  String?
+  phone                          String?
+  guardianName                   String?
+  guardianEmail                  String?
+  guardianPhone                  String?
+  channel                        String?
+  climatePassportId              String
+  userId                         String?
+  learningExperienceProgramId    String?
+  learningExperienceApplicationId String?
+  answersJson                    Json?
+  submittedAt                    DateTime @default(now())
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+
+  user                           User?                         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  learningExperienceProgram      LearningExperienceProgram?    @relation(fields: [learningExperienceProgramId], references: [id], onDelete: SetNull)
+  learningExperienceApplication  LearningExperienceApplication? @relation(fields: [learningExperienceApplicationId], references: [id], onDelete: SetNull)
+
+  @@unique([projectSlug, email])
+  @@index([email])
+  @@index([climatePassportId])
+  @@index([userId])
+  @@map("summer_school_applications")
 }

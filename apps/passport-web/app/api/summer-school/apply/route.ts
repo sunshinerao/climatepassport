@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { locales } from "@/lib/site-content";
-import { getCurrentUser } from "@/lib/server/auth";
+import {
+  generateClimatePassportId,
+  hashUserPassword,
+  normalizeUserEmail,
+} from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const applySchema = z.object({
   locale: z.enum(locales).default("en"),
@@ -41,11 +50,6 @@ const applySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  }
-
   const body = await request.json() as unknown;
   const payload = applySchema.safeParse(body);
   if (!payload.success) {
@@ -56,42 +60,163 @@ export async function POST(request: Request) {
   }
 
   const data = payload.data;
+  const normalizedEmail = normalizeUserEmail(data.email);
 
   const prisma = getPrismaClient();
-  if (prisma) {
-    // Store application as a LearningExperience application if matching program exists, 
-    // or as a JSON-persisted record. For now we persist to the DB via a LE application.
-    // Find or get the summer school program
-    const program = await prisma.learningExperienceProgram.findFirst({
-      where: { slug: data.projectSlug },
-      select: { id: true },
-    });
-
-    if (program) {
-      // Check for existing application
-      const existing = await prisma.learningExperienceApplication.findFirst({
-        where: { programId: program.id, userId: user.id },
-        select: { id: true, status: true },
-      });
-
-      if (existing) {
-        return NextResponse.json(
-          { error: "You have already applied to this program." },
-          { status: 409 },
-        );
-      }
-
-      await prisma.learningExperienceApplication.create({
-        data: {
-          programId: program.id,
-          userId: user.id,
-          status: "SUBMITTED",
-          answersJson: data as object,
-        },
-      });
-    }
-    // If no matching program, we accept gracefully and the admin handles it offline
+  if (!prisma) {
+    return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
   }
 
-  return NextResponse.json({ ok: true });
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const duplicate = await tx.summerSchoolApplication.findUnique({
+        where: {
+          projectSlug_email: {
+            projectSlug: data.projectSlug,
+            email: normalizedEmail,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (duplicate) {
+        return { duplicate: true as const };
+      }
+
+      let user = await tx.user.findUnique({
+        where: { email: normalizedEmail },
+        select: {
+          id: true,
+          climatePassportId: true,
+          role: true,
+          status: true,
+        },
+      });
+
+      if (!user) {
+        const [passwordHash, climatePassportId] = await Promise.all([
+          hashUserPassword(randomBytes(24).toString("hex")),
+          generateClimatePassportId(),
+        ]);
+
+        user = await tx.user.create({
+          data: {
+            name: data.fullName.trim(),
+            email: normalizedEmail,
+            password: passwordHash,
+            role: "ATTENDEE",
+            status: "PENDING",
+            climatePassportId,
+            phone: data.phone || null,
+            country: data.nationality || null,
+            notificationPreference: {
+              create: {
+                emailEnabled: true,
+                inAppEnabled: true,
+                smsEnabled: false,
+              },
+            },
+          },
+          select: {
+            id: true,
+            climatePassportId: true,
+            role: true,
+            status: true,
+          },
+        });
+      } else if (!user.climatePassportId) {
+        const climatePassportId = await generateClimatePassportId();
+        user = await tx.user.update({
+          where: { id: user.id },
+          data: { climatePassportId },
+          select: {
+            id: true,
+            climatePassportId: true,
+            role: true,
+            status: true,
+          },
+        });
+      }
+
+      const program = await tx.learningExperienceProgram.findFirst({
+        where: { slug: data.projectSlug },
+        select: { id: true },
+      });
+
+      let learningApplicationId: string | null = null;
+
+      if (program) {
+        const existingLearningApplication = await tx.learningExperienceApplication.findUnique({
+          where: {
+            programId_userId: {
+              programId: program.id,
+              userId: user.id,
+            },
+          },
+          select: { id: true },
+        });
+
+        if (existingLearningApplication) {
+          learningApplicationId = existingLearningApplication.id;
+        } else {
+          const learningApplication = await tx.learningExperienceApplication.create({
+            data: {
+              programId: program.id,
+              userId: user.id,
+              status: "SUBMITTED",
+              submittedAt: new Date(),
+              answersJson: data as object,
+            },
+            select: { id: true },
+          });
+          learningApplicationId = learningApplication.id;
+        }
+      }
+
+      await tx.summerSchoolApplication.create({
+        data: {
+          projectSlug: data.projectSlug,
+          projectType: data.projectType,
+          applicationStatus: data.applicationStatus,
+          locale: data.locale,
+          email: normalizedEmail,
+          fullName: data.fullName,
+          preferredName: data.preferredName || null,
+          phone: data.phone || null,
+          guardianName: data.guardianName || null,
+          guardianEmail: data.guardianEmail || null,
+          guardianPhone: data.guardianPhone || null,
+          channel: data.channel || null,
+          climatePassportId: user.climatePassportId ?? user.id,
+          userId: user.id,
+          learningExperienceProgramId: program?.id ?? null,
+          learningExperienceApplicationId: learningApplicationId,
+          answersJson: data as object,
+          submittedAt: new Date(),
+        },
+      });
+
+      return {
+        duplicate: false as const,
+        climatePassportId: user.climatePassportId,
+      };
+    });
+
+    if (result.duplicate) {
+      return NextResponse.json(
+        { error: "An application already exists for this email and project." },
+        { status: 409 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, climatePassportId: result.climatePassportId });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json(
+        { error: "An application already exists for this email and project." },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: "Failed to submit application." }, { status: 500 });
+  }
 }

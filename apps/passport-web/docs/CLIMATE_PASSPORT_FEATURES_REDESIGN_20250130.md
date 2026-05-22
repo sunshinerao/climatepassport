@@ -130,3 +130,30 @@
 - `npm run build --workspace passport-web` ✅ 编译成功，无 TypeScript 错误
 - 新增路由：`/[locale]/dashboard/summer-school`, `/[locale]/admin/certificates`
 - 新增 API：`/api/summer-school/apply`, `/api/admin/certificates/issue`
+
+## 夏校申请临时功能（2026-05-22）
+
+### 需求解读
+- 在正式 Climate Passport 注册/登录闭环完全上线前，开放夏校申请临时入口。
+- 用户可通过公开链接直接申请；系统需自动创建或关联 Climate Passport ID。
+- 申请记录必须可追溯并可在后续正式注册时自动关联到同邮箱账号。
+- 需要基础防重复提交（同项目 + 同邮箱）。
+
+### 修改方法
+- 新增独立临时申请存储模型 `SummerSchoolApplication`，避免依赖既有登录态流程。
+- 改造 `/api/summer-school/apply` 为公开提交接口，移除登录前置。
+- 提交时按邮箱自动创建 PENDING 用户并分配 Climate Passport ID，或复用已有用户与已有 ID。
+- 在正式注册接口中增加“临时账号认领”路径：当检测到 PENDING 且来源于夏校临时申请时，直接激活账号并沿用 Climate Passport ID。
+
+### 修改内容
+- 新增公开页面路由：`/learning-experience/summer-school-2026/apply`。
+- Prisma 新增模型：`SummerSchoolApplication`，并补充与 `User` / `LearningExperienceProgram` / `LearningExperienceApplication` 的关联。
+- `app/api/summer-school/apply/route.ts`：
+  - 支持公开提交。
+  - 自动创建或关联用户与 Climate Passport ID。
+  - 记录临时申请。
+  - 同邮箱+同项目重复提交返回 409。
+- `app/api/auth/register/route.ts`：
+  - 对临时 PENDING 夏校用户支持注册激活与数据关联延续。
+- `components/summer-school-form.tsx`：
+  - 去除对登录用户 ID 的硬依赖，兼容公开页面直接使用。

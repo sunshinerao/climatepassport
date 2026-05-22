@@ -6,7 +6,6 @@ import type { Locale } from "@/lib/site-content";
 
 type SummerSchoolFormProps = {
   locale: Locale;
-  userId: string;
   climatePassportId?: string | null;
 };
 

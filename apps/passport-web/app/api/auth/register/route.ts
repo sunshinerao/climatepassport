@@ -43,65 +43,153 @@ export async function POST(request: Request) {
   const normalizedEmail = normalizeUserEmail(email);
   const existingUser = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: { id: true },
-  });
-
-  if (existingUser) {
-    return NextResponse.json({ error: "An account already exists for this email." }, { status: 409 });
-  }
-
-  const [passwordHash, climatePassportId] = await Promise.all([
-    hashUserPassword(password),
-    generateClimatePassportId(),
-  ]);
-
-  const user = await prisma.user.create({
-    data: {
-      name: name.trim(),
-      email: normalizedEmail,
-      password: passwordHash,
-      role: "ATTENDEE",
-      status: "ACTIVE",
-      climatePassportId,
-      salutation: salutation || null,
-      title: title || null,
-      phone: phone || null,
-      country: country || null,
-      ...(organizationName
-        ? {
-            organization: {
-              create: {
-                name: organizationName.trim(),
-              },
-            },
-          }
-        : {}),
-      notificationPreference: {
-        create: {
-          emailEnabled: true,
-          inAppEnabled: true,
-          smsEnabled: false,
-        },
-      },
-      notifications: {
-        create: {
-          channel: "IN_APP",
-          status: "DELIVERED",
-          kind: "SYSTEM",
-          title: "Welcome to Climate Passport",
-          titleEn: "Welcome to Climate Passport",
-          body: "Your account is ready. You can now manage participation, certificates, and your Climate Passport archive.",
-          bodyEn:
-            "Your account is ready. You can now manage participation, certificates, and your Climate Passport archive.",
-          deliveredAt: new Date(),
-        },
-      },
-    },
     select: {
       id: true,
+      status: true,
       role: true,
+      climatePassportId: true,
+      summerSchoolApplications: {
+        take: 1,
+        select: { id: true },
+      },
+      notificationPreference: {
+        select: { id: true },
+      },
     },
   });
+
+  const passwordHash = await hashUserPassword(password);
+
+  const user = await prisma.$transaction(async (tx) => {
+    if (existingUser) {
+      const isTemporarySummerSchoolUser =
+        existingUser.status === "PENDING" && existingUser.summerSchoolApplications.length > 0;
+
+      if (!isTemporarySummerSchoolUser) {
+        throw new Error("ACCOUNT_EXISTS");
+      }
+
+      const resolvedPassportId = existingUser.climatePassportId ?? (await generateClimatePassportId());
+
+      const updated = await tx.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name: name.trim(),
+          password: passwordHash,
+          role: existingUser.role ?? "ATTENDEE",
+          status: "ACTIVE",
+          climatePassportId: resolvedPassportId,
+          salutation: salutation || null,
+          title: title || null,
+          phone: phone || null,
+          country: country || null,
+          ...(organizationName
+            ? {
+                organization: {
+                  upsert: {
+                    update: { name: organizationName.trim() },
+                    create: { name: organizationName.trim() },
+                  },
+                },
+              }
+            : {}),
+          ...(existingUser.notificationPreference
+            ? {}
+            : {
+                notificationPreference: {
+                  create: {
+                    emailEnabled: true,
+                    inAppEnabled: true,
+                    smsEnabled: false,
+                  },
+                },
+              }),
+          notifications: {
+            create: {
+              channel: "IN_APP",
+              status: "DELIVERED",
+              kind: "SYSTEM",
+              title: "Welcome to Climate Passport",
+              titleEn: "Welcome to Climate Passport",
+              body: "Your account is now fully activated and linked to your Summer School application.",
+              bodyEn:
+                "Your account is now fully activated and linked to your Summer School application.",
+              deliveredAt: new Date(),
+            },
+          },
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
+
+      await tx.summerSchoolApplication.updateMany({
+        where: { userId: existingUser.id },
+        data: { climatePassportId: resolvedPassportId },
+      });
+
+      return updated;
+    }
+
+    const climatePassportId = await generateClimatePassportId();
+    return tx.user.create({
+      data: {
+        name: name.trim(),
+        email: normalizedEmail,
+        password: passwordHash,
+        role: "ATTENDEE",
+        status: "ACTIVE",
+        climatePassportId,
+        salutation: salutation || null,
+        title: title || null,
+        phone: phone || null,
+        country: country || null,
+        ...(organizationName
+          ? {
+              organization: {
+                create: {
+                  name: organizationName.trim(),
+                },
+              },
+            }
+          : {}),
+        notificationPreference: {
+          create: {
+            emailEnabled: true,
+            inAppEnabled: true,
+            smsEnabled: false,
+          },
+        },
+        notifications: {
+          create: {
+            channel: "IN_APP",
+            status: "DELIVERED",
+            kind: "SYSTEM",
+            title: "Welcome to Climate Passport",
+            titleEn: "Welcome to Climate Passport",
+            body: "Your account is ready. You can now manage participation, certificates, and your Climate Passport archive.",
+            bodyEn:
+              "Your account is ready. You can now manage participation, certificates, and your Climate Passport archive.",
+            deliveredAt: new Date(),
+          },
+        },
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+  }).catch((error: Error) => {
+    if (error.message === "ACCOUNT_EXISTS") {
+      return null;
+    }
+    throw error;
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "An account already exists for this email." }, { status: 409 });
+  }
 
   await createUserSession(user.id);
 
