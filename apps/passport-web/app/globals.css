@@ -468,6 +468,72 @@ textarea:focus-visible {
   font-size: var(--cp-text-body-lg);
 }
 
+.privacy-policy-content {
+  display: grid;
+  gap: 14px;
+}
+
+.privacy-policy-section {
+  border: 1px solid var(--cp-line);
+  background: var(--cp-white);
+}
+
+.privacy-policy-lead {
+  font-size: var(--cp-text-body-lg);
+  color: var(--cp-text);
+  margin: 0 0 10px;
+}
+
+.privacy-policy-section p {
+  margin: 0 0 10px;
+  color: var(--cp-text-secondary);
+}
+
+.privacy-policy-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--cp-text-secondary);
+}
+
+.privacy-policy-list li {
+  margin: 6px 0;
+}
+
+.privacy-policy-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-md);
+  margin-top: 12px;
+}
+
+.privacy-policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  font-size: var(--cp-text-small);
+}
+
+.privacy-policy-table th,
+.privacy-policy-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--cp-line-soft, #edf1f4);
+  vertical-align: top;
+}
+
+.privacy-policy-table th {
+  color: var(--cp-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--cp-text-caption);
+}
+
+.privacy-policy-table tr:last-child td {
+  border-bottom: none;
+}
+
 .card-grid,
 .certificate-grid,
 .events-grid {
