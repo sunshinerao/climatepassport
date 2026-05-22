@@ -469,7 +469,6 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
         input?.focus();
         setConfirmationErrorId(item.id);
         setConfirmationErrorMessage(item.message);
-        setError(item.message);
         return;
       }
     }
