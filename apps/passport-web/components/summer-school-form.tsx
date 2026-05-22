@@ -79,6 +79,22 @@ const COUNTRIES_EN = [
 
 type FieldError = { id: string; msg: string };
 
+type ExistingApplicationPayload = {
+  found: boolean;
+  application?: {
+    id: string;
+    fullName: string;
+    preferredName: string | null;
+    email: string;
+    phone: string | null;
+    guardianName: string | null;
+    guardianEmail: string | null;
+    guardianPhone: string | null;
+    climatePassportId: string | null;
+    answersJson: Record<string, unknown> | null;
+  };
+};
+
 function parseDob(value: string) {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
   if (!match) return null;
@@ -116,6 +132,25 @@ function formatDobForApi(value: string): string {
   const month = String(parsed.month).padStart(2, "0");
   const day = String(parsed.day).padStart(2, "0");
   return `${parsed.year}-${month}-${day}`;
+}
+
+function formatDobForDisplay(value: unknown): string {
+  if (!value) return "";
+  const raw = String(value).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!m) return raw;
+  return `${m[2]}/${m[3]}/${m[1]}`;
+}
+
+function asString(value: unknown): string {
+  if (value == null) return "";
+  return String(value);
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => String(v));
 }
 
 function validateStep1(data: FormData, isZh: boolean): FieldError[] {
@@ -191,9 +226,96 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
   const [confirmationErrorId, setConfirmationErrorId] = useState<string | null>(null);
   const [confirmationErrorMessage, setConfirmationErrorMessage] = useState("");
   const [passportLookupState, setPassportLookupState] = useState<"idle" | "loading" | "matched" | "new">("idle");
+  const [lookupApplicationState, setLookupApplicationState] = useState<"idle" | "loading" | "found" | "not-found">("idle");
+  const [lockedApplicationId, setLockedApplicationId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const formTopRef = useRef<HTMLDivElement>(null);
+  const isReadOnly = Boolean(lockedApplicationId);
+
+  useEffect(() => {
+    if (lockedApplicationId) return;
+
+    const email = data.email.trim().toLowerCase();
+    const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const passportId = data.passportId.trim();
+
+    if (!hasValidEmail && !passportId) {
+      setLookupApplicationState("idle");
+      return;
+    }
+
+    setLookupApplicationState("loading");
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams();
+        if (hasValidEmail) params.set("email", email);
+        if (passportId) params.set("passportId", passportId);
+
+        const res = await fetch(`/api/summer-school/application-lookup?${params.toString()}`, { method: "GET" });
+        const payload = (await res.json()) as ExistingApplicationPayload;
+        if (cancelled) return;
+
+        if (payload.found && payload.application) {
+          const app = payload.application;
+          const answers = app.answersJson ?? {};
+
+          setData((prev) => ({
+            ...prev,
+            fullName: asString(answers.fullName) || app.fullName || prev.fullName,
+            preferredName: asString(answers.preferredName) || app.preferredName || "",
+            dob: formatDobForDisplay(answers.dob),
+            nationality: asString(answers.nationality),
+            school: asString(answers.school),
+            grade: asString(answers.grade),
+            email: app.email || asString(answers.email),
+            phone: app.phone || asString(answers.phone),
+            guardianName: app.guardianName || asString(answers.guardianName),
+            guardianEmail: app.guardianEmail || asString(answers.guardianEmail),
+            guardianPhone: app.guardianPhone || asString(answers.guardianPhone),
+            channel: asString(answers.channel),
+            explorationStage: asString(answers.explorationStage),
+            coreIssue: asString(answers.coreIssue),
+            practiceProof: asString(answers.practiceProof),
+            portfolioUrl: asString(answers.portfolioUrl),
+            aiRole: asString(answers.aiRole),
+            aiTools: asString(answers.aiTools),
+            aiBlindspot: asString(answers.aiBlindspot),
+            expectation: asString(answers.expectation),
+            futurePath: asStringArray(answers.futurePath),
+            languageComfort: asString(answers.languageComfort),
+            travelCommitment: asString(answers.travelCommitment),
+            financialAid: asString(answers.financialAid),
+            financialAidNote: asString(answers.financialAidNote),
+            commitment: Boolean(answers.commitment),
+            integrity: Boolean(answers.integrity),
+            passportConsent: Boolean(answers.passportConsent),
+            privacyConsent: Boolean(answers.privacyConsent),
+            passportId: app.climatePassportId || asString(answers.passportId),
+          }));
+
+          setLookupApplicationState("found");
+          setLockedApplicationId(app.id);
+          setFieldErrors([]);
+          setError(isZh ? "检测到该邮箱或 Passport ID 已提交过申请，以下内容为只读。" : "An application already exists for this email or Passport ID. The content is read-only.");
+          return;
+        }
+
+        setLookupApplicationState("not-found");
+      } catch {
+        if (!cancelled) {
+          setLookupApplicationState("idle");
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [data.email, data.passportId, lockedApplicationId, isZh]);
 
   useEffect(() => {
     if (climatePassportId) {
@@ -240,11 +362,13 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
   }, [data.email, climatePassportId]);
 
   function setField<K extends keyof FormData>(key: K, value: FormData[K]) {
+    if (isReadOnly) return;
     setData((prev) => ({ ...prev, [key]: value }));
     setFieldErrors((prev) => prev.filter((e) => e.id !== key));
   }
 
   function toggleFuturePath(value: string) {
+    if (isReadOnly) return;
     setData((prev) => ({
       ...prev,
       futurePath: prev.futurePath.includes(value)
@@ -299,6 +423,10 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isReadOnly) {
+      setError(isZh ? "该申请已提交，内容为只读。" : "This application has already been submitted and is read-only.");
+      return;
+    }
     const confirmationChecks = [
       {
         id: "commitment",
@@ -452,9 +580,21 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
           <p>{stepDescriptions[step - 1]}</p>
         </div>
 
+        {lookupApplicationState === "loading" ? (
+          <p className="form-success" style={{ marginBottom: 12 }}>
+            {isZh ? "正在检索是否已有申请..." : "Checking for existing application..."}
+          </p>
+        ) : null}
+
+        {isReadOnly ? (
+          <p className="form-success" style={{ marginBottom: 12 }}>
+            {isZh ? "已匹配到历史申请，当前为只读展示。" : "Existing application matched. This form is now read-only."}
+          </p>
+        ) : null}
+
         {/* Step 1 */}
         {step === 1 && (
-          <div className="form-grid">
+          <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="field-row">
               <div className="field" id="field-fullName">
                 <label htmlFor="fullName">
@@ -586,12 +726,12 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                 <option value="other">{isZh ? "其他" : "Other"}</option>
               </select>
             </div>
-          </div>
+          </fieldset>
         )}
 
         {/* Step 2 */}
         {step === 2 && (
-          <div className="form-grid">
+          <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="field" id="field-explorationStage">
               <label>
                 <span>{isZh ? "你目前处于哪个气候探索阶段？" : "What stage of climate exploration are you at?"}<span className="req-star">*</span></span>
@@ -633,12 +773,12 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               </label>
               <input id="portfolioUrl" type="url" value={data.portfolioUrl} onChange={handleTextChange("portfolioUrl")} placeholder="https://" />
             </div>
-          </div>
+          </fieldset>
         )}
 
         {/* Step 3 */}
         {step === 3 && (
-          <div className="form-grid">
+          <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="field" id="field-aiRole">
               <label>
                 <span>{isZh ? "你如何看待 AI 在你学习和研究中的角色？" : "How do you view AI's role in your learning and research?"}<span className="req-star">*</span></span>
@@ -677,12 +817,12 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               <textarea id="aiBlindspot" value={data.aiBlindspot} onChange={handleTextChange("aiBlindspot")} rows={5} placeholder={isZh ? "请分享你的思考…" : "Share your thinking..."} aria-required="true" />
               {getFieldError("aiBlindspot") && <span className="field-error">{getFieldError("aiBlindspot")}</span>}
             </div>
-          </div>
+          </fieldset>
         )}
 
         {/* Step 4 */}
         {step === 4 && (
-          <div className="form-grid">
+          <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="field" id="field-expectation">
               <label htmlFor="expectation">
                 <span>{isZh ? "你对夏校的期望是什么？" : "What are your expectations for this summer school?"}<span className="req-star">*</span></span>
@@ -709,12 +849,12 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                 </label>
               ))}
             </div>
-          </div>
+          </fieldset>
         )}
 
         {/* Step 5 */}
         {step === 5 && (
-          <div className="form-grid">
+          <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="field" id="field-languageComfort">
               <label htmlFor="languageComfort">
                 <span>{isZh ? "课程语言适应度" : "Language comfort level"}<span className="req-star">*</span></span>
@@ -744,12 +884,13 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
 
             <input type="hidden" id="financialAid" value={data.financialAid} readOnly />
             <input type="hidden" id="financialAidNote" value={data.financialAidNote} readOnly />
-          </div>
+          </fieldset>
         )}
 
         {/* Step 6 */}
         {step === 6 && (
           <form className="form-grid" onSubmit={handleSubmit}>
+            <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="panel" style={{ background: "var(--cp-bg-soft)", border: "none" }}>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--cp-text-secondary)" }}>
                 <span style={{ whiteSpace: "pre-line" }}>
@@ -832,10 +973,11 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
             {error ? <p className="form-error">{error}</p> : null}
 
             <div className="button-row">
-              <button className="button" disabled={submitting || !data.commitment || !data.integrity || !data.passportConsent || !data.privacyConsent} type="submit">
+              <button className="button" disabled={submitting || isReadOnly} type="submit">
                 {submitting ? (isZh ? "提交中…" : "Submitting…") : (isZh ? "提交申请" : "Submit Application")}
               </button>
             </div>
+            </fieldset>
           </form>
         )}
 
