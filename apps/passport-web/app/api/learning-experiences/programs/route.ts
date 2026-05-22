@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getPrismaClient } from "@/lib/server/prisma";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const prisma = getPrismaClient();
 
