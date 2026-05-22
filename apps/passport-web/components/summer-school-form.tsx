@@ -172,7 +172,6 @@ function validateStep5(data: FormData, isZh: boolean): FieldError[] {
   const errors: FieldError[] = [];
   if (!data.languageComfort) errors.push({ id: "languageComfort", msg: isZh ? "请选择语言适应度" : "Please select your language comfort level" });
   if (!data.travelCommitment) errors.push({ id: "travelCommitment", msg: isZh ? "请选择行程承诺" : "Please confirm your travel commitment" });
-  if (!data.financialAid) errors.push({ id: "financialAid", msg: isZh ? "请选择是否需要资助" : "Please indicate financial aid need" });
   return errors;
 }
 
@@ -656,26 +655,8 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               {getFieldError("travelCommitment") && <span className="field-error">{getFieldError("travelCommitment")}</span>}
             </div>
 
-            <div className="field" id="field-financialAid">
-              <label htmlFor="financialAid">
-                <span>{isZh ? "是否需要申请资助？" : "Do you need financial assistance?"}<span className="req-star">*</span></span>
-              </label>
-              <select id="financialAid" value={data.financialAid} onChange={handleTextChange("financialAid")} aria-required="true">
-                <option value="">{isZh ? "请选择" : "Select..."}</option>
-                <option value="yes">{isZh ? "是，需要资助" : "Yes, I need assistance"}</option>
-                <option value="no">{isZh ? "否，无需资助" : "No, I do not need assistance"}</option>
-              </select>
-              {getFieldError("financialAid") && <span className="field-error">{getFieldError("financialAid")}</span>}
-            </div>
-
-            {data.financialAid === "yes" && (
-              <div className="field" id="field-financialAidNote">
-                <label htmlFor="financialAidNote">
-                  <span>{isZh ? "请简要说明你的资助需求" : "Briefly describe your financial assistance needs"}</span>
-                </label>
-                <textarea id="financialAidNote" value={data.financialAidNote} onChange={handleTextChange("financialAidNote")} rows={4} />
-              </div>
-            )}
+            <input type="hidden" id="financialAid" value={data.financialAid} readOnly />
+            <input type="hidden" id="financialAidNote" value={data.financialAidNote} readOnly />
           </div>
         )}
 

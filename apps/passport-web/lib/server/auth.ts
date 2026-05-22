@@ -131,13 +131,11 @@ export async function getCurrentSession(): Promise<{
   });
 
   if (!session) {
-    cookies().delete(SESSION_COOKIE_NAME);
     return null;
   }
 
   if (session.expires <= new Date()) {
     await prisma.session.delete({ where: { sessionToken } }).catch(() => undefined);
-    cookies().delete(SESSION_COOKIE_NAME);
     return null;
   }
 

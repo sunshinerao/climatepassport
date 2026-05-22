@@ -4710,3 +4710,155 @@ body {
     grid-column: span 2;
   }
 }
+
+/* ============================================================
+   Summer School Applications Admin  (ssa-*)
+   ============================================================ */
+.ssa-wrapper {
+  padding: 0 0 48px;
+}
+.ssa-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.ssa-count {
+  font-size: 0.9rem;
+  color: var(--cp-text-secondary, #555);
+}
+.ssa-btn-primary {
+  padding: 8px 18px;
+  background: #1a3a2a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ssa-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ssa-btn-primary:not(:disabled):hover {
+  opacity: 0.85;
+}
+.ssa-btn-link {
+  font-size: 0.8rem;
+  color: #1a3a2a;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.ssa-btn-link:hover {
+  opacity: 0.7;
+}
+.ssa-empty {
+  font-size: 0.9rem;
+  color: var(--cp-text-secondary, #555);
+  padding: 32px 0;
+}
+.ssa-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--cp-line, #e5e5e5);
+  border-radius: 8px;
+}
+.ssa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  min-width: 900px;
+}
+.ssa-table thead th {
+  background: #f4f6f5;
+  font-weight: 600;
+  padding: 10px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--cp-line, #e5e5e5);
+  white-space: nowrap;
+  color: #333;
+}
+.ssa-table tbody tr {
+  border-bottom: 1px solid var(--cp-line, #e5e5e5);
+  transition: background 0.1s;
+}
+.ssa-table tbody tr:last-child {
+  border-bottom: none;
+}
+.ssa-table tbody tr:hover {
+  background: #f9faf9;
+}
+.ssa-row-selected {
+  background: #eef5ef !important;
+}
+.ssa-table td {
+  padding: 9px 10px;
+  vertical-align: top;
+  color: #222;
+}
+.ssa-th-check,
+.ssa-td-check {
+  width: 36px;
+  text-align: center;
+  padding-left: 12px !important;
+}
+.ssa-td-name {
+  min-width: 120px;
+}
+.ssa-fullname {
+  font-weight: 600;
+}
+.ssa-preferred {
+  font-size: 0.78rem;
+  color: #666;
+  margin-left: 4px;
+}
+.ssa-td-email {
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+.ssa-td-phone {
+  white-space: nowrap;
+}
+.ssa-guardian-email {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+}
+.ssa-td-passportid code {
+  font-size: 0.75rem;
+  background: #f0f0f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.ssa-td-date {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  color: #555;
+}
+.ssa-td-actions {
+  white-space: nowrap;
+}
+/* Status badges */
+.ssa-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.ssa-badge-pending  { background: #fff7e6; border-color: #f0a030; color: #8a4b00; }
+.ssa-badge-approved { background: #e6f4ea; border-color: #34a853; color: #1a5e2b; }
+.ssa-badge-rejected { background: #fce8e6; border-color: #ea4335; color: #8b1a11; }
+.ssa-badge-waitlisted { background: #e8f0fe; border-color: #4285f4; color: #1a42a0; }
+.ssa-badge- { background: #f4f4f4; border-color: #ccc; color: #666; }
+@media (max-width: 768px) {
+  .ssa-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

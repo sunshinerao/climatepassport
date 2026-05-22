@@ -57,6 +57,10 @@ export default async function LocalizedAdminPage({ params }: { params: { locale:
               <span aria-hidden="true">◇</span>
               {params.locale === "zh" ? "学习项目" : "Learning experiences"}
             </Link>
+            <Link href={`/${params.locale}/admin/summer-school/applications`}>
+              <span aria-hidden="true">◇</span>
+              {params.locale === "zh" ? "夏校申请" : "Summer school apps"}
+            </Link>
             <Link href={`/${params.locale}/admin/certificates`}>
               <span aria-hidden="true">◇</span>
               {params.locale === "zh" ? "证书中心" : "Certificate hub"}
