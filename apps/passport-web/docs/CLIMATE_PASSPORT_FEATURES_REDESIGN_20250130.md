@@ -224,3 +224,30 @@
   - 新增 `ss-main-*` 样式完成顶部对齐与风格统一。
   - `ss-layout-with-header-row .ss-form-card` 添加顶部偏移用于首步骤顶对齐。
   - `ss-progress-list` 的 `gap` 调整为 `12px`。
+
+## 夏校申请表单校验与提交修正（2026-05-22）
+
+### 需求解读
+- 出生日期输入需符合英文习惯 `MM/DD/YYYY`，并限制年份为 4 位，同时进行日期有效性、月份范围、年份范围校验。
+- “了解渠道”文案需修正：中文 `GCA` 为“全球气候学院”，英文“上海气候周”显示为 `SHCW`。
+- 第 6 步 3 个确认项必须全部勾选后才能提交；同意写入文案中去掉“若录取”。
+- 需要降低提交时出现泛化 `Failed` 的概率，并让错误反馈更稳定。
+
+### 修改方法
+- 前端将 DOB 输入改为文本格式并在输入阶段做规范化（自动限制为 `MM/DD/YYYY` 结构）。
+- 在 Step 1 中添加 DOB 解析与校验函数，覆盖格式、月/日有效值、年份区间及未来日期校验。
+- 前后端同时收紧第 6 步确认项规则，避免只靠按钮禁用状态。
+- 提交响应增加稳健 JSON 解析，避免因非 JSON 错误体导致前端二次异常。
+
+### 修改内容
+- `components/summer-school-form.tsx`：
+  - 新增 `parseDob`、`normalizeDobInput`、`formatDobForApi`。
+  - DOB 输入框改为 `type="text" + placeholder="MM/DD/YYYY" + maxLength=10`。
+  - Step 1 DOB 校验加入：格式、月份范围、日期有效性、年份范围（1900~当前年）、未来日期。
+  - 渠道文案修正为：`全球气候学院`（zh）与 `SHCW`（en）。
+  - 提交前和按钮禁用条件都改为必须同时勾选 `commitment` / `integrity` / `passportConsent`。
+  - 同意写入文案去掉“若录取”。
+  - 提交响应解析增加 `try/catch`，提升错误展示稳定性。
+- `app/api/summer-school/apply/route.ts`：
+  - `dob` 约束为 `YYYY-MM-DD` 或 `MM/DD/YYYY`。
+  - `commitment` / `integrity` / `passportConsent` 改为 `z.literal(true)`，服务端强制三项为 true。

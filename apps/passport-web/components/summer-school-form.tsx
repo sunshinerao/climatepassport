@@ -77,10 +77,64 @@ const COUNTRIES_EN = [
 
 type FieldError = { id: string; msg: string };
 
+function parseDob(value: string) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+  if (!match) return null;
+
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+  const year = Number(match[3]);
+  if (month < 1 || month > 12) return null;
+
+  const maxDay = new Date(year, month, 0).getDate();
+  if (day < 1 || day > maxDay) return null;
+
+  const parsed = new Date(year, month - 1, day);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day, date: parsed };
+}
+
+function normalizeDobInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function formatDobForApi(value: string): string {
+  const parsed = parseDob(value);
+  if (!parsed) return value;
+  const month = String(parsed.month).padStart(2, "0");
+  const day = String(parsed.day).padStart(2, "0");
+  return `${parsed.year}-${month}-${day}`;
+}
+
 function validateStep1(data: FormData, isZh: boolean): FieldError[] {
   const errors: FieldError[] = [];
   if (!data.fullName.trim()) errors.push({ id: "fullName", msg: isZh ? "请填写全名" : "Full name is required" });
-  if (!data.dob) errors.push({ id: "dob", msg: isZh ? "请填写出生日期" : "Date of birth is required" });
+  if (!data.dob.trim()) {
+    errors.push({ id: "dob", msg: isZh ? "请填写出生日期（MM/DD/YYYY）" : "Date of birth is required (MM/DD/YYYY)" });
+  } else {
+    const parsedDob = parseDob(data.dob);
+    if (!parsedDob) {
+      errors.push({ id: "dob", msg: isZh ? "出生日期格式需为 MM/DD/YYYY，且日期需有效" : "Date of birth must be a valid MM/DD/YYYY date" });
+    } else {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      if (parsedDob.year < 1900 || parsedDob.year > currentYear) {
+        errors.push({ id: "dob", msg: isZh ? "年份需在 1900 到当前年份之间" : "Year must be between 1900 and current year" });
+      } else if (parsedDob.date > today) {
+        errors.push({ id: "dob", msg: isZh ? "出生日期不能晚于今天" : "Date of birth cannot be in the future" });
+      }
+    }
+  }
   if (!data.nationality) errors.push({ id: "nationality", msg: isZh ? "请选择国籍" : "Nationality is required" });
   if (!data.school.trim()) errors.push({ id: "school", msg: isZh ? "请填写就读学校" : "School is required" });
   if (!data.grade) errors.push({ id: "grade", msg: isZh ? "请选择年级" : "Grade is required" });
@@ -155,6 +209,10 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
     };
   }
 
+  function handleDobChange(e: ChangeEvent<HTMLInputElement>) {
+    setField("dob", normalizeDobInput(e.target.value));
+  }
+
   function getFieldError(id: string): string | undefined {
     return fieldErrors.find((e) => e.id === id)?.msg;
   }
@@ -191,7 +249,7 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!data.commitment || !data.integrity) {
+    if (!data.commitment || !data.integrity || !data.passportConsent) {
       setError(isZh ? "请阅读并勾选所有确认项。" : "Please check all confirmation items.");
       return;
     }
@@ -204,12 +262,18 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
         body: JSON.stringify({
           locale,
           ...data,
+          dob: formatDobForApi(data.dob),
           projectSlug: "gca-yungu-summer-school-2026",
           projectType: "milestone_program",
           applicationStatus: "application_submitted",
         }),
       });
-      const result = (await res.json()) as { error?: string };
+      let result: { error?: string } = {};
+      try {
+        result = (await res.json()) as { error?: string };
+      } catch {
+        result = {};
+      }
       if (!res.ok) {
         setError(result.error ?? (isZh ? "提交失败，请稍后重试。" : "Submission failed. Please try again."));
         return;
@@ -328,7 +392,17 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                 <label htmlFor="dob">
                   <span>{isZh ? "出生日期" : "Date of birth"}<span className="req-star">*</span></span>
                 </label>
-                <input id="dob" type="date" value={data.dob} onChange={handleTextChange("dob")} aria-required="true" />
+                <input
+                  id="dob"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="bday"
+                  placeholder="MM/DD/YYYY"
+                  value={data.dob}
+                  onChange={handleDobChange}
+                  aria-required="true"
+                  maxLength={10}
+                />
                 {getFieldError("dob") && <span className="field-error">{getFieldError("dob")}</span>}
               </div>
               <div className="field" id="field-nationality">
@@ -421,8 +495,8 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                 <option value="teacher">{isZh ? "老师推荐" : "Teacher recommendation"}</option>
                 <option value="social">{isZh ? "社交媒体" : "Social media"}</option>
                 <option value="friend">{isZh ? "朋友推荐" : "Friend recommendation"}</option>
-                <option value="gca">GCA</option>
-                <option value="scw">{isZh ? "上海气候周 (SCW)" : "Shanghai Climate Week (SCW)"}</option>
+                <option value="gca">{isZh ? "全球气候学院" : "GCA"}</option>
+                <option value="scw">{isZh ? "上海气候周" : "SHCW"}</option>
                 <option value="other">{isZh ? "其他" : "Other"}</option>
               </select>
             </div>
@@ -643,14 +717,14 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               <input checked={data.passportConsent} onChange={(e) => setField("passportConsent", e.target.checked)} type="checkbox" />
               <div className="radio-card-label">
                 <strong>{isZh ? "同意写入 Climate Passport" : "Consent to Climate Passport record"}</strong>
-                <span>{isZh ? "若录取，我同意将本次申请的参与记录写入我的 Climate Passport 档案。" : "If admitted, I consent to having this participation recorded in my Climate Passport."}</span>
+                <span>{isZh ? "我同意将本次申请的参与记录写入我的 Climate Passport 档案。" : "I consent to having this participation recorded in my Climate Passport."}</span>
               </div>
             </label>
 
             {error ? <p className="form-error">{error}</p> : null}
 
             <div className="button-row">
-              <button className="button" disabled={submitting || !data.commitment || !data.integrity} type="submit">
+              <button className="button" disabled={submitting || !data.commitment || !data.integrity || !data.passportConsent} type="submit">
                 {submitting ? (isZh ? "提交中…" : "Submitting…") : (isZh ? "提交申请" : "Submit Application")}
               </button>
             </div>

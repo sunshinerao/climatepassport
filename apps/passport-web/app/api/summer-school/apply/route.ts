@@ -17,7 +17,10 @@ const applySchema = z.object({
   locale: z.enum(locales).default("en"),
   fullName: z.string().trim().min(2).max(120),
   preferredName: z.string().trim().max(80).optional(),
-  dob: z.string(),
+  dob: z
+    .string()
+    .trim()
+    .regex(/^(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4})$/, "Date of birth must be YYYY-MM-DD or MM/DD/YYYY."),
   nationality: z.string().trim().max(80),
   school: z.string().trim().max(160),
   grade: z.string().trim().max(40),
@@ -40,9 +43,9 @@ const applySchema = z.object({
   travelCommitment: z.string().trim().max(40).optional(),
   financialAid: z.string().trim().max(4).optional(),
   financialAidNote: z.string().trim().max(1000).optional(),
-  commitment: z.boolean(),
-  integrity: z.boolean(),
-  passportConsent: z.boolean().optional(),
+  commitment: z.literal(true),
+  integrity: z.literal(true),
+  passportConsent: z.literal(true),
   passportId: z.string().trim().max(40).optional(),
   projectSlug: z.string(),
   projectType: z.string(),
