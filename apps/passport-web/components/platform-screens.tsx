@@ -5,6 +5,7 @@ import { AuthForm } from "@/components/auth-form";
 import { ContactMessageForm } from "@/components/contact-message-form";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import { EventsFilterableGrid } from "@/components/events-filterable-grid";
+import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import type { Locale } from "@/lib/site-content";
 import { getCurrentUser, getDashboardPathForRole, requireAuthenticatedUser } from "@/lib/server/auth";
 import {
@@ -545,7 +546,7 @@ export async function LoginScreen({ locale, nextPath }: { locale: Locale; nextPa
   const currentUser = await getCurrentUser();
 
   if (currentUser) {
-    redirect(nextPath || getDashboardPathForRole(locale, currentUser.role));
+    redirect(sanitizeLocalRedirectPath(nextPath, getDashboardPathForRole(locale, currentUser.role)));
   }
 
   const { login } = await getLoginPageData(locale);
@@ -609,7 +610,7 @@ export async function RegisterScreen({ locale, nextPath }: { locale: Locale; nex
   const currentUser = await getCurrentUser();
 
   if (currentUser) {
-    redirect(nextPath || getDashboardPathForRole(locale, currentUser.role));
+    redirect(sanitizeLocalRedirectPath(nextPath, getDashboardPathForRole(locale, currentUser.role)));
   }
 
   const { register } = await getRegisterPageData(locale);

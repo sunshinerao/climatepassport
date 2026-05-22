@@ -34,7 +34,8 @@ async function withPrismaFallback<T>(resolver: (client: NonNullable<ReturnType<t
 
   try {
     return await resolver(client);
-  } catch {
+  } catch (error) {
+    console.error("[platform-data] Prisma query failed; rendering fallback content.", error);
     return fallback();
   }
 }

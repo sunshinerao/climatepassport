@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { optionalLocalRedirectPath } from "@/lib/redirect-path";
 import { issueChannelBridgeToken, requireAuthenticatedUser } from "@/lib/server/auth";
 
 const requestSchema = z.object({
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
 
   const bridgeToken = await issueChannelBridgeToken({
     userId: user.id,
-    targetPath: payload.data.targetPath,
+    targetPath: optionalLocalRedirectPath(payload.data.targetPath) ?? undefined,
   });
 
   return NextResponse.json({

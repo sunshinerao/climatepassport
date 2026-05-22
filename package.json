@@ -10,7 +10,7 @@
     "dev": "npm run dev --workspace passport-web",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "node --test tests/*.test.mjs",
     "db:format": "prisma format --schema prisma/schema.prisma",
     "db:validate": "prisma validate --schema prisma/schema.prisma",
     "db:generate": "prisma generate --schema prisma/schema.prisma",

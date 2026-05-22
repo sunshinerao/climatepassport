@@ -971,7 +971,7 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                     </>
                   ) : (
                     <>
-                      I have read and agree to the <Link className="inline-link" href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer">Climate Passport Privacy Policy</Link> and this application's personal data processing notice
+                      I have read and agree to the <Link className="inline-link" href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer">Climate Passport Privacy Policy</Link> and this application&apos;s personal data processing notice
                     </>
                   )}
                 </strong>

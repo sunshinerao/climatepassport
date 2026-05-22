@@ -8,6 +8,7 @@ import {
   hashUserPassword,
   normalizeUserEmail,
 } from "@/lib/server/auth";
+import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const registerSchema = z.object({
@@ -193,8 +194,10 @@ export async function POST(request: Request) {
 
   await createUserSession(user.id);
 
+  const fallbackPath = getDashboardPathForRole(locale as Locale, user.role);
+
   return NextResponse.json({
     ok: true,
-    redirectTo: next || getDashboardPathForRole(locale as Locale, user.role),
+    redirectTo: sanitizeLocalRedirectPath(next, fallbackPath),
   });
 }
