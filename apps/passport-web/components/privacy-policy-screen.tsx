@@ -35,7 +35,7 @@ const zhSections: PolicySection[] = [
     title: "2. 适用范围",
     paragraphs: [
       "本政策适用于你使用 Climate Passport 网站、项目申请页面、活动报名页面、证书与成就管理功能、学习项目与相关沟通服务时，我们对个人信息的处理。",
-      "本政策也适用于 GCA、上海气候周相关主办/承办机构，以及经授权参与项目执行的必要合作方在 Climate Passport 服务场景下对个人信息的处理。",
+      "本政策也适用于 Climate Passport 相关主办/承办机构，以及经授权参与项目执行的必要合作方在 Climate Passport 服务场景下对个人信息的处理。",
       "若某一项目设有单独隐私说明，该等专项说明将与本政策共同适用；如不一致，以更具体、对你权利保护更充分的说明为准。",
     ],
   },
@@ -43,8 +43,8 @@ const zhSections: PolicySection[] = [
     id: "controller",
     title: "3. 个人信息处理者 / Data Controller",
     bullets: [
-      "Climate Passport / Global Climate Academy（GCA）：负责账户、Climate Passport ID、证书、申请与平台通知等处理。",
-      "上海气候周相关主办/承办机构：在项目筛选、组织、通知、证书签发中可能作为共同处理方或独立处理方。",
+      "Climate Passport：负责账户、Climate Passport ID、证书、申请与平台通知等处理。",
+      "Climate Passport 相关主办/承办机构：在项目筛选、组织、通知、证书签发中可能作为共同处理方或独立处理方。",
       "项目必要合作方：包括评审专家、课程导师、承办机构、技术服务商等，处理范围限于项目执行所必需。",
     ],
   },
@@ -143,7 +143,7 @@ const zhSections: PolicySection[] = [
     id: "retention",
     title: "10. 保存期限",
     bullets: [
-      "账户与 Passport ID：账户存续期间及注销后必要留档期。",
+      "账户与 Climate Passport ID：账户存续期间及注销后必要留档期。",
       "申请材料：申请、评审、执行及必要争议解决期间。",
       "证书与参与记录：证书验证期及必要留档期。",
       "日志与安全记录：安全审计和故障排查所需合理期限。",
@@ -234,7 +234,7 @@ const enSections: PolicySection[] = [
     id: "controller",
     title: "3. Controller / Processor Roles",
     bullets: [
-      "Climate Passport / GCA for platform account and identity processing",
+      "Climate Passport for platform account and identity processing",
       "SHCW hosts/organizers for project operations",
       "Necessary delivery partners and technical processors",
     ],
@@ -246,7 +246,7 @@ const enSections: PolicySection[] = [
       { category: "Identity & contact", example: "Name, email, phone", purpose: "Account and communication" },
       { category: "Education background", example: "School, grade, experience", purpose: "Application review" },
       { category: "Application materials", example: "Forms, essays, portfolio", purpose: "Selection and operations" },
-      { category: "Platform records", example: "Passport ID, login logs", purpose: "Security and verification" },
+      { category: "Platform records", example: "Climate Passport ID, login logs", purpose: "Security and verification" },
     ],
   },
   {
