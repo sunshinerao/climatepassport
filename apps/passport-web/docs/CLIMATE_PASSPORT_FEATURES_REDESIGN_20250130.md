@@ -251,3 +251,17 @@
 - `app/api/summer-school/apply/route.ts`：
   - `dob` 约束为 `YYYY-MM-DD` 或 `MM/DD/YYYY`。
   - `commitment` / `integrity` / `passportConsent` 改为 `z.literal(true)`，服务端强制三项为 true。
+
+## Summer School 提交失败运行时修复（2026-05-22）
+
+### 需求解读
+- 用户在点击提交后出现 `Failed to submit application.`，日志显示 `Cannot find module './chunks/vendor-chunks/next.js'`。
+- 该错误并非业务校验失败，而是开发态 `next dev` 运行时 chunk 文件被破坏/覆盖导致 API 路由 500。
+
+### 修改方法
+- 将开发态与构建态输出目录隔离，避免 `next dev` 与 `next build` 互相覆盖同一 `.next` 目录内容。
+
+### 修改内容
+- `next.config.mjs`：
+  - 新增 `experimental.isolatedDevBuild = true`。
+  - 使开发构建使用隔离目录，避免出现 `vendor-chunks/next.js` 丢失导致的随机 500。
