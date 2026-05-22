@@ -26,13 +26,13 @@ export default function SummerSchoolApplyPublicPage({ searchParams }: PageProps)
         </p>
         <div className="button-row top-gap-sm" aria-label={isZh ? "语言切换" : "Language switch"}>
           <Link
-            className={locale === "zh" ? "button" : "button-outline"}
+            className={locale === "zh" ? "button button-amber" : "button-outline"}
             href="/learning-experience/summer-school-2026/apply?lang=zh"
           >
             中文
           </Link>
           <Link
-            className={locale === "en" ? "button" : "button-outline"}
+            className={locale === "en" ? "button button-amber" : "button-outline"}
             href="/learning-experience/summer-school-2026/apply?lang=en"
           >
             EN
