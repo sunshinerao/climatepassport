@@ -3164,10 +3164,13 @@ textarea:focus-visible {
    Summer School Application (Task 3)
    ════════════════════════════════════════════════════════════════ */
 
-.ss-layout {
+.ss-layout,
+.ss-public-header {
+  --ss-sidebar-width: 240px;
+  --ss-column-gap: 28px;
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 28px;
+  grid-template-columns: var(--ss-sidebar-width) minmax(0, 1fr);
+  gap: var(--ss-column-gap);
   align-items: start;
 }
 
@@ -3253,10 +3256,11 @@ textarea:focus-visible {
 }
 
 .ss-public-header {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(420px, 1.3fr) auto;
-  align-items: center;
-  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.ss-public-header-title {
+  width: 100%;
 }
 
 .ss-public-header h1 {
@@ -3266,11 +3270,19 @@ textarea:focus-visible {
   max-width: 10ch;
 }
 
+.ss-public-header-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
 .ss-public-header-copy {
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
-  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: nowrap;
 }
 
@@ -3278,6 +3290,8 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .ss-section-header {
@@ -4651,11 +4665,15 @@ body {
     grid-template-columns: 1fr;
     align-items: start;
   }
+  .ss-public-header-main {
+    flex-wrap: wrap;
+  }
   .ss-public-header-copy {
     white-space: normal;
   }
   .ss-public-header-switcher {
     justify-content: flex-start;
+    margin-left: 0;
   }
   .proto-how-it-works-steps {
     grid-template-columns: 1fr;

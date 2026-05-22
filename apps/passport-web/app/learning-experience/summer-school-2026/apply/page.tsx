@@ -14,18 +14,20 @@ export default function SummerSchoolApplyPublicPage({ searchParams }: PageProps)
 
   return (
     <main className="page">
-      <div className="section-header ss-public-header">
-        <div>
+      <div className="ss-public-header">
+        <div className="ss-public-header-title">
           <span className="label">{isZh ? "公开申请" : "Open Application"}</span>
           <h1>{isZh ? "可持续夏校2026" : "Sustainability Summer School 2026"}</h1>
         </div>
-        <p className="ss-public-header-copy">
-          {isZh
-            ? "请提交您的申请，提交后系统将自动创建Climate Passport ID。"
-            : "Please submit your application. A Climate Passport ID will be created automatically after submission."}
-        </p>
-        <div className="ss-public-header-switcher">
-          <SummerSchoolLocaleSwitcher locale={locale} label={isZh ? "语言切换" : "Language switch"} />
+        <div className="ss-public-header-main">
+          <p className="ss-public-header-copy">
+            {isZh
+              ? "请提交您的申请，提交后系统将自动创建Climate Passport ID。"
+              : "Please submit your application. A Climate Passport ID will be created automatically after submission."}
+          </p>
+          <div className="ss-public-header-switcher">
+            <SummerSchoolLocaleSwitcher locale={locale} label={isZh ? "语言切换" : "Language switch"} />
+          </div>
         </div>
       </div>
 
