@@ -23,6 +23,7 @@ import {
 export async function HomeScreen({ locale }: { locale: Locale }) {
   const { home } = await getHomePageData(locale);
   const isZh = locale === "zh";
+  const summerSchoolApplyHref = `/learning-experience/summer-school-2026/apply?lang=${isZh ? "zh" : "en"}`;
 
   return (
     <>
@@ -44,6 +45,9 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
             </Link>
             <Link className="button-outline" href={`/${locale}/events`}>
               {isZh ? "浏览活动" : "Browse Events"}
+            </Link>
+            <Link className="button-outline" href={summerSchoolApplyHref}>
+              {isZh ? "夏校申请" : "Summer School Apply"}
             </Link>
           </div>
         </div>
