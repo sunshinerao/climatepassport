@@ -1,0 +1,58 @@
+[
+  {
+    "id": "e22232e3-a973-43a9-95ba-087b1a4ca365",
+    "speakerId": "77b64398-e6d2-42cd-864a-bce8264590fb",
+    "title": "Vice Chair",
+    "titleEn": "Vice Chair",
+    "organization": "World Economic Forum Global Future  Council",
+    "organizationEn": "World Economic Forum Global Future  Council",
+    "startYear": null,
+    "endYear": null,
+    "isCurrent": true,
+    "order": 0,
+    "createdAt": "2026-04-20T13:31:53.595Z",
+    "updatedAt": "2026-04-20T13:31:53.595Z"
+  },
+  {
+    "id": "717efe1e-6843-4a03-8ebc-04e07142f4ca",
+    "speakerId": "f6f06d18-f668-44e7-91ee-4eec213aef1a",
+    "title": "Member",
+    "titleEn": "Member",
+    "organization": "World Economic Forum Global Future Council",
+    "organizationEn": "World Economic Forum Global Future Council",
+    "startYear": null,
+    "endYear": null,
+    "isCurrent": true,
+    "order": 0,
+    "createdAt": "2026-04-20T13:35:12.226Z",
+    "updatedAt": "2026-04-20T19:20:33.070Z"
+  },
+  {
+    "id": "b8160f8d-b5b7-44a2-9078-f162f068fd16",
+    "speakerId": "b94231df-0ff9-4194-a214-59e0b7204368",
+    "title": "成员",
+    "titleEn": "Member",
+    "organization": "香港金融发展局绿色金融政策研究小组",
+    "organizationEn": "Hong Kong Financial Development Council Green Finance Policy Research Group",
+    "startYear": null,
+    "endYear": null,
+    "isCurrent": true,
+    "order": 0,
+    "createdAt": "2026-04-22T06:30:31.142Z",
+    "updatedAt": "2026-04-22T06:30:31.142Z"
+  },
+  {
+    "id": "f6d48a57-6b09-4abd-a534-2202f3737abc",
+    "speakerId": "b94231df-0ff9-4194-a214-59e0b7204368",
+    "title": "创始合伙人",
+    "titleEn": "Founding Partner",
+    "organization": "晨天清能有限公司",
+    "organizationEn": "CT Green Capital Ltd.",
+    "startYear": null,
+    "endYear": null,
+    "isCurrent": true,
+    "order": 1,
+    "createdAt": "2026-04-22T06:30:31.142Z",
+    "updatedAt": "2026-04-22T06:30:31.142Z"
+  }
+]

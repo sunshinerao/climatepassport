@@ -1,0 +1,36 @@
+{
+  "extractedAt": "2026-05-20T02:32:38.253Z",
+  "source": "SHCW",
+  "scopes": [
+    "tracks",
+    "users",
+    "events",
+    "institutions",
+    "event-institutions",
+    "speakers",
+    "speaker-roles",
+    "agenda-items",
+    "registrations",
+    "event-verifiers",
+    "checkins",
+    "point-transactions",
+    "invitation-requests",
+    "special-passes"
+  ],
+  "counts": {
+    "tracks": 13,
+    "users": 1109,
+    "events": 49,
+    "institutions": 0,
+    "eventInstitutions": 0,
+    "speakers": 301,
+    "speakerRoles": 4,
+    "agendaItems": 291,
+    "registrations": 2118,
+    "eventVerifiers": 1,
+    "checkins": 23,
+    "pointTransactions": 23,
+    "invitationRequests": 101,
+    "specialPasses": 16
+  }
+}

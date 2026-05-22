@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — Climate Passport</title>
+  <style>
+    :root {
+      --forest-deep: #0b3d2e;
+      --forest: #1a5d48;
+      --moss: #4a8a6a;
+      --sage: #8fb89a;
+      --leaf-light: #c4dcc8;
+      --amber-warm: #c4893f;
+      --amber-soft: #e8c88a;
+      --cream: #faf8f3;
+      --paper: #f5f2ec;
+      --ink: #0f2a20;
+      --ink-soft: #2d5245;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: Inter, system-ui, -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { font: inherit; cursor: pointer; border: none; background: none; }
+
+    /* Navigation */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(250, 248, 243, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(11, 61, 46, 0.08);
+    }
+    .topbar-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 72px;
+    }
+    .brand-block { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 18px; color: var(--forest-deep); }
+    .brand-block svg { width: 32px; height: 32px; }
+    .nav { display: flex; gap: 6px; }
+    .nav a {
+      padding: 8px 14px; border-radius: 999px;
+      font-size: 14px; font-weight: 600; color: var(--ink-soft);
+      transition: all 0.2s ease;
+    }
+    .nav a:hover, .nav a.active { background: var(--leaf-light); color: var(--forest-deep); }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 22px; border-radius: 999px;
+      font-size: 14px; font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-amber { background: var(--amber-warm); color: #fff; }
+    .btn-amber:hover { background: #a87332; transform: translateY(-1px); }
+    .btn-outline { border: 1.5px solid var(--forest); color: var(--forest); background: transparent; }
+    .btn-outline:hover { background: var(--forest); color: #fff; }
+    .locale-pill {
+      display: inline-flex; gap: 6px; align-items: center;
+      padding: 6px 12px; border-radius: 999px;
+      border: 1px solid rgba(11, 61, 46, 0.15);
+      font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    }
+    .menu-toggle { display: none; background: none; border: none; font-size: 24px; color: var(--forest-deep); }
+
+    /* Page Header */
+    .page-header {
+      max-width: 1200px; margin: 0 auto; padding: 56px 24px 32px;
+    }
+    .eyebrow {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--moss); margin-bottom: 10px;
+    }
+    .page-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 400; color: var(--forest-deep);
+      line-height: 1.15; margin-bottom: 8px;
+    }
+    .page-subtitle { font-size: 18px; color: var(--ink-soft); margin-bottom: 28px; }
+    .search-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;
+    }
+    .search-input {
+      flex: 1; min-width: 260px;
+      padding: 12px 18px; padding-left: 44px;
+      border-radius: 999px; border: 1.5px solid rgba(11, 61, 46, 0.12);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%232d5245' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 16px center;
+      font-size: 15px; color: var(--ink);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .search-input:focus { outline: none; border-color: var(--moss); box-shadow: 0 0 0 3px rgba(74, 138, 106, 0.15); }
+    .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-pill {
+      padding: 8px 18px; border-radius: 999px;
+      border: 1.5px solid rgba(11, 61, 46, 0.12);
+      background: #fff;
+      font-size: 13px; font-weight: 600; color: var(--ink-soft);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .filter-pill:hover { border-color: var(--moss); color: var(--forest); }
+    .filter-pill.active { background: var(--amber-warm); color: #fff; border-color: var(--amber-warm); }
+
+    /* Featured Event */
+    .featured-section { max-width: 1200px; margin: 0 auto; padding: 0 24px 40px; }
+    .featured-card {
+      display: grid; grid-template-columns: 1.2fr 1fr; gap: 0;
+      border-radius: 28px; overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(11, 61, 46, 0.08);
+      box-shadow: 0 8px 32px rgba(11, 61, 46, 0.06);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .featured-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(11, 61, 46, 0.1); }
+    .featured-visual {
+      background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 50%, var(--moss) 100%);
+      position: relative; overflow: hidden;
+      min-height: 320px; display: flex; align-items: center; justify-content: center;
+    }
+    .featured-visual::before {
+      content: ""; position: absolute; inset: 0;
+      opacity: 0.1;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 5 C35 15, 45 20, 55 18 C50 28, 52 38, 58 45 C48 42, 38 48, 30 58 C22 48, 12 42, 2 45 C8 38, 10 28, 5 18 C15 20, 25 15, 30 5Z' fill='white'/%3E%3C/svg%3E");
+      background-size: 80px 80px;
+    }
+    .featured-visual-inner {
+      position: relative; z-index: 1; text-align: center; color: #fff;
+    }
+    .featured-visual-inner svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.9; }
+    .featured-visual-inner h3 { font-family: Georgia, serif; font-size: 28px; font-weight: 400; margin-bottom: 8px; }
+    .featured-visual-inner p { font-size: 15px; opacity: 0.85; }
+    .featured-content { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+    .featured-date {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 999px;
+      background: var(--leaf-light); color: var(--forest-deep);
+      font-size: 13px; font-weight: 700; margin-bottom: 16px; width: fit-content;
+    }
+    .featured-content h2 {
+      font-family: Georgia, serif; font-size: 32px; font-weight: 400;
+      color: var(--forest-deep); line-height: 1.2; margin-bottom: 10px;
+    }
+    .featured-location {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 15px; color: var(--ink-soft); margin-bottom: 16px;
+    }
+    .featured-content p { font-size: 15px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 24px; }
+
+    /* Events Grid */
+    .events-section { max-width: 1200px; margin: 0 auto; padding: 0 24px 40px; }
+    .section-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: Georgia, serif; font-size: 28px; font-weight: 400;
+      color: var(--forest-deep);
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .event-card {
+      background: #fff; border-radius: 24px;
+      border: 1px solid rgba(11, 61, 46, 0.08);
+      box-shadow: 0 4px 20px rgba(11, 61, 46, 0.04);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .event-card:hover { transform: translateY(-5px); box-shadow: 0 14px 40px rgba(11, 61, 46, 0.1); }
+    .event-card.hidden { display: none; }
+    .event-image {
+      position: relative; height: 180px;
+      background: linear-gradient(135deg, var(--sage) 0%, var(--leaf-light) 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .event-image svg { width: 40px; height: 40px; color: var(--forest-deep); opacity: 0.5; }
+    .event-date-badge {
+      position: absolute; top: 14px; left: 14px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(4px);
+      font-size: 12px; font-weight: 700; color: var(--forest-deep);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .event-body { padding: 22px; }
+    .event-body h3 {
+      font-size: 18px; font-weight: 700; color: var(--forest-deep);
+      line-height: 1.3; margin-bottom: 8px;
+    }
+    .event-body p {
+      font-size: 14px; color: var(--ink-soft); line-height: 1.6;
+      margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .event-meta {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--ink-soft); margin-bottom: 14px;
+    }
+    .event-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .event-tag {
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--paper); color: var(--ink-soft);
+      font-size: 12px; font-weight: 600;
+    }
+    .event-link {
+      font-size: 14px; font-weight: 700; color: var(--amber-warm);
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: gap 0.2s ease;
+    }
+    .event-link:hover { gap: 8px; }
+
+    /* Past Events */
+    .past-section { max-width: 1200px; margin: 0 auto; padding: 0 24px 40px; }
+    .past-list { display: grid; gap: 14px; }
+    .past-card {
+      display: grid; grid-template-columns: 160px 1fr auto;
+      gap: 20px; align-items: center;
+      padding: 18px 24px;
+      background: #fff; border-radius: 20px;
+      border: 1px solid rgba(11, 61, 46, 0.06);
+      transition: border-color 0.2s ease;
+    }
+    .past-card:hover { border-color: var(--leaf-light); }
+    .past-thumb {
+      width: 160px; height: 90px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--paper) 0%, #e8e4dc 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .past-thumb svg { width: 28px; height: 28px; opacity: 0.4; }
+    .past-info h4 { font-size: 16px; font-weight: 700; color: var(--forest-deep); margin-bottom: 4px; }
+    .past-info span { font-size: 13px; color: var(--ink-soft); }
+    .past-action {
+      font-size: 13px; font-weight: 700; color: var(--moss);
+      white-space: nowrap;
+    }
+    .past-action:hover { color: var(--forest); }
+
+    .load-more-wrap { text-align: center; padding: 20px 24px 60px; }
+
+    /* Footer */
+    .site-footer {
+      background: var(--forest-deep); color: rgba(255,255,255,0.85);
+      padding: 56px 24px 28px;
+    }
+    .footer-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-bottom: 14px; color: #fff; }
+    .footer-brand svg { width: 28px; height: 28px; }
+    .footer-col p { font-size: 14px; line-height: 1.7; opacity: 0.8; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage); margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 14px; padding: 5px 0; opacity: 0.8; transition: opacity 0.2s; }
+    .footer-col a:hover { opacity: 1; color: #fff; }
+    .footer-bottom {
+      max-width: 1200px; margin: 36px auto 0; padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 13px; opacity: 0.6; text-align: center;
+    }
+
+    /* Language Toggle */
+    .lang-toggle {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 999px;
+      background: var(--forest-deep); color: #fff;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(11, 61, 46, 0.25);
+      cursor: pointer; border: none;
+      transition: background 0.2s ease;
+    }
+    .lang-toggle:hover { background: var(--forest); }
+
+    /* Responsive */
+    @media (max-width: 980px) {
+      .nav { display: none; }
+      .menu-toggle { display: block; }
+      .featured-card { grid-template-columns: 1fr; }
+      .events-grid { grid-template-columns: repeat(2, 1fr); }
+      .past-card { grid-template-columns: 120px 1fr; }
+      .past-action { display: none; }
+      .footer-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .events-grid { grid-template-columns: 1fr; }
+      .featured-content { padding: 28px; }
+      .past-card { grid-template-columns: 1fr; }
+      .past-thumb { width: 100%; height: 120px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+      .search-bar { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand-block">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M16 2C10 8 6 14 6 20c0 5.5 4.5 10 10 10s10-4.5 10-10c0-6-4-12-10-18z" fill="var(--moss)"/><path d="M16 8v18" stroke="var(--forest-deep)" stroke-width="2" stroke-linecap="round"/></svg>
+      <span data-en="Climate Passport" data-zh="气候护照">Climate Passport</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html" data-en="Home" data-zh="首页">Home</a>
+      <a href="events.html" class="active" data-en="Events" data-zh="活动">Events</a>
+      <a href="#" data-en="Speakers" data-zh="演讲者">Speakers</a>
+      <a href="#" data-en="About" data-zh="关于">About</a>
+      <a href="#" data-en="Certificates" data-zh="证书">Certificates</a>
+    </nav>
+    <div class="header-actions">
+      <span class="locale-pill" onclick="toggleLang()">EN / 中文</span>
+      <a href="auth.html" class="btn btn-outline" data-en="Log In" data-zh="登录">Log In</a>
+      <a href="auth.html" class="btn btn-amber" data-en="Register" data-zh="注册">Register</a>
+    </div>
+    <button class="menu-toggle" onclick="document.querySelector('.nav').classList.toggle('mobile-open')">&#9776;</button>
+  </div>
+</header>
+
+<!-- Page Header -->
+<section class="page-header">
+  <div class="eyebrow" data-en="Discover" data-zh="探索">Discover</div>
+  <h1 class="page-title" data-en="Upcoming Events" data-zh=" upcoming events">Upcoming Events</h1>
+  <p class="page-subtitle" data-en="Join the global community driving climate action" data-zh="加入推动气候行动的全球社区">Join the global community driving climate action</p>
+  <div class="search-bar">
+    <input type="text" class="search-input" placeholder="Search events, topics, or locations..." data-en="Search events, topics, or locations..." data-zh="搜索活动、主题或地点...">
+    <div class="filter-pills">
+      <button class="filter-pill active" data-filter="all" onclick="filterEvents('all', this)">All</button>
+      <button class="filter-pill" data-filter="summit" onclick="filterEvents('summit', this)" data-en="Climate Summit" data-zh="气候峰会">Climate Summit</button>
+      <button class="filter-pill" data-filter="workshop" onclick="filterEvents('workshop', this)" data-en="Workshops" data-zh="工作坊">Workshops</button>
+      <button class="filter-pill" data-filter="exhibition" onclick="filterEvents('exhibition', this)" data-en="Exhibition" data-zh="展览">Exhibition</button>
+      <button class="filter-pill" data-filter="online" onclick="filterEvents('online', this)" data-en="Online" data-zh="线上">Online</button>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Event -->
+<section class="featured-section">
+  <div class="featured-card">
+    <div class="featured-visual">
+      <div class="featured-visual-inner">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><path d="M32 8v48M8 32h48" stroke-linecap="round"/><circle cx="32" cy="32" r="20" stroke-dasharray="4 4"/></svg>
+        <h3>SHCW 2026</h3>
+        <p>The flagship climate event of the year</p>
+      </div>
+    </div>
+    <div class="featured-content">
+      <span class="featured-date">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        June 15-20, 2026
+      </span>
+      <h2 data-en="Shanghai Climate Week 2026" data-zh="2026上海气候周">Shanghai Climate Week 2026</h2>
+      <div class="featured-location">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span data-en="Shanghai, China" data-zh="中国上海">Shanghai, China</span>
+      </div>
+      <p data-en="Six days of keynotes, workshops, and exhibitions bringing together global leaders, innovators, and communities to accelerate climate action." data-zh="为期六天的主题演讲、工作坊和展览，汇聚全球领袖、创新者和社区，加速气候行动。">Six days of keynotes, workshops, and exhibitions bringing together global leaders, innovators, and communities to accelerate climate action.</p>
+      <a href="#" class="btn btn-amber" data-en="Register Now" data-zh="立即注册">Register Now</a>
+    </div>
+  </div>
+</section>
+
+<!-- Events Grid -->
+<section class="events-section">
+  <div class="section-header-row">
+    <h2 class="section-title" data-en="All Events" data-zh="所有活动">All Events</h2>
+  </div>
+  <div class="events-grid" id="eventsGrid">
+
+    <article class="event-card" data-category="workshop">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="event-date-badge">Aug 12</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Youth Climate Action Forum" data-zh="青年气候行动论坛">Youth Climate Action Forum</h3>
+        <p data-en="Empowering the next generation of climate leaders through dialogue, workshops, and collaborative projects." data-zh="通过对话、工作坊和协作项目，赋能下一代气候领袖。">Empowering the next generation of climate leaders through dialogue, workshops, and collaborative projects.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Shanghai
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Youth</span>
+          <span class="event-tag">Workshop</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+    <article class="event-card" data-category="summit online">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span class="event-date-badge">Sep 5</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Green Finance Summit" data-zh="绿色金融峰会">Green Finance Summit</h3>
+        <p data-en="Connecting capital with climate solutions. Explore sustainable investing, carbon markets, and ESG innovations." data-zh="连接资本与气候解决方案。探索可持续投资、碳市场和ESG创新。">Connecting capital with climate solutions. Explore sustainable investing, carbon markets, and ESG innovations.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Online
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Finance</span>
+          <span class="event-tag">Summit</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+    <article class="event-card" data-category="exhibition">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span class="event-date-badge">Oct 18</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Urban Sustainability Expo" data-zh="城市可持续发展博览会">Urban Sustainability Expo</h3>
+        <p data-en="Showcasing cutting-edge urban solutions for greener cities, from smart grids to circular architecture." data-zh="展示绿色城市的尖端城市解决方案，从智能电网到循环建筑。">Showcasing cutting-edge urban solutions for greener cities, from smart grids to circular architecture.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Beijing
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Exhibition</span>
+          <span class="event-tag">Urban</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+    <article class="event-card" data-category="workshop online">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M12 20V4M12 4l-7 4h14l-7-4z"/></svg>
+        <span class="event-date-badge">Nov 3</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Carbon Neutrality Workshop" data-zh="碳中和工作坊">Carbon Neutrality Workshop</h3>
+        <p data-en="Hands-on training for organizations and individuals committed to achieving net-zero targets." data-zh="为致力于实现净零目标的组织和个人提供实践培训。">Hands-on training for organizations and individuals committed to achieving net-zero targets.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Online
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Workshop</span>
+          <span class="event-tag">Carbon</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+    <article class="event-card" data-category="summit">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span class="event-date-badge">Dec 8</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Ocean Conservation Dialogue" data-zh="海洋保护对话">Ocean Conservation Dialogue</h3>
+        <p data-en="Bringing together marine scientists, policymakers, and activists to address ocean health and blue economy." data-zh="汇聚海洋科学家、政策制定者和活动家，共同探讨海洋健康和蓝色经济。">Bringing together marine scientists, policymakers, and activists to address ocean health and blue economy.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Shenzhen
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Marine</span>
+          <span class="event-tag">Dialogue</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+    <article class="event-card" data-category="online">
+      <div class="event-image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span class="event-date-badge">Jan 15</span>
+      </div>
+      <div class="event-body">
+        <h3 data-en="Renewable Energy Roundtable" data-zh="可再生能源圆桌会议">Renewable Energy Roundtable</h3>
+        <p data-en="A high-level discussion on scaling renewables, grid modernization, and energy equity across regions." data-zh="关于扩大可再生能源、电网现代化和区域能源公平的高级讨论。">A high-level discussion on scaling renewables, grid modernization, and energy equity across regions.</p>
+        <div class="event-meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Online
+        </div>
+        <div class="event-tags">
+          <span class="event-tag">Energy</span>
+          <span class="event-tag">Roundtable</span>
+        </div>
+        <a href="#" class="event-link" data-en="Details →" data-zh="详情 →">Details →</a>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- Past Events -->
+<section class="past-section">
+  <div class="section-header-row">
+    <h2 class="section-title" data-en="Past Events" data-zh="往期活动">Past Events</h2>
+  </div>
+  <div class="past-list">
+    <div class="past-card">
+      <div class="past-thumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </div>
+      <div class="past-info">
+        <h4 data-en="Climate Innovation Bootcamp" data-zh="气候创新训练营">Climate Innovation Bootcamp</h4>
+        <span data-en="March 10-12, 2026 · Online" data-zh="2026年3月10-12日 · 线上">March 10-12, 2026 · Online</span>
+      </div>
+      <a href="#" class="past-action" data-en="View Recording" data-zh="观看回放">View Recording</a>
+    </div>
+    <div class="past-card">
+      <div class="past-thumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="past-info">
+        <h4 data-en="Biodiversity & Cities Symposium" data-zh="生物多样性与城市研讨会">Biodiversity & Cities Symposium</h4>
+        <span data-en="January 22, 2026 · Chengdu" data-zh="2026年1月22日 · 成都">January 22, 2026 · Chengdu</span>
+      </div>
+      <a href="#" class="past-action" data-en="View Recording" data-zh="观看回放">View Recording</a>
+    </div>
+    <div class="past-card">
+      <div class="past-thumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M12 20V4M12 4l-7 4h14l-7-4z"/></svg>
+      </div>
+      <div class="past-info">
+        <h4 data-en="Net Zero Supply Chain Forum" data-zh="净零供应链论坛">Net Zero Supply Chain Forum</h4>
+        <span data-en="November 8, 2025 · Guangzhou" data-zh="2025年11月8日 · 广州">November 8, 2025 · Guangzhou</span>
+      </div>
+      <a href="#" class="past-action" data-en="View Recording" data-zh="观看回放">View Recording</a>
+    </div>
+  </div>
+</section>
+
+<!-- Load More -->
+<div class="load-more-wrap">
+  <button class="btn btn-outline" data-en="Load More Events" data-zh="加载更多活动">Load More Events</button>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="footer-brand">
+        <svg viewBox="0 0 32 32" fill="none"><path d="M16 2C10 8 6 14 6 20c0 5.5 4.5 10 10 10s10-4.5 10-10c0-6-4-12-10-18z" fill="var(--sage)"/><path d="M16 8v18" stroke="var(--forest-deep)" stroke-width="2" stroke-linecap="round"/></svg>
+        Climate Passport
+      </div>
+      <p data-en="Your unified identity for climate events, learning, and verified credentials across the global sustainability community." data-zh="您在全球可持续发展社区中的气候活动、学习和验证凭证的统一身份。">Your unified identity for climate events, learning, and verified credentials across the global sustainability community.</p>
+    </div>
+    <div class="footer-col">
+      <h4 data-en="Navigate" data-zh="导航">Navigate</h4>
+      <a href="index.html" data-en="Home" data-zh="首页">Home</a>
+      <a href="events.html" data-en="Events" data-zh="活动">Events</a>
+      <a href="#" data-en="Speakers" data-zh="演讲者">Speakers</a>
+      <a href="#" data-en="About" data-zh="关于">About</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-en="Info" data-zh="信息">Info</h4>
+      <a href="#" data-en="Privacy Policy" data-zh="隐私政策">Privacy Policy</a>
+      <a href="#" data-en="Terms of Service" data-zh="服务条款">Terms of Service</a>
+      <a href="#" data-en="FAQ" data-zh="常见问题">FAQ</a>
+      <a href="#" data-en="Contact" data-zh="联系我们">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-en="Contact" data-zh="联系">Contact</h4>
+      <p>hello@climatepass.org</p>
+      <p data-en="Shanghai, China" data-zh="中国上海">Shanghai, China</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    © 2026 Climate Passport. Made with care for our planet.
+  </div>
+</footer>
+
+<!-- Language Toggle -->
+<button class="lang-toggle" onclick="toggleLang()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  EN / 中文
+</button>
+
+<script>
+  let currentLang = 'en';
+  function toggleLang() {
+    currentLang = currentLang === 'en' ? 'zh' : 'en';
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      el.textContent = el.getAttribute('data-' + currentLang);
+    });
+    document.querySelectorAll('input[data-en][data-zh]').forEach(el => {
+      el.placeholder = el.getAttribute('data-' + currentLang);
+    });
+  }
+  function filterEvents(category, btn) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.event-card').forEach(card => {
+      const cats = card.getAttribute('data-category') || '';
+      if (category === 'all' || cats.includes(category)) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

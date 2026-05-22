@@ -1,0 +1,36 @@
+{
+  "name": "climate-passport",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace passport-web",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:format": "prisma format --schema prisma/schema.prisma",
+    "db:validate": "prisma validate --schema prisma/schema.prisma",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:seed": "node prisma/seed.mjs",
+    "migrate:core:dry-run": "node scripts/migrate-shcw-core.mjs --dry-run",
+    "migrate:core:extract": "node scripts/migrate-shcw-core.mjs --extract-only",
+    "migrate:core:import": "node scripts/import-shcw-core.mjs"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  }
+}

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Climate Passport</title>
+  <style>
+    :root {
+      --forest-deep: #0b3d2e;
+      --forest: #1a5d48;
+      --moss: #4a8a6a;
+      --sage: #8fb89a;
+      --leaf-light: #c4dcc8;
+      --amber-warm: #c4893f;
+      --amber-soft: #e8c88a;
+      --cream: #faf8f3;
+      --paper: #f5f2ec;
+      --ink: #0f2a20;
+      --ink-soft: #2d5245;
+      --sidebar-w: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: Inter, system-ui, -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { font: inherit; cursor: pointer; border: none; background: none; }
+
+    /* Layout */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--forest-deep);
+      color: rgba(255,255,255,0.85);
+      display: flex;
+      flex-direction: column;
+      position: fixed; inset: 0 auto 0 0;
+      z-index: 50;
+      overflow-y: auto;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 12px;
+      padding: 24px;
+      font-weight: 700; font-size: 18px; color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-brand svg { width: 32px; height: 32px; }
+    .sidebar-nav {
+      padding: 16px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+      flex: 1;
+    }
+    .nav-section-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--sage); opacity: 0.7;
+      padding: 16px 12px 8px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: 12px;
+      font-size: 14px; font-weight: 600;
+      color: rgba(255,255,255,0.72);
+      cursor: pointer; transition: all 0.2s ease;
+      position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .nav-item.active {
+      background: rgba(255,255,255,0.1); color: #fff;
+    }
+    .nav-item.active::before {
+      content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 20px; border-radius: 0 4px 4px 0;
+      background: var(--amber-warm);
+    }
+    .nav-item svg { width: 20px; height: 20px; opacity: 0.8; }
+    .nav-badge {
+      margin-left: auto;
+      padding: 2px 8px; border-radius: 999px;
+      background: var(--amber-warm); color: #fff;
+      font-size: 11px; font-weight: 700;
+    }
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .user-mini {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .user-mini:hover { background: rgba(255,255,255,0.1); }
+    .user-mini-avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--moss), var(--sage));
+      display: grid; place-items: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .user-mini-info strong { display: block; font-size: 13px; color: #fff; }
+    .user-mini-info span { font-size: 12px; color: var(--sage); }
+
+    /* Main content */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+    }
+    .topbar {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(250, 248, 243, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(11, 61, 46, 0.08);
+      padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 64px;
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: var(--ink-soft);
+    }
+    .breadcrumb strong { color: var(--forest-deep); font-weight: 600; }
+    .topbar-actions {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .search-box {
+      padding: 8px 14px 8px 38px;
+      border-radius: 999px; border: 1.5px solid rgba(11,61,46,0.1);
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d5245' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center;
+      font-size: 14px; color: var(--ink);
+      width: 240px; transition: all 0.2s ease;
+    }
+    .search-box:focus { outline: none; border-color: var(--moss); width: 300px; box-shadow: 0 0 0 3px rgba(74,138,106,0.1); }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: transparent; color: var(--ink-soft);
+      transition: all 0.2s; position: relative;
+    }
+    .icon-btn:hover { background: var(--paper); color: var(--forest-deep); }
+    .icon-btn .dot-alert {
+      position: absolute; top: 6px; right: 6px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--amber-warm); border: 2px solid var(--cream);
+    }
+    .locale-pill {
+      padding: 6px 14px; border-radius: 999px;
+      border: 1.5px solid rgba(11,61,46,0.12);
+      font-size: 13px; font-weight: 600; color: var(--ink-soft);
+      background: #fff; cursor: pointer;
+    }
+
+    /* Content */
+    .content { padding: 32px; max-width: 1200px; }
+    .page-header { margin-bottom: 28px; }
+    .page-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px; font-weight: 400;
+      color: var(--forest-deep); line-height: 1.2;
+    }
+    .page-desc { font-size: 15px; color: var(--ink-soft); margin-top: 6px; }
+
+    /* Section hide/show */
+    .section-panel { display: none; }
+    .section-panel.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Stats */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #fff; border-radius: 20px;
+      border: 1px solid rgba(11,61,46,0.06);
+      box-shadow: 0 2px 12px rgba(11,61,46,0.04);
+      padding: 22px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,61,46,0.08); }
+    .stat-card .label {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-soft); opacity: 0.7; margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 32px; font-weight: 700;
+      color: var(--forest-deep); letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .stat-change {
+      font-size: 13px; font-weight: 600; margin-top: 8px;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .stat-change.up { color: var(--moss); }
+    .stat-change.down { color: #b33a3a; }
+
+    /* Cards */
+    .card {
+      background: #fff; border-radius: 20px;
+      border: 1px solid rgba(11,61,46,0.06);
+      box-shadow: 0 2px 12px rgba(11,61,46,0.04);
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(11,61,46,0.06);
+    }
+    .card-title {
+      font-size: 16px; font-weight: 700; color: var(--forest-deep);
+    }
+    .card-body { padding: 20px 24px; }
+    .card-footer {
+      padding: 14px 24px;
+      border-top: 1px solid rgba(11,61,46,0.06);
+      display: flex; justify-content: flex-end;
+    }
+
+    /* Two-column dashboard */
+    .dash-grid {
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px;
+    }
+
+    /* Charts (CSS-only) */
+    .bar-chart {
+      display: flex; align-items: flex-end; gap: 10px;
+      height: 160px; padding-top: 20px;
+    }
+    .bar-group {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .bar {
+      width: 100%; border-radius: 6px 6px 0 0;
+      background: linear-gradient(180deg, var(--moss) 0%, var(--sage) 100%);
+      transition: opacity 0.2s; min-height: 4px;
+    }
+    .bar:hover { opacity: 0.8; }
+    .bar-label { font-size: 11px; font-weight: 600; color: var(--ink-soft); }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      text-align: left; padding: 12px 16px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--ink-soft); opacity: 0.7;
+      border-bottom: 1.5px solid rgba(11,61,46,0.08);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 14px 16px; font-size: 14px;
+      border-bottom: 1px solid rgba(11,61,46,0.04);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: rgba(11,61,46,0.02); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .cell-strong { font-weight: 600; color: var(--forest-deep); }
+    .cell-muted { color: var(--ink-soft); font-size: 13px; }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+    }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .badge-green .badge-dot { background: #22c55e; }
+    .badge-amber .badge-dot { background: #f59e0b; }
+    .badge-red .badge-dot { background: #ef4444; }
+    .badge-blue .badge-dot { background: #3b82f6; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 18px; border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .btn-amber { background: var(--amber-warm); color: #fff; }
+    .btn-amber:hover { background: #a87332; }
+    .btn-outline { border: 1.5px solid rgba(11,61,46,0.15); color: var(--ink-soft); background: #fff; }
+    .btn-outline:hover { border-color: var(--forest); color: var(--forest); }
+    .btn-ghost { color: var(--ink-soft); background: transparent; }
+    .btn-ghost:hover { background: var(--paper); color: var(--forest-deep); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-danger { background: #fee2e2; color: #b33a3a; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-success { background: #dcfce7; color: #166534; }
+    .btn-success:hover { background: #bbf7d0; }
+
+    /* Forms */
+    .form-grid { display: grid; gap: 16px; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+    .field input, .field select, .field textarea {
+      padding: 10px 14px; border-radius: 12px;
+      border: 1.5px solid rgba(11,61,46,0.1);
+      background: #fff; font-size: 14px; color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: var(--moss);
+      box-shadow: 0 0 0 3px rgba(74,138,106,0.1);
+    }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .toggle-row {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .toggle {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 12px;
+      border: 1.5px solid rgba(11,61,46,0.1);
+      background: #fff; font-size: 13px; font-weight: 600; color: var(--ink-soft);
+      cursor: pointer;
+    }
+    .toggle input { accent-color: var(--moss); }
+
+    /* Activity feed */
+    .feed-item {
+      display: flex; gap: 14px; padding: 14px 0;
+      border-bottom: 1px solid rgba(11,61,46,0.04);
+    }
+    .feed-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .feed-avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--moss), var(--sage));
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-body p { font-size: 14px; color: var(--ink); line-height: 1.5; }
+    .feed-body p strong { color: var(--forest-deep); }
+    .feed-time { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+    /* Quick links */
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .quick-card {
+      padding: 20px; border-radius: 16px;
+      border: 1.5px solid rgba(11,61,46,0.08);
+      background: #fff; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .quick-card:hover { border-color: var(--leaf-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,61,46,0.06); }
+    .quick-card .label { margin-bottom: 8px; }
+    .quick-card h3 { font-size: 15px; font-weight: 700; color: var(--forest-deep); margin-bottom: 4px; }
+    .quick-card p { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+    /* Lang toggle */
+    .lang-toggle {
+      position: fixed; bottom: 20px; right: 20px; z-index: 100;
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 999px;
+      background: var(--forest-deep); color: #fff;
+      font-size: 12px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(11,61,46,0.25);
+      cursor: pointer; border: none;
+    }
+
+    /* Mobile */
+    .menu-toggle { display: none; background: none; border: none; font-size: 22px; color: var(--forest-deep); }
+    @media (max-width: 980px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .menu-toggle { display: block; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .dash-grid { grid-template-columns: 1fr; }
+      .quick-grid { grid-template-columns: 1fr; }
+      .search-box { width: 160px; }
+      .search-box:focus { width: 180px; }
+      .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .content { padding: 20px; }
+      .topbar { padding: 0 16px; }
+      .field-row { grid-template-columns: 1fr; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 45;
+    }
+    .overlay.show { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M16 2C10 8 6 14 6 20c0 5.5 4.5 10 10 10s10-4.5 10-10c0-6-4-12-10-18z" fill="var(--sage)"/><path d="M16 8v18" stroke="var(--forest-deep)" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Climate Passport</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item active" onclick="showSection('overview', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        <span data-en="Dashboard" data-zh="仪表盘">Dashboard</span>
+      </a>
+      <a class="nav-item" onclick="showSection('events', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span data-en="Events" data-zh="活动">Events</span>
+        <span class="nav-badge">186</span>
+      </a>
+      <a class="nav-item" onclick="showSection('applications', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+        <span data-en="Applications" data-zh="申请审批">Applications</span>
+        <span class="nav-badge">12</span>
+      </a>
+      <a class="nav-item" onclick="showSection('le', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M12 20V4M12 4l-7 4h14l-7-4z"/></svg>
+        <span data-en="Learning" data-zh="学习项目">Learning</span>
+      </a>
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" onclick="showSection('users', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-en="Users" data-zh="用户管理">Users</span>
+      </a>
+      <a class="nav-item" onclick="showSection('settings', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.68 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-en="Settings" data-zh="系统设置">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-mini">
+        <div class="user-mini-avatar">WZ</div>
+        <div class="user-mini-info">
+          <strong>Wei Zhang</strong>
+          <span>Administrator</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="menu-toggle" onclick="openSidebar()">&#9776;</button>
+        <div class="breadcrumb">
+          <span>Climate Passport</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.4"><path d="m9 18 6-6-6-6"/></svg>
+          <strong data-en="Admin Console" data-zh="管理后台">Admin Console</strong>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <input type="text" class="search-box" placeholder="Search..." data-en="Search..." data-zh="搜索...">
+        <button class="icon-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="dot-alert"></span>
+        </button>
+        <button class="locale-pill" onclick="toggleLang()">EN / 中文</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ===== OVERVIEW ===== -->
+      <div class="section-panel active" id="panel-overview">
+        <div class="page-header">
+          <h1 class="page-title" data-en="Dashboard" data-zh="仪表盘">Dashboard</h1>
+          <p class="page-desc" data-en="Overview of platform activity and key metrics." data-zh="平台活动和关键指标概览。">Overview of platform activity and key metrics.</p>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="label" data-en="Total Users" data-zh="总用户数">Total Users</div>
+            <div class="stat-value">12,847</div>
+            <div class="stat-change up">+8.2% <span data-en="vs last month" data-zh="较上月">vs last month</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="label" data-en="Active Events" data-zh="活跃活动">Active Events</div>
+            <div class="stat-value">186</div>
+            <div class="stat-change up">+12 <span data-en="new this week" data-zh="本周新增">new this week</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="label" data-en="Pending Applications" data-zh="待审批申请">Pending Applications</div>
+            <div class="stat-value">24</div>
+            <div class="stat-change down">+5 <span data-en="since yesterday" data-zh="自昨日">since yesterday</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="label" data-en="Certificates Issued" data-zh="已颁发证书">Certificates Issued</div>
+            <div class="stat-value">9,432</div>
+            <div class="stat-change up">+3.5% <span data-en="vs last month" data-zh="较上月">vs last month</span></div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-header">
+                <span class="card-title" data-en="Registration Trend" data-zh="注册趋势">Registration Trend</span>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-sm btn-outline">7D</button>
+                  <button class="btn btn-sm btn-amber">30D</button>
+                  <button class="btn btn-sm btn-outline">90D</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="bar-chart">
+                  <div class="bar-group"><div class="bar" style="height:45%"></div><span class="bar-label">W1</span></div>
+                  <div class="bar-group"><div class="bar" style="height:62%"></div><span class="bar-label">W2</span></div>
+                  <div class="bar-group"><div class="bar" style="height:38%"></div><span class="bar-label">W3</span></div>
+                  <div class="bar-group"><div class="bar" style="height:78%"></div><span class="bar-label">W4</span></div>
+                  <div class="bar-group"><div class="bar" style="height:55%"></div><span class="bar-label">W5</span></div>
+                  <div class="bar-group"><div class="bar" style="height:92%"></div><span class="bar-label">W6</span></div>
+                  <div class="bar-group"><div class="bar" style="height:68%"></div><span class="bar-label">W7</span></div>
+                  <div class="bar-group"><div class="bar" style="height:85%"></div><span class="bar-label">W8</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title" data-en="Recent Activity" data-zh="最近动态">Recent Activity</span>
+                <a href="#" class="btn btn-ghost btn-sm" data-en="View All" data-zh="查看全部">View All</a>
+              </div>
+              <div class="card-body">
+                <div class="feed-item">
+                  <div class="feed-avatar">LW</div>
+                  <div class="feed-body">
+                    <p><strong>Lin Wei</strong> <span data-en="registered for" data-zh="注册了">registered for</span> <strong>Shanghai Climate Week 2026</strong></p>
+                    <div class="feed-time">2 minutes ago</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-avatar" style="background:linear-gradient(135deg,var(--amber-warm),var(--amber-soft));color:var(--forest-deep);">AM</div>
+                  <div class="feed-body">
+                    <p><strong>Admin</strong> <span data-en="approved application for" data-zh="批准了申请">approved application for</span> <strong>Carbon Neutrality Workshop</strong></p>
+                    <div class="feed-time">15 minutes ago</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-avatar">CY</div>
+                  <div class="feed-body">
+                    <p><strong>Chen Yu</strong> <span data-en="earned certificate" data-zh="获得了证书">earned certificate</span> <strong>Climate Leadership Fundamentals</strong></p>
+                    <div class="feed-time">1 hour ago</div>
+                  </div>
+                </div>
+                <div class="feed-item">
+                  <div class="feed-avatar" style="background:linear-gradient(135deg,#7c9a8a,#a8c4b0);">SH</div>
+                  <div class="feed-body">
+                    <p><strong>Sarah H.</strong> <span data-en="submitted application to" data-zh="提交了申请">submitted application to</span> <strong>Youth Climate Action Forum</strong></p>
+                    <div class="feed-time">3 hours ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-header">
+                <span class="card-title" data-en="Quick Actions" data-zh="快捷操作">Quick Actions</span>
+              </div>
+              <div class="card-body">
+                <div class="quick-grid">
+                  <div class="quick-card" onclick="showSection('events', document.querySelectorAll('.nav-item')[1])">
+                    <span class="label" style="color:var(--moss);">Events</span>
+                    <h3 data-en="Create Event" data-zh="创建活动">Create Event</h3>
+                    <p data-en="Set up a new climate event with full configuration." data-zh="创建并配置一个新的气候活动。">Set up a new climate event with full configuration.</p>
+                  </div>
+                  <div class="quick-card" onclick="showSection('applications', document.querySelectorAll('.nav-item')[2])">
+                    <span class="label" style="color:var(--amber-warm);">Applications</span>
+                    <h3 data-en="Review Pending" data-zh="审批申请">Review Pending</h3>
+                    <p data-en="12 applications awaiting your review." data-zh="12个申请等待您的审批。">12 applications awaiting your review.</p>
+                  </div>
+                  <div class="quick-card">
+                    <span class="label" style="color:#3b82f6;">Export</span>
+                    <h3 data-en="Export Data" data-zh="导出数据">Export Data</h3>
+                    <p data-en="Download registrations and certificates report." data-zh="下载注册和证书报告。">Download registrations and certificates report.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title" data-en="Pending Applications" data-zh="待处理申请">Pending Applications</span>
+                <span class="badge badge-amber"><span class="badge-dot"></span>12 pending</span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                  <tr><td><span class="cell-strong">Sarah Henderson</span><div class="cell-muted">Green Finance Summit</div></td><td style="text-align:right;"><button class="btn btn-sm btn-success">Approve</button></td></tr>
+                  <tr><td><span class="cell-strong">Li Ming</span><div class="cell-muted">Urban Sustainability Expo</div></td><td style="text-align:right;"><button class="btn btn-sm btn-success">Approve</button></td></tr>
+                  <tr><td><span class="cell-strong">Aiko Tanaka</span><div class="cell-muted">Youth Climate Action Forum</div></td><td style="text-align:right;"><button class="btn btn-sm btn-success">Approve</button></td></tr>
+                  <tr><td><span class="cell-strong">James O'Connor</span><div class="cell-muted">Ocean Conservation Dialogue</div></td><td style="text-align:right;"><button class="btn btn-sm btn-success">Approve</button></td></tr>
+                </table>
+              </div>
+              <div class="card-footer">
+                <a href="#" class="btn btn-ghost btn-sm" onclick="showSection('applications', document.querySelectorAll('.nav-item')[2]); return false;" data-en="View All Applications" data-zh="查看全部申请">View All Applications</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== EVENTS ===== -->
+      <div class="section-panel" id="panel-events">
+        <div class="page-header">
+          <h1 class="page-title" data-en="Event Management" data-zh="活动管理">Event Management</h1>
+          <p class="page-desc" data-en="Create, edit, publish, and manage all climate events." data-zh="创建、编辑、发布和管理所有气候活动。">Create, edit, publish, and manage all climate events.</p>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <button class="btn btn-amber" onclick="openEventForm()">+ <span data-en="New Event" data-zh="新建活动">New Event</span></button>
+          <button class="btn btn-outline" data-en="Import" data-zh="导入">Import</button>
+          <button class="btn btn-outline" data-en="Export" data-zh="导出">Export</button>
+          <div style="flex:1"></div>
+          <div class="filter-pills" style="display:flex;gap:8px;">
+            <button class="filter-pill active" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterTable(this, 'all')">All</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterTable(this, 'published')">Published</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterTable(this, 'draft')">Draft</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterTable(this, 'closed')">Closed</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="eventsTable">
+              <thead>
+                <tr>
+                  <th data-en="Event" data-zh="活动">Event</th>
+                  <th data-en="Date" data-zh="日期">Date</th>
+                  <th data-en="Location" data-zh="地点">Location</th>
+                  <th data-en="Status" data-zh="状态">Status</th>
+                  <th data-en="Registrations" data-zh="报名">Registrations</th>
+                  <th data-en="Manager" data-zh="负责人">Manager</th>
+                  <th style="text-align:right;" data-en="Actions" data-zh="操作">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-status="published">
+                  <td><span class="cell-strong">Shanghai Climate Week 2026</span><div class="cell-muted">Summit</div></td>
+                  <td>Jun 15-20, 2026</td>
+                  <td>Shanghai</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Published</span></td>
+                  <td><strong>2,847</strong></td>
+                  <td>Wei Zhang</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+                <tr data-status="published">
+                  <td><span class="cell-strong">Youth Climate Action Forum</span><div class="cell-muted">Forum</div></td>
+                  <td>Aug 12, 2026</td>
+                  <td>Shanghai</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Published</span></td>
+                  <td><strong>642</strong></td>
+                  <td>Li Wei</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+                <tr data-status="published">
+                  <td><span class="cell-strong">Green Finance Summit</span><div class="cell-muted">Summit</div></td>
+                  <td>Sep 5, 2026</td>
+                  <td>Online</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Published</span></td>
+                  <td><strong>1,203</strong></td>
+                  <td>Wei Zhang</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+                <tr data-status="draft">
+                  <td><span class="cell-strong">Urban Sustainability Expo</span><div class="cell-muted">Exhibition</div></td>
+                  <td>Oct 18, 2026</td>
+                  <td>Beijing</td>
+                  <td><span class="badge badge-amber"><span class="badge-dot"></span>Draft</span></td>
+                  <td>—</td>
+                  <td>Unassigned</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+                <tr data-status="published">
+                  <td><span class="cell-strong">Carbon Neutrality Workshop</span><div class="cell-muted">Workshop</div></td>
+                  <td>Nov 3, 2026</td>
+                  <td>Online</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Published</span></td>
+                  <td><strong>456</strong></td>
+                  <td>Chen Yu</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+                <tr data-status="closed">
+                  <td><span class="cell-strong">Climate Innovation Bootcamp</span><div class="cell-muted">Workshop</div></td>
+                  <td>Mar 10-12, 2026</td>
+                  <td>Online</td>
+                  <td><span class="badge badge-gray"><span class="badge-dot"></span>Closed</span></td>
+                  <td><strong>892</strong></td>
+                  <td>Wei Zhang</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Event Form (hidden by default) -->
+        <div class="card" id="eventForm" style="margin-top:24px;display:none;">
+          <div class="card-header">
+            <span class="card-title" data-en="Create New Event" data-zh="创建新活动">Create New Event</span>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('eventForm').style.display='none'">✕</button>
+          </div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="field-row">
+                <div class="field"><label data-en="Chinese Title" data-zh="中文标题">Chinese Title</label><input type="text" placeholder="输入活动中文名称"></div>
+                <div class="field"><label data-en="English Title" data-zh="英文标题">English Title</label><input type="text" placeholder="Enter event English name"></div>
+              </div>
+              <div class="field"><label data-en="Description" data-zh="描述">Description</label><textarea rows="3" placeholder="Event description..."></textarea></div>
+              <div class="field-row">
+                <div class="field"><label data-en="Start Date" data-zh="开始日期">Start Date</label><input type="date"></div>
+                <div class="field"><label data-en="End Date" data-zh="结束日期">End Date</label><input type="date"></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label data-en="Start Time" data-zh="开始时间">Start Time</label><input type="time" value="09:00"></div>
+                <div class="field"><label data-en="End Time" data-zh="结束时间">End Time</label><input type="time" value="17:00"></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label data-en="Venue" data-zh="场地">Venue</label><input type="text" placeholder="Venue name"></div>
+                <div class="field"><label data-en="City" data-zh="城市">City</label><input type="text" placeholder="City"></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label data-en="Event Type" data-zh="活动类型">Event Type</label>
+                  <select><option>Forum</option><option>Summit</option><option>Workshop</option><option>Exhibition</option></select>
+                </div>
+                <div class="field"><label data-en="Manager" data-zh="负责人">Manager</label>
+                  <select><option>Wei Zhang</option><option>Li Wei</option><option>Chen Yu</option></select>
+                </div>
+              </div>
+              <div class="toggle-row">
+                <label class="toggle"><input type="checkbox"> <span data-en="Require Approval" data-zh="需要审批">Require Approval</span></label>
+                <label class="toggle"><input type="checkbox" checked> <span data-en="Published" data-zh="已发布">Published</span></label>
+                <label class="toggle"><input type="checkbox"> <span data-en="Closed" data-zh="已关闭">Closed</span></label>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px;">
+                <button class="btn btn-amber" data-en="Save Event" data-zh="保存活动">Save Event</button>
+                <button class="btn btn-outline" onclick="document.getElementById('eventForm').style.display='none'" data-en="Cancel" data-zh="取消">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== APPLICATIONS ===== -->
+      <div class="section-panel" id="panel-applications">
+        <div class="page-header">
+          <h1 class="page-title" data-en="Application Review" data-zh="申请审批">Application Review</h1>
+          <p class="page-desc" data-en="Review and approve participant applications for events and learning programs." data-zh="审批活动和学习项目的参与者申请。">Review and approve participant applications for events and learning programs.</p>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <div class="filter-pills" style="display:flex;gap:8px;">
+            <button class="filter-pill active" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterApp(this, 'all')">All (24)</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterApp(this, 'pending')">Pending (12)</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterApp(this, 'approved')">Approved (8)</button>
+            <button class="filter-pill" style="padding:8px 16px;border-radius:999px;border:1.5px solid rgba(11,61,46,0.1);background:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="filterApp(this, 'rejected')">Rejected (4)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="appsTable">
+              <thead>
+                <tr>
+                  <th data-en="Applicant" data-zh="申请人">Applicant</th>
+                  <th data-en="Program / Event" data-zh="项目/活动">Program / Event</th>
+                  <th data-en="Status" data-zh="状态">Status</th>
+                  <th data-en="Submitted" data-zh="提交时间">Submitted</th>
+                  <th data-en="Stage" data-zh="阶段">Stage</th>
+                  <th style="text-align:right;" data-en="Actions" data-zh="操作">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-app="pending">
+                  <td><span class="cell-strong">Sarah Henderson</span><div class="cell-muted">sarah.h@email.com</div></td>
+                  <td>Green Finance Summit</td>
+                  <td><span class="badge badge-amber"><span class="badge-dot"></span>Pending</span></td>
+                  <td>May 18, 2026</td>
+                  <td>Application</td>
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button class="btn btn-sm btn-success">Approve</button>
+                    <button class="btn btn-sm btn-danger">Reject</button>
+                  </td>
+                </tr>
+                <tr data-app="pending">
+                  <td><span class="cell-strong">Li Ming</span><div class="cell-muted">liming@email.com</div></td>
+                  <td>Urban Sustainability Expo</td>
+                  <td><span class="badge badge-amber"><span class="badge-dot"></span>Pending</span></td>
+                  <td>May 17, 2026</td>
+                  <td>Application</td>
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button class="btn btn-sm btn-success">Approve</button>
+                    <button class="btn btn-sm btn-danger">Reject</button>
+                  </td>
+                </tr>
+                <tr data-app="pending">
+                  <td><span class="cell-strong">Aiko Tanaka</span><div class="cell-muted">aiko.t@email.com</div></td>
+                  <td>Youth Climate Action Forum</td>
+                  <td><span class="badge badge-amber"><span class="badge-dot"></span>Pending</span></td>
+                  <td>May 16, 2026</td>
+                  <td>Application</td>
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button class="btn btn-sm btn-success">Approve</button>
+                    <button class="btn btn-sm btn-danger">Reject</button>
+                  </td>
+                </tr>
+                <tr data-app="approved">
+                  <td><span class="cell-strong">James O'Connor</span><div class="cell-muted">james.o@email.com</div></td>
+                  <td>Ocean Conservation Dialogue</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Approved</span></td>
+                  <td>May 14, 2026</td>
+                  <td>Participation</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">View</button></td>
+                </tr>
+                <tr data-app="approved">
+                  <td><span class="cell-strong">Wang Fang</span><div class="cell-muted">wangfang@email.com</div></td>
+                  <td>Carbon Neutrality Workshop</td>
+                  <td><span class="badge badge-green"><span class="badge-dot"></span>Approved</span></td>
+                  <td>May 12, 2026</td>
+                  <td>Completed</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">View</button></td>
+                </tr>
+                <tr data-app="rejected">
+                  <td><span class="cell-strong">Robert Klein</span><div class="cell-muted">robert.k@email.com</div></td>
+                  <td>Green Finance Summit</td>
+                  <td><span class="badge badge-red"><span class="badge-dot"></span>Rejected</span></td>
+                  <td>May 10, 2026</td>
+                  <td>—</td>
+                  <td style="text-align:right;"><button class="btn btn-sm btn-ghost">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LEARNING ===== -->
+      <div class="section-panel" id="panel-le">
+        <div class="page-header">
+          <h1 class="page-title" data-en="Learning Experiences" data-zh="学习项目">Learning Experiences</h1>
+          <p class="page-desc" data-en="Manage learning programs, stages, and participant progress." data-zh="管理学习项目、阶段和学员进度。">Manage learning programs, stages, and participant progress.</p>
+        </div>
+        <div class="quick-grid">
+          <div class="card" style="padding:24px;">
+            <span class="label" style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);opacity:0.7;margin-bottom:10px;display:block;">Programs</span>
+            <div class="stat-value">8</div>
+            <p style="font-size:14px;color:var(--ink-soft);margin-top:8px;">Active learning programs</p>
+          </div>
+          <div class="card" style="padding:24px;">
+            <span class="label" style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);opacity:0.7;margin-bottom:10px;display:block;">Participants</span>
+            <div class="stat-value">1,245</div>
+            <p style="font-size:14px;color:var(--ink-soft);margin-top:8px;">Enrolled across all programs</p>
+          </div>
+          <div class="card" style="padding:24px;">
+            <span class="label" style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);opacity:0.7;margin-bottom:10px;display:block;">Completion</span>
+            <div class="stat-value">67%</div>
+            <p style="font-size:14px;color:var(--ink-soft);margin-top:8px;">Average completion rate</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header"><span class="card-title">Programs</span><button class="btn btn-amber btn-sm">+ New Program</button></div>
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>Program</th><th>Category</th><th>Stages</th><th>Participants</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody>
+                <tr><td><span class="cell-strong">Climate Leadership 101</span></td><td>Leadership</td><td>5</td><td>482</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Sustainable Cities</span></td><td>Urban</td><td>4</td><td>315</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Carbon Accounting Basics</span></td><td>Finance</td><td>3</td><td>198</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Ocean Stewardship</span></td><td>Marine</td><td>6</td><td>250</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div class="section-panel" id="panel-users">
+        <div class="page-header">
+          <h1 class="page-title" data-en="User Management" data-zh="用户管理">User Management</h1>
+          <p class="page-desc" data-en="View and manage platform users, roles, and permissions." data-zh="查看和管理平台用户、角色和权限。">View and manage platform users, roles, and permissions.</p>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Events</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody>
+                <tr><td><span class="cell-strong">Wei Zhang</span><div class="cell-muted">wei.zhang@climatepass.org</div></td><td>Admin</td><td><span class="badge badge-green"><span class="badge-dot"></span>Active</span></td><td>Jan 2025</td><td>24</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Li Wei</span><div class="cell-muted">liwei@email.com</div></td><td>Event Manager</td><td><span class="badge badge-green"><span class="badge-dot"></span>Active</span></td><td>Mar 2025</td><td>12</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Chen Yu</span><div class="cell-muted">chenyu@email.com</div></td><td>Event Manager</td><td><span class="badge badge-green"><span class="badge-dot"></span>Active</span></td><td>Jun 2025</td><td>8</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+                <tr><td><span class="cell-strong">Lin Mei</span><div class="cell-muted">lin.mei@email.com</div></td><td>User</td><td><span class="badge badge-gray"><span class="badge-dot"></span>Inactive</span></td><td>Apr 2025</td><td>3</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="section-panel" id="panel-settings">
+        <div class="page-header">
+          <h1 class="page-title" data-en="System Settings" data-zh="系统设置">System Settings</h1>
+          <p class="page-desc" data-en="Configure platform behavior, notifications, and integrations." data-zh="配置平台行为、通知和集成。">Configure platform behavior, notifications, and integrations.</p>
+        </div>
+        <div class="dash-grid">
+          <div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-header"><span class="card-title">General</span></div>
+              <div class="card-body">
+                <div class="form-grid">
+                  <div class="field"><label>Platform Name</label><input type="text" value="Climate Passport"></div>
+                  <div class="field"><label>Contact Email</label><input type="text" value="hello@climatepass.org"></div>
+                  <div class="toggle-row">
+                    <label class="toggle"><input type="checkbox" checked> Enable registrations</label>
+                    <label class="toggle"><input type="checkbox" checked> Require email verification</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Notifications</span></div>
+              <div class="card-body">
+                <div class="form-grid">
+                  <div class="toggle-row">
+                    <label class="toggle"><input type="checkbox" checked> New registration alerts</label>
+                    <label class="toggle"><input type="checkbox" checked> Application review reminders</label>
+                    <label class="toggle"><input type="checkbox"> Weekly digest</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Danger Zone</span></div>
+              <div class="card-body">
+                <p style="font-size:14px;color:var(--ink-soft);margin-bottom:16px;">These actions are irreversible. Please proceed with caution.</p>
+                <button class="btn btn-danger" style="width:100%;justify-content:center;">Clear All Cache</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<button class="lang-toggle" onclick="toggleLang()">EN / 中文</button>
+
+<script>
+  let currentLang = 'en';
+  function toggleLang() {
+    currentLang = currentLang === 'en' ? 'zh' : 'en';
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      if (el.tagName === 'INPUT') el.placeholder = el.getAttribute('data-' + currentLang);
+      else el.textContent = el.getAttribute('data-' + currentLang);
+    });
+  }
+
+  function showSection(id, navEl) {
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) navEl.classList.add('active');
+    closeSidebar();
+  }
+
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('overlay').classList.add('show');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  function openEventForm() {
+    document.getElementById('eventForm').style.display = 'block';
+    document.getElementById('eventForm').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function filterTable(btn, status) {
+    document.querySelectorAll('#eventsTable ~ .filter-pills .filter-pill, .filter-pills .filter-pill').forEach(p => {
+      if (p.closest('#panel-events')) p.style.background = '#fff';
+    });
+    btn.style.background = 'var(--amber-warm)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--amber-warm)';
+    document.querySelectorAll('#eventsTable tbody tr').forEach(row => {
+      row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  function filterApp(btn, status) {
+    document.querySelectorAll('#panel-applications .filter-pill').forEach(p => {
+      p.style.background = '#fff'; p.style.color = ''; p.style.borderColor = '';
+    });
+    btn.style.background = 'var(--amber-warm)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--amber-warm)';
+    document.querySelectorAll('#appsTable tbody tr').forEach(row => {
+      row.style.display = (status === 'all' || row.dataset.app === status) ? '' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>

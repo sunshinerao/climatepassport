@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Climate Passport</title>
+    <style>
+        :root {
+            --forest-deep: #0b3d2e;
+            --forest: #1a5d48;
+            --moss: #4a8a6a;
+            --sage: #8fb89a;
+            --leaf-light: #c4dcc8;
+            --amber-warm: #c4893f;
+            --amber-soft: #e8c88a;
+            --cream: #faf8f3;
+            --paper: #f5f2ec;
+            --ink: #0f2a20;
+            --ink-soft: #2d5245;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(180deg, var(--cream) 0%, var(--paper) 100%);
+            color: var(--ink);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(250, 248, 243, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(143, 184, 154, 0.2);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .nav-brand-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--forest-deep);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ink-soft);
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--forest-deep);
+        }
+
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--amber-warm);
+            border-radius: 2px;
+        }
+
+        .nav-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--forest-deep) 0%, var(--moss) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid var(--leaf-light);
+        }
+
+        .nav-avatar:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 16px rgba(11, 61, 46, 0.2);
+        }
+
+        .nav-mobile-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 8px;
+        }
+
+        .nav-mobile-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--forest-deep);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* Welcome Header */
+        .welcome-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .welcome-text h1 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--forest-deep);
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-text .date {
+            font-size: 15px;
+            color: var(--ink-soft);
+            font-weight: 400;
+        }
+
+        .welcome-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .notification-bell {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--paper);
+            border: 1px solid rgba(143, 184, 154, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .notification-bell:hover {
+            background: var(--leaf-light);
+            transform: scale(1.08);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            background: var(--amber-warm);
+            border-radius: 50%;
+            border: 2px solid var(--paper);
+        }
+
+        /* Main Layout */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px 64px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 28px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 28px;
+            border: 1px solid rgba(143, 184, 154, 0.15);
+            box-shadow: 0 4px 24px rgba(11, 61, 46, 0.04), 0 1px 4px rgba(11, 61, 46, 0.02);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(11, 61, 46, 0.08), 0 4px 12px rgba(11, 61, 46, 0.04);
+        }
+
+        .card-title {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--forest-deep);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Passport Card */
+        .passport-card {
+            background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 50%, var(--moss) 100%);
+            color: white;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 24px;
+            padding: 36px;
+            border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(11, 61, 46, 0.2), 0 4px 16px rgba(11, 61, 46, 0.15);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+        }
+
+        .passport-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 20px 56px rgba(11, 61, 46, 0.28), 0 8px 24px rgba(11, 61, 46, 0.18);
+        }
+
+        .passport-card::before {
+            content: "";
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(196, 220, 200, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .passport-card::after {
+            content: "";
+            position: absolute;
+            bottom: -40px;
+            left: -40px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(196, 137, 63, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .passport-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .passport-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .passport-name {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .passport-role {
+            display: inline-block;
+            background: rgba(196, 137, 63, 0.25);
+            color: var(--amber-soft);
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 28px;
+        }
+
+        .passport-stats {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .passport-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .passport-stat-value {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .passport-stat-label {
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
+        .passport-qr {
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .qr-placeholder {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .qr-label {
+            font-size: 11px;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
+        }
+
+        .passport-id {
+            font-size: 13px;
+            opacity: 0.6;
+            margin-top: 16px;
+            letter-spacing: 0.5px;
+            font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+        }
+
+        /* Quick Stats Row */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-mini {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+            border: 1px solid rgba(143, 184, 154, 0.15);
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-mini:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(11, 61, 46, 0.07);
+        }
+
+        .stat-mini-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 18px;
+        }
+
+        .stat-mini-value {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--forest-deep);
+            margin-bottom: 2px;
+        }
+
+        .stat-mini-label {
+            font-size: 12px;
+            color: var(--ink-soft);
+            font-weight: 500;
+        }
+
+        /* Upcoming Events Timeline */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: stretch;
+            gap: 16px;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(143, 184, 154, 0.06) 0%, rgba(196, 220, 200, 0.06) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(143, 184, 154, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            background: linear-gradient(135deg, rgba(143, 184, 154, 0.1) 0%, rgba(196, 220, 200, 0.1) 100%);
+            border-color: rgba(143, 184, 154, 0.25);
+            transform: translateX(4px);
+        }
+
+        .timeline-date {
+            min-width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(143, 184, 154, 0.2);
+            flex-shrink: 0;
+        }
+
+        .timeline-date-day {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--forest-deep);
+            line-height: 1;
+        }
+
+        .timeline-date-month {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--moss);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .timeline-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-meta {
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .btn-pill-primary {
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            color: white;
+        }
+
+        .btn-pill-primary:hover {
+            background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(26, 93, 72, 0.3);
+        }
+
+        .btn-pill-ghost {
+            background: rgba(143, 184, 154, 0.1);
+            color: var(--forest);
+        }
+
+        .btn-pill-ghost:hover {
+            background: rgba(143, 184, 154, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Certificate Cards */
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .cert-card {
+            background: linear-gradient(135deg, rgba(196, 220, 200, 0.12) 0%, rgba(232, 200, 138, 0.08) 100%);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(143, 184, 154, 0.12);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cert-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(11, 61, 46, 0.07);
+            border-color: rgba(143, 184, 154, 0.25);
+        }
+
+        .cert-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .cert-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--amber-soft) 0%, rgba(196, 137, 63, 0.2) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .cert-download {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(143, 184, 154, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            color: var(--moss);
+        }
+
+        .cert-download:hover {
+            background: var(--moss);
+            color: white;
+            transform: scale(1.12);
+        }
+
+        .cert-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .cert-issuer {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+
+        .cert-date {
+            font-size: 12px;
+            color: var(--moss);
+            font-weight: 500;
+        }
+
+        /* Circular Progress */
+        .profile-completion {
+            text-align: center;
+            padding: 28px;
+        }
+
+        .progress-ring-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 20px;
+        }
+
+        .progress-ring-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(143, 184, 154, 0.15);
+            stroke-width: 10;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#progressGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 408.4;
+            stroke-dashoffset: 61.26;
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-value {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 36px;
+            font-weight: 600;
+            color: var(--forest-deep);
+            line-height: 1;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin-top: 4px;
+        }
+
+        /* Badges */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .badge-tile {
+            border-radius: 18px;
+            padding: 16px 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(143, 184, 154, 0.15);
+            background: white;
+        }
+
+        .badge-tile:hover {
+            transform: translateY(-3px) scale(1.03);
+        }
+
+        .badge-tile.earned {
+            background: linear-gradient(135deg, rgba(232, 200, 138, 0.2) 0%, rgba(196, 137, 63, 0.1) 100%);
+            border-color: rgba(196, 137, 63, 0.25);
+        }
+
+        .badge-tile.locked {
+            opacity: 0.45;
+            filter: grayscale(0.8);
+        }
+
+        .badge-tile.locked:hover {
+            opacity: 0.7;
+            filter: grayscale(0.5);
+        }
+
+        .badge-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 22px;
+        }
+
+        .badge-tile.earned .badge-icon {
+            background: linear-gradient(135deg, var(--amber-soft) 0%, rgba(196, 137, 63, 0.2) 100%);
+        }
+
+        .badge-tile.locked .badge-icon {
+            background: rgba(143, 184, 154, 0.15);
+        }
+
+        .badge-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.3;
+        }
+
+        .badge-tile.earned .badge-name {
+            color: var(--forest-deep);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 18px 12px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(143, 184, 154, 0.08) 0%, rgba(196, 220, 200, 0.08) 100%);
+            border: 1px solid rgba(143, 184, 154, 0.12);
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, rgba(143, 184, 154, 0.18) 0%, rgba(196, 220, 200, 0.18) 100%);
+            border-color: rgba(143, 184, 154, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(11, 61, 46, 0.06);
+        }
+
+        .action-btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        /* Right Column Spacing */
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(180deg, var(--paper) 0%, rgba(250, 248, 243, 0.5) 100%);
+            border-top: 1px solid rgba(143, 184, 154, 0.15);
+            padding: 48px 24px 32px;
+            margin-top: 32px;
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--forest-deep);
+        }
+
+        .footer-brand-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-link {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--forest-deep);
+        }
+
+        .footer-copy {
+            font-size: 13px;
+            color: rgba(45, 82, 69, 0.5);
+        }
+
+        /* Language Toggle */
+        .lang-toggle {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 200;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            color: white;
+            border: none;
+            border-radius: 100px;
+            padding: 12px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(11, 61, 46, 0.25);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lang-toggle:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 10px 32px rgba(11, 61, 46, 0.3);
+        }
+
+        /* Decorative SVGs */
+        .leaf-deco {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.04;
+            z-index: 0;
+        }
+
+        .leaf-deco-1 {
+            top: 120px;
+            right: 40px;
+            width: 200px;
+            height: 200px;
+        }
+
+        .leaf-deco-2 {
+            bottom: 200px;
+            left: 20px;
+            width: 160px;
+            height: 160px;
+            transform: rotate(180deg);
+        }
+
+        /* Section spacing */
+        .section + .section {
+            margin-top: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .nav-mobile-toggle {
+                display: flex;
+            }
+
+            .welcome-text h1 {
+                font-size: 24px;
+            }
+
+            .passport-inner {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .passport-stats {
+                justify-content: center;
+            }
+
+            .passport-name {
+                font-size: 24px;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .certificates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                gap: 16px;
+            }
+
+            .badges-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .lang-toggle {
+                bottom: 16px;
+                right: 16px;
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+
+            .dashboard-container {
+                padding: 16px 16px 48px;
+            }
+
+            .welcome-header {
+                padding: 24px 16px 12px;
+            }
+
+            .nav-inner {
+                padding: 0 16px;
+            }
+
+            .passport-card {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-mini {
+                padding: 14px 10px;
+            }
+
+            .stat-mini-value {
+                font-size: 18px;
+            }
+
+            .badges-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Decorative Leaves -->
+    <svg class="leaf-deco leaf-deco-1" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 0C50 0 80 30 80 60C80 75 70 90 50 100C30 90 20 75 20 60C20 30 50 0 50 0Z" fill="#1a5d48"/>
+        <path d="M50 10C50 10 70 35 70 60C70 70 62 82 50 90C38 82 30 70 30 60C30 35 50 10 50 10Z" fill="#4a8a6a"/>
+        <line x1="50" y1="10" x2="50" y2="90" stroke="#0b3d2e" stroke-width="1"/>
+    </svg>
+    <svg class="leaf-deco leaf-deco-2" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 0C50 0 80 30 80 60C80 75 70 90 50 100C30 90 20 75 20 60C20 30 50 0 50 0Z" fill="#1a5d48"/>
+        <path d="M50 10C50 10 70 35 70 60C70 70 62 82 50 90C38 82 30 70 30 60C30 35 50 10 50 10Z" fill="#4a8a6a"/>
+        <line x1="50" y1="10" x2="50" y2="90" stroke="#0b3d2e" stroke-width="1"/>
+    </svg>
+
+    <!-- SVG Definitions -->
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4a8a6a"/>
+                <stop offset="100%" stop-color="#c4893f"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-brand">
+                <div class="nav-brand-icon">CP</div>
+                <span class="nav-brand-text">Climate Passport</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="#" class="nav-link active">Dashboard</a>
+                <a href="#" class="nav-link">Events</a>
+                <a href="#" class="nav-link">Learn</a>
+                <a href="#" class="nav-link">Community</a>
+                <div class="nav-avatar" title="Wei Zhang">WZ</div>
+            </div>
+            <button class="nav-mobile-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Welcome Header -->
+    <header class="welcome-header">
+        <div class="welcome-text">
+            <h1>Welcome back, Wei Zhang</h1>
+            <p class="date" id="currentDate">Wednesday, May 21, 2026</p>
+        </div>
+        <div class="welcome-actions">
+            <button class="notification-bell" aria-label="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--forest-deep);">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                </svg>
+                <span class="notification-dot"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-container">
+        <!-- LEFT COLUMN -->
+        <div class="left-col">
+            <!-- Climate Passport Card -->
+            <div class="passport-card">
+                <div class="passport-inner">
+                    <div>
+                        <div class="passport-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                            Climate Passport
+                        </div>
+                        <div class="passport-name">Wei Zhang</div>
+                        <div class="passport-role">Speaker</div>
+                        <div class="passport-stats">
+                            <div class="passport-stat">
+                                <div class="passport-stat-value">1,240</div>
+                                <div class="passport-stat-label">Points</div>
+                            </div>
+                            <div class="passport-stat">
+                                <div class="passport-stat-value">12</div>
+                                <div class="passport-stat-label">Events</div>
+                            </div>
+                            <div class="passport-stat">
+                                <div class="passport-stat-value">48</div>
+                                <div class="passport-stat-label">Hours</div>
+                            </div>
+                        </div>
+                        <div class="passport-id">ID: CP-2026-8841</div>
+                    </div>
+                    <div class="passport-qr">
+                        <div class="qr-placeholder">
+                            <svg width="100" height="100" viewBox="0 0 100 100">
+                                <!-- QR code placeholder pattern -->
+                                <rect x="8" y="8" width="24" height="24" fill="#0b3d2e" rx="2"/>
+                                <rect x="12" y="12" width="16" height="16" fill="white" rx="1"/>
+                                <rect x="16" y="16" width="8" height="8" fill="#0b3d2e" rx="1"/>
+                                <rect x="68" y="8" width="24" height="24" fill="#0b3d2e" rx="2"/>
+                                <rect x="72" y="12" width="16" height="16" fill="white" rx="1"/>
+                                <rect x="76" y="16" width="8" height="8" fill="#0b3d2e" rx="1"/>
+                                <rect x="8" y="68" width="24" height="24" fill="#0b3d2e" rx="2"/>
+                                <rect x="12" y="72" width="16" height="16" fill="white" rx="1"/>
+                                <rect x="16" y="76" width="8" height="8" fill="#0b3d2e" rx="1"/>
+                                <rect x="40" y="8" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="50" y="8" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="40" y="18" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="50" y="18" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="8" y="40" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="18" y="40" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="8" y="50" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="18" y="50" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="40" y="40" width="20" height="20" fill="#0b3d2e" rx="2"/>
+                                <rect x="44" y="44" width="12" height="12" fill="white" rx="1"/>
+                                <rect x="48" y="48" width="4" height="4" fill="#c4893f" rx="1"/>
+                                <rect x="68" y="40" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="78" y="40" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="88" y="40" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="68" y="50" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="78" y="50" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="88" y="50" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="40" y="68" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="50" y="68" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="40" y="78" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="50" y="78" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="40" y="88" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="50" y="88" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="68" y="68" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="78" y="68" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="88" y="68" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="68" y="78" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="78" y="78" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                                <rect x="88" y="78" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="68" y="88" width="6" height="6" fill="#1a5d48" rx="1"/>
+                                <rect x="78" y="88" width="6" height="6" fill="#4a8a6a" rx="1"/>
+                                <rect x="88" y="88" width="6" height="6" fill="#0b3d2e" rx="1"/>
+                            </svg>
+                        </div>
+                        <div class="qr-label">Scan to Connect</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="quick-stats">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: linear-gradient(135deg, rgba(74,138,106,0.15) 0%, rgba(143,184,154,0.15) 100%);">&#9733;</div>
+                    <div class="stat-mini-value">1,240</div>
+                    <div class="stat-mini-label">Total Points</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: linear-gradient(135deg, rgba(196,137,63,0.15) 0%, rgba(232,200,138,0.15) 100%);">&#127881;</div>
+                    <div class="stat-mini-value">12</div>
+                    <div class="stat-mini-label">Events Joined</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: linear-gradient(135deg, rgba(74,138,106,0.15) 0%, rgba(196,137,63,0.1) 100%);">&#127891;</div>
+                    <div class="stat-mini-value">7</div>
+                    <div class="stat-mini-label">Certificates</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: linear-gradient(135deg, rgba(143,184,154,0.2) 0%, rgba(74,138,106,0.15) 100%);">&#9200;</div>
+                    <div class="stat-mini-value">48</div>
+                    <div class="stat-mini-label">Learning Hours</div>
+                </div>
+            </div>
+
+            <!-- Upcoming for You -->
+            <div class="card section">
+                <h2 class="card-title">
+                    <span class="card-title-icon" style="background: linear-gradient(135deg, rgba(74,138,106,0.15) 0%, rgba(143,184,154,0.15) 100%); color: var(--moss);">&#128197;</span>
+                    Upcoming for You
+                </h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            <div class="timeline-date-day">28</div>
+                            <div class="timeline-date-month">May</div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Sustainable Cities Summit Keynote</div>
+                            <div class="timeline-meta">Shanghai Convention Center, 9:00 AM</div>
+                        </div>
+                        <a href="#" class="btn-pill btn-pill-primary">Join</a>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            <div class="timeline-date-day">02</div>
+                            <div class="timeline-date-month">Jun</div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Green Finance Workshop Series</div>
+                            <div class="timeline-meta">Virtual Event, 2:00 PM CST</div>
+                        </div>
+                        <a href="#" class="btn-pill btn-pill-ghost">Details</a>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            <div class="timeline-date-day">10</div>
+                            <div class="timeline-date-month">Jun</div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Climate Action Roundtable</div>
+                            <div class="timeline-meta">Beijing Green Hub, 10:30 AM</div>
+                        </div>
+                        <a href="#" class="btn-pill btn-pill-ghost">Details</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Certificates -->
+            <div class="card section">
+                <h2 class="card-title">
+                    <span class="card-title-icon" style="background: linear-gradient(135deg, rgba(196,137,63,0.15) 0%, rgba(232,200,138,0.2) 100%); color: var(--amber-warm);">&#127891;</span>
+                    Recent Certificates
+                </h2>
+                <div class="certificates-grid">
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-icon">&#127891;</div>
+                            <button class="cert-download" aria-label="Download certificate">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="cert-title">Climate Leadership Certification</div>
+                        <div class="cert-issuer">Issued by Global Climate Alliance</div>
+                        <div class="cert-date">May 15, 2026</div>
+                    </div>
+                    <div class="cert-card">
+                        <div class="cert-card-header">
+                            <div class="cert-icon">&#128161;</div>
+                            <button class="cert-download" aria-label="Download certificate">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="cert-title">Sustainable Development Workshop</div>
+                        <div class="cert-issuer">Issued by UN SDG Academy</div>
+                        <div class="cert-date">April 28, 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="right-col">
+            <!-- Profile Completion -->
+            <div class="card profile-completion">
+                <h2 class="card-title" style="justify-content: center;">
+                    <span class="card-title-icon" style="background: linear-gradient(135deg, rgba(74,138,106,0.15) 0%, rgba(196,137,63,0.1) 100%); color: var(--moss);">&#128100;</span>
+                    Profile Completion
+                </h2>
+                <div class="progress-ring-container">
+                    <svg class="progress-ring-svg" viewBox="0 0 140 140">
+                        <circle class="progress-ring-bg" cx="70" cy="70" r="65"/>
+                        <circle class="progress-ring-fill" cx="70" cy="70" r="65"/>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-value">85%</div>
+                        <div class="progress-label">Complete</div>
+                    </div>
+                </div>
+                <a href="#" class="btn-pill btn-pill-primary" style="margin-top: 4px;">Finish Your Profile</a>
+            </div>
+
+            <!-- Achievements / Badges -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="card-title-icon" style="background: linear-gradient(135deg, rgba(196,137,63,0.15) 0%, rgba(232,200,138,0.2) 100%); color: var(--amber-warm);">&#127942;</span>
+                    Achievements
+                </h2>
+                <div class="badges-grid">
+                    <div class="badge-tile earned">
+                        <div class="badge-icon">&#127881;</div>
+                        <div class="badge-name">First Event</div>
+                    </div>
+                    <div class="badge-tile earned">
+                        <div class="badge-icon">&#127793;</div>
+                        <div class="badge-name">Climate Advocate</div>
+                    </div>
+                    <div class="badge-tile earned">
+                        <div class="badge-icon">&#127908;</div>
+                        <div class="badge-name">Top Speaker</div>
+                    </div>
+                    <div class="badge-tile locked">
+                        <div class="badge-icon">&#9200;</div>
+                        <div class="badge-name">100 Hours</div>
+                    </div>
+                    <div class="badge-tile locked">
+                        <div class="badge-icon">&#128101;</div>
+                        <div class="badge-name">Community Leader</div>
+                    </div>
+                    <div class="badge-tile locked">
+                        <div class="badge-icon">&#127758;</div>
+                        <div class="badge-name">Global Citizen</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span class="card-title-icon" style="background: linear-gradient(135deg, rgba(74,138,106,0.15) 0%, rgba(143,184,154,0.15) 100%); color: var(--moss);">&#9881;</span>
+                    Quick Actions
+                </h2>
+                <div class="quick-actions">
+                    <a href="#" class="action-btn">
+                        <div class="action-btn-icon">&#9998;</div>
+                        Edit Profile
+                    </a>
+                    <a href="#" class="action-btn">
+                        <div class="action-btn-icon">&#128197;</div>
+                        My Events
+                    </a>
+                    <a href="#" class="action-btn">
+                        <div class="action-btn-icon">&#9993;</div>
+                        Messages
+                    </a>
+                    <a href="#" class="action-btn">
+                        <div class="action-btn-icon">&#9881;</div>
+                        Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="footer-brand-icon">CP</div>
+                Climate Passport
+            </div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Privacy</a>
+                <a href="#" class="footer-link">Terms</a>
+                <a href="#" class="footer-link">Support</a>
+                <a href="#" class="footer-link">Contact</a>
+            </div>
+            <div class="footer-copy">&copy; 2026 Climate Passport. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <!-- Language Toggle -->
+    <button class="lang-toggle" aria-label="Switch language">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        EN / &#20013;&#25991;
+    </button>
+
+    <script>
+        // Dynamic date
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', dateOptions);
+    </script>
+</body>
+</html>

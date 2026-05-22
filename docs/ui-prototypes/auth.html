@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climate Passport — Sign In</title>
+  <style>
+    /* ============================================
+       CSS RESET & BASE
+       ============================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --forest-deep: #0b3d2e;
+      --forest: #1a5d48;
+      --moss: #4a8a6a;
+      --sage: #8fb89a;
+      --leaf-light: #c4dcc8;
+      --amber-warm: #c4893f;
+      --amber-soft: #e8c88a;
+      --cream: #faf8f3;
+      --paper: #f5f2ec;
+      --ink: #0f2a20;
+      --ink-soft: #2d5245;
+      --radius-xl: 28px;
+      --radius-lg: 14px;
+      --radius-pill: 9999px;
+      --shadow-soft: 0 4px 24px rgba(11, 61, 46, 0.08);
+      --shadow-medium: 0 8px 32px rgba(11, 61, 46, 0.12);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ============================================
+       LAYOUT: SPLIT SCREEN
+       ============================================ */
+    .auth-page {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* LEFT SIDE — Brand/Value Panel */
+    .auth-left {
+      width: 45%;
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 64px 56px;
+      overflow: hidden;
+      background: linear-gradient(160deg, var(--forest-deep) 0%, var(--forest) 40%, #144d3a 100%);
+    }
+
+    .auth-left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(74, 138, 106, 0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 80% at 85% 20%, rgba(143, 184, 154, 0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Decorative organic blobs */
+    .organic-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .blob-1 {
+      width: 320px;
+      height: 320px;
+      background: var(--sage);
+      top: -80px;
+      right: -60px;
+    }
+
+    .blob-2 {
+      width: 260px;
+      height: 260px;
+      background: var(--moss);
+      bottom: 120px;
+      left: -80px;
+    }
+
+    .blob-3 {
+      width: 180px;
+      height: 180px;
+      background: var(--leaf-light);
+      top: 40%;
+      right: 10%;
+      opacity: 0.08;
+    }
+
+    /* Floating leaf SVGs */
+    .leaf-deco {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0.12;
+    }
+
+    .leaf-1 {
+      top: 15%;
+      right: 12%;
+      width: 48px;
+      height: 48px;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .leaf-2 {
+      bottom: 25%;
+      right: 20%;
+      width: 36px;
+      height: 36px;
+      animation: float 8s ease-in-out infinite 1s;
+    }
+
+    .leaf-3 {
+      top: 55%;
+      left: 8%;
+      width: 28px;
+      height: 28px;
+      animation: float 7s ease-in-out infinite 2s;
+    }
+
+    .leaf-4 {
+      bottom: 10%;
+      right: 8%;
+      width: 52px;
+      height: 52px;
+      animation: float 9s ease-in-out infinite 0.5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .auth-left-content {
+      position: relative;
+      z-index: 2;
+      max-width: 420px;
+    }
+
+    .auth-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 48px;
+    }
+
+    .auth-logo-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-logo-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .auth-logo-text {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: -0.02em;
+    }
+
+    .auth-left h1 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.75rem;
+      font-weight: 400;
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-left .subtitle {
+      font-size: 1.0625rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    /* Value proposition list */
+    .value-list {
+      list-style: none;
+      margin-bottom: 48px;
+    }
+
+    .value-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+      font-size: 0.9375rem;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.5;
+    }
+
+    .value-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .check-icon {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: rgba(143, 184, 154, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .check-icon svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Testimonial */
+    .testimonial {
+      position: relative;
+      padding: 24px;
+      background: rgba(255,255,255,0.06);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .testimonial-quote {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1rem;
+      font-style: italic;
+      color: rgba(255,255,255,0.78);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .testimonial-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--moss), var(--sage));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .testimonial-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .testimonial-role {
+      font-size: 0.8125rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* RIGHT SIDE — Form Panel */
+    .auth-right {
+      width: 55%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 64px;
+      background: var(--cream);
+      position: relative;
+    }
+
+    .auth-right-inner {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Tab Switcher */
+    .tab-switcher {
+      display: flex;
+      background: var(--paper);
+      border-radius: var(--radius-pill);
+      padding: 4px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      border-radius: var(--radius-pill);
+      transition: var(--transition);
+      position: relative;
+      z-index: 2;
+    }
+
+    .tab-btn.active {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .tab-slider {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      height: calc(100% - 8px);
+      width: calc(50% - 4px);
+      background: #fff;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+
+    .tab-slider.right {
+      transform: translateX(100%);
+    }
+
+    /* Form Panels */
+    .form-panel {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .form-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .form-subtitle {
+      font-size: 0.9375rem;
+      color: var(--ink-soft);
+      margin-bottom: 32px;
+    }
+
+    /* Inputs */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      color: var(--ink);
+      background: #fff;
+      border: 1.5px solid #e0ddd6;
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input::placeholder {
+      color: #a8a49a;
+    }
+
+    .form-input:hover {
+      border-color: #c8c4bb;
+    }
+
+    .form-input:focus {
+      border-color: var(--forest);
+      box-shadow: 0 0 0 3px rgba(26, 93, 72, 0.12);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    /* Checkbox */
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--forest);
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      font-size: 0.875rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .checkbox-group a {
+      color: var(--forest);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .checkbox-group a:hover {
+      text-decoration: underline;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 15px 24px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--amber-warm);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(196, 137, 63, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: #b07835;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(196, 137, 63, 0.35);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1.5px solid #ddd9d0;
+    }
+
+    .btn-outline:hover {
+      background: var(--paper);
+      border-color: #c8c4bb;
+    }
+
+    /* Forgot password */
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-size: 0.8125rem;
+      color: var(--forest);
+      text-decoration: none;
+      margin-top: -10px;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 28px 0;
+      color: #a8a49a;
+      font-size: 0.8125rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e0ddd6;
+    }
+
+    /* Social Buttons */
+    .social-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .social-buttons .btn {
+      flex: 1;
+      gap: 10px;
+    }
+
+    .social-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Bottom note */
+    .form-note {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 0.875rem;
+      color: var(--ink-soft);
+    }
+
+    .form-note a {
+      color: var(--forest);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .form-note a:hover {
+      text-decoration: underline;
+    }
+
+    /* Language Toggle */
+    .lang-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill);
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      transition: var(--transition);
+    }
+
+    .lang-toggle:hover {
+      background: #fff;
+      box-shadow: var(--shadow-medium);
+    }
+
+    .lang-toggle svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
+    }
+
+    /* ============================================
+       RESPONSIVE: MOBILE
+       ============================================ */
+    @media (max-width: 900px) {
+      .auth-page {
+        flex-direction: column;
+      }
+
+      .auth-left {
+        width: 100%;
+        min-height: auto;
+        padding: 40px 24px 48px;
+        text-align: center;
+      }
+
+      .auth-left-content {
+        max-width: 100%;
+      }
+
+      .auth-logo {
+        margin-bottom: 28px;
+        justify-content: center;
+      }
+
+      .auth-left h1 {
+        font-size: 2rem;
+        margin-bottom: 14px;
+      }
+
+      .auth-left .subtitle {
+        font-size: 0.9375rem;
+        margin-bottom: 28px;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .value-list {
+        display: inline-block;
+        text-align: left;
+        margin-bottom: 32px;
+      }
+
+      .value-list li {
+        font-size: 0.875rem;
+      }
+
+      .testimonial {
+        max-width: 420px;
+        margin: 0 auto;
+        text-align: left;
+      }
+
+      .leaf-deco {
+        display: none;
+      }
+
+      .auth-right {
+        width: 100%;
+        min-height: auto;
+        padding: 36px 24px 48px;
+      }
+
+      .auth-right-inner {
+        max-width: 100%;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .lang-toggle {
+        top: 12px;
+        right: 12px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .auth-left {
+        padding: 32px 20px 40px;
+      }
+
+      .auth-left h1 {
+        font-size: 1.625rem;
+      }
+
+      .auth-right {
+        padding: 28px 20px 40px;
+      }
+
+      .social-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Language Toggle -->
+  <button class="lang-toggle" type="button" aria-label="Switch language">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M2 12h20"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    EN / 中文
+  </button>
+
+  <div class="auth-page">
+
+    <!-- LEFT SIDE — Brand & Value -->
+    <aside class="auth-left">
+      <!-- Organic blobs -->
+      <div class="organic-blob blob-1"></div>
+      <div class="organic-blob blob-2"></div>
+      <div class="organic-blob blob-3"></div>
+
+      <!-- Floating leaf decorations -->
+      <svg class="leaf-deco leaf-1" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4C24 4 40 16 40 30C40 38 33 44 24 44C15 44 8 38 8 30C8 16 24 4 24 4Z" fill="#8fb89a"/>
+        <path d="M24 12V38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M24 20L18 16M24 26L18 22M24 32L18 28" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-linecap="round"/>
+        <path d="M24 20L30 16M24 26L30 22M24 32L30 28" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <svg class="leaf-deco leaf-2" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4C24 4 40 16 40 30C40 38 33 44 24 44C15 44 8 38 8 30C8 16 24 4 24 4Z" fill="#4a8a6a"/>
+        <path d="M24 12V38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg class="leaf-deco leaf-3" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4C24 4 40 16 40 30C40 38 33 44 24 44C15 44 8 38 8 30C8 16 24 4 24 4Z" fill="#c4dcc8"/>
+        <path d="M24 12V38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg class="leaf-deco leaf-4" viewBox="0 0 48 48" fill="none">
+        <ellipse cx="24" cy="24" rx="18" ry="12" transform="rotate(-30 24 24)" fill="#8fb89a" opacity="0.5"/>
+        <path d="M24 14V34" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" transform="rotate(-30 24 24)"/>
+      </svg>
+
+      <div class="auth-left-content">
+        <div class="auth-logo">
+          <div class="auth-logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.85);">
+              <path d="M12 22c4.97 0 9-4.03 9-9-4.5 0-9-4.5-9-9-4.5 4.5-9 9-9 9 0 4.97 4.03 9 9 9z"/>
+              <path d="M12 8v4" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M12 14h.01" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="auth-logo-text">Climate Passport</span>
+        </div>
+
+        <h1>Join the Movement</h1>
+        <p class="subtitle">
+          Create your Climate Passport to access events, earn certificates, and connect with the global climate community.
+        </p>
+
+        <ul class="value-list">
+          <li>
+            <span class="check-icon">
+              <svg viewBox="0 0 12 12" fill="none" stroke="#8fb89a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6l3 3 5-6"/>
+              </svg>
+            </span>
+            One identity across all climate events
+          </li>
+          <li>
+            <span class="check-icon">
+              <svg viewBox="0 0 12 12" fill="none" stroke="#8fb89a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6l3 3 5-6"/>
+              </svg>
+            </span>
+            Track your learning and impact
+          </li>
+          <li>
+            <span class="check-icon">
+              <svg viewBox="0 0 12 12" fill="none" stroke="#8fb89a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6l3 3 5-6"/>
+              </svg>
+            </span>
+            Verified credentials you own
+          </li>
+        </ul>
+
+        <div class="testimonial">
+          <p class="testimonial-quote">
+            "The Climate Passport made it so easy to participate in SHCW and keep all my certificates in one place."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">LM</div>
+            <div>
+              <div class="testimonial-name">Dr. Li Mei</div>
+              <div class="testimonial-role">Researcher</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDE — Auth Forms -->
+    <main class="auth-right">
+      <div class="auth-right-inner">
+
+        <!-- Tab Switcher -->
+        <div class="tab-switcher" role="tablist" aria-label="Authentication tabs">
+          <div class="tab-slider" id="tabSlider"></div>
+          <button
+            class="tab-btn active"
+            id="tabSignIn"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panelSignIn"
+            onclick="switchTab('signin')"
+          >
+            Sign In
+          </button>
+          <button
+            class="tab-btn"
+            id="tabSignUp"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panelSignUp"
+            onclick="switchTab('signup')"
+          >
+            Create Account
+          </button>
+        </div>
+
+        <!-- SIGN IN PANEL -->
+        <div class="form-panel active" id="panelSignIn" role="tabpanel" aria-labelledby="tabSignIn">
+          <h2 class="form-title">Welcome back</h2>
+          <p class="form-subtitle">Sign in to continue your climate journey.</p>
+
+          <form onsubmit="event.preventDefault();">
+            <div class="form-group">
+              <label class="form-label" for="signin-email">Email address</label>
+              <input
+                type="email"
+                id="signin-email"
+                class="form-input"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="signin-password">Password</label>
+              <input
+                type="password"
+                id="signin-password"
+                class="form-input"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <a href="#" class="forgot-link">Forgot password?</a>
+
+            <button type="submit" class="btn btn-primary">Sign In</button>
+          </form>
+
+          <div class="divider">or continue with</div>
+
+          <div class="social-buttons">
+            <button type="button" class="btn btn-outline">
+              <svg class="social-icon" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </button>
+            <button type="button" class="btn btn-outline">
+              <svg class="social-icon" viewBox="0 0 24 24" fill="#07C160">
+                <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.95-6.609 1.12-1.022 2.96-1.97 5.23-1.97H14.2c-.67-2.764-3.52-4.843-6.509-4.843zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-2.297 0-4.175 1.014-5.206 2.303-.983 1.231-1.288 2.724-.81 4.173.943 2.953 4.391 5.119 8.313 5.119.771 0 1.53-.086 2.262-.253a.69.69 0 0 1 .573.078l1.518.89a.26.26 0 0 0 .134.043c.129 0 .233-.105.233-.236 0-.058-.023-.114-.038-.17l-.312-1.175a.47.47 0 0 1 .17-.53C23.026 18.115 24 16.405 24 14.469c0-2.97-3.16-5.611-7.062-5.611zm-2.36 2.63c.535 0 .969.44.969.983a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.543.434-.982.97-.982zm4.72 0c.535 0 .969.44.969.983a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.543.434-.982.969-.982z"/>
+              </svg>
+              WeChat
+            </button>
+          </div>
+        </div>
+
+        <!-- SIGN UP PANEL -->
+        <div class="form-panel" id="panelSignUp" role="tabpanel" aria-labelledby="tabSignUp">
+          <h2 class="form-title">Create your account</h2>
+          <p class="form-subtitle">Start your climate journey today.</p>
+
+          <form onsubmit="event.preventDefault();">
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Full Name</label>
+              <input
+                type="text"
+                id="signup-name"
+                class="form-input"
+                placeholder="Your full name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email address</label>
+              <input
+                type="email"
+                id="signup-email"
+                class="form-input"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="signup-password">Password</label>
+                <input
+                  type="password"
+                  id="signup-password"
+                  class="form-input"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="signup-confirm">Confirm Password</label>
+                <input
+                  type="password"
+                  id="signup-confirm"
+                  class="form-input"
+                  placeholder="Confirm password"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="terms" required />
+              <label for="terms">
+                I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Account</button>
+          </form>
+
+          <div class="divider">or continue with</div>
+
+          <div class="social-buttons">
+            <button type="button" class="btn btn-outline">
+              <svg class="social-icon" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google
+            </button>
+            <button type="button" class="btn btn-outline">
+              <svg class="social-icon" viewBox="0 0 24 24" fill="#07C160">
+                <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.95-6.609 1.12-1.022 2.96-1.97 5.23-1.97H14.2c-.67-2.764-3.52-4.843-6.509-4.843zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-2.297 0-4.175 1.014-5.206 2.303-.983 1.231-1.288 2.724-.81 4.173.943 2.953 4.391 5.119 8.313 5.119.771 0 1.53-.086 2.262-.253a.69.69 0 0 1 .573.078l1.518.89a.26.26 0 0 0 .134.043c.129 0 .233-.105.233-.236 0-.058-.023-.114-.038-.17l-.312-1.175a.47.47 0 0 1 .17-.53C23.026 18.115 24 16.405 24 14.469c0-2.97-3.16-5.611-7.062-5.611zm-2.36 2.63c.535 0 .969.44.969.983a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.543.434-.982.97-.982zm4.72 0c.535 0 .969.44.969.983a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.543.434-.982.969-.982z"/>
+              </svg>
+              WeChat
+            </button>
+          </div>
+
+          <p class="form-note">
+            Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign In</a>
+          </p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tab) {
+      const slider = document.getElementById('tabSlider');
+      const tabSignIn = document.getElementById('tabSignIn');
+      const tabSignUp = document.getElementById('tabSignUp');
+      const panelSignIn = document.getElementById('panelSignIn');
+      const panelSignUp = document.getElementById('panelSignUp');
+
+      if (tab === 'signin') {
+        slider.classList.remove('right');
+        tabSignIn.classList.add('active');
+        tabSignIn.setAttribute('aria-selected', 'true');
+        tabSignUp.classList.remove('active');
+        tabSignUp.setAttribute('aria-selected', 'false');
+        panelSignIn.classList.add('active');
+        panelSignUp.classList.remove('active');
+      } else {
+        slider.classList.add('right');
+        tabSignUp.classList.add('active');
+        tabSignUp.setAttribute('aria-selected', 'true');
+        tabSignIn.classList.remove('active');
+        tabSignIn.setAttribute('aria-selected', 'false');
+        panelSignUp.classList.add('active');
+        panelSignIn.classList.remove('active');
+      }
+    }
+
+    // Optional: Language toggle placeholder
+    document.querySelector('.lang-toggle').addEventListener('click', function() {
+      // In a real app, this would switch languages
+      console.log('Language toggle clicked');
+    });
+  </script>
+</body>
+</html>

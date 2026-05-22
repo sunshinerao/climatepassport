@@ -1,0 +1,1093 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  VISITOR
+  ATTENDEE
+  ORGANIZATION
+  SPONSOR
+  SPEAKER
+  MEDIA
+  ADMIN
+  EVENT_MANAGER
+  SPECIAL_PASS_MANAGER
+  STAFF
+  VERIFIER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum RegistrationStatus {
+  PENDING_APPROVAL
+  REGISTERED
+  CANCELLED
+  ATTENDED
+  WAITLIST
+  REJECTED
+}
+
+enum EventLayer {
+  INSTITUTION
+  ECONOMY
+  ROOT
+  ACCELERATOR
+  COMPREHENSIVE
+}
+
+enum EventHostType {
+  OFFICIAL
+  CO_HOSTED
+  REGISTERED
+  SIDE_EVENT
+  COMMUNITY
+}
+
+enum InvitationStatus {
+  PENDING
+  UPLOADED
+  DOWNLOADED
+  REJECTED
+}
+
+enum SpecialPassStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SpecialPassEntryType {
+  DOMESTIC
+  INTERNATIONAL
+}
+
+enum ContactCategory {
+  GENERAL
+  ORGANIZATION
+  PARTNERSHIP
+  SPEAKER
+  MEDIA
+  SPONSOR
+  VOLUNTEER
+  OTHER
+}
+
+enum ContactMessageStatus {
+  PENDING
+  REPLIED
+  CLOSED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum NotificationStatus {
+  QUEUED
+  DELIVERED
+  READ
+  ARCHIVED
+}
+
+enum NotificationKind {
+  REGISTRATION
+  ATTENDANCE
+  CERTIFICATE
+  INVITATION
+  SPECIAL_PASS
+  SYSTEM
+}
+
+enum CertificateTemplateType {
+  ATTENDANCE
+  LEARNING
+  ACHIEVEMENT
+  CUSTOM
+}
+
+enum CertificateVerificationMode {
+  PUBLIC_CODE
+  INTERNAL_ONLY
+  QR_CODE
+}
+
+enum CertificateIssueStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  GENERATED
+  ISSUED
+  REVOKED
+}
+
+enum VerificationResult {
+  VALID
+  INVALID
+  REVOKED
+}
+
+enum ChannelKey {
+  SHCW
+}
+
+enum LearningExperienceProgramStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum LearningExperienceApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  INTERVIEW
+  OFFERED
+  WAITLISTED
+  ACCEPTED
+  REJECTED
+  ENROLLED
+  COMPLETED
+  WITHDRAWN
+}
+
+enum LearningExperienceParticipationStatus {
+  ADMITTED
+  ACTIVE
+  COMPLETED
+  WITHDRAWN
+}
+
+model User {
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  password             String
+  name                 String
+  salutation           String?
+  avatar               String?
+  phone                String?
+  title                String?
+  bio                  String?              @db.Text
+  country              String?
+  role                 UserRole             @default(ATTENDEE)
+  status               UserStatus           @default(ACTIVE)
+  staffPermissions     String?              @db.Text
+  passCode             String               @unique @default(uuid())
+  climatePassportId    String?              @unique
+  points               Int                  @default(0)
+  emailVerified        DateTime?
+  resetToken           String?              @unique
+  resetTokenExpiry     DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  organization         Organization?
+  registrations        Registration[]
+  checkins             CheckIn[]
+  accounts             Account[]
+  sessions             Session[]
+  wishlist             Wishlist[]
+  pointTransactions    PointTransaction[]
+  invitationRequests   InvitationRequest[]
+  specialPasses        SpecialPass[]
+  contactMessages      ContactMessage[]
+  notificationPreference NotificationPreference?
+  notifications        Notification[]
+  managedEvents        Event[]              @relation("EventManager")
+  assignedEvents       EventVerifier[]
+  certificateIssues    CertificateIssue[]   @relation("CertificateOwner")
+  approvedCertificates CertificateIssue[]   @relation("CertificateApprover")
+  certificateChecks    CertificateVerification[] @relation("CertificateVerifiedBy")
+  unlockedAchievements UserAchievement[]
+  milestones           PassportMilestone[]
+  channelSessionBridges ChannelSessionBridge[]
+  managedLearningExperiencePrograms LearningExperienceProgram[] @relation("LearningExperienceManager")
+  learningExperienceApplications LearningExperienceApplication[]
+  learningExperienceParticipations LearningExperienceParticipation[]
+
+  @@index([email])
+  @@index([passCode])
+  @@index([role])
+  @@map("users")
+}
+
+model Organization {
+  id           String   @id @default(uuid())
+  name         String
+  logo         String?
+  website      String?
+  description  String?  @db.Text
+  industry     String?
+  size         String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  userId       String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("organizations")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Track {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  name          String
+  nameEn        String?
+  description   String   @db.Text
+  descriptionEn String?  @db.Text
+  category      String
+  color         String
+  icon          String
+  partners      Json?
+  partnersEn    Json?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  events        Event[]
+
+  @@map("tracks")
+}
+
+model Institution {
+  id                String    @id @default(uuid())
+  slug              String    @unique
+  name              String
+  nameEn            String?
+  shortName         String?
+  shortNameEn       String?
+  logo              String?
+  website           String?
+  orgType           String?
+  countryOrRegion   String?
+  countryOrRegionEn String?
+  description       String?   @db.Text
+  descriptionEn     String?   @db.Text
+  isActive          Boolean   @default(true)
+  order             Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  speakers          Speaker[]
+  events            EventInstitution[]
+
+  @@map("institutions")
+}
+
+model Event {
+  id                       String            @id @default(uuid())
+  title                    String
+  titleEn                  String?
+  description              String            @db.Text
+  descriptionEn            String?           @db.Text
+  shortDesc                String?
+  shortDescEn              String?
+  highlights               Json?
+  highlightsEn             Json?
+  highlightsGeneratedAt    DateTime?
+  startDate                DateTime
+  endDate                  DateTime
+  startTime                String
+  endTime                  String
+  venue                    String
+  venueEn                  String?
+  address                  String?
+  addressEn                String?
+  city                     String?
+  cityEn                   String?
+  image                    String?
+  partners                 Json?
+  partnersEn               Json?
+  type                     String
+  eventLayer               EventLayer?
+  hostType                 EventHostType?
+  trackId                  String?
+  managerUserId            String?
+  venueCheckinSecret       String?           @unique
+  invitationContentHtml_zh String?           @db.Text
+  invitationContentHtml_en String?           @db.Text
+  maxAttendees             Int?
+  requireApproval          Boolean           @default(false)
+  isClosed                 Boolean           @default(false)
+  isPublished              Boolean           @default(false)
+  isFeatured               Boolean           @default(false)
+  isPinned                 Boolean           @default(false)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  track                    Track?            @relation(fields: [trackId], references: [id])
+  manager                  User?             @relation("EventManager", fields: [managerUserId], references: [id])
+  registrations            Registration[]
+  eventDateSlots           EventDateSlot[]
+  agendaItems              AgendaItem[]
+  checkins                 CheckIn[]
+  wishlist                 Wishlist[]
+  pointTransactions        PointTransaction[]
+  invitationRequests       InvitationRequest[]
+  verifiers                EventVerifier[]
+  institutions             EventInstitution[]
+  milestones               PassportMilestone[]
+  learningExperienceLinks  LearningExperienceProgramEventLink[]
+
+  @@index([startDate])
+  @@index([trackId])
+  @@index([managerUserId])
+  @@index([isPinned, startDate, startTime])
+  @@map("events")
+}
+
+model EventInstitution {
+  id            String      @id @default(uuid())
+  eventId       String
+  institutionId String
+  roleLabel     String?
+  roleLabelEn   String?
+  showLogo      Boolean     @default(true)
+  order         Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, institutionId])
+  @@index([eventId, order])
+  @@index([institutionId])
+  @@map("event_institutions")
+}
+
+model EventVerifier {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_verifiers")
+}
+
+model EventDateSlot {
+  id           String   @id @default(uuid())
+  eventId      String
+  scheduleDate DateTime
+  startTime    String
+  endTime      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, scheduleDate])
+  @@index([eventId, scheduleDate])
+  @@map("event_date_slots")
+}
+
+model Registration {
+  id            String             @id @default(uuid())
+  userId        String
+  eventId       String
+  status        RegistrationStatus @default(REGISTERED)
+  notes         String?
+  dietaryReq    String?
+  checkedInAt   DateTime?
+  checkedInBy   String?
+  checkInMethod String?
+  pointsEarned  Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event         Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  pointTransactions PointTransaction[]
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@index([checkedInBy])
+  @@map("registrations")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("wishlists")
+}
+
+model PointTransaction {
+  id             String       @id @default(uuid())
+  userId         String
+  points         Int
+  type           String
+  eventId        String?
+  registrationId String?
+  description    String
+  createdBy      String?
+  createdAt      DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event          Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  registration   Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("point_transactions")
+}
+
+model Speaker {
+  id                  String      @id @default(uuid())
+  slug                String?     @unique
+  salutation          String?
+  name                String
+  nameEn              String?
+  avatar              String?
+  title               String
+  titleEn             String?
+  organization        String
+  organizationEn      String?
+  organizationLogo    String?
+  bio                 String?     @db.Text
+  bioEn               String?     @db.Text
+  summary             String?     @db.Text
+  summaryEn           String?     @db.Text
+  countryOrRegion     String?
+  countryOrRegionEn   String?
+  relevanceToShcw     String?     @db.Text
+  relevanceToShcwEn   String?     @db.Text
+  expertiseTags       Json?
+  email               String?
+  linkedin            String?
+  twitter             String?
+  website             String?
+  isKeynote           Boolean     @default(false)
+  isVisible           Boolean     @default(true)
+  agendaRoleDisplayMode String    @default("allCurrent")
+  institutionId       String?
+  order               Int         @default(0)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  institution         Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  agendaItems         AgendaItem[]
+  moderatedItems      AgendaItem[] @relation("AgendaModerator")
+  roles               SpeakerRole[]
+
+  @@map("speakers")
+}
+
+model SpeakerRole {
+  id             String   @id @default(uuid())
+  speakerId      String
+  title          String
+  titleEn        String?
+  organization   String
+  organizationEn String?
+  startYear      Int?
+  endYear        Int?
+  isCurrent      Boolean  @default(false)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  speaker        Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+
+  @@map("speaker_roles")
+}
+
+model AgendaItem {
+  id            String    @id @default(uuid())
+  eventId       String
+  agendaDate    DateTime
+  startTime     String
+  endTime       String
+  title         String
+  titleEn       String?
+  description   String?   @db.Text
+  descriptionEn String?   @db.Text
+  type          String
+  venue         String?
+  speakerMeta   Json?
+  moderatorId   String?
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  moderator     Speaker?  @relation("AgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  speakers      Speaker[]
+
+  @@index([eventId])
+  @@index([eventId, agendaDate])
+  @@index([moderatorId])
+  @@map("agenda_items")
+}
+
+model CheckIn {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String?
+  scannedBy String
+  scannedAt DateTime @default(now())
+  method    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([scannedBy])
+  @@map("checkins")
+}
+
+model InvitationRequest {
+  id               String           @id @default(uuid())
+  userId           String
+  salutation       String?
+  guestName        String
+  guestTitle       String?
+  guestOrg         String?
+  guestEmail       String?
+  language         String           @default("zh")
+  eventId          String?
+  purpose          String?          @db.Text
+  notes            String?          @db.Text
+  customMainContent String?         @db.Text
+  aiEnhancedBodyZh String?          @db.Text
+  aiEnhancedBodyEn String?          @db.Text
+  signaturePresetId String?
+  useStamp         Boolean          @default(false)
+  status           InvitationStatus @default(PENDING)
+  letterFileUrl    String?
+  rejectReason     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event            Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([eventId])
+  @@map("invitation_requests")
+}
+
+model SpecialPass {
+  id            String               @id @default(uuid())
+  userId        String
+  entryType     SpecialPassEntryType
+  status        SpecialPassStatus    @default(PENDING)
+  country       String
+  name          String
+  birthDate     String
+  gender        String
+  docNumber     String
+  docValidFrom  String
+  docValidTo    String
+  docPhoto      String?              @db.Text
+  docPhotoBack  String?              @db.Text
+  photo         String?              @db.Text
+  organization  String?
+  jobTitle      String?
+  docType       String?
+  email         String?
+  phoneArea     String?
+  phone         String?
+  contactMethod String?
+  contactValue  String?
+  adminNotes    String?              @db.Text
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([entryType])
+  @@map("special_passes")
+}
+
+model ContactMessage {
+  id            String               @id @default(uuid())
+  name          String
+  email         String
+  phone         String?
+  organization  String?
+  userId        String?
+  category      ContactCategory      @default(GENERAL)
+  subject       String
+  message       String               @db.Text
+  metadata      Json?
+  status        ContactMessageStatus @default(PENDING)
+  adminReply    String?              @db.Text
+  adminNotes    String?              @db.Text
+  repliedAt     DateTime?
+  repliedBy     String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  user          User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+model NotificationPreference {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  emailEnabled     Boolean   @default(true)
+  inAppEnabled     Boolean   @default(true)
+  smsEnabled       Boolean   @default(false)
+  marketingEnabled Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model Notification {
+  id          String             @id @default(uuid())
+  userId      String
+  channel     NotificationChannel @default(IN_APP)
+  status      NotificationStatus  @default(QUEUED)
+  kind        NotificationKind    @default(SYSTEM)
+  title       String
+  titleEn     String?
+  body        String              @db.Text
+  bodyEn      String?             @db.Text
+  actionUrl   String?
+  metadata    Json?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([kind])
+  @@map("notifications")
+}
+
+model AchievementDefinition {
+  id            String               @id @default(uuid())
+  key           String               @unique
+  name          String
+  nameEn        String?
+  description   String?              @db.Text
+  descriptionEn String?              @db.Text
+  pointThreshold Int?
+  isActive      Boolean              @default(true)
+  order         Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  userAchievements UserAchievement[]
+  certificateDefinitions CertificateDefinition[]
+
+  @@map("achievement_definitions")
+}
+
+model UserAchievement {
+  id                    String                @id @default(uuid())
+  userId                String
+  achievementDefinitionId String
+  sourceType            String?
+  sourceId              String?
+  certificateIssueId    String?
+  unlockedAt            DateTime              @default(now())
+  createdAt             DateTime              @default(now())
+
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementDefinition AchievementDefinition @relation(fields: [achievementDefinitionId], references: [id], onDelete: Cascade)
+  certificateIssue      CertificateIssue?     @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, achievementDefinitionId, sourceId])
+  @@index([userId])
+  @@index([achievementDefinitionId])
+  @@map("user_achievements")
+}
+
+model PassportMilestone {
+  id                 String            @id @default(uuid())
+  userId             String
+  title              String
+  titleEn            String?
+  description        String?           @db.Text
+  descriptionEn      String?           @db.Text
+  sourceType         String?
+  sourceId           String?
+  eventId            String?
+  certificateIssueId String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event              Event?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  certificateIssue   CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventId])
+  @@map("passport_milestones")
+}
+
+model CertificateCategory {
+  id            String                 @id @default(uuid())
+  key           String                 @unique
+  name          String
+  nameEn        String?
+  description   String?                @db.Text
+  descriptionEn String?                @db.Text
+  order         Int                    @default(0)
+  isActive      Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  templates     CertificateTemplate[]
+  definitions   CertificateDefinition[]
+
+  @@map("certificate_categories")
+}
+
+model CertificateTemplate {
+  id                 String                 @id @default(uuid())
+  categoryId         String
+  name               String
+  nameEn             String?
+  templateType       CertificateTemplateType
+  templateConfigJson Json
+  renderConfigJson   Json?
+  isActive           Boolean                @default(true)
+  version            Int                    @default(1)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  category           CertificateCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  definitions        CertificateDefinition[]
+
+  @@index([categoryId, isActive])
+  @@map("certificate_templates")
+}
+
+model CertificateDefinition {
+  id                    String                     @id @default(uuid())
+  categoryId            String
+  templateId            String
+  achievementDefinitionId String?
+  name                  String
+  nameEn                String?
+  issueRule             Json?
+  approvalMode          String                    @default("auto")
+  verificationMode      CertificateVerificationMode @default(PUBLIC_CODE)
+  pointReward           Int?
+  milestoneTitleTemplate String?
+  milestoneTitleTemplateEn String?
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  category              CertificateCategory       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  template              CertificateTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  achievementDefinition AchievementDefinition?    @relation(fields: [achievementDefinitionId], references: [id], onDelete: SetNull)
+  issues                CertificateIssue[]
+  learningExperiencePrograms LearningExperienceProgram[]
+
+  @@index([categoryId, isActive])
+  @@index([templateId])
+  @@map("certificate_definitions")
+}
+
+model CertificateIssue {
+  id                String                @id @default(uuid())
+  definitionId      String
+  userId            String
+  sourceType        String?
+  sourceId          String?
+  status            CertificateIssueStatus @default(DRAFT)
+  generatedFileUrl  String?
+  generatedFileName String?
+  verificationCode  String?               @unique
+  approvedBy        String?
+  approvedAt        DateTime?
+  issuedAt          DateTime?
+  downloadCount     Int                   @default(0)
+  pointsAwarded     Int?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  definition        CertificateDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  user              User                  @relation("CertificateOwner", fields: [userId], references: [id], onDelete: Cascade)
+  approver          User?                 @relation("CertificateApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  verifications     CertificateVerification[]
+  achievementUnlocks UserAchievement[]
+  linkedMilestones  PassportMilestone[]
+  learningExperienceParticipations LearningExperienceParticipation[]
+
+  @@index([definitionId])
+  @@index([userId])
+  @@index([status])
+  @@map("certificate_issues")
+}
+
+model CertificateVerification {
+  id                 String             @id @default(uuid())
+  certificateIssueId String
+  verifiedAt         DateTime           @default(now())
+  verifiedBy         String?
+  verificationChannel String
+  result             VerificationResult @default(VALID)
+  metadataJson       Json?
+
+  certificateIssue   CertificateIssue   @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
+  verifier           User?              @relation("CertificateVerifiedBy", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([certificateIssueId])
+  @@index([verifiedAt])
+  @@map("certificate_verifications")
+}
+
+model ChannelSessionBridge {
+  id          String    @id @default(cuid())
+  channel     ChannelKey @default(SHCW)
+  tokenHash   String    @unique
+  userId      String
+  targetPath  String?
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channel, expiresAt])
+  @@index([userId, createdAt])
+  @@map("channel_session_bridges")
+}
+
+model LearningExperienceCategory {
+  id            String   @id @default(uuid())
+  slug          String   @unique
+  name          String
+  nameEn        String?
+  description   String?  @db.Text
+  descriptionEn String?  @db.Text
+  isActive      Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  programs      LearningExperienceProgram[]
+
+  @@index([order])
+  @@map("learning_experience_categories")
+}
+
+model LearningExperienceProgram {
+  id                    String                           @id @default(uuid())
+  slug                  String                           @unique
+  categoryId            String
+  managerUserId         String?
+  certificateDefinitionId String?
+  title                 String
+  titleEn               String?
+  summary               String?                          @db.Text
+  summaryEn             String?                          @db.Text
+  description           String?                          @db.Text
+  descriptionEn         String?                          @db.Text
+  location              String?
+  locationEn            String?
+  applicationOpenAt     DateTime?
+  applicationCloseAt    DateTime?
+  cohortStartAt         DateTime?
+  cohortEndAt           DateTime?
+  capacity              Int?
+  pointReward           Int?
+  status                LearningExperienceProgramStatus  @default(DRAFT)
+  isPublished           Boolean                          @default(false)
+  applicationSchemaJson Json?
+  programConfigJson     Json?
+  createdAt             DateTime                         @default(now())
+  updatedAt             DateTime                         @updatedAt
+
+  category              LearningExperienceCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  manager               User?                            @relation("LearningExperienceManager", fields: [managerUserId], references: [id], onDelete: SetNull)
+  certificateDefinition CertificateDefinition?           @relation(fields: [certificateDefinitionId], references: [id], onDelete: SetNull)
+  stages                LearningExperienceStage[]
+  applications          LearningExperienceApplication[]
+  participations        LearningExperienceParticipation[]
+  eventLinks            LearningExperienceProgramEventLink[]
+
+  @@index([categoryId, status])
+  @@index([managerUserId])
+  @@index([isPublished, applicationOpenAt])
+  @@map("learning_experience_programs")
+}
+
+model LearningExperienceStage {
+  id             String   @id @default(uuid())
+  programId      String
+  key            String
+  name           String
+  nameEn         String?
+  description    String?  @db.Text
+  descriptionEn  String?  @db.Text
+  order          Int      @default(0)
+  isDecisionStage Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  program        LearningExperienceProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  applications   LearningExperienceApplication[] @relation("LearningExperienceCurrentStage")
+
+  @@unique([programId, key])
+  @@index([programId, order])
+  @@map("learning_experience_stages")
+}
+
+model LearningExperienceApplication {
+  id             String                             @id @default(uuid())
+  programId      String
+  userId         String
+  currentStageId String?
+  status         LearningExperienceApplicationStatus @default(DRAFT)
+  answersJson    Json?
+  reviewNotes    String?                            @db.Text
+  submittedAt    DateTime?
+  reviewedAt     DateTime?
+  decidedAt      DateTime?
+  createdAt      DateTime                           @default(now())
+  updatedAt      DateTime                           @updatedAt
+
+  program        LearningExperienceProgram          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user           User                               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStage   LearningExperienceStage?           @relation("LearningExperienceCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+  participation  LearningExperienceParticipation?
+
+  @@unique([programId, userId])
+  @@index([userId, status])
+  @@index([programId, status])
+  @@map("learning_experience_applications")
+}
+
+model LearningExperienceParticipation {
+  id                String                                @id @default(uuid())
+  programId         String
+  userId            String
+  applicationId     String?                               @unique
+  certificateIssueId String?
+  status            LearningExperienceParticipationStatus  @default(ADMITTED)
+  completionPercent Int                                   @default(0)
+  mentorReviewJson  Json?
+  outcomeSummary    String?                               @db.Text
+  outcomeSummaryEn  String?                               @db.Text
+  pointsAwarded     Int?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime                              @default(now())
+  updatedAt         DateTime                              @updatedAt
+
+  program           LearningExperienceProgram             @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user              User                                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application       LearningExperienceApplication?        @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  certificateIssue  CertificateIssue?                     @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+
+  @@unique([programId, userId])
+  @@index([userId, status])
+  @@index([programId, status])
+  @@map("learning_experience_participations")
+}
+
+model LearningExperienceProgramEventLink {
+  id          String   @id @default(uuid())
+  programId   String
+  eventId     String
+  linkType    String
+  title       String?
+  titleEn     String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  program     LearningExperienceProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  event       Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, eventId, linkType])
+  @@index([eventId])
+  @@index([programId, order])
+  @@map("learning_experience_program_event_links")
+}
