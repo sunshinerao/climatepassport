@@ -3196,6 +3196,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
+  border: none;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
@@ -3267,14 +3268,16 @@ textarea:focus-visible {
   font-size: clamp(20px, 2.5vw, 24px);
   line-height: 1.08;
   margin: 8px 0 0;
-  max-width: 10ch;
+  max-width: none;
+  white-space: nowrap;
 }
 
 .ss-public-header-main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 20px;
   min-width: 0;
+  margin-top: 24px;
 }
 
 .ss-public-header-copy {
@@ -4667,6 +4670,10 @@ body {
   }
   .ss-public-header-main {
     flex-wrap: wrap;
+    margin-top: 0;
+  }
+  .ss-public-header h1 {
+    white-space: normal;
   }
   .ss-public-header-copy {
     white-space: normal;
