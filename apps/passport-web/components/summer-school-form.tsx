@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, type ReactNode, type FormEvent, type ChangeEvent } from "react";
+import { useEffect, useState, useRef, type ReactNode, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/site-content";
 
@@ -190,9 +190,54 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
   const [error, setError] = useState("");
   const [confirmationErrorId, setConfirmationErrorId] = useState<string | null>(null);
   const [confirmationErrorMessage, setConfirmationErrorMessage] = useState("");
+  const [passportLookupState, setPassportLookupState] = useState<"idle" | "loading" | "matched" | "new">("idle");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const formTopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (climatePassportId) {
+      setData((prev) => ({ ...prev, passportId: climatePassportId }));
+      setPassportLookupState("matched");
+      return;
+    }
+
+    const email = data.email.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setPassportLookupState("idle");
+      setData((prev) => (prev.passportId ? { ...prev, passportId: "" } : prev));
+      return;
+    }
+
+    setPassportLookupState("loading");
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/summer-school/passport-id?email=${encodeURIComponent(email)}`, { method: "GET" });
+        const payload = (await res.json()) as { climatePassportId?: string | null };
+        if (cancelled) return;
+
+        const matchedId = payload.climatePassportId?.trim() ?? "";
+        if (matchedId) {
+          setData((prev) => ({ ...prev, passportId: matchedId }));
+          setPassportLookupState("matched");
+        } else {
+          setData((prev) => (prev.passportId ? { ...prev, passportId: "" } : prev));
+          setPassportLookupState("new");
+        }
+      } catch {
+        if (!cancelled) {
+          setPassportLookupState("idle");
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [data.email, climatePassportId]);
 
   function setField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -719,7 +764,23 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               <label htmlFor="passportId">
                 <span>{isZh ? "你的 Climate Passport ID（已有账号填写）" : "Your Climate Passport ID (if you have one)"}</span>
               </label>
-              <input id="passportId" type="text" value={data.passportId} onChange={handleTextChange("passportId")} placeholder="K3MV7NP-A4JQHF" className="mono" />
+              <input
+                id="passportId"
+                type="text"
+                value={data.passportId}
+                readOnly
+                placeholder={isZh ? "提交后自动生成" : "Auto-generated after submission"}
+                className="mono"
+              />
+              <span className="label" style={{ letterSpacing: "normal", textTransform: "none", marginTop: 6 }}>
+                {passportLookupState === "loading"
+                  ? (isZh ? "正在根据邮箱匹配 Climate Passport ID..." : "Matching Climate Passport ID by email...")
+                  : passportLookupState === "matched"
+                  ? (isZh ? "已匹配到已有 Climate Passport ID。" : "Existing Climate Passport ID matched.")
+                  : passportLookupState === "new"
+                  ? (isZh ? "未匹配到 ID，将在提交后自动新建。" : "No ID matched. A new one will be created after submission.")
+                  : (isZh ? "请先填写申请人邮箱，系统将自动匹配。" : "Enter applicant email first. The ID will be matched automatically.")}
+              </span>
             </div>
 
             <label className={`radio-card ${confirmationErrorId === "commitment" && !data.commitment ? "error" : ""}`} id="field-commitment" style={{ cursor: "pointer" }}>
