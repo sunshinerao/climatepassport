@@ -365,6 +365,17 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
     if (isReadOnly) return;
     setData((prev) => ({ ...prev, [key]: value }));
     setFieldErrors((prev) => prev.filter((e) => e.id !== key));
+
+    // Clear submit-consent error as soon as the missing checkbox is checked.
+    if (
+      (key === "commitment" || key === "integrity" || key === "passportConsent" || key === "privacyConsent") &&
+      Boolean(value) &&
+      confirmationErrorId === key
+    ) {
+      setConfirmationErrorId(null);
+      setConfirmationErrorMessage("");
+      setError("");
+    }
   }
 
   function toggleFuturePath(value: string) {
@@ -431,22 +442,22 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
       {
         id: "commitment",
         fieldId: "field-commitment",
-        message: isZh ? "请先勾选‘承诺认真对待本次申请’。" : "Please confirm you will take this application seriously.",
+        message: isZh ? "您必须同意（承诺认真对待本次申请）才能提交申请。" : "You must agree to (serious application commitment) before submitting.",
       },
       {
         id: "integrity",
         fieldId: "field-integrity",
-        message: isZh ? "请先勾选‘学术诚信声明’。" : "Please confirm the academic integrity declaration.",
+        message: isZh ? "您必须同意（学术诚信声明）才能提交申请。" : "You must agree to (academic integrity declaration) before submitting.",
       },
       {
         id: "passportConsent",
         fieldId: "field-passportConsent",
-        message: isZh ? "请先勾选‘同意写入 Climate Passport’。" : "Please confirm Climate Passport consent.",
+        message: isZh ? "您必须同意（写入 Climate Passport 档案）才能提交申请。" : "You must agree to (Climate Passport record consent) before submitting.",
       },
       {
         id: "privacyConsent",
         fieldId: "field-privacyConsent",
-        message: isZh ? "请先勾选隐私政策与未成年人同意声明。" : "Please confirm the privacy policy and guardian consent declaration.",
+        message: isZh ? "您必须同意（隐私政策与未成年人同意声明）才能提交申请。" : "You must agree to (privacy policy and guardian consent declaration) before submitting.",
       },
     ] as const;
 
