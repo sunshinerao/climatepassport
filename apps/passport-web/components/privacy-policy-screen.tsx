@@ -41,7 +41,7 @@ const zhSections: PolicySection[] = [
   },
   {
     id: "controller",
-    title: "3. 个人信息处理者 / Data Controller",
+    title: "3. 个人信息处理者",
     bullets: [
       "Climate Passport：负责账户、Climate Passport ID、证书、申请与平台通知等处理。",
       "Climate Passport 相关主办/承办机构：在项目筛选、组织、通知、证书签发中可能作为共同处理方或独立处理方。",

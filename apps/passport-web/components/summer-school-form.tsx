@@ -143,10 +143,12 @@ function validateStep1(data: FormData, isZh: boolean): FieldError[] {
   if (!data.email.trim()) errors.push({ id: "email", msg: isZh ? "请填写邮箱" : "Email is required" });
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
     errors.push({ id: "email", msg: isZh ? "邮箱格式不正确" : "Invalid email address" });
+  if (!data.phone.trim()) errors.push({ id: "phone", msg: isZh ? "请填写申请人手机" : "Applicant phone is required" });
   if (!data.guardianName.trim()) errors.push({ id: "guardianName", msg: isZh ? "请填写监护人姓名" : "Guardian name is required" });
   if (!data.guardianEmail.trim()) errors.push({ id: "guardianEmail", msg: isZh ? "请填写监护人邮箱" : "Guardian email is required" });
   if (data.guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.guardianEmail))
     errors.push({ id: "guardianEmail", msg: isZh ? "监护人邮箱格式不正确" : "Invalid guardian email" });
+  if (!data.guardianPhone.trim()) errors.push({ id: "guardianPhone", msg: isZh ? "请填写监护人手机" : "Guardian phone is required" });
   return errors;
 }
 
@@ -488,9 +490,10 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               </div>
               <div className="field" id="field-phone">
                 <label htmlFor="phone">
-                  <span>{isZh ? "申请人手机" : "Applicant phone"}</span>
+                  <span>{isZh ? "申请人手机" : "Applicant phone"}<span className="req-star">*</span></span>
                 </label>
-                <input id="phone" type="tel" value={data.phone} onChange={handleTextChange("phone")} />
+                <input id="phone" type="tel" value={data.phone} onChange={handleTextChange("phone")} aria-required="true" />
+                {getFieldError("phone") && <span className="field-error">{getFieldError("phone")}</span>}
               </div>
             </div>
 
@@ -516,9 +519,10 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               </div>
               <div className="field" id="field-guardianPhone">
                 <label htmlFor="guardianPhone">
-                  <span>{isZh ? "监护人手机" : "Guardian phone"}</span>
+                  <span>{isZh ? "监护人手机" : "Guardian phone"}<span className="req-star">*</span></span>
                 </label>
-                <input id="guardianPhone" type="tel" value={data.guardianPhone} onChange={handleTextChange("guardianPhone")} />
+                <input id="guardianPhone" type="tel" value={data.guardianPhone} onChange={handleTextChange("guardianPhone")} aria-required="true" />
+                {getFieldError("guardianPhone") && <span className="field-error">{getFieldError("guardianPhone")}</span>}
               </div>
             </div>
 
@@ -751,11 +755,11 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
                 <strong>
                   {isZh ? (
                     <>
-                      我已阅读并同意 <Link className="inline-link" href={`/${locale}/privacy`}>《Climate Passport 隐私政策》</Link> 及本申请相关个人信息处理说明
+                      我已阅读并同意 <Link className="inline-link" href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer">《Climate Passport 隐私政策》</Link> 及本申请相关个人信息处理说明
                     </>
                   ) : (
                     <>
-                      I have read and agree to the <Link className="inline-link" href={`/${locale}/privacy`}>Climate Passport Privacy Policy</Link> and this application's personal data processing notice
+                      I have read and agree to the <Link className="inline-link" href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer">Climate Passport Privacy Policy</Link> and this application's personal data processing notice
                     </>
                   )}
                 </strong>
