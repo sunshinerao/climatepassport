@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useRef, type ReactNode, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/site-content";
@@ -39,6 +40,7 @@ type FormData = {
   commitment: boolean;
   integrity: boolean;
   passportConsent: boolean;
+  privacyConsent: boolean;
   passportId: string;
   accountAction: string;
 };
@@ -49,7 +51,7 @@ const INITIAL: FormData = {
   channel: "", explorationStage: "", coreIssue: "", practiceProof: "",
   portfolioUrl: "", aiRole: "", aiTools: "", aiBlindspot: "", expectation: "",
   futurePath: [], languageComfort: "", travelCommitment: "", financialAid: "",
-  financialAidNote: "", commitment: false, integrity: false, passportConsent: false,
+  financialAidNote: "", commitment: false, integrity: false, passportConsent: false, privacyConsent: false,
   passportId: "", accountAction: "",
 };
 
@@ -184,6 +186,8 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
   const [data, setData] = useState<FormData>({ ...INITIAL, passportId: climatePassportId ?? "" });
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [error, setError] = useState("");
+  const [confirmationErrorId, setConfirmationErrorId] = useState<string | null>(null);
+  const [confirmationErrorMessage, setConfirmationErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const formTopRef = useRef<HTMLDivElement>(null);
@@ -248,10 +252,44 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!data.commitment || !data.integrity || !data.passportConsent) {
-      setError(isZh ? "请阅读并勾选所有确认项。" : "Please check all confirmation items.");
-      return;
+    const confirmationChecks = [
+      {
+        id: "commitment",
+        fieldId: "field-commitment",
+        message: isZh ? "请先勾选‘承诺认真对待本次申请’。" : "Please confirm you will take this application seriously.",
+      },
+      {
+        id: "integrity",
+        fieldId: "field-integrity",
+        message: isZh ? "请先勾选‘学术诚信声明’。" : "Please confirm the academic integrity declaration.",
+      },
+      {
+        id: "passportConsent",
+        fieldId: "field-passportConsent",
+        message: isZh ? "请先勾选‘同意写入 Climate Passport’。" : "Please confirm Climate Passport consent.",
+      },
+      {
+        id: "privacyConsent",
+        fieldId: "field-privacyConsent",
+        message: isZh ? "请先勾选隐私政策与未成年人同意声明。" : "Please confirm the privacy policy and guardian consent declaration.",
+      },
+    ] as const;
+
+    for (const item of confirmationChecks) {
+      if (!data[item.id]) {
+        const el = document.getElementById(item.fieldId);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        const input = el?.querySelector("input") as HTMLElement | null;
+        input?.focus();
+        setConfirmationErrorId(item.id);
+        setConfirmationErrorMessage(item.message);
+        setError(item.message);
+        return;
+      }
     }
+
+    setConfirmationErrorId(null);
+    setConfirmationErrorMessage("");
     setError("");
     setSubmitting(true);
     try {
@@ -665,9 +703,11 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
           <form className="form-grid" onSubmit={handleSubmit}>
             <div className="panel" style={{ background: "var(--cp-bg-soft)", border: "none" }}>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--cp-text-secondary)" }}>
-                {isZh
-                  ? "提交申请即表示你授权 GCA 及上海气候周主办方收集和处理本申请表中的个人信息，用于项目筛选与沟通联络。你的数据受 Climate Passport 隐私政策保护，不会被用于商业目的。"
-                  : "By submitting this application, you authorize GCA and the Shanghai Climate Week organizer to collect and process the personal information in this form for program selection and communication. Your data is protected under the Climate Passport privacy policy and will not be used for commercial purposes."}
+                <span style={{ whiteSpace: "pre-line" }}>
+                  {isZh
+                    ? "提交本申请即表示你已阅读并同意《Climate Passport 隐私政策》及本申请相关个人信息处理说明。相关主办/承办机构及本项目必要的合作方，将在合法、正当、必要和最小化原则下，收集、使用和处理你在申请表中提交的个人信息，仅用于夏校项目申请审核、身份确认、录取与候补管理、项目沟通、证书或 Climate Passport ID 生成、项目组织与安全管理等与本项目直接相关的目的。\n\n除法律法规要求、项目执行所必需，或经你另行明确同意外，我们不会出售你的个人信息，也不会将其用于与本项目无关的商业营销、画像或广告用途。你可根据适用法律法规，申请访问、更正、删除你的个人信息，撤回同意，或就个人信息处理提出咨询与投诉。若申请人为未成年人，应由其父母或法定监护人知情并同意后提交。"
+                    : "By submitting this application, you acknowledge that you have read and agreed to the Climate Passport Privacy Policy and this application's personal data processing notice. Relevant host, organizing, and implementation partners, together with other necessary collaborators for this program, will collect, use, and process the personal information submitted in this form under the principles of legality, legitimacy, necessity, and data minimization, solely for purposes directly related to the summer school program, including application review, identity verification, admission and waitlist management, program communication, certificate or Climate Passport ID generation, program operations, and safety management.\n\nUnless required by law, necessary for program execution, or otherwise with your separate and explicit consent, we will not sell your personal information, nor will we use it for unrelated commercial marketing, profiling, or advertising. You may, subject to applicable laws and regulations, request access to, correction of, or deletion of your personal information, withdraw your consent, or raise inquiries and complaints regarding personal data processing. If the applicant is a minor, their parent or legal guardian should be informed and consent before submission."}
+                </span>
               </p>
             </div>
 
@@ -675,37 +715,59 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
               <label htmlFor="passportId">
                 <span>{isZh ? "你的 Climate Passport ID（已有账号填写）" : "Your Climate Passport ID (if you have one)"}</span>
               </label>
-              <input id="passportId" type="text" value={data.passportId} onChange={handleTextChange("passportId")} placeholder="CP-XXXX-XXXXXX" className="mono" />
+              <input id="passportId" type="text" value={data.passportId} onChange={handleTextChange("passportId")} placeholder="K3MV7NP-A4JQHF" className="mono" />
             </div>
 
-            <label className="radio-card" style={{ cursor: "pointer" }}>
+            <label className={`radio-card ${confirmationErrorId === "commitment" && !data.commitment ? "error" : ""}`} id="field-commitment" style={{ cursor: "pointer" }}>
               <input checked={data.commitment} onChange={(e) => setField("commitment", e.target.checked)} type="checkbox" />
               <div className="radio-card-label">
                 <strong>{isZh ? "承诺认真对待本次申请" : "I commit to this application seriously"}</strong>
                 <span>{isZh ? "我理解这是一个竞争性的遴选过程，我保证所提供的所有信息均真实准确。" : "I understand this is a competitive selection process and confirm all information provided is accurate."}</span>
               </div>
             </label>
+            {confirmationErrorId === "commitment" && !data.commitment ? <span className="field-error">{confirmationErrorMessage}</span> : null}
 
-            <label className="radio-card" style={{ cursor: "pointer" }}>
+            <label className={`radio-card ${confirmationErrorId === "integrity" && !data.integrity ? "error" : ""}`} id="field-integrity" style={{ cursor: "pointer" }}>
               <input checked={data.integrity} onChange={(e) => setField("integrity", e.target.checked)} type="checkbox" />
               <div className="radio-card-label">
                 <strong>{isZh ? "学术诚信声明" : "Academic integrity declaration"}</strong>
                 <span>{isZh ? "我承诺本申请中的文字内容均为本人原创或已在文中注明 AI 辅助。" : "I confirm the written content in this application is my own or AI assistance has been disclosed."}</span>
               </div>
             </label>
+            {confirmationErrorId === "integrity" && !data.integrity ? <span className="field-error">{confirmationErrorMessage}</span> : null}
 
-            <label className="radio-card" style={{ cursor: "pointer" }}>
+            <label className={`radio-card ${confirmationErrorId === "passportConsent" && !data.passportConsent ? "error" : ""}`} id="field-passportConsent" style={{ cursor: "pointer" }}>
               <input checked={data.passportConsent} onChange={(e) => setField("passportConsent", e.target.checked)} type="checkbox" />
               <div className="radio-card-label">
                 <strong>{isZh ? "同意写入 Climate Passport" : "Consent to Climate Passport record"}</strong>
                 <span>{isZh ? "我同意将本次申请的参与记录写入我的 Climate Passport 档案。" : "I consent to having this participation recorded in my Climate Passport."}</span>
               </div>
             </label>
+            {confirmationErrorId === "passportConsent" && !data.passportConsent ? <span className="field-error">{confirmationErrorMessage}</span> : null}
+
+            <label className={`radio-card ${confirmationErrorId === "privacyConsent" && !data.privacyConsent ? "error" : ""}`} id="field-privacyConsent" style={{ cursor: "pointer" }}>
+              <input checked={data.privacyConsent} onChange={(e) => setField("privacyConsent", e.target.checked)} type="checkbox" />
+              <div className="radio-card-label">
+                <strong>
+                  {isZh ? (
+                    <>
+                      我已阅读并同意 <Link className="inline-link" href={`/${locale}/privacy`}>《Climate Passport 隐私政策》</Link> 及本申请相关个人信息处理说明
+                    </>
+                  ) : (
+                    <>
+                      I have read and agree to the <Link className="inline-link" href={`/${locale}/privacy`}>Climate Passport Privacy Policy</Link> and this application's personal data processing notice
+                    </>
+                  )}
+                </strong>
+                <span>{isZh ? "如申请人为未成年人，我确认其父母或法定监护人已知情并同意提交本申请。" : "If the applicant is a minor, I confirm their parent or legal guardian is informed and consents to this application."}</span>
+              </div>
+            </label>
+            {confirmationErrorId === "privacyConsent" && !data.privacyConsent ? <span className="field-error">{confirmationErrorMessage}</span> : null}
 
             {error ? <p className="form-error">{error}</p> : null}
 
             <div className="button-row">
-              <button className="button" disabled={submitting || !data.commitment || !data.integrity || !data.passportConsent} type="submit">
+              <button className="button" disabled={submitting || !data.commitment || !data.integrity || !data.passportConsent || !data.privacyConsent} type="submit">
                 {submitting ? (isZh ? "提交中…" : "Submitting…") : (isZh ? "提交申请" : "Submit Application")}
               </button>
             </div>

@@ -46,6 +46,7 @@ const applySchema = z.object({
   commitment: z.literal(true),
   integrity: z.literal(true),
   passportConsent: z.literal(true),
+  privacyConsent: z.literal(true),
   passportId: z.string().trim().max(40).optional(),
   projectSlug: z.string(),
   projectType: z.string(),

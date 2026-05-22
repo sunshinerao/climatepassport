@@ -3355,6 +3355,25 @@ textarea:focus-visible {
   background: #f4f9f6;
 }
 
+.radio-card.error {
+  border-color: #c53a2f;
+  background: var(--cp-white);
+}
+
+.radio-card.error .radio-card-label strong {
+  color: #a73026;
+}
+
+.inline-link {
+  color: var(--cp-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inline-link:hover {
+  color: var(--cp-ink-strong, #0f2f22);
+}
+
 .radio-card input[type="radio"] {
   flex-shrink: 0;
   margin-top: 3px;
