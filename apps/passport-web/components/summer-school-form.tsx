@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, type FormEvent, type ChangeEvent } from "react";
+import { useState, useRef, type ReactNode, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/site-content";
 
 type SummerSchoolFormProps = {
   locale: Locale;
   climatePassportId?: string | null;
+  headerRow?: ReactNode;
 };
 
 type FormData = {
@@ -123,7 +124,7 @@ function validateStep5(data: FormData, isZh: boolean): FieldError[] {
 
 const VALIDATORS = [validateStep1, validateStep2, validateStep3, validateStep4, validateStep5];
 
-export function SummerSchoolForm({ locale, climatePassportId }: SummerSchoolFormProps) {
+export function SummerSchoolForm({ locale, climatePassportId, headerRow }: SummerSchoolFormProps) {
   const router = useRouter();
   const isZh = locale === "zh";
   const [step, setStep] = useState(1);
@@ -267,7 +268,7 @@ export function SummerSchoolForm({ locale, climatePassportId }: SummerSchoolForm
   const countries = isZh ? COUNTRIES_ZH : COUNTRIES_EN;
 
   return (
-    <div className="ss-layout">
+    <div className={`ss-layout ${headerRow ? "ss-layout-with-header-row" : ""}`}>
       {/* Sidebar progress */}
       <aside className="ss-sidebar">
         <div className="ss-sidebar-card">
@@ -294,7 +295,9 @@ export function SummerSchoolForm({ locale, climatePassportId }: SummerSchoolForm
       </aside>
 
       {/* Main form */}
-      <div className="ss-form-card" ref={formTopRef}>
+      <div className="ss-main-column">
+        {headerRow ? <div className="ss-main-header-row">{headerRow}</div> : null}
+        <div className="ss-form-card" ref={formTopRef}>
         <div className="ss-section-header">
           <span className="label">{isZh ? `第 ${step} 步 / ${TOTAL_STEPS}` : `Step ${step} of ${TOTAL_STEPS}`}</span>
           <h2>{stepLabels[step - 1]}</h2>
@@ -669,6 +672,7 @@ export function SummerSchoolForm({ locale, climatePassportId }: SummerSchoolForm
             <div />
           </div>
         )}
+        </div>
       </div>
     </div>
   );

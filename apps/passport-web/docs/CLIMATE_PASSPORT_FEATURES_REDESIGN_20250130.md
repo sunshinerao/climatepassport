@@ -198,3 +198,29 @@
   - `.ss-public-header-main` 改为 `align-items: flex-start` 并增加顶部偏移，使说明和语言切换器顶对齐标题文字。
   - `.ss-progress-item` 增加 `border: none`，去掉步骤项外围深色边框。
   - 保留移动端回退：窄屏下允许标题与说明换行，防止横向溢出。
+
+## 夏校申请页对齐与间距二次修正（2026-05-22）
+
+### 需求解读
+- 说明文字与语言切换器需与“申请进度”文字顶部对齐，并使用同一文字风格。
+- 右侧申请信息框顶部需与左侧第一个步骤块顶部对齐。
+- 6 个申请步骤块之间的垂直间距需扩大为当前的 3 倍。
+
+### 修改方法
+- 将“说明 + 语言切换器”从页头移入申请表单主列顶部行，和左侧 `申请进度` 放在同一 `ss-layout` 行内对齐。
+- 主列顶部行复用 `.label` 风格，并同步语言切换器触发器的字号/字重/字距。
+- 通过 `ss-layout-with-header-row` 变体为右侧表单卡增加顶部偏移，使其与左侧第一个步骤块顶对齐。
+- 直接将步骤列表 `gap` 从 `4px` 调整到 `12px`。
+
+### 修改内容
+- `app/learning-experience/summer-school-2026/apply/page.tsx`：
+  - 公开申请页只保留左侧标题区。
+  - 将说明与语言切换器通过 `headerRow` 传入 `SummerSchoolForm`，在主列顶部渲染。
+- `components/summer-school-form.tsx`：
+  - 新增可选属性 `headerRow?: ReactNode`。
+  - 新增 `ss-main-column` 与 `ss-main-header-row` 结构。
+  - `headerRow` 存在时挂载 `ss-layout-with-header-row` 变体类。
+- `app/globals.css`：
+  - 新增 `ss-main-*` 样式完成顶部对齐与风格统一。
+  - `ss-layout-with-header-row .ss-form-card` 添加顶部偏移用于首步骤顶对齐。
+  - `ss-progress-list` 的 `gap` 调整为 `12px`。
