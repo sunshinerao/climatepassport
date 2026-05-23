@@ -170,6 +170,20 @@ enum LearningExperienceParticipationStatus {
   WITHDRAWN
 }
 
+enum QrTokenType {
+  IDENTITY
+  EVENT_CHECKIN
+  CERTIFICATE_VERIFICATION
+  INVITATION_SPECIAL_PASS
+}
+
+enum QrTokenStatus {
+  ACTIVE
+  CONSUMED
+  REVOKED
+  EXPIRED
+}
+
 model User {
   id                   String               @id @default(uuid())
   email                String               @unique
@@ -210,6 +224,8 @@ model User {
   certificateIssues    CertificateIssue[]   @relation("CertificateOwner")
   approvedCertificates CertificateIssue[]   @relation("CertificateApprover")
   certificateChecks    CertificateVerification[] @relation("CertificateVerifiedBy")
+  qrTokens             QrToken[]
+  auditLogs            CoreAuditLog[]       @relation("CoreAuditActor")
   unlockedAchievements UserAchievement[]
   milestones           PassportMilestone[]
   channelSessionBridges ChannelSessionBridge[]
@@ -381,6 +397,7 @@ model Event {
   pointTransactions        PointTransaction[]
   invitationRequests       InvitationRequest[]
   verifiers                EventVerifier[]
+  qrTokens                 QrToken[]
   institutions             EventInstitution[]
   milestones               PassportMilestone[]
   learningExperienceLinks  LearningExperienceProgramEventLink[]
@@ -897,6 +914,7 @@ model CertificateIssue {
   user              User                  @relation("CertificateOwner", fields: [userId], references: [id], onDelete: Cascade)
   approver          User?                 @relation("CertificateApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
   verifications     CertificateVerification[]
+  qrTokens          QrToken[]
   achievementUnlocks UserAchievement[]
   linkedMilestones  PassportMilestone[]
   learningExperienceParticipations LearningExperienceParticipation[]
@@ -939,6 +957,56 @@ model ChannelSessionBridge {
   @@index([channel, expiresAt])
   @@index([userId, createdAt])
   @@map("channel_session_bridges")
+}
+
+model QrToken {
+  id                 String        @id @default(cuid())
+  tokenHash          String        @unique
+  type               QrTokenType
+  status             QrTokenStatus @default(ACTIVE)
+  userId             String?
+  eventId            String?
+  certificateIssueId String?
+  subjectType        String
+  subjectId          String
+  scopeJson          Json?
+  metadataJson       Json?
+  expiresAt          DateTime?
+  consumedAt         DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event              Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  certificateIssue   CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
+
+  @@index([type, status])
+  @@index([userId, type])
+  @@index([eventId, type])
+  @@index([certificateIssueId])
+  @@index([expiresAt])
+  @@map("qr_tokens")
+}
+
+model CoreAuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  action      String
+  subjectType String
+  subjectId   String?
+  result      String
+  ipAddress   String?
+  userAgent   String?
+  metadataJson Json?
+  createdAt   DateTime @default(now())
+
+  actor       User?    @relation("CoreAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([subjectType, subjectId])
+  @@map("core_audit_logs")
 }
 
 model LearningExperienceCategory {

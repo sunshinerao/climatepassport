@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const locale = (url.searchParams.get("locale") ?? "en") as "zh" | "en";
 
-  await requireRoleAccess(locale, ["ADMIN", "EVENT_MANAGER"], `/${locale}/admin`);
+  await requireRoleAccess(locale, ["ADMIN"], `/${locale}/admin`);
 
   const prisma = getPrismaClient();
   if (!prisma) {

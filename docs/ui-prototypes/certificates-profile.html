@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wei Zhang - Climate Passport Profile</title>
+    <style>
+        :root {
+            --forest-deep: #0b3d2e;
+            --forest: #1a5d48;
+            --moss: #4a8a6a;
+            --sage: #8fb89a;
+            --leaf-light: #c4dcc8;
+            --amber-warm: #c4893f;
+            --amber-soft: #e8c88a;
+            --cream: #faf8f3;
+            --paper: #f5f2ec;
+            --ink: #0f2a20;
+            --ink-soft: #2d5245;
+            --gold: #b8860b;
+            --verify-green: #16a34a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--cream);
+            color: var(--ink);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(250, 248, 243, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(26, 93, 72, 0.08);
+            padding: 0.875rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--forest-deep), var(--moss));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .nav-brand-text {
+            font-family: Georgia, serif;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--forest-deep);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.875rem;
+            background: var(--leaf-light);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--forest-deep);
+        }
+
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--paper);
+            border-radius: 20px;
+            padding: 3px;
+            border: 1px solid rgba(26, 93, 72, 0.12);
+        }
+
+        .lang-btn {
+            padding: 0.3rem 0.7rem;
+            border: none;
+            background: transparent;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--ink-soft);
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn.active {
+            background: var(--forest);
+            color: white;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: var(--leaf-light);
+        }
+
+        /* Profile Header */
+        .profile-header {
+            position: relative;
+            background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 40%, var(--moss) 100%);
+            padding: 3.5rem 2rem 3rem;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .profile-header-watermark {
+            position: absolute;
+            bottom: 1rem;
+            right: 1.5rem;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.25);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .profile-header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 2rem;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amber-warm), var(--amber-soft));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            font-family: Georgia, serif;
+            flex-shrink: 0;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+        }
+
+        .profile-title {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 0.625rem;
+            font-weight: 400;
+        }
+
+        .profile-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .profile-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .profile-meta-item svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.8;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            background: rgba(22, 163, 74, 0.2);
+            border: 1px solid rgba(22, 163, 74, 0.4);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #86efac;
+            margin-bottom: 1rem;
+        }
+
+        .verified-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .profile-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            display: block;
+            line-height: 1.2;
+            font-family: Georgia, serif;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem 4rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-heading {
+            font-size: 1.5rem;
+            color: var(--forest-deep);
+            margin-bottom: 0.375rem;
+            font-weight: 700;
+        }
+
+        .section-subheading {
+            font-size: 0.875rem;
+            color: var(--ink-soft);
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+        }
+
+        /* Featured Credentials */
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .credential-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.06);
+            border: 1px solid rgba(26, 93, 72, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .credential-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(11, 61, 46, 0.12);
+        }
+
+        .credential-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .credential-card.gold-accent::before {
+            background: linear-gradient(90deg, var(--gold), var(--amber-soft));
+        }
+
+        .credential-card.green-accent::before {
+            background: linear-gradient(90deg, var(--forest), var(--moss));
+        }
+
+        .credential-card.amber-accent::before {
+            background: linear-gradient(90deg, var(--amber-warm), var(--amber-soft));
+        }
+
+        .credential-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .credential-type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-course {
+            background: var(--leaf-light);
+            color: var(--forest-deep);
+        }
+
+        .badge-event {
+            background: rgba(196, 137, 63, 0.15);
+            color: var(--amber-warm);
+        }
+
+        .badge-program {
+            background: rgba(184, 134, 11, 0.12);
+            color: var(--gold);
+        }
+
+        .credential-verified-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--verify-green);
+        }
+
+        .credential-card-name {
+            font-family: Georgia, serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .credential-card-issuer {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+            margin-bottom: 0.25rem;
+        }
+
+        .credential-card-date {
+            font-size: 0.75rem;
+            color: var(--moss);
+            margin-bottom: 1rem;
+        }
+
+        .credential-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--paper);
+        }
+
+        .verify-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--forest);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .verify-link:hover {
+            color: var(--forest-deep);
+        }
+
+        .verify-link svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Competency Map */
+        .competency-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.06);
+            border: 1px solid rgba(26, 93, 72, 0.08);
+        }
+
+        .skill-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 24px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .skill-pill:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(11, 61, 46, 0.12);
+        }
+
+        .skill-pill.advanced {
+            font-size: 0.9rem;
+            padding: 0.6rem 1.25rem;
+            background: linear-gradient(135deg, rgba(184, 134, 11, 0.08), rgba(184, 134, 11, 0.04));
+            border: 2px solid var(--gold);
+            color: var(--gold);
+        }
+
+        .skill-pill.intermediate {
+            font-size: 0.82rem;
+            padding: 0.5rem 1rem;
+            background: rgba(26, 93, 72, 0.06);
+            border: 1.5px solid var(--moss);
+            color: var(--forest);
+        }
+
+        .skill-pill.beginner {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.85rem;
+            background: var(--paper);
+            border: 1px solid var(--sage);
+            color: var(--ink-soft);
+        }
+
+        .skill-level-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .skill-level-dot.advanced {
+            background: var(--gold);
+        }
+
+        .skill-level-dot.intermediate {
+            background: var(--moss);
+        }
+
+        .skill-level-dot.beginner {
+            background: var(--sage);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2.5rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--forest), var(--sage), var(--leaf-light));
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -2.35rem;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--forest);
+            z-index: 1;
+        }
+
+        .timeline-item:first-child .timeline-dot {
+            background: var(--forest);
+            border-color: var(--forest);
+            box-shadow: 0 0 0 4px rgba(26, 93, 72, 0.15);
+        }
+
+        .timeline-date {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--moss);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-title {
+            font-family: Georgia, serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-credential {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: var(--ink-soft);
+            background: var(--paper);
+            padding: 0.25rem 0.6rem;
+            border-radius: 10px;
+            margin-right: 0.5rem;
+        }
+
+        .timeline-verify {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 0.7rem;
+            color: var(--forest);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .timeline-verify:hover {
+            color: var(--forest-deep);
+        }
+
+        /* All Credentials */
+        .credentials-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.4rem 1rem;
+            border: 1.5px solid rgba(26, 93, 72, 0.15);
+            background: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--moss);
+            color: var(--forest);
+        }
+
+        .tab-btn.active {
+            background: var(--forest);
+            border-color: var(--forest);
+            color: white;
+        }
+
+        .credentials-list {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.06);
+            border: 1px solid rgba(26, 93, 72, 0.08);
+            overflow: hidden;
+        }
+
+        .credential-row {
+            display: grid;
+            grid-template-columns: 36px 1fr auto auto auto;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid var(--paper);
+            transition: background 0.2s;
+        }
+
+        .credential-row:last-child {
+            border-bottom: none;
+        }
+
+        .credential-row:hover {
+            background: var(--paper);
+        }
+
+        .credential-row-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .credential-row-icon.course {
+            background: var(--leaf-light);
+            color: var(--forest);
+        }
+
+        .credential-row-icon.event {
+            background: rgba(196, 137, 63, 0.12);
+            color: var(--amber-warm);
+        }
+
+        .credential-row-icon.badge {
+            background: rgba(184, 134, 11, 0.1);
+            color: var(--gold);
+        }
+
+        .credential-row-icon.program {
+            background: rgba(143, 184, 154, 0.3);
+            color: var(--forest);
+        }
+
+        .credential-row-info {
+            min-width: 0;
+        }
+
+        .credential-row-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .credential-row-issuer {
+            font-size: 0.72rem;
+            color: var(--ink-soft);
+        }
+
+        .credential-row-date {
+            font-size: 0.75rem;
+            color: var(--moss);
+            white-space: nowrap;
+        }
+
+        .credential-row-type {
+            display: inline-flex;
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .credential-row-verify {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--forest);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .credential-row-verify:hover {
+            color: var(--verify-green);
+        }
+
+        /* Program Cards */
+        .program-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .program-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.06);
+            border: 1px solid rgba(26, 93, 72, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .program-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(11, 61, 46, 0.1);
+        }
+
+        .program-card-name {
+            font-family: Georgia, serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .program-card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-completed {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--verify-green);
+        }
+
+        .status-active {
+            background: rgba(196, 137, 63, 0.12);
+            color: var(--amber-warm);
+        }
+
+        .program-card-detail {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* Footer */
+        .page-footer {
+            background: var(--forest-deep);
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            padding: 2.5rem 2rem;
+        }
+
+        .footer-brand {
+            font-family: Georgia, serif;
+            font-size: 1.1rem;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .footer-links a {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .featured-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .program-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 0.75rem 1rem;
+            }
+
+            .profile-header {
+                padding: 2.5rem 1.25rem 2rem;
+            }
+
+            .profile-header-inner {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .profile-meta {
+                justify-content: center;
+            }
+
+            .verified-badge {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .profile-stats {
+                justify-content: center;
+            }
+
+            .profile-name {
+                font-size: 1.6rem;
+            }
+
+            .main-content {
+                padding: 1.75rem 1.25rem 3rem;
+            }
+
+            .featured-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .program-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .credential-row {
+                grid-template-columns: 32px 1fr auto;
+                gap: 0.75rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .credential-row-date,
+            .credential-row-type {
+                display: none;
+            }
+
+            .section-heading {
+                font-size: 1.3rem;
+            }
+
+            .competency-cloud {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 1.6rem;
+            }
+
+            .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .nav-badge {
+                display: none;
+            }
+
+            .timeline {
+                padding-left: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="nav-brand-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                    <path d="M2 12h20"/>
+                </svg>
+            </div>
+            <span class="nav-brand-text">Climate Passport</span>
+        </div>
+        <div class="nav-right">
+            <span class="nav-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Public Profile
+            </span>
+            <div class="lang-toggle">
+                <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" onclick="setLang('zh')">ZH</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Header -->
+    <header class="profile-header">
+        <div class="profile-header-inner">
+            <div class="avatar">WZ</div>
+            <div class="profile-info">
+                <h1 class="profile-name" data-en="Wei Zhang" data-zh="Zhang Wei">Wei Zhang</h1>
+                <p class="profile-title" data-en="Climate Finance Specialist & Sustainability Advocate" data-zh="Climate Finance Specialist & Sustainability Advocate">Climate Finance Specialist &amp; Sustainability Advocate</p>
+                <div class="profile-meta">
+                    <span class="profile-meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Shanghai Institute of Sustainability
+                    </span>
+                    <span class="profile-meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Shanghai, China
+                    </span>
+                    <span class="profile-meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        CP-2026-8841
+                    </span>
+                </div>
+                <div class="verified-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    Verified Profile
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">18</span>
+                        <span class="stat-label">Credentials</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">9</span>
+                        <span class="stat-label">Skills Verified</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">12</span>
+                        <span class="stat-label">Events</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Lvl 3</span>
+                        <span class="stat-label">Climate Advocate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="profile-header-watermark">Climate Passport</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Featured Credentials -->
+        <section class="section">
+            <h2 class="section-heading" data-en="Featured Credentials" data-zh="Featured Credentials">Featured Credentials</h2>
+            <p class="section-subheading" data-en="User-selected credential highlights" data-zh="User-selected credential highlights">User-selected credential highlights</p>
+            <div class="featured-grid">
+                <!-- Card 1 -->
+                <div class="credential-card gold-accent">
+                    <div class="credential-card-header">
+                        <span class="credential-type-badge badge-course">Course</span>
+                        <svg class="credential-verified-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="credential-card-name">FSA Credential - Level I</h3>
+                    <p class="credential-card-issuer">IFRS Foundation</p>
+                    <p class="credential-card-date">March 2026</p>
+                    <div class="credential-card-footer">
+                        <span class="credential-type-badge badge-program" style="font-size: 0.6rem;">Sustainability Accounting</span>
+                        <a href="#" class="verify-link">
+                            Verify
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </a>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="credential-card green-accent">
+                    <div class="credential-card-header">
+                        <span class="credential-type-badge badge-course">Course</span>
+                        <svg class="credential-verified-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="credential-card-name">Climate Leadership Fundamentals</h3>
+                    <p class="credential-card-issuer">Global Climate Alliance (GCA)</p>
+                    <p class="credential-card-date">January 2026</p>
+                    <div class="credential-card-footer">
+                        <span class="credential-type-badge badge-course" style="font-size: 0.6rem;">Climate Leadership</span>
+                        <a href="#" class="verify-link">
+                            Verify
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </a>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="credential-card amber-accent">
+                    <div class="credential-card-header">
+                        <span class="credential-type-badge badge-event">Event</span>
+                        <svg class="credential-verified-icon" style="color: var(--amber-warm);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="credential-card-name">Shanghai Climate Week 2026 - Keynote Speaker</h3>
+                    <p class="credential-card-issuer">SHCW Organizing Committee</p>
+                    <p class="credential-card-date">June 2026</p>
+                    <div class="credential-card-footer">
+                        <span class="credential-type-badge badge-event" style="font-size: 0.6rem;">Speaker Certificate</span>
+                        <a href="#" class="verify-link">
+                            Verify
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Competency Map -->
+        <section class="section">
+            <h2 class="section-heading" data-en="Verified Competencies" data-zh="Verified Competencies">Verified Competencies</h2>
+            <p class="section-subheading" data-en="Skills validated through credentials and assessments" data-zh="Skills validated through credentials and assessments">Skills validated through credentials and assessments</p>
+            <div class="competency-cloud">
+                <a href="#" class="skill-pill advanced">
+                    <span class="skill-level-dot advanced"></span>
+                    Sustainable Finance
+                    <span style="font-size:0.65rem; opacity:0.7;">(Advanced)</span>
+                </a>
+                <a href="#" class="skill-pill intermediate">
+                    <span class="skill-level-dot intermediate"></span>
+                    ESG Reporting
+                    <span style="font-size:0.6rem; opacity:0.7;">(Intermediate)</span>
+                </a>
+                <a href="#" class="skill-pill advanced">
+                    <span class="skill-level-dot advanced"></span>
+                    Climate Literacy
+                    <span style="font-size:0.65rem; opacity:0.7;">(Advanced)</span>
+                </a>
+                <a href="#" class="skill-pill intermediate">
+                    <span class="skill-level-dot intermediate"></span>
+                    Carbon Accounting
+                    <span style="font-size:0.6rem; opacity:0.7;">(Intermediate)</span>
+                </a>
+                <a href="#" class="skill-pill beginner">
+                    <span class="skill-level-dot beginner"></span>
+                    Future Food Systems
+                    <span style="font-size:0.6rem; opacity:0.7;">(Beginner)</span>
+                </a>
+                <a href="#" class="skill-pill intermediate">
+                    <span class="skill-level-dot intermediate"></span>
+                    Water Security
+                    <span style="font-size:0.6rem; opacity:0.7;">(Intermediate)</span>
+                </a>
+                <a href="#" class="skill-pill beginner">
+                    <span class="skill-level-dot beginner"></span>
+                    Urban Sustainability
+                    <span style="font-size:0.6rem; opacity:0.7;">(Beginner)</span>
+                </a>
+                <a href="#" class="skill-pill intermediate">
+                    <span class="skill-level-dot intermediate"></span>
+                    Climate Policy
+                    <span style="font-size:0.6rem; opacity:0.7;">(Intermediate)</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Learning Journey Timeline -->
+        <section class="section">
+            <h2 class="section-heading" data-en="Climate Action Timeline" data-zh="Climate Action Timeline">Climate Action Timeline</h2>
+            <p class="section-subheading" data-en="Key milestones in this climate journey" data-zh="Key milestones in this climate journey">Key milestones in this climate journey</p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">June 2026</div>
+                    <div class="timeline-title">Keynote Speaker - Shanghai Climate Week</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        Speaker Certificate
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">May 2026</div>
+                    <div class="timeline-title">Completed Ocean Stewardship Program</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                        Milestone Credential
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">March 2026</div>
+                    <div class="timeline-title">Earned FSA Credential Level I</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        Course Certificate
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">January 2026</div>
+                    <div class="timeline-title">Completed Climate Leadership Fundamentals</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        Course Certificate
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">November 2025</div>
+                    <div class="timeline-title">Volunteer - Biodiversity Summit</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        Volunteer Certificate
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">September 2025</div>
+                    <div class="timeline-title">First Event Attended - SHCW Youth Forum</div>
+                    <span class="timeline-credential">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Achievement Badge
+                    </span>
+                    <a href="#" class="timeline-verify">Verify &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- All Credentials -->
+        <section class="section">
+            <h2 class="section-heading" data-en="All Verified Credentials" data-zh="All Verified Credentials">All Verified Credentials <span style="font-size: 0.9rem; font-weight: 400; color: var(--moss); font-family: Inter, system-ui;">(14)</span></h2>
+            <p class="section-subheading" data-en="Complete list of earned credentials" data-zh="Complete list of earned credentials">Complete list of earned credentials</p>
+            <div class="credentials-tabs">
+                <button class="tab-btn active" onclick="filterCredentials('all')">All</button>
+                <button class="tab-btn" onclick="filterCredentials('courses')">Courses</button>
+                <button class="tab-btn" onclick="filterCredentials('events')">Events</button>
+                <button class="tab-btn" onclick="filterCredentials('programs')">Programs</button>
+                <button class="tab-btn" onclick="filterCredentials('badges')">Badges</button>
+            </div>
+            <div class="credentials-list">
+                <div class="credential-row" data-category="courses">
+                    <div class="credential-row-icon course">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">FSA Credential - Level I</div>
+                        <div class="credential-row-issuer">IFRS Foundation</div>
+                    </div>
+                    <span class="credential-row-date">Mar 2026</span>
+                    <span class="credential-row-type badge-program">Course</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="courses">
+                    <div class="credential-row-icon course">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Climate Leadership Fundamentals</div>
+                        <div class="credential-row-issuer">Global Climate Alliance</div>
+                    </div>
+                    <span class="credential-row-date">Jan 2026</span>
+                    <span class="credential-row-type badge-course">Course</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="events">
+                    <div class="credential-row-icon event">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Shanghai Climate Week 2026 - Keynote Speaker</div>
+                        <div class="credential-row-issuer">SHCW Organizing Committee</div>
+                    </div>
+                    <span class="credential-row-date">Jun 2026</span>
+                    <span class="credential-row-type badge-event">Event</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="programs">
+                    <div class="credential-row-icon program">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Ocean Stewardship Program - Milestone</div>
+                        <div class="credential-row-issuer">Ocean Conservation Institute</div>
+                    </div>
+                    <span class="credential-row-date">May 2026</span>
+                    <span class="credential-row-type badge-program">Program</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="courses">
+                    <div class="credential-row-icon course">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Sustainable Finance Foundations</div>
+                        <div class="credential-row-issuer">CFA Institute</div>
+                    </div>
+                    <span class="credential-row-date">Dec 2025</span>
+                    <span class="credential-row-type badge-course">Course</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="events">
+                    <div class="credential-row-icon event">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Biodiversity Summit 2025 - Volunteer</div>
+                        <div class="credential-row-issuer">UNEP Regional Office</div>
+                    </div>
+                    <span class="credential-row-date">Nov 2025</span>
+                    <span class="credential-row-type badge-event">Event</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="courses">
+                    <div class="credential-row-icon course">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Carbon Accounting Principles</div>
+                        <div class="credential-row-issuer">GHG Protocol Institute</div>
+                    </div>
+                    <span class="credential-row-date">Oct 2025</span>
+                    <span class="credential-row-type badge-course">Course</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="badges">
+                    <div class="credential-row-icon badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">First Event Achievement Badge</div>
+                        <div class="credential-row-issuer">Climate Passport</div>
+                    </div>
+                    <span class="credential-row-date">Sep 2025</span>
+                    <span class="credential-row-type badge-event">Badge</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="events">
+                    <div class="credential-row-icon event">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">SHCW Youth Forum 2025 - Attendee</div>
+                        <div class="credential-row-issuer">Shanghai Climate Week</div>
+                    </div>
+                    <span class="credential-row-date">Sep 2025</span>
+                    <span class="credential-row-type badge-event">Event</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+                <div class="credential-row" data-category="programs">
+                    <div class="credential-row-icon program">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                    </div>
+                    <div class="credential-row-info">
+                        <div class="credential-row-name">Summer School on Sustainable Finance 2026</div>
+                        <div class="credential-row-issuer">Asia Sustainability Institute</div>
+                    </div>
+                    <span class="credential-row-date">Aug 2025</span>
+                    <span class="credential-row-type badge-program">Program</span>
+                    <a href="#" class="credential-row-verify">Verify</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Program Participation -->
+        <section class="section">
+            <h2 class="section-heading" data-en="Program Participation" data-zh="Program Participation">Program Participation</h2>
+            <p class="section-subheading" data-en="Structured programs and learning journeys" data-zh="Structured programs and learning journeys">Structured programs and learning journeys</p>
+            <div class="program-grid">
+                <div class="program-card">
+                    <h3 class="program-card-name">Summer School on Sustainable Finance 2026</h3>
+                    <div class="program-card-status status-completed">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Completed
+                    </div>
+                    <p class="program-card-detail">48 hours of structured learning</p>
+                </div>
+                <div class="program-card">
+                    <h3 class="program-card-name">Youth Climate Action Forum</h3>
+                    <div class="program-card-status status-active">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="3"/></svg>
+                        Active Participant
+                    </div>
+                    <p class="program-card-detail">Ongoing engagement since Jan 2026</p>
+                </div>
+                <div class="program-card">
+                    <h3 class="program-card-name">Ocean Stewardship Program</h3>
+                    <div class="program-card-status status-completed">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Completed
+                    </div>
+                    <p class="program-card-detail">Milestone Earned - May 2026</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="footer-brand">Climate Passport</div>
+        <p class="footer-text">This profile is part of the Climate Passport platform</p>
+        <p class="footer-text">All credentials shown are independently verifiable</p>
+        <p class="footer-text" style="margin-top: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.72rem;">Powered by Climate Passport | climatepass.org</p>
+        <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Verify a Credential</a>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Contact</a>
+        </div>
+    </footer>
+
+    <script>
+        // Language Toggle
+        function setLang(lang) {
+            const btns = document.querySelectorAll('.lang-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update elements with data attributes
+            document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+                const text = el.getAttribute('data-' + lang);
+                if (text) {
+                    // Preserve child elements like the count span
+                    const span = el.querySelector('span');
+                    if (span && el.classList.contains('section-heading')) {
+                        el.innerHTML = text + ' ' + span.outerHTML;
+                    } else {
+                        el.textContent = text;
+                    }
+                }
+            });
+        }
+
+        // Credential Category Filter
+        function filterCredentials(category) {
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const rows = document.querySelectorAll('.credential-row');
+            rows.forEach(row => {
+                if (category === 'all') {
+                    row.style.display = '';
+                } else {
+                    const cat = row.getAttribute('data-category');
+                    row.style.display = (cat === category) ? '' : 'none';
+                }
+            });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

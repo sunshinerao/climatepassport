@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exchangeChannelBridgeToken, getDashboardPathForRole } from "@/lib/server/auth";
+import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 import { locales } from "@/lib/site-content";
 
 const exchangeSchema = z.object({
@@ -9,6 +10,15 @@ const exchangeSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(getRequestRateLimitKey(request, "channel-bridge-exchange"), {
+    limit: 30,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Too many bridge token exchange attempts." }, { status: 429 });
+  }
+
   const payload = exchangeSchema.safeParse(await request.json());
 
   if (!payload.success) {

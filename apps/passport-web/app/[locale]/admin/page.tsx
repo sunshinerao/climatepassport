@@ -8,6 +8,7 @@ export default async function LocalizedAdminPage({ params }: { params: { locale:
   noStore();
   const user = await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin`);
   const prisma = getPrismaClient();
+  const isPlatformAdmin = user.role === "ADMIN";
 
   const [managedCount, publishedCount, pendingApprovalCount, recentEvents] = prisma
     ? await Promise.all([
@@ -57,14 +58,18 @@ export default async function LocalizedAdminPage({ params }: { params: { locale:
               <span aria-hidden="true">◇</span>
               {params.locale === "zh" ? "学习项目" : "Learning experiences"}
             </Link>
-            <Link href={`/${params.locale}/admin/summer-school/applications`}>
-              <span aria-hidden="true">◇</span>
-              {params.locale === "zh" ? "夏校申请" : "Summer school apps"}
-            </Link>
-            <Link href={`/${params.locale}/admin/certificates`}>
-              <span aria-hidden="true">◇</span>
-              {params.locale === "zh" ? "证书中心" : "Certificate hub"}
-            </Link>
+            {isPlatformAdmin ? (
+              <Link href={`/${params.locale}/admin/summer-school/applications`}>
+                <span aria-hidden="true">◇</span>
+                {params.locale === "zh" ? "夏校申请" : "Summer school apps"}
+              </Link>
+            ) : null}
+            {isPlatformAdmin ? (
+              <Link href={`/${params.locale}/admin/certificates`}>
+                <span aria-hidden="true">◇</span>
+                {params.locale === "zh" ? "证书中心" : "Certificate hub"}
+              </Link>
+            ) : null}
             <span className="proto-admin-nav-section">{params.locale === "zh" ? "个人" : "Personal"}</span>
             <Link href={`/${params.locale}/dashboard`}>
               <span aria-hidden="true">◇</span>
@@ -134,10 +139,12 @@ export default async function LocalizedAdminPage({ params }: { params: { locale:
               <h3>{params.locale === "zh" ? "Learning Experiences" : "Learning Experiences"}</h3>
               <p>{params.locale === "zh" ? "维护 program/application 生命周期和 cohort 状态。" : "Maintain program/application lifecycle and cohort statuses."}</p>
             </Link>
-            <Link href={`/${params.locale}/admin/certificates`}>
-              <h3>{params.locale === "zh" ? "Certificate Hub" : "Certificate Hub"}</h3>
-              <p>{params.locale === "zh" ? "配置证书模板、签发流程与验真策略。" : "Configure templates, issuance workflows and verification policy."}</p>
-            </Link>
+            {isPlatformAdmin ? (
+              <Link href={`/${params.locale}/admin/certificates`}>
+                <h3>{params.locale === "zh" ? "Certificate Hub" : "Certificate Hub"}</h3>
+                <p>{params.locale === "zh" ? "配置证书模板、签发流程与验真策略。" : "Configure templates, issuance workflows and verification policy."}</p>
+              </Link>
+            ) : null}
           </section>
         </div>
       </section>

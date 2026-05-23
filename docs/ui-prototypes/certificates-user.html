@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Certificates - Climate Passport</title>
+    <style>
+        :root {
+            --forest-deep: #0b3d2e;
+            --forest: #1a5d48;
+            --moss: #4a8a6a;
+            --sage: #8fb89a;
+            --leaf-light: #c4dcc8;
+            --amber-warm: #c4893f;
+            --amber-soft: #e8c88a;
+            --cream: #faf8f3;
+            --paper: #f5f2ec;
+            --ink: #0f2a20;
+            --ink-soft: #2d5245;
+            --gold: #b8860b;
+            --verify-green: #16a34a;
+            --radius-card: 28px;
+            --radius-pill: 999px;
+            --shadow-soft: 0 4px 24px rgba(11, 61, 46, 0.08);
+            --shadow-hover: 0 8px 40px rgba(11, 61, 46, 0.14);
+            --shadow-elevated: 0 12px 48px rgba(11, 61, 46, 0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--cream);
+            color: var(--ink);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ===== STICKY NAV ===== */
+        .nav-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(250, 248, 243, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(26, 93, 72, 0.08);
+            padding: 0 40px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--forest-deep);
+        }
+
+        .nav-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .nav-brand-text {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--ink-soft);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--forest);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--forest);
+            border-radius: 2px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .locale-btn {
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .locale-btn:hover {
+            border-color: var(--moss);
+            color: var(--forest);
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px 6px 6px;
+            border-radius: var(--radius-pill);
+            background: white;
+            border: 1px solid var(--leaf-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-pill:hover {
+            border-color: var(--moss);
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.08);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--sage) 0%, var(--moss) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px 40px 80px;
+        }
+
+        /* ===== VIEW 1: CERTIFICATES LIST ===== */
+        #view-list,
+        #view-detail {
+            display: none;
+        }
+
+        #view-list.active,
+        #view-detail.active {
+            display: block;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 40%, var(--moss) 100%);
+            border-radius: var(--radius-card);
+            padding: 48px 56px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(143, 184, 154, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 40%;
+            height: 150%;
+            background: radial-gradient(ellipse, rgba(196, 220, 200, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            opacity: 0.85;
+            margin-bottom: 32px;
+            font-weight: 400;
+            position: relative;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .hero-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .hero-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.75;
+        }
+
+        .hero-progress {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .hero-progress-label {
+            font-size: 13px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-progress-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .hero-progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .hero-progress-fill {
+            height: 100%;
+            width: 72%;
+            background: linear-gradient(90deg, var(--amber-soft), var(--amber-warm));
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .hero-progress-percent {
+            font-size: 12px;
+            opacity: 0.75;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .search-input-wrap .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--moss);
+            font-size: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 18px 14px 48px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 14px;
+            color: var(--ink);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--moss);
+            box-shadow: 0 0 0 4px rgba(74, 138, 106, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--sage);
+        }
+
+        .filter-select {
+            padding: 14px 40px 14px 18px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 14px;
+            color: var(--ink);
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a8a6a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            transition: var(--transition);
+        }
+
+        .filter-select:focus {
+            border-color: var(--moss);
+            box-shadow: 0 0 0 4px rgba(74, 138, 106, 0.1);
+        }
+
+        .status-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            padding: 8px 18px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .status-pill:hover {
+            border-color: var(--moss);
+            color: var(--forest);
+        }
+
+        .status-pill.active {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+        }
+
+        /* Certificate Grid */
+        .cert-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .cert-card {
+            background: white;
+            border-radius: var(--radius-card);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cert-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .cert-card-accent {
+            height: 6px;
+            width: 100%;
+        }
+
+        .cert-card-accent.gold { background: linear-gradient(90deg, var(--gold), var(--amber-soft)); }
+        .cert-card-accent.moss { background: linear-gradient(90deg, var(--forest), var(--moss)); }
+        .cert-card-accent.amber { background: linear-gradient(90deg, var(--amber-warm), var(--amber-soft)); }
+        .cert-card-accent.blue { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+        .cert-card-accent.sage { background: linear-gradient(90deg, var(--sage), var(--leaf-light)); }
+        .cert-card-accent.teal { background: linear-gradient(90deg, #0d9488, #5eead4); }
+
+        .cert-card-body {
+            padding: 24px;
+            position: relative;
+        }
+
+        .cert-type-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cert-type-badge.course { background: #fef3c7; color: var(--gold); }
+        .cert-type-badge.event { background: #d1fae5; color: var(--forest); }
+        .cert-type-badge.speaker { background: #fed7aa; color: #92400e; }
+        .cert-type-badge.volunteer { background: #dbeafe; color: #1e40af; }
+        .cert-type-badge.learning { background: #e0e7ff; color: #4338ca; }
+        .cert-type-badge.badge { background: #cffafe; color: #0e7490; }
+        .cert-type-badge.milestone { background: #fce7f3; color: #9d174d; }
+        .cert-type-badge.moderator { background: #f3e8ff; color: #6b21a8; }
+
+        .cert-card-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 8px;
+            padding-right: 80px;
+            line-height: 1.4;
+        }
+
+        .cert-card-org {
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cert-card-org-icon {
+            width: 16px;
+            height: 16px;
+            background: var(--leaf-light);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: var(--forest);
+        }
+
+        .cert-card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .cert-card-meta-item {
+            font-size: 12px;
+            color: var(--ink-soft);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cert-card-meta-item .meta-label {
+            color: var(--sage);
+            min-width: 50px;
+        }
+
+        .cert-card-number {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 11px;
+            color: var(--moss);
+            background: var(--paper);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+
+        .cert-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--paper);
+        }
+
+        .cert-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cert-status.issued { background: #dcfce7; color: var(--verify-green); }
+        .cert-status.pending { background: #fef3c7; color: #d97706; }
+        .cert-status.expired { background: #f3f4f6; color: #6b7280; }
+        .cert-status.revoked { background: #fee2e2; color: #dc2626; }
+
+        .cert-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .cert-status.issued .cert-status-dot { background: var(--verify-green); }
+        .cert-status.pending .cert-status-dot { background: #d97706; }
+        .cert-status.expired .cert-status-dot { background: #6b7280; }
+        .cert-status.revoked .cert-status-dot { background: #dc2626; }
+
+        .cert-verified-icon {
+            color: var(--verify-green);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cert-view-btn {
+            padding: 8px 18px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--forest);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cert-view-btn:hover {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+        }
+
+        /* Load More */
+        .load-more-wrap {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .load-more-btn {
+            padding: 14px 40px;
+            border-radius: var(--radius-pill);
+            border: 2px solid var(--leaf-light);
+            background: white;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--forest);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .load-more-btn:hover {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* ===== VIEW 2: CERTIFICATE DETAIL ===== */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--forest);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 32px;
+        }
+
+        .back-btn:hover {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+        }
+
+        /* Certificate Preview */
+        .cert-preview {
+            max-width: 800px;
+            margin: 0 auto 48px;
+            background: white;
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-elevated);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .cert-preview-border {
+            padding: 8px;
+            background: linear-gradient(135deg, var(--forest-deep), var(--forest), var(--moss), var(--gold), var(--amber-soft));
+            border-radius: var(--radius-card);
+        }
+
+        .cert-preview-inner {
+            background: white;
+            border-radius: 22px;
+            padding: 56px 64px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cert-preview-inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at top right, rgba(196, 220, 200, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom left, rgba(232, 200, 138, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .cert-preview-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 160px;
+            color: rgba(11, 61, 46, 0.03);
+            font-weight: 900;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .cert-preview-header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .cert-preview-logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--moss) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .cert-preview-org-name {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--moss);
+            font-weight: 600;
+        }
+
+        .cert-preview-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--gold);
+            margin-top: 20px;
+            margin-bottom: 8px;
+        }
+
+        .cert-preview-name-label {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .cert-preview-cert-name {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 28px;
+            color: var(--ink);
+            text-align: center;
+            margin-bottom: 24px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .cert-preview-recipient-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--sage);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .cert-preview-recipient {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 24px;
+            color: var(--forest-deep);
+            text-align: center;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .cert-preview-body {
+            font-size: 14px;
+            color: var(--ink-soft);
+            text-align: center;
+            line-height: 1.7;
+            max-width: 560px;
+            margin: 0 auto 32px;
+            position: relative;
+        }
+
+        .cert-preview-details {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .cert-preview-detail-item {
+            text-align: center;
+        }
+
+        .cert-preview-detail-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--sage);
+            margin-bottom: 4px;
+        }
+
+        .cert-preview-detail-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .cert-preview-signature {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid var(--leaf-light);
+            position: relative;
+        }
+
+        .cert-signature-block {
+            text-align: center;
+        }
+
+        .cert-signature-line {
+            width: 180px;
+            height: 1px;
+            background: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+
+        .cert-signature-label {
+            font-size: 11px;
+            color: var(--ink-soft);
+        }
+
+        .cert-signature-name {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: var(--forest-deep);
+            margin-bottom: 4px;
+        }
+
+        .cert-seal {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .cert-seal-inner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gold);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .cert-qr-corner {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: var(--paper);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: var(--ink-soft);
+            border: 1px solid var(--leaf-light);
+        }
+
+        .cert-qr-pattern {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 1px;
+        }
+
+        .cert-qr-cell {
+            background: var(--ink);
+            border-radius: 1px;
+        }
+
+        .cert-qr-cell.empty {
+            background: transparent;
+        }
+
+        /* Metadata Section */
+        .cert-metadata {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .cert-meta-col {
+            background: white;
+            border-radius: var(--radius-card);
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .cert-meta-col h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--paper);
+        }
+
+        .cert-meta-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+
+        .cert-meta-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .cert-meta-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--sage);
+            font-weight: 600;
+        }
+
+        .cert-meta-value {
+            font-size: 14px;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .cert-meta-value.mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--moss);
+        }
+
+        .cert-meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .cert-meta-tag {
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            background: var(--leaf-light);
+            color: var(--forest);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .cert-verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--verify-green);
+            font-weight: 600;
+        }
+
+        .cert-verified-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Actions */
+        .cert-actions {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: white;
+            border-radius: var(--radius-card);
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .cert-actions h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        .cert-actions-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .cert-action-btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--forest);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cert-action-btn:hover {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .cert-action-btn.primary {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+        }
+
+        .cert-action-btn.primary:hover {
+            background: var(--forest-deep);
+            border-color: var(--forest-deep);
+        }
+
+        .cert-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-top: 1px solid var(--paper);
+        }
+
+        .cert-toggle-label {
+            font-size: 14px;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .cert-toggle-desc {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-top: 2px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: var(--leaf-light);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-switch.active {
+            background: var(--verify-green);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toggle-switch.active::after {
+            left: 24px;
+        }
+
+        /* Verification Section */
+        .cert-verification {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: white;
+            border-radius: var(--radius-card);
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .cert-verification h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        .cert-verify-content {
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        .cert-verify-qr {
+            width: 140px;
+            height: 140px;
+            background: white;
+            border: 2px solid var(--leaf-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cert-verify-qr-grid {
+            width: 108px;
+            height: 108px;
+            display: grid;
+            grid-template-columns: repeat(11, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            gap: 1px;
+        }
+
+        .cert-verify-info {
+            flex: 1;
+        }
+
+        .cert-verify-url {
+            background: var(--paper);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--moss);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .cert-verify-url-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cert-verify-copy-btn {
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--leaf-light);
+            background: white;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--forest);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .cert-verify-copy-btn:hover {
+            background: var(--forest);
+            color: white;
+        }
+
+        .cert-verify-note {
+            font-size: 13px;
+            color: var(--ink-soft);
+            line-height: 1.6;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .cert-verify-note-icon {
+            color: var(--verify-green);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--forest-deep);
+            color: white;
+            padding: 56px 40px 32px;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-brand-desc {
+            font-size: 13px;
+            opacity: 0.7;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .footer-col h4 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-bottom: 16px;
+        }
+
+        .footer-col a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .footer-col a:hover {
+            opacity: 1;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .cert-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .hero-stats {
+                gap: 24px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-header {
+                padding: 0 20px;
+            }
+            .main-content {
+                padding: 24px 20px 60px;
+            }
+            .hero-banner {
+                padding: 32px 28px;
+            }
+            .hero-title {
+                font-size: 24px;
+            }
+            .hero-stats {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+            .hero-stat-value {
+                font-size: 22px;
+            }
+            .cert-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .cert-metadata {
+                grid-template-columns: 1fr;
+            }
+            .cert-preview-inner {
+                padding: 32px 24px;
+            }
+            .cert-preview-cert-name {
+                font-size: 22px;
+            }
+            .cert-preview-recipient {
+                font-size: 20px;
+            }
+            .cert-preview-details {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .cert-preview-signature {
+                flex-direction: column;
+                align-items: center;
+                gap: 24px;
+            }
+            .cert-actions-row {
+                flex-direction: column;
+            }
+            .cert-verify-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-pills {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 4px;
+            }
+            .cert-action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .cert-card:nth-child(1) { animation-delay: 0.05s; }
+        .cert-card:nth-child(2) { animation-delay: 0.1s; }
+        .cert-card:nth-child(3) { animation-delay: 0.15s; }
+        .cert-card:nth-child(4) { animation-delay: 0.2s; }
+        .cert-card:nth-child(5) { animation-delay: 0.25s; }
+        .cert-card:nth-child(6) { animation-delay: 0.3s; }
+        .cert-card:nth-child(7) { animation-delay: 0.35s; }
+        .cert-card:nth-child(8) { animation-delay: 0.4s; }
+        .cert-card:nth-child(9) { animation-delay: 0.45s; }
+    </style>
+</head>
+<body>
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="nav-header">
+        <a href="#" class="nav-brand">
+            <div class="nav-brand-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 3v12"/>
+                    <path d="M18 9a3 3 0 0 1-3 3H6"/>
+                    <path d="M12 21c-4 0-6-2-6-5 0-4 6-3 6-7"/>
+                    <path d="M17 14c.5 1 1 2 1 4 0 2-1 3-3 3"/>
+                </svg>
+            </div>
+            <span class="nav-brand-text">Climate Passport</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Events</a></li>
+            <li><a href="#" class="active">Certificates</a></li>
+            <li><a href="#">Programs</a></li>
+            <li><a href="#">Community</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="locale-btn" id="localeBtn" onclick="toggleLocale()">EN / CN</button>
+            <div class="user-pill">
+                <div class="user-avatar">WZ</div>
+                <span class="user-name">Wei Zhang</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+        <!-- VIEW 1: Certificate List -->
+        <section id="view-list" class="active">
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <div class="hero-title" data-en="My Credential Portfolio" data-cn="我的证书档案">My Credential Portfolio</div>
+                <div class="hero-subtitle" data-en="Your verified achievements on the Climate Passport platform" data-cn="您在气候通行证平台上的已验证成就">Your verified achievements on the Climate Passport platform</div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">18</div>
+                        <div class="hero-stat-label" data-en="Total Certificates" data-cn="证书总数">Total Certificates</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">14</div>
+                        <div class="hero-stat-label" data-en="Verified" data-cn="已验证">Verified</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">3</div>
+                        <div class="hero-stat-label" data-en="This Month" data-cn="本月新增">This Month</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">9</div>
+                        <div class="hero-stat-label" data-en="Skills Earned" data-cn="技能获得">Skills Earned</div>
+                    </div>
+                </div>
+                <div class="hero-progress">
+                    <div class="hero-progress-label">
+                        <span data-en="Credential Level:" data-cn="证书等级:">Credential Level:</span>
+                        <span class="hero-progress-badge">Climate Advocate</span>
+                    </div>
+                    <div class="hero-progress-bar">
+                        <div class="hero-progress-fill"></div>
+                    </div>
+                    <div class="hero-progress-percent">72%</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="search-input-wrap">
+                    <span class="search-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </span>
+                    <input type="text" class="search-input" placeholder="Search certificates..." data-placeholder-en="Search certificates..." data-placeholder-cn="搜索证书...">
+                </div>
+                <select class="filter-select">
+                    <option>All Categories</option>
+                    <option>Course Certificate</option>
+                    <option>Event Attendance</option>
+                    <option>Speaker Certificate</option>
+                    <option>Volunteer Certificate</option>
+                    <option>Learning Experience</option>
+                    <option>Achievement Badge</option>
+                    <option>Milestone Credential</option>
+                </select>
+                <div class="status-pills">
+                    <button class="status-pill active">All</button>
+                    <button class="status-pill">Issued</button>
+                    <button class="status-pill">Pending</button>
+                    <button class="status-pill">Expired</button>
+                    <button class="status-pill">Revoked</button>
+                </div>
+            </div>
+
+            <!-- Certificate Grid -->
+            <div class="cert-grid">
+                <!-- Card 1 -->
+                <div class="cert-card animate-in" onclick="showDetail(0)">
+                    <div class="cert-card-accent gold"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge course">Course</span>
+                        <div class="cert-card-name">FSA Credential - Level I</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">IF</span>
+                            IFRS Foundation
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>March 15, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>FSA Certification Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-004821</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(0)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="cert-card animate-in" onclick="showDetail(1)">
+                    <div class="cert-card-accent moss"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge event">Event</span>
+                        <div class="cert-card-name">Shanghai Climate Week 2026 - Attendance</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">SC</span>
+                            SHCW Organizing Committee
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>May 10, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>SHCW 2026 Main Conference</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-005103</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(1)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="cert-card animate-in" onclick="showDetail(2)">
+                    <div class="cert-card-accent amber"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge speaker">Speaker</span>
+                        <div class="cert-card-name">Youth Climate Action Forum - Keynote Speaker</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">YC</span>
+                            Youth Climate Alliance
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>April 22, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>Youth Climate Action Forum</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-004957</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(2)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="cert-card animate-in" onclick="showDetail(3)">
+                    <div class="cert-card-accent gold"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge course">Course</span>
+                        <div class="cert-card-name">Climate Leadership Fundamentals</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">GC</span>
+                            Global Climate Academy (GCA)
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>February 28, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>GCA Online Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-003842</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(3)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="cert-card animate-in" onclick="showDetail(4)">
+                    <div class="cert-card-accent blue"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge volunteer">Volunteer</span>
+                        <div class="cert-card-name">Volunteer Service - SHCW 2026</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">SC</span>
+                            SHCW Organizing Committee
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>May 12, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>SHCW 2026 Volunteer Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-005210</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(4)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="cert-card animate-in" onclick="showDetail(5)">
+                    <div class="cert-card-accent sage"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge learning">Learning</span>
+                        <div class="cert-card-name">Summer School on Sustainable Finance</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">SF</span>
+                            Sustainable Finance Institute
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>January 20, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>Winter Intensive Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-002195</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(5)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7 -->
+                <div class="cert-card animate-in" onclick="showDetail(6)">
+                    <div class="cert-card-accent teal"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge badge">Badge</span>
+                        <div class="cert-card-name">Climate Literacy Badge - Level 3</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">CP</span>
+                            Climate Passport Authority
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>April 5, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>Climate Literacy Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-004512</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status issued">
+                                <span class="cert-status-dot"></span>
+                                Issued
+                            </div>
+                            <span class="cert-verified-icon" title="Blockchain Verified">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(6)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="cert-card animate-in" onclick="showDetail(7)">
+                    <div class="cert-card-accent sage"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge milestone">Milestone</span>
+                        <div class="cert-card-name">Ocean Stewardship Program - Completion</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">OS</span>
+                            Ocean Stewardship Council
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>May 18, 2026</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>Ocean Stewardship Program</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2026-005387</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status pending">
+                                <span class="cert-status-dot"></span>
+                                Pending Review
+                            </div>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(7)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 9 -->
+                <div class="cert-card animate-in" onclick="showDetail(8)">
+                    <div class="cert-card-accent amber"></div>
+                    <div class="cert-card-body">
+                        <span class="cert-type-badge moderator">Moderator</span>
+                        <div class="cert-card-name">Green Finance Workshop - Moderator</div>
+                        <div class="cert-card-org">
+                            <span class="cert-card-org-icon">GF</span>
+                            Green Finance Forum
+                        </div>
+                        <div class="cert-card-meta">
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Date</span>
+                                <span>November 8, 2025</span>
+                            </div>
+                            <div class="cert-card-meta-item">
+                                <span class="meta-label">Event</span>
+                                <span>Annual Green Finance Workshop</span>
+                            </div>
+                        </div>
+                        <div class="cert-card-number">CP-CERT-2025-012847</div>
+                        <div class="cert-card-footer">
+                            <div class="cert-status expired">
+                                <span class="cert-status-dot"></span>
+                                Expired
+                            </div>
+                            <button class="cert-view-btn" onclick="event.stopPropagation(); showDetail(8)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more-wrap">
+                <button class="load-more-btn" data-en="Load More Certificates" data-cn="加载更多证书">Load More Certificates</button>
+            </div>
+        </section>
+
+        <!-- VIEW 2: Certificate Detail -->
+        <section id="view-detail">
+            <button class="back-btn" onclick="showList()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <span data-en="Back to My Certificates" data-cn="返回证书列表">Back to My Certificates</span>
+            </button>
+
+            <!-- Certificate Preview -->
+            <div class="cert-preview">
+                <div class="cert-preview-border">
+                    <div class="cert-preview-inner">
+                        <div class="cert-preview-watermark">CLIMATE PASSPORT</div>
+
+                        <!-- Header -->
+                        <div class="cert-preview-header">
+                            <div class="cert-preview-logo">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 3v12"/><path d="M18 9a3 3 0 0 1-3 3H6"/><path d="M12 21c-4 0-6-2-6-5 0-4 6-3 6-7"/><path d="M17 14c.5 1 1 2 1 4 0 2-1 3-3 3"/>
+                                </svg>
+                            </div>
+                            <div class="cert-preview-org-name" id="detail-org">Climate Passport Authority</div>
+                        </div>
+
+                        <!-- Certificate Content -->
+                        <div class="cert-preview-title">Certificate of Achievement</div>
+                        <div class="cert-preview-cert-name" id="detail-cert-name">FSA Credential - Level I</div>
+                        <div class="cert-preview-recipient-label">Awarded To</div>
+                        <div class="cert-preview-recipient">Wei Zhang</div>
+                        <div class="cert-preview-body" id="detail-body">
+                            In recognition of successfully completing the Fundamentals of Sustainability Accounting (FSA) Credential Level I program, demonstrating proficiency in sustainability disclosure standards, ESG integration, and climate-related financial reporting.
+                        </div>
+
+                        <!-- Details -->
+                        <div class="cert-preview-details">
+                            <div class="cert-preview-detail-item">
+                                <div class="cert-preview-detail-label">Certificate No.</div>
+                                <div class="cert-preview-detail-value" id="detail-number">CP-CERT-2026-004821</div>
+                            </div>
+                            <div class="cert-preview-detail-item">
+                                <div class="cert-preview-detail-label">Issue Date</div>
+                                <div class="cert-preview-detail-value" id="detail-date">March 15, 2026</div>
+                            </div>
+                            <div class="cert-preview-detail-item">
+                                <div class="cert-preview-detail-label">Valid Through</div>
+                                <div class="cert-preview-detail-value" id="detail-expiry">March 15, 2029</div>
+                            </div>
+                        </div>
+
+                        <!-- Signature -->
+                        <div class="cert-preview-signature">
+                            <div class="cert-signature-block">
+                                <div class="cert-signature-name">Dr. Sarah Chen</div>
+                                <div class="cert-signature-line"></div>
+                                <div class="cert-signature-label">Authorized Signatory</div>
+                            </div>
+                            <div class="cert-seal">
+                                <div class="cert-seal-inner">Official<br>Seal</div>
+                            </div>
+                            <div class="cert-signature-block">
+                                <div class="cert-signature-name">Prof. James Liu</div>
+                                <div class="cert-signature-line"></div>
+                                <div class="cert-signature-label">Program Director</div>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Corner -->
+                        <div class="cert-qr-corner">
+                            <div class="cert-qr-pattern">
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div>
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div>
+                                <div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div>
+                                <div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate Metadata -->
+            <div class="cert-metadata">
+                <div class="cert-meta-col">
+                    <h3 data-en="Certificate Information" data-cn="证书信息">Certificate Information</h3>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Certificate Name</span>
+                        <span class="cert-meta-value" id="meta-name">FSA Credential - Level I</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Type</span>
+                        <span class="cert-meta-value" id="meta-type">Course Certificate</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Category</span>
+                        <span class="cert-meta-value" id="meta-category">Professional Certification</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Related Program</span>
+                        <span class="cert-meta-value" id="meta-program">FSA Certification Program</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Related Event</span>
+                        <span class="cert-meta-value" id="meta-event">IFRS Sustainability Standards Training</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Competency Tags</span>
+                        <div class="cert-meta-tags" id="meta-tags">
+                            <span class="cert-meta-tag">ESG Reporting</span>
+                            <span class="cert-meta-tag">IFRS S1/S2</span>
+                            <span class="cert-meta-tag">Climate Risk</span>
+                            <span class="cert-meta-tag">Sustainability</span>
+                        </div>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Description</span>
+                        <span class="cert-meta-value" id="meta-desc" style="font-size: 13px; line-height: 1.6; color: var(--ink-soft);">Successfully completed the FSA Credential Level I program covering fundamentals of sustainability accounting, climate disclosure standards, and ESG integration in financial analysis.</span>
+                    </div>
+                </div>
+                <div class="cert-meta-col">
+                    <h3 data-en="Verification Details" data-cn="验证详情">Verification Details</h3>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Certificate Number</span>
+                        <span class="cert-meta-value mono" id="meta-number">CP-CERT-2026-004821</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Issue Date</span>
+                        <span class="cert-meta-value" id="meta-issue-date">March 15, 2026</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Expiry Date</span>
+                        <span class="cert-meta-value" id="meta-expiry-date">March 15, 2029</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Issuing Authority</span>
+                        <span class="cert-meta-value" id="meta-authority">IFRS Foundation / Climate Passport Authority</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Verification Status</span>
+                        <span class="cert-meta-value">
+                            <span class="cert-verified-badge" id="meta-verify-status">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                                Blockchain Verified
+                            </span>
+                        </span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Blockchain Hash</span>
+                        <span class="cert-meta-value mono" id="meta-hash" style="font-size: 11px; word-break: break-all;">0x7a3b...f2e8d1c4</span>
+                    </div>
+                    <div class="cert-meta-row">
+                        <span class="cert-meta-label">Credential Standard</span>
+                        <span class="cert-meta-value" id="meta-standard">Open Badges v3.0 / W3C Verifiable Credentials</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="cert-actions">
+                <h3 data-en="Actions" data-cn="操作">Actions</h3>
+                <div class="cert-actions-row">
+                    <button class="cert-action-btn primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download PDF
+                    </button>
+                    <button class="cert-action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy Verification Link
+                    </button>
+                    <button class="cert-action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        Share to LinkedIn
+                    </button>
+                    <button class="cert-action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        Share to WeChat
+                    </button>
+                    <button class="cert-action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Share via Email
+                    </button>
+                </div>
+                <div class="cert-toggle-row">
+                    <div>
+                        <div class="cert-toggle-label" data-en="Display on Public Climate Passport Profile" data-cn="在公开气候通行证资料中展示">Display on Public Climate Passport Profile</div>
+                        <div class="cert-toggle-desc" data-en="Allow this certificate to be visible on your public profile page" data-cn="允许此证书在您的公开资料页面上可见">Allow this certificate to be visible on your public profile page</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+            </div>
+
+            <!-- Verification Section -->
+            <div class="cert-verification">
+                <h3 data-en="Independent Verification" data-cn="独立验证">Independent Verification</h3>
+                <div class="cert-verify-content">
+                    <div class="cert-verify-qr">
+                        <div class="cert-verify-qr-grid">
+                            <!-- Simplified QR pattern -->
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div>
+                            <div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div>
+                            <div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell empty"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div><div class="cert-qr-cell"></div>
+                        </div>
+                    </div>
+                    <div class="cert-verify-info">
+                        <div class="cert-verify-url">
+                            <span class="cert-verify-url-text">https://verify.climatepassport.org/cert/CP-CERT-2026-004821</span>
+                            <button class="cert-verify-copy-btn" onclick="copyUrl(this)">Copy</button>
+                        </div>
+                        <div class="cert-verify-note">
+                            <span class="cert-verify-note-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </span>
+                            <span data-en="This certificate can be independently verified by any third party using the QR code or verification URL above. The credential is anchored on a distributed ledger ensuring tamper-proof authenticity." data-cn="任何第三方均可通过上方的二维码或验证链接独立验证此证书。该凭证锚定在分布式账本上，确保防篡改的真实性。">This certificate can be independently verified by any third party using the QR code or verification URL above. The credential is anchored on a distributed ledger ensuring tamper-proof authenticity.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-brand-name">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 3v12"/><path d="M18 9a3 3 0 0 1-3 3H6"/><path d="M12 21c-4 0-6-2-6-5 0-4 6-3 6-7"/><path d="M17 14c.5 1 1 2 1 4 0 2-1 3-3 3"/>
+                    </svg>
+                    Climate Passport
+                </div>
+                <p class="footer-brand-desc">Empowering climate action through verified digital credentials and transparent sustainability tracking.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Platform</h4>
+                <a href="#">Dashboard</a>
+                <a href="#">Events</a>
+                <a href="#">Certificates</a>
+                <a href="#">Programs</a>
+            </div>
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <a href="#">Documentation</a>
+                <a href="#">API Reference</a>
+                <a href="#">Verification</a>
+                <a href="#">Standards</a>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>2026 Climate Passport. All rights reserved.</span>
+            <span>Shanghai Climate Week 2026</span>
+        </div>
+    </footer>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // Certificate data
+        const certificates = [
+            {
+                name: 'FSA Credential - Level I',
+                type: 'Course Certificate',
+                category: 'Professional Certification',
+                org: 'IFRS Foundation',
+                date: 'March 15, 2026',
+                expiry: 'March 15, 2029',
+                number: 'CP-CERT-2026-004821',
+                event: 'IFRS Sustainability Standards Training',
+                program: 'FSA Certification Program',
+                status: 'issued',
+                verified: true,
+                tags: ['ESG Reporting', 'IFRS S1/S2', 'Climate Risk', 'Sustainability'],
+                body: 'In recognition of successfully completing the Fundamentals of Sustainability Accounting (FSA) Credential Level I program, demonstrating proficiency in sustainability disclosure standards, ESG integration, and climate-related financial reporting.',
+                hash: '0x7a3b9c2e...f2e8d1c4a5b6',
+                authority: 'IFRS Foundation / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Shanghai Climate Week 2026 - Attendance',
+                type: 'Event Certificate',
+                category: 'Event Participation',
+                org: 'SHCW Organizing Committee',
+                date: 'May 10, 2026',
+                expiry: 'N/A (Lifetime)',
+                number: 'CP-CERT-2026-005103',
+                event: 'SHCW 2026 Main Conference',
+                program: 'Shanghai Climate Week 2026',
+                status: 'issued',
+                verified: true,
+                tags: ['Climate Action', 'Sustainability', 'Conference', 'Networking'],
+                body: 'This certifies that Wei Zhang attended the Shanghai Climate Week 2026 Main Conference, participating in sessions covering climate finance, sustainable development, and global climate governance.',
+                hash: '0x4e1f8a7d...c3b9e2d5f6a1',
+                authority: 'SHCW Organizing Committee / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Youth Climate Action Forum - Keynote Speaker',
+                type: 'Speaker Certificate',
+                category: 'Speaking Engagement',
+                org: 'Youth Climate Alliance',
+                date: 'April 22, 2026',
+                expiry: 'N/A (Lifetime)',
+                number: 'CP-CERT-2026-004957',
+                event: 'Youth Climate Action Forum 2026',
+                program: 'Youth Leadership Series',
+                status: 'issued',
+                verified: true,
+                tags: ['Public Speaking', 'Youth Leadership', 'Climate Advocacy', 'Keynote'],
+                body: 'In recognition of delivering a keynote address at the Youth Climate Action Forum 2026 on the topic of "Bridging Generations in Climate Finance," inspiring youth engagement in sustainability.',
+                hash: '0x9d2c4b7a...e1f3a8c6d5b2',
+                authority: 'Youth Climate Alliance / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Climate Leadership Fundamentals',
+                type: 'Course Certificate',
+                category: 'Professional Development',
+                org: 'Global Climate Academy (GCA)',
+                date: 'February 28, 2026',
+                expiry: 'February 28, 2028',
+                number: 'CP-CERT-2026-003842',
+                event: 'GCA Online Program',
+                program: 'Climate Leadership Series',
+                status: 'issued',
+                verified: true,
+                tags: ['Climate Leadership', 'Strategy', 'Policy', 'Governance'],
+                body: 'Successfully completed the Climate Leadership Fundamentals course covering climate governance, policy frameworks, strategic planning for sustainability, and organizational leadership in climate action.',
+                hash: '0x3f5a1e8c...b7d2c9a4f6e3',
+                authority: 'Global Climate Academy / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Volunteer Service - SHCW 2026',
+                type: 'Volunteer Certificate',
+                category: 'Community Service',
+                org: 'SHCW Organizing Committee',
+                date: 'May 12, 2026',
+                expiry: 'N/A (Lifetime)',
+                number: 'CP-CERT-2026-005210',
+                event: 'SHCW 2026 Volunteer Program',
+                program: 'Shanghai Climate Week 2026',
+                status: 'issued',
+                verified: true,
+                tags: ['Volunteering', 'Community Service', 'Event Management', 'Teamwork'],
+                body: 'This certifies that Wei Zhang provided outstanding volunteer service during Shanghai Climate Week 2026, contributing 40+ hours of support in event coordination, translation services, and attendee guidance.',
+                hash: '0x6c8d2f4a...a1e5b3c7d9f2',
+                authority: 'SHCW Organizing Committee / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Summer School on Sustainable Finance',
+                type: 'Learning Experience',
+                category: 'Academic Program',
+                org: 'Sustainable Finance Institute',
+                date: 'January 20, 2026',
+                expiry: 'N/A (Lifetime)',
+                number: 'CP-CERT-2026-002195',
+                event: 'Winter Intensive Program 2026',
+                program: 'Sustainable Finance Education',
+                status: 'issued',
+                verified: true,
+                tags: ['Sustainable Finance', 'ESG Investing', 'Green Bonds', 'Impact'],
+                body: 'Successfully completed the intensive program on Sustainable Finance covering green bond markets, ESG investment strategies, impact measurement, and climate-aligned portfolio construction.',
+                hash: '0x2a7e9b1d...d4c8f6a3e5b7',
+                authority: 'Sustainable Finance Institute / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Climate Literacy Badge - Level 3',
+                type: 'Achievement Badge',
+                category: 'Skill Achievement',
+                org: 'Climate Passport Authority',
+                date: 'April 5, 2026',
+                expiry: 'April 5, 2028',
+                number: 'CP-CERT-2026-004512',
+                event: 'Climate Literacy Assessment',
+                program: 'Climate Literacy Program',
+                status: 'issued',
+                verified: true,
+                tags: ['Climate Science', 'Carbon Literacy', 'Systems Thinking', 'Data Analysis'],
+                body: 'Awarded for demonstrating advanced climate literacy at Level 3, including proficiency in climate science fundamentals, carbon accounting, systems thinking, and data-driven sustainability analysis.',
+                hash: '0x5b3c7d9f...f2a1e6b4c8d3',
+                authority: 'Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            },
+            {
+                name: 'Ocean Stewardship Program - Completion',
+                type: 'Milestone Credential',
+                category: 'Program Completion',
+                org: 'Ocean Stewardship Council',
+                date: 'May 18, 2026',
+                expiry: 'Pending',
+                number: 'CP-CERT-2026-005387',
+                event: 'Ocean Conservation Initiative',
+                program: 'Ocean Stewardship Program',
+                status: 'pending',
+                verified: false,
+                tags: ['Ocean Conservation', 'Marine Biology', 'Sustainability', 'Stewardship'],
+                body: 'Pending verification for completion of the Ocean Stewardship Program, covering marine ecosystem preservation, ocean sustainability practices, and community-based ocean conservation strategies.',
+                hash: 'Pending...',
+                authority: 'Ocean Stewardship Council / Climate Passport Authority',
+                standard: 'Open Badges v3.0 (Pending Issuance)'
+            },
+            {
+                name: 'Green Finance Workshop - Moderator',
+                type: 'Moderator Certificate',
+                category: 'Speaking Engagement',
+                org: 'Green Finance Forum',
+                date: 'November 8, 2025',
+                expiry: 'November 8, 2026 (Expired)',
+                number: 'CP-CERT-2025-012847',
+                event: 'Annual Green Finance Workshop 2025',
+                program: 'Green Finance Forum Series',
+                status: 'expired',
+                verified: false,
+                tags: ['Moderation', 'Green Finance', 'Panel Discussion', 'Facilitation'],
+                body: 'In recognition of serving as panel moderator at the Annual Green Finance Workshop 2025, facilitating discussions on sustainable investment frameworks and climate-aligned financial products.',
+                hash: '0x1d4f6a8c...b9e2c7d5a3f1',
+                authority: 'Green Finance Forum / Climate Passport Authority',
+                standard: 'Open Badges v3.0 / W3C Verifiable Credentials'
+            }
+        ];
+
+        let currentLocale = 'en';
+
+        // View toggle
+        function showDetail(index) {
+            const cert = certificates[index];
+            document.getElementById('view-list').classList.remove('active');
+            document.getElementById('view-detail').classList.add('active');
+
+            // Update detail view
+            document.getElementById('detail-cert-name').textContent = cert.name;
+            document.getElementById('detail-org').textContent = cert.org;
+            document.getElementById('detail-body').textContent = cert.body;
+            document.getElementById('detail-number').textContent = cert.number;
+            document.getElementById('detail-date').textContent = cert.date;
+            document.getElementById('detail-expiry').textContent = cert.expiry;
+
+            // Update metadata
+            document.getElementById('meta-name').textContent = cert.name;
+            document.getElementById('meta-type').textContent = cert.type;
+            document.getElementById('meta-category').textContent = cert.category;
+            document.getElementById('meta-program').textContent = cert.program;
+            document.getElementById('meta-event').textContent = cert.event;
+            document.getElementById('meta-number').textContent = cert.number;
+            document.getElementById('meta-issue-date').textContent = cert.date;
+            document.getElementById('meta-expiry-date').textContent = cert.expiry;
+            document.getElementById('meta-authority').textContent = cert.authority;
+            document.getElementById('meta-hash').textContent = cert.hash;
+            document.getElementById('meta-standard').textContent = cert.standard;
+            document.getElementById('meta-desc').textContent = cert.body;
+
+            // Update tags
+            const tagsEl = document.getElementById('meta-tags');
+            tagsEl.innerHTML = cert.tags.map(t => `<span class="cert-meta-tag">${t}</span>`).join('');
+
+            // Update verification status
+            const verifyEl = document.getElementById('meta-verify-status');
+            if (cert.verified) {
+                verifyEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> Blockchain Verified`;
+                verifyEl.style.color = 'var(--verify-green)';
+            } else {
+                verifyEl.innerHTML = cert.status === 'pending' ? 'Pending Verification' : 'Verification Expired';
+                verifyEl.style.color = cert.status === 'pending' ? '#d97706' : '#6b7280';
+            }
+
+            // Update verify URL
+            document.querySelector('.cert-verify-url-text').textContent = `https://verify.climatepassport.org/cert/${cert.number}`;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showList() {
+            document.getElementById('view-detail').classList.remove('active');
+            document.getElementById('view-list').classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Status pill toggle
+        document.querySelectorAll('.status-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Locale toggle
+        function toggleLocale() {
+            currentLocale = currentLocale === 'en' ? 'cn' : 'en';
+            const btn = document.getElementById('localeBtn');
+            btn.textContent = currentLocale === 'en' ? 'EN / CN' : 'CN / EN';
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-' + currentLocale + ']').forEach(el => {
+                const text = el.getAttribute('data-' + currentLocale);
+                if (text) el.textContent = text;
+            });
+
+            // Update placeholder
+            document.querySelectorAll('[data-placeholder-' + currentLocale + ']').forEach(el => {
+                const text = el.getAttribute('data-placeholder-' + currentLocale);
+                if (text) el.placeholder = text;
+            });
+        }
+
+        // Copy URL function
+        function copyUrl(btn) {
+            const urlText = document.querySelector('.cert-verify-url-text').textContent;
+            navigator.clipboard.writeText(urlText).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = 'var(--verify-green)';
+                btn.style.color = 'white';
+                btn.style.borderColor = 'var(--verify-green)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            });
+        }
+
+        // Initialize view
+        document.getElementById('view-list').classList.add('active');
+    </script>
+</body>
+</html>

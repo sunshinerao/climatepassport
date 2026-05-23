@@ -9,7 +9,7 @@ export default async function SummerSchoolApplicationsPage({ params }: { params:
   const locale = params.locale;
   const isZh = locale === "zh";
 
-  await requireRoleAccess(locale, ["ADMIN", "EVENT_MANAGER"], `/${locale}/admin`);
+  await requireRoleAccess(locale, ["ADMIN"], `/${locale}/admin`);
 
   return (
     <div className="proto-admin-page">

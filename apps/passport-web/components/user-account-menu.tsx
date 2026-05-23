@@ -55,17 +55,30 @@ function getUserMenuItems(locale: Locale): MenuItem[] {
   ];
 }
 
-function getAdminMenuItems(locale: Locale): MenuItem[] {
+function getAdminMenuItems(locale: Locale, role: UserRole): MenuItem[] {
   const prefix = `/${locale}`;
 
-  return [
+  const items: MenuItem[] = [
     { href: `${prefix}/admin`, icon: "AD", label: locale === "zh" ? "管理总览" : "Admin Overview" },
     { href: `${prefix}/admin/events`, icon: "EV", label: locale === "zh" ? "活动管理" : "Event Management" },
-    { href: `${prefix}/admin/certificates`, icon: "CR", label: locale === "zh" ? "证书签发" : "Certificate Issuing" },
     { href: `${prefix}/admin/learning-experiences`, icon: "PG", label: locale === "zh" ? "项目管理" : "Program Management" },
     { href: `${prefix}/admin/learning-experiences/applications`, icon: "AP", label: locale === "zh" ? "学习申请" : "Learning Applications" },
-    { href: `${prefix}/admin/summer-school/applications`, icon: "SA", label: locale === "zh" ? "夏校申请" : "Summer School Applications" },
   ];
+
+  if (role === "ADMIN") {
+    items.splice(2, 0, {
+      href: `${prefix}/admin/certificates`,
+      icon: "CR",
+      label: locale === "zh" ? "证书签发" : "Certificate Issuing",
+    });
+    items.push({
+      href: `${prefix}/admin/summer-school/applications`,
+      icon: "SA",
+      label: locale === "zh" ? "夏校申请" : "Summer School Applications",
+    });
+  }
+
+  return items;
 }
 
 export function UserAccountMenu({ locale, user }: { locale: Locale; user: MenuUser }) {
@@ -111,7 +124,7 @@ export function UserAccountMenu({ locale, user }: { locale: Locale; user: MenuUs
   }
 
   const userItems = getUserMenuItems(locale);
-  const adminItems = adminUser ? getAdminMenuItems(locale) : [];
+  const adminItems = adminUser ? getAdminMenuItems(locale, user.role) : [];
 
   return (
     <div className="account-menu" ref={menuRef}>

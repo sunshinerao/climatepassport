@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate --schema ../../prisma/schema.prisma"
   },
   "dependencies": {
+    "@climate-passport/passport-core": "0.1.0",
     "@prisma/client": "^5.10.0",
     "bcryptjs": "^3.0.3",
     "next": "14.2.35",

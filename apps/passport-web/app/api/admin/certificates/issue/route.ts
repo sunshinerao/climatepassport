@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/server/auth";
+import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const issueSchema = z.object({
@@ -10,7 +11,8 @@ const issueSchema = z.object({
 
 export async function POST(request: Request) {
   const admin = await getCurrentUser();
-  if (!admin || (admin.role !== "ADMIN" && admin.role !== "EVENT_MANAGER")) {
+
+  if (!admin || admin.role !== "ADMIN") {
     return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
   }
 
@@ -48,9 +50,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No active certificate definition found for this template." }, { status: 404 });
   }
 
-  // Create issue record
-  const { randomUUID } = await import("crypto");
-  const verificationCode = `CP-${randomUUID().split("-")[0].toUpperCase()}-${randomUUID().split("-")[1].toUpperCase()}`;
+  const verificationCode = await allocateCertificateVerificationCode(async (candidate) => {
+    const existing = await prisma.certificateIssue.findUnique({
+      where: { verificationCode: candidate },
+      select: { id: true },
+    });
+
+    return Boolean(existing);
+  });
 
   await prisma.certificateIssue.create({
     data: {

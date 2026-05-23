@@ -8,7 +8,7 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
   noStore();
   const user = await requireRoleAccess(
     params.locale,
-    ["ADMIN", "EVENT_MANAGER"],
+    ["ADMIN"],
     `/${params.locale}/admin/certificates`,
   );
   const prisma = getPrismaClient();

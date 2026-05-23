@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate Admin — Climate Passport</title>
+<style>
+:root{--forest-deep:#0b3d2e;--forest:#1a5d48;--moss:#4a8a6a;--sage:#8fb89a;--leaf-light:#c4dcc8;--amber-warm:#c4893f;--amber-soft:#e8c88a;--cream:#faf8f3;--paper:#f5f2ec;--ink:#0f2a20;--ink-soft:#2d5245;--gold:#b8860b;--verify-green:#16a34a;--danger:#dc2626;--sidebar-w:260px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Noto Sans SC","PingFang SC",sans-serif;color:var(--ink);background:var(--cream);line-height:1.6}
+a{text-decoration:none;color:inherit}
+button{font:inherit;cursor:pointer;border:none;background:none}
+.layout{display:flex;min-height:100vh}
+/* Sidebar */
+.sb{width:var(--sidebar-w);background:var(--forest-deep);color:rgba(255,255,255,.85);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:50;overflow-y:auto}
+.sb-brand{display:flex;align-items:center;gap:12px;padding:22px 20px;font-weight:700;font-size:17px;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-brand svg{width:30px;height:30px}
+.sb-nav{padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex:1}
+.sb-sec{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);opacity:.65;padding:14px 12px 6px}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:11px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:.2s;position:relative}
+.ni:hover{background:rgba(255,255,255,.06);color:#fff}
+.ni.ac{background:rgba(255,255,255,.1);color:#fff}
+.ni.ac::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--amber-warm)}
+.ni svg{width:18px;height:18px;opacity:.8}
+.ni .badge{margin-left:auto;padding:2px 7px;border-radius:999px;background:var(--amber-warm);color:#fff;font-size:10px;font-weight:700}
+.sb-ft{padding:14px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:9px;border-radius:12px;background:rgba(255,255,255,.06)}
+.sb-av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--moss),var(--sage));display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.sb-info strong{display:block;font-size:12px;color:#fff}
+.sb-info span{font-size:11px;color:var(--sage)}
+/* Main */
+.mn{margin-left:var(--sidebar-w);flex:1;min-width:0}
+.tb{position:sticky;top:0;z-index:40;background:rgba(250,248,243,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(11,61,46,.08);padding:0 28px;display:flex;align-items:center;justify-content:space-between;min-height:60px}
+.bc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+.bc strong{color:var(--forest-deep);font-weight:600}
+.tb-acts{display:flex;align-items:center;gap:12px}
+.srch{padding:7px 12px 7px 34px;border-radius:999px;border:1.5px solid rgba(11,61,46,.1);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232d5245' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;font-size:13px;width:200px;transition:.2s}
+.srch:focus{outline:none;border-color:var(--moss);width:260px;box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.lp{padding:5px 12px;border-radius:999px;border:1.5px solid rgba(11,61,46,.12);font-size:12px;font-weight:600;color:var(--ink-soft);background:#fff;cursor:pointer}
+/* Content */
+.ct{padding:28px;max-width:1220px}
+.sp{display:none}
+.sp.ac{display:block;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ph{margin-bottom:24px}
+.pt{font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:400;color:var(--forest-deep);line-height:1.2}
+.pd{font-size:14px;color:var(--ink-soft);margin-top:5px}
+/* Stats */
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.sc{background:#fff;border-radius:18px;border:1px solid rgba(11,61,46,.06);box-shadow:0 2px 10px rgba(11,61,46,.03);padding:20px;transition:.2s}
+.sc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(11,61,46,.07)}
+.sc .lb{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);opacity:.7;margin-bottom:6px}
+.sv{font-size:28px;font-weight:700;color:var(--forest-deep);letter-spacing:-.03em;line-height:1.1}
+.sch{font-size:12px;font-weight:600;margin-top:6px;display:inline-flex;align-items:center;gap:3px}
+.sch.up{color:var(--moss)}
+.sch.dn{color:var(--danger)}
+/* Cards */
+.cd{background:#fff;border-radius:18px;border:1px solid rgba(11,61,46,.06);box-shadow:0 2px 10px rgba(11,61,46,.03);overflow:hidden}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(11,61,46,.06)}
+.cti{font-size:15px;font-weight:700;color:var(--forest-deep)}
+.cb{padding:18px 20px}
+.cf{padding:12px 20px;border-top:1px solid rgba(11,61,46,.06);display:flex;justify-content:flex-end}
+/* Tables */
+.dt{width:100%;border-collapse:collapse}
+.dt th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);opacity:.7;border-bottom:1.5px solid rgba(11,61,46,.08);white-space:nowrap}
+.dt td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(11,61,46,.04);vertical-align:middle}
+.dt tr:hover td{background:rgba(11,61,46,.015)}
+.dt tr:last-child td{border-bottom:none}
+.cs{font-weight:600;color:var(--forest-deep)}
+.cm{color:var(--ink-soft);font-size:12px}
+/* Badges */
+.bg{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.bg-g{background:#dcfce7;color:#166534}
+.bg-a{background:#fef3c7;color:#92400e}
+.bg-r{background:#fee2e2;color:#991b1b}
+.bg-b{background:#dbeafe;color:#1e40af}
+.bg-gr{background:#f3f4f6;color:#4b5563}
+.bg-gold{background:#fef3c7;color:var(--gold)}
+.bdot{width:5px;height:5px;border-radius:50%}
+.bg-g .bdot{background:#22c55e}
+.bg-a .bdot{background:#f59e0b}
+.bg-r .bdot{background:#ef4444}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 16px;border-radius:999px;font-size:12px;font-weight:600;transition:.2s;white-space:nowrap}
+.btn-am{background:var(--amber-warm);color:#fff}
+.btn-am:hover{background:#a87332}
+.btn-ol{border:1.5px solid rgba(11,61,46,.15);color:var(--ink-soft);background:#fff}
+.btn-ol:hover{border-color:var(--forest);color:var(--forest)}
+.btn-gh{color:var(--ink-soft);background:transparent}
+.btn-gh:hover{background:var(--paper);color:var(--forest-deep)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-suc{background:#dcfce7;color:#166534}
+.btn-suc:hover{background:#bbf7d0}
+.btn-dan{background:#fee2e2;color:#b33a3a}
+.btn-dan:hover{background:#fecaca}
+/* Forms */
+.fg{display:grid;gap:14px}
+.fd{display:grid;gap:5px}
+.fd label{font-size:12px;font-weight:600;color:var(--ink-soft)}
+.fd input,.fd select,.fd textarea{padding:9px 12px;border-radius:11px;border:1.5px solid rgba(11,61,46,.1);background:#fff;font-size:13px;color:var(--ink);transition:.2s}
+.fd input:focus,.fd select:focus,.fd textarea:focus{outline:none;border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tr{display:flex;gap:10px;flex-wrap:wrap}
+.tg{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:10px;border:1.5px solid rgba(11,61,46,.1);background:#fff;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+.tg input{accent-color:var(--moss)}
+/* Grid */
+.dg{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+/* Bar chart */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-lbl{width:140px;font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:22px;background:var(--paper);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--moss),var(--sage));transition:.3s}
+.bar-val{width:50px;font-size:12px;font-weight:700;color:var(--forest-deep);text-align:right}
+/* Template cards */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tpl-card{background:#fff;border-radius:16px;border:1px solid rgba(11,61,46,.08);overflow:hidden;transition:.2s;cursor:pointer}
+.tpl-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(11,61,46,.08)}
+.tpl-thumb{height:120px;display:flex;align-items:center;justify-content:center;position:relative}
+.tpl-thumb .tpl-border{width:80%;height:80%;border:2px solid rgba(11,61,46,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em}
+.tpl-body{padding:14px 16px}
+.tpl-body h4{font-size:14px;font-weight:700;color:var(--forest-deep);margin-bottom:4px}
+.tpl-meta{font-size:12px;color:var(--ink-soft);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.tpl-acts{display:flex;gap:6px}
+/* Feed */
+.fi{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(11,61,46,.04)}
+.fi:last-child{border-bottom:none}
+.fa{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--moss),var(--sage));display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.fb{flex:1}
+.fb p{font-size:13px;color:var(--ink);line-height:1.4}
+.fb p strong{color:var(--forest-deep)}
+.ft{font-size:11px;color:var(--ink-soft);margin-top:2px}
+/* Quick cards */
+.qg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.qc{padding:16px;border-radius:14px;border:1.5px solid rgba(11,61,46,.08);background:#fff;cursor:pointer;transition:.2s}
+.qc:hover{border-color:var(--leaf-light);transform:translateY(-2px);box-shadow:0 6px 18px rgba(11,61,46,.06)}
+.qc h3{font-size:13px;font-weight:700;color:var(--forest-deep);margin:6px 0 3px}
+.qc p{font-size:12px;color:var(--ink-soft);line-height:1.4}
+/* Rule item */
+.rl{padding:14px 16px;border:1px solid rgba(11,61,46,.06);border-radius:14px;background:#fff;display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr .6fr .6fr .5fr;gap:10px;align-items:center;margin-bottom:8px;transition:.15s}
+.rl:hover{border-color:var(--leaf-light)}
+/* Pagination */
+.pg{display:flex;align-items:center;justify-content:space-between;padding:14px 0;font-size:12px;color:var(--ink-soft)}
+.pg-btns{display:flex;gap:4px}
+.pg-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(11,61,46,.1);display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--ink-soft);background:#fff;cursor:pointer}
+.pg-btn.ac{background:var(--amber-warm);color:#fff;border-color:var(--amber-warm)}
+/* Lang */
+.lang{position:fixed;bottom:18px;right:18px;z-index:100;display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;background:var(--forest-deep);color:#fff;font-size:11px;font-weight:600;box-shadow:0 3px 12px rgba(11,61,46,.25);cursor:pointer;border:none}
+/* Mobile */
+.mt{display:none;background:none;border:none;font-size:20px;color:var(--forest-deep)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:45}
+.overlay.show{display:block}
+@media(max-width:1080px){.sr{grid-template-columns:repeat(2,1fr)}.dg{grid-template-columns:1fr}.tpl-grid{grid-template-columns:repeat(2,1fr)}.qg{grid-template-columns:1fr}.rl{grid-template-columns:1fr;gap:4px}}
+@media(max-width:980px){.sb{transform:translateX(-100%);transition:.3s}.sb.open{transform:translateX(0)}.mn{margin-left:0}.mt{display:block}.srch{width:140px}.srch:focus{width:180px}}
+@media(max-width:640px){.sr{grid-template-columns:1fr}.ct{padding:18px}.tb{padding:0 14px}.fr{grid-template-columns:1fr}.tpl-grid{grid-template-columns:1fr}.dt{display:block;overflow-x:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<div class="layout">
+<!-- Sidebar -->
+<aside class="sb" id="sidebar">
+<div class="sb-brand">
+<svg viewBox="0 0 32 32" fill="none"><path d="M16 2C10 8 6 14 6 20c0 5.5 4.5 10 10 10s10-4.5 10-10c0-6-4-12-10-18z" fill="var(--sage)"/><path d="M16 8v18" stroke="var(--forest-deep)" stroke-width="2" stroke-linecap="round"/></svg>
+<span>Certificates</span>
+</div>
+<nav class="sb-nav">
+<div class="sb-sec">Overview</div>
+<a class="ni ac" onclick="show('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a>
+<div class="sb-sec">Configuration</div>
+<a class="ni" onclick="show('cats',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg><span>Categories</span></a>
+<a class="ni" onclick="show('tpl',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>Templates</span><span class="badge">16</span></a>
+<a class="ni" onclick="show('rules',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>Issuing Rules</span></a>
+<div class="sb-sec">Operations</div>
+<a class="ni" onclick="show('issue',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Issue Certificates</span></a>
+<a class="ni" onclick="show('apps',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg><span>Applications</span><span class="badge">5</span></a>
+<a class="ni" onclick="show('recs',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M12 20V4M12 4l-7 4h14l-7-4z"/></svg><span>Records</span><span class="badge">9.4K</span></a>
+<a class="ni" onclick="show('logs',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Audit Logs</span></a>
+</nav>
+<div class="sb-ft"><div class="sb-user"><div class="sb-av">WZ</div><div class="sb-info"><strong>Wei Zhang</strong><span>Administrator</span></div></div></div>
+</aside>
+<div class="overlay" id="ov" onclick="closeSb()"></div>
+<!-- Main -->
+<div class="mn">
+<header class="tb">
+<div style="display:flex;align-items:center;gap:10px">
+<button class="mt" onclick="openSb()">&#9776;</button>
+<div class="bc"><span>Climate Passport</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"><path d="m9 18 6-6-6-6"/></svg><span>Certificates</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"><path d="m9 18 6-6-6-6"/></svg><strong id="bcTitle">Dashboard</strong></div>
+</div>
+<div class="tb-acts"><input class="srch" placeholder="Search certificates..."><button class="lp" onclick="toggleLang()">EN / 中文</button></div>
+</header>
+<div class="ct">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="sp ac" id="p-dash">
+<div class="ph"><h1 class="pt">Certificate Dashboard</h1><p class="pd">Overview of credential system activity and metrics.</p></div>
+<div class="sr">
+<div class="sc"><div class="lb">Total Certificates</div><div class="sv">9,432</div><div class="sch up">+3.5% vs last month</div></div>
+<div class="sc"><div class="lb">This Month</div><div class="sv">312</div><div class="sch up">+18% vs last month</div></div>
+<div class="sc"><div class="lb">Pending Review</div><div class="sv">24</div><div class="sch dn">+5 since yesterday</div></div>
+<div class="sc"><div class="lb">Active Templates</div><div class="sv">16</div><div class="sch up">2 new this week</div></div>
+</div>
+<div class="dg">
+<div>
+<div class="cd" style="margin-bottom:18px">
+<div class="ch"><span class="cti">Popular Certificate Types</span></div>
+<div class="cb">
+<div class="bars">
+<div class="bar-row"><span class="bar-lbl">Course Certificate</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="bar-val">3,840</span></div>
+<div class="bar-row"><span class="bar-lbl">Event Attendance</span><div class="bar-track"><div class="bar-fill" style="width:56%"></div></div><span class="bar-val">2,156</span></div>
+<div class="bar-row"><span class="bar-lbl">Speaker Certificate</span><div class="bar-track"><div class="bar-fill" style="width:38%"></div></div><span class="bar-val">1,428</span></div>
+<div class="bar-row"><span class="bar-lbl">Achievement Badge</span><div class="bar-track"><div class="bar-fill" style="width:22%"></div></div><span class="bar-val">892</span></div>
+<div class="bar-row"><span class="bar-lbl">Learning Experience</span><div class="bar-track"><div class="bar-fill" style="width:16%"></div></div><span class="bar-val">645</span></div>
+<div class="bar-row"><span class="bar-lbl">Volunteer Certificate</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-val">471</span></div>
+</div></div></div>
+<div class="cd">
+<div class="ch"><span class="cti">Recent Issuances</span><a class="btn btn-gh btn-sm">View All</a></div>
+<div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Recipient</th><th>Certificate</th><th>Date</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cs">Lin Wei</td><td>FSA Credential - Level I</td><td>May 22</td><td><span class="bg bg-g"><span class="bdot"></span>Issued</span></td></tr>
+<tr><td class="cs">Sarah H.</td><td>SHCW 2026 Attendance</td><td>May 21</td><td><span class="bg bg-g"><span class="bdot"></span>Issued</span></td></tr>
+<tr><td class="cs">James O.</td><td>Ocean Stewardship</td><td>May 20</td><td><span class="bg bg-a"><span class="bdot"></span>Pending</span></td></tr>
+<tr><td class="cs">Aiko T.</td><td>Youth Forum Speaker</td><td>May 19</td><td><span class="bg bg-g"><span class="bdot"></span>Issued</span></td></tr>
+<tr><td class="cs">Wang Fang</td><td>Volunteer - SHCW 2026</td><td>May 18</td><td><span class="bg bg-g"><span class="bdot"></span>Issued</span></td></tr>
+</tbody></table></div></div>
+</div>
+<div>
+<div class="cd" style="margin-bottom:18px">
+<div class="ch"><span class="cti">Anomalous Verifications</span></div>
+<div class="cb">
+<div class="fi"><div class="fa" style="background:linear-gradient(135deg,var(--amber-warm),var(--amber-soft));color:var(--forest-deep)">!</div><div class="fb"><p><strong>Multiple rapid verifications</strong> from same IP</p><div class="ft">12 requests in 2 min · Tokyo, JP · 3 hours ago</div></div></div>
+<div class="fi"><div class="fa" style="background:linear-gradient(135deg,#ef4444,#fca5a5);color:#fff">✕</div><div class="fb"><p>Verification attempt on <strong>revoked certificate</strong></p><div class="ft">CP-CERT-2025-002341 · Unknown · 5 hours ago</div></div></div>
+<div class="fi"><div class="fa" style="background:linear-gradient(135deg,var(--amber-warm),var(--amber-soft));color:var(--forest-deep)">!</div><div class="fb"><p><strong>Expired certificate</strong> accessed 15+ times</p><div class="ft">CP-CERT-2025-001102 · Beijing, CN · Today</div></div></div>
+</div></div>
+<div class="cd">
+<div class="ch"><span class="cti">Quick Actions</span></div>
+<div class="cb">
+<div class="qg">
+<div class="qc" onclick="show('issue',document.querySelectorAll('.ni')[5])"><div class="lb" style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--moss)">Issue</div><h3>Issue Certificate</h3><p>Single or batch issue</p></div>
+<div class="qc" onclick="show('apps',document.querySelectorAll('.ni')[6])"><div class="lb" style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber-warm)">Review</div><h3>Applications</h3><p>5 pending review</p></div>
+<div class="qc" onclick="show('tpl',document.querySelectorAll('.ni')[2])"><div class="lb" style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#3b82f6">Create</div><h3>New Template</h3><p>Design new credential</p></div>
+</div></div></div>
+</div></div></div>
+
+<!-- ===== CATEGORIES ===== -->
+<div class="sp" id="p-cats">
+<div class="ph" style="display:flex;align-items:center;justify-content:space-between"><div><h1 class="pt">Certificate Categories</h1><p class="pd">Manage credential types and their configurations.</p></div><button class="btn btn-am">+ New Category</button></div>
+<div class="cd"><div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Category</th><th>English Name</th><th>Auto-Issue</th><th>User Request</th><th>PDF</th><th>Public Verify</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+<tr><td class="cs">课程证书</td><td>Course Certificate</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">活动出席证书</td><td>Event Attendance</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">演讲嘉宾证书</td><td>Speaker Certificate</td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">主持人证书</td><td>Moderator Certificate</td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">志愿者证书</td><td>Volunteer Certificate</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">导师证书</td><td>Mentor Certificate</td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">学习体验证书</td><td>Learning Experience</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">成就徽章</td><td>Achievement Badge</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">里程碑证书</td><td>Milestone Credential</td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">气候行动记录</td><td>Climate Action Record</td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><input type="checkbox" style="accent-color:var(--moss)"></td><td><span class="bg bg-a"><span class="bdot"></span>Draft</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+</tbody></table></div></div></div>
+
+<!-- ===== TEMPLATES ===== -->
+<div class="sp" id="p-tpl">
+<div class="ph" style="display:flex;align-items:center;justify-content:space-between"><div><h1 class="pt">Certificate Templates</h1><p class="pd">Design and manage credential templates.</p></div><button class="btn btn-am" onclick="document.getElementById('tplEditor').style.display='block'">+ New Template</button></div>
+<div class="tpl-grid" style="margin-bottom:20px">
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,var(--paper),var(--leaf-light))"><div class="tpl-border">A4 Landscape</div></div><div class="tpl-body"><h4>SHCW Official Certificate</h4><div class="tpl-meta"><span class="bg bg-g btn-sm">Active</span><span>A4 Landscape</span><span>EN/ZH</span></div><div style="font-size:11px;color:var(--ink-soft)">2,847 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,#fef3c7,var(--amber-soft))"><div class="tpl-border">A4 Portrait</div></div><div class="tpl-body"><h4>Course Completion - Standard</h4><div class="tpl-meta"><span class="bg bg-g btn-sm">Active</span><span>A4 Portrait</span><span>EN/ZH</span></div><div style="font-size:11px;color:var(--ink-soft)">1,203 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,var(--forest-deep),var(--moss))"><div class="tpl-border" style="border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.7)">A4 Landscape</div></div><div class="tpl-body"><h4>Speaker Certificate - Premium</h4><div class="tpl-meta"><span class="bg bg-g btn-sm">Active</span><span>A4 Landscape</span><span>EN</span></div><div style="font-size:11px;color:var(--ink-soft)">428 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,var(--sage),var(--leaf-light))"><div class="tpl-border" style="border-radius:50%;width:60%;height:70%">Badge</div></div><div class="tpl-body"><h4>Achievement Badge - Round</h4><div class="tpl-meta"><span class="bg bg-g btn-sm">Active</span><span>Square Badge</span><span>EN/ZH</span></div><div style="font-size:11px;color:var(--ink-soft)">892 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,var(--paper),#e8e4dc)"><div class="tpl-border">A4 Portrait</div></div><div class="tpl-body"><h4>Volunteer Service - Basic</h4><div class="tpl-meta"><span class="bg bg-g btn-sm">Active</span><span>A4 Portrait</span><span>ZH</span></div><div style="font-size:11px;color:var(--ink-soft)">471 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+<div class="tpl-card"><div class="tpl-thumb" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)"><div class="tpl-border" style="border-radius:12px;width:50%;height:65%">Card</div></div><div class="tpl-body"><h4>Digital Micro-Credential</h4><div class="tpl-meta"><span class="bg bg-a btn-sm">Draft</span><span>Digital Card</span><span>EN</span></div><div style="font-size:11px;color:var(--ink-soft)">0 issued</div><div class="tpl-acts" style="margin-top:8px"><button class="btn btn-sm btn-ol">Edit</button><button class="btn btn-sm btn-gh">Preview</button><button class="btn btn-sm btn-gh">Duplicate</button></div></div></div>
+</div>
+<!-- Template Editor -->
+<div class="cd" id="tplEditor" style="display:none">
+<div class="ch"><span class="cti">Template Editor</span><button class="btn btn-gh btn-sm" onclick="document.getElementById('tplEditor').style.display='none'">✕ Close</button></div>
+<div class="cb"><div class="fg">
+<div class="fr"><div class="fd"><label>Template Name</label><input placeholder="e.g. SHCW Official Certificate"></div><div class="fd"><label>Category</label><select><option>Course Certificate</option><option>Event Attendance</option><option>Speaker Certificate</option><option>Achievement Badge</option><option>Learning Experience</option><option>Milestone Credential</option></select></div></div>
+<div class="fr"><div class="fd"><label>Dimensions</label><select><option>A4 Landscape</option><option>A4 Portrait</option><option>Square Badge</option><option>Digital Card</option></select></div><div class="fd"><label>Certificate Number Format</label><input value="CP-CERT-{YEAR}-{SEQ6}"></div></div>
+<div class="tr"><label class="tg"><input type="checkbox" checked> English</label><label class="tg"><input type="checkbox" checked> Chinese</label><label class="tg"><input type="checkbox"> Bilingual</label></div>
+<div class="fd"><label>Available Merge Fields</label><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">
+<span class="bg bg-b btn-sm">{{recipient_name}}</span><span class="bg bg-b btn-sm">{{recipient_name_en}}</span><span class="bg bg-b btn-sm">{{certificate_title}}</span><span class="bg bg-b btn-sm">{{program_name}}</span><span class="bg bg-b btn-sm">{{event_name}}</span><span class="bg bg-b btn-sm">{{completion_date}}</span><span class="bg bg-b btn-sm">{{issue_date}}</span><span class="bg bg-b btn-sm">{{certificate_number}}</span><span class="bg bg-b btn-sm">{{issuing_authority}}</span><span class="bg bg-b btn-sm">{{role}}</span><span class="bg bg-b btn-sm">{{learning_hours}}</span><span class="bg bg-b btn-sm">{{signatory_name}}</span>
+</div></div>
+<div class="fr"><div class="fd"><label>QR Code Position</label><select><option>Bottom-Right</option><option>Bottom-Left</option><option>Top-Right</option></select></div><div class="fd"><label>Background Image</label><input type="file" style="padding:7px"></div></div>
+<div class="fd"><label>Signature Configuration</label><input placeholder="Signatory name and title"></div>
+<div style="display:flex;gap:10px;margin-top:8px"><button class="btn btn-am">Save Template</button><button class="btn btn-ol">Preview</button><button class="btn btn-gh" onclick="document.getElementById('tplEditor').style.display='none'">Cancel</button></div>
+</div></div></div></div>
+
+<!-- ===== ISSUING RULES ===== -->
+<div class="sp" id="p-rules">
+<div class="ph" style="display:flex;align-items:center;justify-content:space-between"><div><h1 class="pt">Automatic Issuing Rules</h1><p class="pd">Configure trigger conditions for auto-issuing certificates.</p></div><button class="btn btn-am" onclick="document.getElementById('ruleForm').style.display='block'">+ Create Rule</button></div>
+<div class="cd"><div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Rule Name</th><th>Trigger</th><th>Condition</th><th>Template</th><th>Notify</th><th>Confirm</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+<tr><td class="cs">Course Completion Auto-Issue</td><td>Course</td><td>All modules complete</td><td>Course Standard</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-gr">No</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">Event Check-in Certificate</td><td>Event</td><td>Successful check-in</td><td>SHCW Official</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-gr">No</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">Speaker Auto-Certificate</td><td>Event</td><td>Role=Speaker + complete</td><td>Speaker Premium</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-a">Yes</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">LE Program Milestone</td><td>Learning Exp.</td><td>All stages complete</td><td>Milestone Cred.</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-a">Yes</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">1000 Points Level Badge</td><td>Points</td><td>Points >= 1000</td><td>Achievement Badge</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-gr">No</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">5 Events Milestone</td><td>Event</td><td>Events attended >= 5</td><td>Milestone Cred.</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-gr">No</span></td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">Volunteer 50hrs Badge</td><td>Volunteer</td><td>Hours >= 50</td><td>Volunteer Service</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-gr">No</span></td><td><span class="bg bg-a"><span class="bdot"></span>Draft</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+<tr><td class="cs">Mentor Program Complete</td><td>Learning Exp.</td><td>Role=Mentor + complete</td><td>Mentor Certificate</td><td><span class="bg bg-g">Yes</span></td><td><span class="bg bg-a">Yes</span></td><td><span class="bg bg-a"><span class="bdot"></span>Draft</span></td><td style="text-align:right"><button class="btn btn-gh btn-sm">Edit</button></td></tr>
+</tbody></table></div></div>
+<!-- Rule Form -->
+<div class="cd" id="ruleForm" style="display:none;margin-top:18px">
+<div class="ch"><span class="cti">Create Issuing Rule</span><button class="btn btn-gh btn-sm" onclick="document.getElementById('ruleForm').style.display='none'">✕</button></div>
+<div class="cb"><div class="fg">
+<div class="fr"><div class="fd"><label>Rule Name</label><input placeholder="e.g. Course Completion Auto-Issue"></div><div class="fd"><label>Trigger Source</label><select><option>Course</option><option>Event</option><option>Learning Experience</option><option>Points</option><option>Manual Review</option></select></div></div>
+<div class="fd"><label>Trigger Condition</label><input placeholder="e.g. All modules complete, Points >= 1000"></div>
+<div class="fr"><div class="fd"><label>Certificate Template</label><select><option>SHCW Official</option><option>Course Standard</option><option>Speaker Premium</option><option>Achievement Badge</option><option>Milestone Credential</option><option>Volunteer Service</option></select></div><div class="fd"><label>Issue Timing</label><select><option>Immediate</option><option>Next Business Day</option><option>Manual Review</option></select></div></div>
+<div class="tr"><label class="tg"><input type="checkbox" checked> Admin Confirmation Required</label><label class="tg"><input type="checkbox" checked> Auto-notify User</label><label class="tg"><input type="checkbox" checked> Allow PDF Download</label><label class="tg"><input type="checkbox"> Public Display</label></div>
+<div style="display:flex;gap:10px;margin-top:8px"><button class="btn btn-am">Save Rule</button><button class="btn btn-gh" onclick="document.getElementById('ruleForm').style.display='none'">Cancel</button></div>
+</div></div></div></div>
+
+<!-- ===== ISSUE CERTIFICATES ===== -->
+<div class="sp" id="p-issue">
+<div class="ph"><h1 class="pt">Issue Certificates</h1><p class="pd">Single or batch issue credentials to users.</p></div>
+<div style="display:flex;gap:8px;margin-bottom:18px"><button class="btn btn-am" id="tabSingle" onclick="showIssueTab('single')">Single Issue</button><button class="btn btn-ol" id="tabBatch" onclick="showIssueTab('batch')">Batch Issue</button></div>
+<!-- Single -->
+<div class="cd" id="issuesSingle">
+<div class="cb"><div class="fg">
+<div class="fr"><div class="fd"><label>Certificate Template</label><select><option>Select template...</option><option>SHCW Official Certificate</option><option>Course Completion - Standard</option><option>Speaker Certificate - Premium</option><option>Achievement Badge - Round</option></select></div><div class="fd"><label>Category</label><select><option>Course Certificate</option><option>Event Attendance</option><option>Speaker Certificate</option><option>Volunteer Certificate</option><option>Achievement Badge</option></select></div></div>
+<div class="fd"><label>Related Program / Event / Course</label><select><option>Select...</option><option>Shanghai Climate Week 2026</option><option>Youth Climate Action Forum</option><option>Green Finance Summit</option><option>FSA Credential Program</option><option>Climate Leadership Fundamentals</option></select></div>
+<div class="fr"><div class="fd"><label>Recipient (search user)</label><input placeholder="Search by name or email..."></div><div class="fd"><label>Role (if applicable)</label><input placeholder="e.g. Speaker, Moderator, Volunteer"></div></div>
+<div class="fr"><div class="fd"><label>Certificate Name</label><input placeholder="Auto-filled from template"></div><div class="fd"><label>Certificate Number</label><input value="CP-CERT-2026-009433" readonly style="background:var(--paper);color:var(--ink-soft)"></div></div>
+<div class="fr"><div class="fd"><label>Issue Date</label><input type="date" value="2026-05-23"></div><div class="fd"><label>Expiry Date (optional)</label><input type="date"></div></div>
+<div style="display:flex;gap:10px;margin-top:8px"><button class="btn btn-ol">Preview Certificate</button><button class="btn btn-am">Confirm & Issue</button></div>
+</div></div></div>
+<!-- Batch -->
+<div class="cd" id="issuesBatch" style="display:none">
+<div class="cb"><div class="fg">
+<div class="fr"><div class="fd"><label>Certificate Template</label><select><option>SHCW Official Certificate</option><option>Course Completion - Standard</option></select></div><div class="fd"><label>Source</label><select id="batchSrc" onchange="document.getElementById('batchPreview').style.display='block'"><option value="">Select source...</option><option>Upload CSV</option><option>From Event Registration List</option><option>From Course Completion List</option><option>From LE Program Completion List</option></select></div></div>
+<div class="fd"><label>Select Event / Course / Program</label><select><option>Shanghai Climate Week 2026 (2,847 registered)</option><option>Youth Climate Action Forum (642 registered)</option></select></div>
+<div id="batchPreview" style="display:none">
+<p style="font-size:13px;font-weight:600;color:var(--forest-deep);margin-bottom:10px">Recipients Preview:</p>
+<table class="dt"><thead><tr><th><input type="checkbox" checked style="accent-color:var(--moss)"></th><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody>
+<tr><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td class="cs">Lin Wei</td><td>linwei@email.com</td><td>Attendee</td><td><span class="bg bg-g">Ready</span></td></tr>
+<tr><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td class="cs">Sarah Henderson</td><td>sarah.h@email.com</td><td>Speaker</td><td><span class="bg bg-g">Ready</span></td></tr>
+<tr><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td class="cs">Chen Yu</td><td>chenyu@email.com</td><td>Moderator</td><td><span class="bg bg-g">Ready</span></td></tr>
+<tr><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td class="cs">Aiko Tanaka</td><td>aiko.t@email.com</td><td>Attendee</td><td><span class="bg bg-g">Ready</span></td></tr>
+<tr><td><input type="checkbox" checked style="accent-color:var(--moss)"></td><td class="cs">James O'Connor</td><td>james.o@email.com</td><td>Volunteer</td><td><span class="bg bg-g">Ready</span></td></tr>
+</tbody></table>
+<div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-ol">Preview Batch</button><button class="btn btn-am">Issue All Selected (5)</button></div>
+<p style="font-size:12px;color:var(--ink-soft);margin-top:8px">All recipients will be notified via email upon issuance.</p>
+</div></div></div></div></div>
+
+<!-- ===== APPLICATIONS ===== -->
+<div class="sp" id="p-apps">
+<div class="ph"><h1 class="pt">Certificate Applications</h1><p class="pd">Review user-initiated certificate requests.</p></div>
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+<button class="btn btn-am btn-sm">All (24)</button>
+<button class="btn btn-ol btn-sm">Pending (5)</button>
+<button class="btn btn-ol btn-sm">Approved (15)</button>
+<button class="btn btn-ol btn-sm">Rejected (2)</button>
+<button class="btn btn-ol btn-sm">Needs Info (2)</button>
+</div>
+<div class="cd"><div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Applicant</th><th>Certificate Type</th><th>Program / Event</th><th>Submitted</th><th>Attachments</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+<tr><td><span class="cs">Li Ming</span><div class="cm">liming@email.com</div></td><td>Volunteer Certificate</td><td>SHCW 2026</td><td>May 20</td><td>2 files</td><td><span class="bg bg-a"><span class="bdot"></span>Pending</span></td><td style="text-align:right;white-space:nowrap"><button class="btn btn-sm btn-suc">Approve</button><button class="btn btn-sm btn-dan">Reject</button></td></tr>
+<tr><td><span class="cs">Wang Fang</span><div class="cm">wangfang@email.com</div></td><td>Speaker Certificate</td><td>Green Finance Summit</td><td>May 18</td><td>1 file</td><td><span class="bg bg-a"><span class="bdot"></span>Pending</span></td><td style="text-align:right;white-space:nowrap"><button class="btn btn-sm btn-suc">Approve</button><button class="btn btn-sm btn-dan">Reject</button></td></tr>
+<tr><td><span class="cs">Aiko Tanaka</span><div class="cm">aiko.t@email.com</div></td><td>Learning Experience</td><td>Summer School 2026</td><td>May 16</td><td>3 files</td><td><span class="bg bg-a"><span class="bdot"></span>Pending</span></td><td style="text-align:right;white-space:nowrap"><button class="btn btn-sm btn-suc">Approve</button><button class="btn btn-sm btn-dan">Reject</button></td></tr>
+<tr><td><span class="cs">Robert Klein</span><div class="cm">robert.k@email.com</div></td><td>Mentor Certificate</td><td>Ocean Stewardship</td><td>May 14</td><td>—</td><td><span class="bg bg-b"><span class="bdot"></span>Needs Info</span></td><td style="text-align:right"><button class="btn btn-sm btn-gh">Review</button></td></tr>
+<tr><td><span class="cs">Sarah Henderson</span><div class="cm">sarah.h@email.com</div></td><td>Event Attendance</td><td>Carbon Workshop</td><td>May 12</td><td>1 file</td><td><span class="bg bg-g"><span class="bdot"></span>Approved</span></td><td style="text-align:right"><button class="btn btn-sm btn-gh">View</button></td></tr>
+<tr><td><span class="cs">Chen Yu</span><div class="cm">chenyu@email.com</div></td><td>Achievement Badge</td><td>5 Events Milestone</td><td>May 10</td><td>—</td><td><span class="bg bg-r"><span class="bdot"></span>Rejected</span></td><td style="text-align:right"><button class="btn btn-sm btn-gh">View</button></td></tr>
+</tbody></table></div></div></div>
+
+<!-- ===== RECORDS ===== -->
+<div class="sp" id="p-recs">
+<div class="ph"><h1 class="pt">Certificate Records</h1><p class="pd">Complete history of all issued credentials.</p></div>
+<div class="sr" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+<div class="sc"><div class="lb">Total</div><div class="sv" style="font-size:22px">9,432</div></div>
+<div class="sc"><div class="lb">Active</div><div class="sv" style="font-size:22px;color:var(--verify-green)">8,891</div></div>
+<div class="sc"><div class="lb">Expired</div><div class="sv" style="font-size:22px;color:var(--ink-soft)">398</div></div>
+<div class="sc"><div class="lb">Revoked</div><div class="sv" style="font-size:22px;color:var(--danger)">143</div></div>
+</div>
+<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+<input class="srch" style="width:240px" placeholder="Search certificate number...">
+<select style="padding:7px 12px;border-radius:999px;border:1.5px solid rgba(11,61,46,.1);font-size:13px;background:#fff"><option>All Status</option><option>Active</option><option>Expired</option><option>Revoked</option></select>
+<select style="padding:7px 12px;border-radius:999px;border:1.5px solid rgba(11,61,46,.1);font-size:13px;background:#fff"><option>All Categories</option><option>Course</option><option>Event</option><option>Speaker</option><option>Badge</option></select>
+<input type="date" style="padding:7px 12px;border-radius:999px;border:1.5px solid rgba(11,61,46,.1);font-size:13px;background:#fff">
+<div style="flex:1"></div>
+<button class="btn btn-ol">Export CSV</button>
+</div>
+<div class="cd"><div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Cert Number</th><th>Certificate Name</th><th>Holder</th><th>Issue Date</th><th>Source</th><th>Status</th><th>Verifications</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2026-009431</td><td>FSA Credential - Level I</td><td>Lin Wei</td><td>May 22, 2026</td><td>Auto</td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td>3</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2026-009430</td><td>SHCW 2026 Attendance</td><td>Sarah H.</td><td>May 21, 2026</td><td>Auto</td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td>1</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2026-009429</td><td>Youth Forum Speaker</td><td>Aiko T.</td><td>May 19, 2026</td><td>Manual</td><td><span class="bg bg-g"><span class="bdot"></span>Active</span></td><td>7</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2026-009425</td><td>Ocean Stewardship</td><td>James O.</td><td>May 18, 2026</td><td>Auto</td><td><span class="bg bg-a"><span class="bdot"></span>Pending</span></td><td>0</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2025-002341</td><td>Green Finance Moderator</td><td>Robert K.</td><td>Nov 15, 2025</td><td>Manual</td><td><span class="bg bg-r"><span class="bdot"></span>Revoked</span></td><td>15</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+<tr><td class="cs" style="font-family:monospace;font-size:12px">CP-CERT-2025-001102</td><td>Climate Literacy Badge L2</td><td>Wang F.</td><td>Aug 22, 2025</td><td>Auto</td><td><span class="bg bg-gr"><span class="bdot"></span>Expired</span></td><td>18</td><td style="text-align:right"><button class="btn btn-gh btn-sm">Actions ▾</button></td></tr>
+</tbody></table></div></div>
+<div class="pg"><span>Showing 1-6 of 9,432</span><div class="pg-btns"><button class="pg-btn ac">1</button><button class="pg-btn">2</button><button class="pg-btn">3</button><button class="pg-btn">...</button><button class="pg-btn">944</button></div></div>
+</div>
+
+<!-- ===== AUDIT LOGS ===== -->
+<div class="sp" id="p-logs">
+<div class="ph"><h1 class="pt">Verification & Audit Logs</h1><p class="pd">Track credential verifications and administrative operations.</p></div>
+<div class="sr" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+<div class="sc"><div class="lb">Today's Verifications</div><div class="sv" style="font-size:22px">47</div></div>
+<div class="sc"><div class="lb">Success Rate</div><div class="sv" style="font-size:22px;color:var(--verify-green)">94.2%</div></div>
+<div class="sc"><div class="lb">Anomalies Detected</div><div class="sv" style="font-size:22px;color:var(--amber-warm)">2</div></div>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btn-am btn-sm" id="logTab1" onclick="showLogTab('verify')">Verification Log</button><button class="btn btn-ol btn-sm" id="logTab2" onclick="showLogTab('admin')">Admin Operations</button></div>
+<!-- Verification Log -->
+<div class="cd" id="logVerify">
+<div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Timestamp</th><th>Certificate</th><th>Holder</th><th>Result</th><th>Method</th><th>Source Region</th></tr></thead><tbody>
+<tr><td class="cm">May 23, 14:32</td><td>FSA Credential - Level I</td><td>Lin Wei</td><td><span class="bg bg-g">Valid</span></td><td>QR Code</td><td>Shanghai, CN</td></tr>
+<tr><td class="cm">May 23, 13:18</td><td>SHCW 2026 Attendance</td><td>Sarah H.</td><td><span class="bg bg-g">Valid</span></td><td>URL Link</td><td>London, UK</td></tr>
+<tr><td class="cm">May 23, 12:45</td><td>Green Finance Moderator</td><td>Robert K.</td><td><span class="bg bg-r">Revoked</span></td><td>QR Code</td><td>Unknown</td></tr>
+<tr><td class="cm">May 23, 11:02</td><td>Climate Literacy L2</td><td>Wang F.</td><td><span class="bg bg-a">Expired</span></td><td>URL Link</td><td>Beijing, CN</td></tr>
+<tr><td class="cm">May 23, 10:30</td><td>Youth Forum Speaker</td><td>Aiko T.</td><td><span class="bg bg-g">Valid</span></td><td>QR Code</td><td>Tokyo, JP</td></tr>
+<tr><td class="cm">May 23, 09:15</td><td>Volunteer - SHCW</td><td>Chen Yu</td><td><span class="bg bg-g">Valid</span></td><td>URL Link</td><td>Shanghai, CN</td></tr>
+<tr><td class="cm">May 22, 22:48</td><td>Unknown</td><td>—</td><td><span class="bg bg-gr">Not Found</span></td><td>URL Link</td><td>Unknown</td></tr>
+<tr><td class="cm">May 22, 18:30</td><td>Summer School 2026</td><td>Li Ming</td><td><span class="bg bg-g">Valid</span></td><td>QR Code</td><td>Hong Kong</td></tr>
+</tbody></table></div></div>
+<!-- Admin Log -->
+<div class="cd" id="logAdmin" style="display:none">
+<div class="cb" style="padding:0">
+<table class="dt"><thead><tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr></thead><tbody>
+<tr><td class="cm">May 23, 14:00</td><td class="cs">Wei Zhang</td><td><span class="bg bg-g">Issued</span></td><td>CP-CERT-2026-009431</td><td>Batch issue (SHCW 2026)</td></tr>
+<tr><td class="cm">May 23, 11:20</td><td class="cs">Wei Zhang</td><td><span class="bg bg-r">Revoked</span></td><td>CP-CERT-2025-002341</td><td>Administrative decision</td></tr>
+<tr><td class="cm">May 22, 16:45</td><td class="cs">Li Wei</td><td><span class="bg bg-b">Modified</span></td><td>Speaker Premium Template</td><td>Updated signature block</td></tr>
+<tr><td class="cm">May 22, 10:00</td><td class="cs">Wei Zhang</td><td><span class="bg bg-g">Approved</span></td><td>Application #A-2026-1847</td><td>Volunteer certificate for SHCW</td></tr>
+<tr><td class="cm">May 21, 14:30</td><td class="cs">Chen Yu</td><td><span class="bg bg-b">Created</span></td><td>Digital Micro-Credential</td><td>New template draft</td></tr>
+<tr><td class="cm">May 21, 09:00</td><td class="cs">Wei Zhang</td><td><span class="bg bg-g">Issued</span></td><td>Batch (142 certs)</td><td>Event attendance - SHCW 2026</td></tr>
+<tr><td class="cm">May 20, 15:20</td><td class="cs">Wei Zhang</td><td><span class="bg bg-a">Updated</span></td><td>Auto-Issue Rule #5</td><td>Changed threshold to 1000 pts</td></tr>
+<tr><td class="cm">May 20, 11:45</td><td class="cs">Li Wei</td><td><span class="bg bg-b">Created</span></td><td>Category: Climate Action Record</td><td>New category in draft</td></tr>
+</tbody></table></div></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<button class="lang" onclick="toggleLang()">EN / 中文</button>
+
+<script>
+let lang='en';
+function toggleLang(){lang=lang==='en'?'zh':'en';document.querySelectorAll('[data-en][data-zh]').forEach(el=>{el.tagName==='INPUT'?el.placeholder=el.getAttribute('data-'+lang):el.textContent=el.getAttribute('data-'+lang)})}
+function show(id,el){document.querySelectorAll('.sp').forEach(p=>p.classList.remove('ac'));document.getElementById('p-'+id).classList.add('ac');document.querySelectorAll('.ni').forEach(n=>n.classList.remove('ac'));if(el)el.classList.add('ac');const titles={dash:'Dashboard',cats:'Categories',tpl:'Templates',rules:'Issuing Rules',issue:'Issue Certificates',apps:'Applications',recs:'Records',logs:'Audit Logs'};document.getElementById('bcTitle').textContent=titles[id]||'Dashboard';closeSb()}
+function openSb(){document.getElementById('sidebar').classList.add('open');document.getElementById('ov').classList.add('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('ov').classList.remove('show')}
+function showIssueTab(t){if(t==='single'){document.getElementById('issuesSingle').style.display='block';document.getElementById('issuesBatch').style.display='none';document.getElementById('tabSingle').className='btn btn-am';document.getElementById('tabBatch').className='btn btn-ol'}else{document.getElementById('issuesSingle').style.display='none';document.getElementById('issuesBatch').style.display='block';document.getElementById('tabSingle').className='btn btn-ol';document.getElementById('tabBatch').className='btn btn-am'}}
+function showLogTab(t){if(t==='verify'){document.getElementById('logVerify').style.display='block';document.getElementById('logAdmin').style.display='none';document.getElementById('logTab1').className='btn btn-am btn-sm';document.getElementById('logTab2').className='btn btn-ol btn-sm'}else{document.getElementById('logVerify').style.display='none';document.getElementById('logAdmin').style.display='block';document.getElementById('logTab1').className='btn btn-ol btn-sm';document.getElementById('logTab2').className='btn btn-am btn-sm'}}
+</script>
+</body>
+</html>

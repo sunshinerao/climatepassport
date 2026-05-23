@@ -1,0 +1,12 @@
+{
+  "name": "@climate-passport/passport-sdk",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@climate-passport/passport-core": "0.1.0"
+  }
+}

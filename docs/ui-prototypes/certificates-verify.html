@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification - Climate Passport</title>
+    <style>
+        :root {
+            --forest-deep: #0b3d2e;
+            --forest: #1a5d48;
+            --moss: #4a8a6a;
+            --sage: #8fb89a;
+            --leaf-light: #c4dcc8;
+            --amber-warm: #c4893f;
+            --amber-soft: #e8c88a;
+            --cream: #faf8f3;
+            --paper: #f5f2ec;
+            --ink: #0f2a20;
+            --ink-soft: #2d5245;
+            --gold: #b8860b;
+            --verify-green: #16a34a;
+            --danger-red: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--cream);
+            color: var(--ink);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--forest-deep);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(11, 61, 46, 0.15);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--moss), var(--sage));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .nav-title {
+            color: white;
+            font-family: Georgia, serif;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-label {
+            color: var(--sage);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: rgba(79, 138, 106, 0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(79, 138, 106, 0.3);
+        }
+
+        /* Demo Toggle Bar */
+        .demo-bar {
+            background: var(--forest-deep);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .demo-bar-label {
+            color: var(--sage);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 8px;
+        }
+
+        .demo-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(143, 184, 154, 0.4);
+            background: transparent;
+            color: var(--sage);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .demo-btn:hover {
+            background: rgba(143, 184, 154, 0.15);
+            border-color: var(--sage);
+        }
+
+        .demo-btn.active {
+            background: var(--moss);
+            color: white;
+            border-color: var(--moss);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            width: 100%;
+        }
+
+        /* State Containers */
+        .state {
+            display: none;
+        }
+
+        .state.active {
+            display: block;
+        }
+
+        /* Verification Result Banner */
+        .result-banner {
+            text-align: center;
+            padding: 48px 32px 40px;
+            border-radius: 20px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Valid state */
+        .result-banner.valid {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 2px solid rgba(22, 163, 74, 0.2);
+            box-shadow: 0 0 40px rgba(22, 163, 74, 0.08), 0 4px 20px rgba(22, 163, 74, 0.06);
+        }
+
+        /* Expired state */
+        .result-banner.expired {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border: 2px solid rgba(196, 137, 63, 0.25);
+            box-shadow: 0 0 40px rgba(196, 137, 63, 0.08), 0 4px 20px rgba(196, 137, 63, 0.06);
+        }
+
+        /* Revoked state */
+        .result-banner.revoked {
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+            border: 2px solid rgba(220, 38, 38, 0.2);
+            box-shadow: 0 0 40px rgba(220, 38, 38, 0.08), 0 4px 20px rgba(220, 38, 38, 0.06);
+        }
+
+        /* Not found state */
+        .result-banner.notfound {
+            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+            border: 2px solid rgba(107, 114, 128, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .icon-badge {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .icon-badge.valid {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3);
+        }
+
+        .icon-badge.expired {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            box-shadow: 0 8px 24px rgba(217, 119, 6, 0.3);
+        }
+
+        .icon-badge.revoked {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+        }
+
+        .icon-badge.notfound {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            box-shadow: 0 8px 24px rgba(107, 114, 128, 0.3);
+        }
+
+        .icon-badge svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .result-heading {
+            font-family: Georgia, serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .result-heading.valid { color: #15803d; }
+        .result-heading.expired { color: #92400e; }
+        .result-heading.revoked { color: #991b1b; }
+        .result-heading.notfound { color: #374151; }
+
+        .result-subtitle {
+            font-size: 15px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .result-subtitle.valid { color: #166534; }
+        .result-subtitle.expired { color: #78350f; }
+        .result-subtitle.revoked { color: #7f1d1d; }
+        .result-subtitle.notfound { color: #4b5563; }
+
+        .result-timestamp {
+            font-size: 13px;
+            color: #6b7280;
+            position: relative;
+        }
+
+        /* Certificate Summary Card */
+        .cert-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .cert-card.muted {
+            opacity: 0.7;
+        }
+
+        .cert-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0ec;
+        }
+
+        .cert-card-title {
+            font-family: Georgia, serif;
+            font-size: 20px;
+            color: var(--ink);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.valid {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid rgba(22, 163, 74, 0.2);
+        }
+
+        .status-badge.expired {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid rgba(196, 137, 63, 0.2);
+        }
+
+        .status-badge.revoked {
+            background: #fecaca;
+            color: #991b1b;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .status-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .cert-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .cert-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cert-detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .cert-detail-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+        }
+
+        .cert-detail-value {
+            font-size: 14px;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .competency-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .competency-tag {
+            background: var(--leaf-light);
+            color: var(--forest);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .competency-tag.expired {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .competency-tag.revoked {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Verification Details */
+        .verification-details {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .verification-details h3 {
+            font-family: Georgia, serif;
+            font-size: 16px;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        .verify-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f0;
+        }
+
+        .verify-item:last-child {
+            border-bottom: none;
+        }
+
+        .verify-item-label {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .verify-item-value {
+            font-size: 13px;
+            color: var(--ink);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hash-value {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            background: #f5f5f0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: var(--ink-soft);
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid #e5e5e0;
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #f5f5f0;
+            border-color: #d5d5d0;
+        }
+
+        .copy-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #6b7280;
+        }
+
+        .integrity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--verify-green);
+            font-weight: 600;
+        }
+
+        .integrity-badge svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--verify-green);
+        }
+
+        /* Trust Badge Section */
+        .trust-section {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+
+        .trust-badge-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .trust-badge-logo .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--forest), var(--moss));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trust-badge-logo .logo-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        .trust-badge-title {
+            font-family: Georgia, serif;
+            font-size: 15px;
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .trust-badge-desc {
+            font-size: 13px;
+            color: #6b7280;
+            max-width: 480px;
+            margin: 0 auto 16px;
+            line-height: 1.6;
+        }
+
+        .trust-link {
+            color: var(--forest);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px solid var(--leaf-light);
+            transition: border-color 0.2s;
+        }
+
+        .trust-link:hover {
+            border-color: var(--forest);
+        }
+
+        /* Revocation Notice */
+        .revocation-notice {
+            background: #fef2f2;
+            border: 1px solid rgba(220, 38, 38, 0.15);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .revocation-notice svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--danger-red);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .revocation-notice-content {
+            font-size: 13px;
+            color: #7f1d1d;
+            line-height: 1.6;
+        }
+
+        .revocation-notice-content strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        /* Expiry Notice */
+        .expiry-notice {
+            background: #fffbeb;
+            border: 1px solid rgba(196, 137, 63, 0.2);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .expiry-notice svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--amber-warm);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .expiry-notice-content {
+            font-size: 13px;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .expiry-notice-content strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        /* Not Found Suggestions */
+        .suggestions {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .suggestions h3 {
+            font-family: Georgia, serif;
+            font-size: 16px;
+            color: var(--ink);
+            margin-bottom: 16px;
+        }
+
+        .suggestion-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .suggestion-item svg {
+            width: 18px;
+            height: 18px;
+            fill: #6b7280;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .suggestion-item p {
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        /* Verify Another Section */
+        .verify-another {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 40px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+
+        .verify-another h3 {
+            font-family: Georgia, serif;
+            font-size: 18px;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .verify-another p {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .verify-input-group {
+            display: flex;
+            gap: 12px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .verify-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid #e5e5e0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--cream);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .verify-input:focus {
+            outline: none;
+            border-color: var(--moss);
+            box-shadow: 0 0 0 3px rgba(74, 138, 106, 0.1);
+        }
+
+        .verify-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .verify-submit-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--forest), var(--moss));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+
+        .verify-submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(26, 93, 72, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--forest-deep);
+            padding: 32px 24px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .footer-brand-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--moss), var(--sage));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-brand-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        .footer-brand-name {
+            color: white;
+            font-family: Georgia, serif;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            color: var(--sage);
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-copy {
+            color: rgba(143, 184, 154, 0.6);
+            font-size: 12px;
+        }
+
+        /* Language Toggle */
+        .lang-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            background: var(--forest-deep);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(11, 61, 46, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid var(--moss);
+            z-index: 1000;
+        }
+
+        .lang-toggle:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 24px rgba(11, 61, 46, 0.4);
+        }
+
+        .lang-toggle span {
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .main {
+                padding: 24px 16px 40px;
+            }
+
+            .nav {
+                padding: 14px 16px;
+            }
+
+            .nav-title {
+                font-size: 16px;
+            }
+
+            .nav-label {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+
+            .result-banner {
+                padding: 36px 20px 32px;
+            }
+
+            .result-heading {
+                font-size: 22px;
+            }
+
+            .icon-badge {
+                width: 64px;
+                height: 64px;
+            }
+
+            .icon-badge svg {
+                width: 32px;
+                height: 32px;
+            }
+
+            .cert-card,
+            .verification-details,
+            .trust-section,
+            .suggestions,
+            .verify-another {
+                padding: 20px;
+                border-radius: 14px;
+            }
+
+            .cert-details {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .cert-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .verify-input-group {
+                flex-direction: column;
+            }
+
+            .verify-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+
+            .demo-bar {
+                padding: 10px 12px;
+            }
+
+            .demo-btn {
+                padding: 5px 12px;
+                font-size: 11px;
+            }
+
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-brand">
+            <div class="nav-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="nav-title">Climate Passport</span>
+        </div>
+        <span class="nav-label">Credential Verification</span>
+    </nav>
+
+    <!-- Demo Toggle Bar -->
+    <div class="demo-bar">
+        <span class="demo-bar-label">Demo States:</span>
+        <button class="demo-btn active" onclick="showState('valid')">Valid</button>
+        <button class="demo-btn" onclick="showState('expired')">Expired</button>
+        <button class="demo-btn" onclick="showState('revoked')">Revoked</button>
+        <button class="demo-btn" onclick="showState('notfound')">Not Found</button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- STATE 1: VALID -->
+        <div class="state active" id="state-valid">
+            <div class="result-banner valid">
+                <div class="icon-badge valid">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                </div>
+                <h1 class="result-heading valid">Certificate Verified</h1>
+                <p class="result-subtitle valid">This credential has been verified as authentic and valid</p>
+                <p class="result-timestamp">Verified on: May 23, 2026 at 14:32 CST</p>
+            </div>
+
+            <div class="cert-card">
+                <div class="cert-card-header">
+                    <h2 class="cert-card-title">Certificate Summary</h2>
+                    <span class="status-badge valid">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                        Valid
+                    </span>
+                </div>
+                <div class="cert-details">
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Name</span>
+                        <span class="cert-detail-value">FSA Credential - Level I</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Holder</span>
+                        <span class="cert-detail-value">Wei Zhang</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issuing Authority</span>
+                        <span class="cert-detail-value">IFRS Foundation via Climate Passport</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issue Date</span>
+                        <span class="cert-detail-value">March 15, 2026</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Number</span>
+                        <span class="cert-detail-value">CP-CERT-2026-004821</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Related Program</span>
+                        <span class="cert-detail-value">Fundamentals of Sustainability Accounting</span>
+                    </div>
+                    <div class="cert-detail-item full-width">
+                        <span class="cert-detail-label">Competency Areas</span>
+                        <div class="competency-tags">
+                            <span class="competency-tag">Sustainable Finance</span>
+                            <span class="competency-tag">ESG Reporting</span>
+                            <span class="competency-tag">IFRS Standards</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="verification-details">
+                <h3>Verification Details</h3>
+                <div class="verify-item">
+                    <span class="verify-item-label">Blockchain Hash</span>
+                    <span class="verify-item-value">
+                        <span class="hash-value">0x7f3a...e4b2c9</span>
+                        <button class="copy-btn" onclick="copyHash()" title="Copy full hash">
+                            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Issuing Platform</span>
+                    <span class="verify-item-value">Climate Passport (climatepass.org)</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Verification Method</span>
+                    <span class="verify-item-value">QR Code + Digital Signature</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Certificate Integrity</span>
+                    <span class="verify-item-value">
+                        <span class="integrity-badge">
+                            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                            Intact
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="trust-section">
+                <div class="trust-badge-logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <span class="trust-badge-title">Verified by Climate Passport</span>
+                </div>
+                <p class="trust-badge-desc">Climate Passport is a trusted digital credential platform for sustainability and climate-related professional certifications. All credentials are cryptographically secured and independently verifiable.</p>
+                <a href="#" class="trust-link">Learn more about our verification system</a>
+            </div>
+        </div>
+
+        <!-- STATE 2: EXPIRED -->
+        <div class="state" id="state-expired">
+            <div class="result-banner expired">
+                <div class="icon-badge expired">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                </div>
+                <h1 class="result-heading expired">Certificate Expired</h1>
+                <p class="result-subtitle expired">This credential was valid but has exceeded its validity period</p>
+                <p class="result-timestamp">Verified on: May 23, 2026 at 14:32 CST</p>
+            </div>
+
+            <div class="expiry-notice">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <div class="expiry-notice-content">
+                    <strong>Validity Period Exceeded</strong>
+                    This certificate expired on December 31, 2025. Contact the issuing authority for renewal options.
+                </div>
+            </div>
+
+            <div class="cert-card">
+                <div class="cert-card-header">
+                    <h2 class="cert-card-title">Certificate Summary</h2>
+                    <span class="status-badge expired">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                        Expired
+                    </span>
+                </div>
+                <div class="cert-details">
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Name</span>
+                        <span class="cert-detail-value">FSA Credential - Level I</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Holder</span>
+                        <span class="cert-detail-value">Wei Zhang</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issuing Authority</span>
+                        <span class="cert-detail-value">IFRS Foundation via Climate Passport</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issue Date</span>
+                        <span class="cert-detail-value">January 10, 2024</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Expiry Date</span>
+                        <span class="cert-detail-value" style="color: #92400e; font-weight: 600;">December 31, 2025</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Number</span>
+                        <span class="cert-detail-value">CP-CERT-2024-002197</span>
+                    </div>
+                    <div class="cert-detail-item full-width">
+                        <span class="cert-detail-label">Related Program</span>
+                        <span class="cert-detail-value">Fundamentals of Sustainability Accounting</span>
+                    </div>
+                    <div class="cert-detail-item full-width">
+                        <span class="cert-detail-label">Competency Areas</span>
+                        <div class="competency-tags">
+                            <span class="competency-tag expired">Sustainable Finance</span>
+                            <span class="competency-tag expired">ESG Reporting</span>
+                            <span class="competency-tag expired">IFRS Standards</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="verification-details">
+                <h3>Verification Details</h3>
+                <div class="verify-item">
+                    <span class="verify-item-label">Blockchain Hash</span>
+                    <span class="verify-item-value">
+                        <span class="hash-value">0x3c9d...f1a87e</span>
+                        <button class="copy-btn" onclick="copyHash()" title="Copy full hash">
+                            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Issuing Platform</span>
+                    <span class="verify-item-value">Climate Passport (climatepass.org)</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Verification Method</span>
+                    <span class="verify-item-value">QR Code + Digital Signature</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Certificate Integrity</span>
+                    <span class="verify-item-value">
+                        <span class="integrity-badge">
+                            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                            Intact
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="trust-section">
+                <div class="trust-badge-logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <span class="trust-badge-title">Verified by Climate Passport</span>
+                </div>
+                <p class="trust-badge-desc">Climate Passport is a trusted digital credential platform for sustainability and climate-related professional certifications. All credentials are cryptographically secured and independently verifiable.</p>
+                <a href="#" class="trust-link">Learn more about our verification system</a>
+            </div>
+        </div>
+
+        <!-- STATE 3: REVOKED -->
+        <div class="state" id="state-revoked">
+            <div class="result-banner revoked">
+                <div class="icon-badge revoked">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                </div>
+                <h1 class="result-heading revoked">Certificate Revoked</h1>
+                <p class="result-subtitle revoked">This credential has been revoked by the issuing authority</p>
+                <p class="result-timestamp">Verified on: May 23, 2026 at 14:32 CST</p>
+            </div>
+
+            <div class="revocation-notice">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <div class="revocation-notice-content">
+                    <strong>Certificate Revoked</strong>
+                    Revocation Date: April 5, 2026<br>
+                    Reason: Administrative decision<br>
+                    This certificate is no longer valid and should not be relied upon for any purpose.
+                </div>
+            </div>
+
+            <div class="cert-card muted">
+                <div class="cert-card-header">
+                    <h2 class="cert-card-title">Certificate Summary</h2>
+                    <span class="status-badge revoked">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                        Revoked
+                    </span>
+                </div>
+                <div class="cert-details">
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Name</span>
+                        <span class="cert-detail-value">FSA Credential - Level I</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Holder</span>
+                        <span class="cert-detail-value">Wei Zhang</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issuing Authority</span>
+                        <span class="cert-detail-value">IFRS Foundation via Climate Passport</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Issue Date</span>
+                        <span class="cert-detail-value">March 15, 2026</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Revocation Date</span>
+                        <span class="cert-detail-value" style="color: #991b1b; font-weight: 600;">April 5, 2026</span>
+                    </div>
+                    <div class="cert-detail-item">
+                        <span class="cert-detail-label">Certificate Number</span>
+                        <span class="cert-detail-value">CP-CERT-2026-004821</span>
+                    </div>
+                    <div class="cert-detail-item full-width">
+                        <span class="cert-detail-label">Related Program</span>
+                        <span class="cert-detail-value">Fundamentals of Sustainability Accounting</span>
+                    </div>
+                    <div class="cert-detail-item full-width">
+                        <span class="cert-detail-label">Competency Areas</span>
+                        <div class="competency-tags">
+                            <span class="competency-tag revoked">Sustainable Finance</span>
+                            <span class="competency-tag revoked">ESG Reporting</span>
+                            <span class="competency-tag revoked">IFRS Standards</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="verification-details">
+                <h3>Verification Details</h3>
+                <div class="verify-item">
+                    <span class="verify-item-label">Blockchain Hash</span>
+                    <span class="verify-item-value">
+                        <span class="hash-value">0x7f3a...e4b2c9</span>
+                        <button class="copy-btn" onclick="copyHash()" title="Copy full hash">
+                            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Issuing Platform</span>
+                    <span class="verify-item-value">Climate Passport (climatepass.org)</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Verification Method</span>
+                    <span class="verify-item-value">QR Code + Digital Signature</span>
+                </div>
+                <div class="verify-item">
+                    <span class="verify-item-label">Certificate Integrity</span>
+                    <span class="verify-item-value">
+                        <span class="integrity-badge" style="color: var(--danger-red);">
+                            <svg viewBox="0 0 24 24" style="fill: var(--danger-red);"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                            Revoked
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="trust-section">
+                <div class="trust-badge-logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <span class="trust-badge-title">Verified by Climate Passport</span>
+                </div>
+                <p class="trust-badge-desc">Climate Passport is a trusted digital credential platform for sustainability and climate-related professional certifications. All credentials are cryptographically secured and independently verifiable.</p>
+                <a href="#" class="trust-link">Learn more about our verification system</a>
+            </div>
+        </div>
+
+        <!-- STATE 4: NOT FOUND -->
+        <div class="state" id="state-notfound">
+            <div class="result-banner notfound">
+                <div class="icon-badge notfound">
+                    <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                </div>
+                <h1 class="result-heading notfound">Certificate Not Found</h1>
+                <p class="result-subtitle notfound">No certificate matching this verification code was found in our system</p>
+                <p class="result-timestamp">Lookup performed: May 23, 2026 at 14:32 CST</p>
+            </div>
+
+            <div class="suggestions">
+                <h3>What You Can Try</h3>
+                <div class="suggestion-item">
+                    <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+                    <p>Double-check the URL in your browser's address bar for any typos or missing characters.</p>
+                </div>
+                <div class="suggestion-item">
+                    <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+                    <p>Try scanning the QR code again, ensuring the entire code is clearly visible and in focus.</p>
+                </div>
+                <div class="suggestion-item">
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    <p>Contact support at <strong>verify@climatepass.org</strong> if you believe this is an error.</p>
+                </div>
+                <div class="suggestion-item">
+                    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    <p>The certificate may not yet have been registered. Please allow up to 24 hours after issuance.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Another Certificate -->
+        <div class="verify-another">
+            <h3>Verify Another Certificate</h3>
+            <p>Enter a certificate number or verification code to check its authenticity</p>
+            <div class="verify-input-group">
+                <input type="text" class="verify-input" placeholder="e.g. CP-CERT-2026-004821" aria-label="Certificate number">
+                <button class="verify-submit-btn">Verify</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-brand">
+            <div class="footer-brand-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="footer-brand-name">Climate Passport</span>
+        </div>
+        <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Support</a>
+        </div>
+        <p class="footer-copy">2026 Climate Passport. Trusted digital credentials for a sustainable future.</p>
+    </footer>
+
+    <!-- Language Toggle -->
+    <div class="lang-toggle" onclick="toggleLanguage()" title="Switch Language">
+        <span id="lang-label">EN</span>
+    </div>
+
+    <script>
+        function showState(state) {
+            // Hide all states
+            document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+            // Show selected state
+            document.getElementById('state-' + state).classList.add('active');
+            // Update demo buttons
+            document.querySelectorAll('.demo-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function copyHash() {
+            const fullHash = '0x7f3a9b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e4b2c9';
+            navigator.clipboard.writeText(fullHash).then(() => {
+                const btn = event.currentTarget;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#16a34a;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+            });
+        }
+
+        let currentLang = 'EN';
+        function toggleLanguage() {
+            currentLang = currentLang === 'EN' ? 'ZH' : 'EN';
+            document.getElementById('lang-label').textContent = currentLang;
+        }
+    </script>
+</body>
+</html>

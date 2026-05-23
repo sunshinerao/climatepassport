@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "crypto";
+import { allocateClimatePassportId, sanitizeChannelBridgeTargetPath as sanitizeCoreChannelBridgeTargetPath } from "@climate-passport/passport-core";
 import type { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -7,8 +8,8 @@ import { getPrismaClient } from "@/lib/server/prisma";
 
 const SESSION_COOKIE_NAME = "climate-passport-session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-const PASSPORT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const PASSWORD_HASH_PREFIX = /^\$2[aby]\$/;
+const DEFAULT_CHANNEL_BRIDGE_TARGET_PREFIXES = ["/en", "/zh", "/fr", "/de"];
 
 export type AuthenticatedUser = {
   id: string;
@@ -58,45 +59,37 @@ export async function verifyUserPassword(storedPassword: string, inputPassword: 
   return storedPassword === inputPassword;
 }
 
-function randomPassportChunk(length: number) {
-  const bytes = randomBytes(length);
-  let output = "";
-
-  for (let index = 0; index < length; index += 1) {
-    output += PASSPORT_ALPHABET[bytes[index] % PASSPORT_ALPHABET.length];
-  }
-
-  return output;
-}
-
 function hashBridgeToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function buildPassportCandidate() {
-  return `${randomPassportChunk(7)}-${randomPassportChunk(6)}`;
+function getChannelBridgeTargetPrefixes() {
+  const configured = process.env.CHANNEL_BRIDGE_TARGET_PATH_PREFIXES?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return configured && configured.length > 0 ? configured : DEFAULT_CHANNEL_BRIDGE_TARGET_PREFIXES;
+}
+
+export function sanitizeChannelBridgeTargetPath(targetPath: string | null | undefined) {
+  return sanitizeCoreChannelBridgeTargetPath(targetPath, getChannelBridgeTargetPrefixes());
 }
 
 export async function generateClimatePassportId() {
   const prisma = getPrismaClient();
 
   if (!prisma) {
-    return buildPassportCandidate();
+    return allocateClimatePassportId(async () => false);
   }
 
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const candidate = buildPassportCandidate();
+  return allocateClimatePassportId(async (candidate) => {
     const existing = await prisma.user.findUnique({
       where: { climatePassportId: candidate },
       select: { id: true },
     });
 
-    if (!existing) {
-      return candidate;
-    }
-  }
-
-  throw new Error("Unable to allocate a unique Climate Passport ID.");
+    return Boolean(existing);
+  });
 }
 
 export async function getCurrentSession(): Promise<{
@@ -137,6 +130,11 @@ export async function getCurrentSession(): Promise<{
   }
 
   if (session.expires <= new Date()) {
+    await prisma.session.delete({ where: { sessionToken } }).catch(() => undefined);
+    return null;
+  }
+
+  if (session.user.status !== "ACTIVE") {
     await prisma.session.delete({ where: { sessionToken } }).catch(() => undefined);
     return null;
   }
@@ -244,7 +242,7 @@ export async function issueChannelBridgeToken(options: {
       channel: "SHCW",
       tokenHash,
       userId: options.userId,
-      targetPath: options.targetPath ?? null,
+      targetPath: sanitizeChannelBridgeTargetPath(options.targetPath) ?? null,
       expiresAt,
     },
   });
@@ -253,7 +251,7 @@ export async function issueChannelBridgeToken(options: {
     token: rawToken,
     channel: "SHCW",
     expiresAt: expiresAt.toISOString(),
-    targetPath: options.targetPath ?? null,
+    targetPath: sanitizeChannelBridgeTargetPath(options.targetPath),
   };
 
   return payload;
@@ -274,12 +272,17 @@ export async function exchangeChannelBridgeToken(token: string) {
         select: {
           id: true,
           role: true,
+          status: true,
         },
       },
     },
   });
 
   if (!bridge || bridge.channel !== "SHCW") {
+    return null;
+  }
+
+  if (bridge.user.status !== "ACTIVE") {
     return null;
   }
 

@@ -17,22 +17,15 @@ export async function GET(request: Request) {
   const email = normalizeUserEmail(emailRaw);
   const passportId = passportIdRaw.trim();
 
-  const queryOr: Array<{ email?: string; climatePassportId?: string }> = [];
-  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    queryOr.push({ email });
-  }
-  if (passportId) {
-    queryOr.push({ climatePassportId: passportId });
-  }
-
-  if (queryOr.length === 0) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !passportId) {
     return NextResponse.json({ found: false }, { status: 200 });
   }
 
   const application = await prisma.summerSchoolApplication.findFirst({
     where: {
       projectSlug: "gca-yungu-summer-school-2026",
-      OR: queryOr,
+      email,
+      climatePassportId: passportId,
     },
     orderBy: { submittedAt: "desc" },
     select: {

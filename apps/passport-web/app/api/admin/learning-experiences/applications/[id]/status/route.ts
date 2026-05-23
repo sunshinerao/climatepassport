@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { LearningExperienceApplicationStatus } from "@prisma/client";
 import { learningApplicationStatusOptions } from "@/lib/server/admin-learning-experiences";
 import { requireRoleAccess } from "@/lib/server/auth";
+import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const statusTransitionMap: Record<LearningExperienceApplicationStatus, LearningExperienceApplicationStatus[]> = {
@@ -52,6 +53,10 @@ export async function PATCH(
         select: {
           id: true,
           managerUserId: true,
+          certificateDefinitionId: true,
+          pointReward: true,
+          title: true,
+          titleEn: true,
           stages: {
             orderBy: { order: "asc" },
             select: {
@@ -219,7 +224,7 @@ export async function PATCH(
     }
 
     if (nextStatus === "COMPLETED") {
-      await tx.learningExperienceParticipation.upsert({
+      const participation = await tx.learningExperienceParticipation.upsert({
         where: {
           programId_userId: {
             programId: current.programId,
@@ -239,6 +244,87 @@ export async function PATCH(
           status: "COMPLETED",
           completedAt: now,
           completionPercent: 100,
+        },
+      });
+
+      let certificateIssueId: string | null = participation.certificateIssueId ?? null;
+
+      if (current.program.certificateDefinitionId && !certificateIssueId) {
+        const existingIssue = await tx.certificateIssue.findFirst({
+          where: {
+            definitionId: current.program.certificateDefinitionId,
+            userId: current.userId,
+            sourceType: "LEARNING_EXPERIENCE",
+            sourceId: participation.id,
+          },
+          select: { id: true },
+        });
+
+        if (existingIssue) {
+          certificateIssueId = existingIssue.id;
+        } else {
+          const verificationCode = await allocateCertificateVerificationCode(async (candidate) => {
+            const existing = await tx.certificateIssue.findUnique({
+              where: { verificationCode: candidate },
+              select: { id: true },
+            });
+
+            return Boolean(existing);
+          });
+
+          const issue = await tx.certificateIssue.create({
+            data: {
+              definitionId: current.program.certificateDefinitionId,
+              userId: current.userId,
+              sourceType: "LEARNING_EXPERIENCE",
+              sourceId: participation.id,
+              status: "ISSUED",
+              approvedBy: user.id,
+              approvedAt: now,
+              issuedAt: now,
+              verificationCode,
+            },
+            select: { id: true },
+          });
+          certificateIssueId = issue.id;
+
+          await tx.learningExperienceParticipation.update({
+            where: { id: participation.id },
+            data: { certificateIssueId },
+          });
+        }
+      }
+
+      const pointReward = current.program.pointReward ?? 0;
+
+      if (pointReward > 0 && !participation.pointsAwarded) {
+        await tx.user.update({
+          where: { id: current.userId },
+          data: { points: { increment: pointReward } },
+        });
+        await tx.pointTransaction.create({
+          data: {
+            userId: current.userId,
+            points: pointReward,
+            type: "LEARNING_EXPERIENCE_COMPLETION",
+            description: `Completed ${current.program.title}`,
+            createdBy: user.id,
+          },
+        });
+        await tx.learningExperienceParticipation.update({
+          where: { id: participation.id },
+          data: { pointsAwarded: pointReward },
+        });
+      }
+
+      await tx.passportMilestone.create({
+        data: {
+          userId: current.userId,
+          title: `Completed ${current.program.title}`,
+          titleEn: current.program.titleEn ? `Completed ${current.program.titleEn}` : null,
+          sourceType: "LEARNING_EXPERIENCE",
+          sourceId: participation.id,
+          certificateIssueId,
         },
       });
     }

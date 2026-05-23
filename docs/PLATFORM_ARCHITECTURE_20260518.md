@@ -1,202 +1,243 @@
 # Climate Passport Platform Architecture
 
+Last updated: 2026-05-23
+
+Status: Current supporting architecture baseline. For the newest decision index, start with `README.md` and `CURRENT_ARCHITECTURE_DECISIONS.md`.
+
 ## 1. Positioning
 
-Climate Passport is the business platform and system of record.
+Climate Passport is the Core Platform and system of record.
 
-Shanghai Climate Week is a themed channel shell.
+Shanghai Climate Week is a Channel Shell.
 
-This means:
-
-- users do not belong to SHCW as a primary system
-- events do not belong to SHCW as a primary system
-- speakers, moderators, registrations, attendance, QR, points, and milestones do not belong to SHCW as a primary system
-- SHCW can still present these experiences in its own visual shell and routes
+This means SHCW can present branded experiences, but it does not own Core platform state for identity, account, Passport ID, QR, event registration, verifier, check-in, certificates, points, achievements, milestones, learning applications, or participation records.
 
 ## 2. Core Product Principle
 
-The current SHCW implementation already contains mature and accepted product flows for:
+Climate Passport must provide one reusable Core for:
 
-- user registration and login
-- profile and dashboard
-- Climate Passport card and QR presentation
-- event registration
-- verifier check-in and attendance confirmation
+- identity and account;
+- Climate Passport ID;
+- passport profile and participation record;
+- event registration and attendance;
+- verifier and QR validation;
+- certificates and certificate verification;
+- points, achievements, and milestones;
+- learning experience application and completion;
+- channel integration for SHCW and future partner shells.
 
-These mature flows and their accepted UI structure must be treated as migration baselines by default.
-
-The migration target is not to redesign these by default.
-
-The migration target is to:
-
-- preserve the current working product behavior
-- preserve the current accepted UI patterns where feasible
-- lift ownership from SHCW into Climate Passport platform modules
-- enable the same flows to render in both Passport-native and SHCW-themed shells
-
-The migration target is not to redesign mature features unless platformization, security, or an explicit product request requires change.
+SHCW and future shells call Core through APIs, SDK helpers, or embedded flows.
 
 ## 3. Repository Shape
 
-The initial repository shape is a workspace repository with three early concerns:
+Current repository shape:
 
-- `apps/passport-web`: primary web application for `climatepass.org`
-- `packages/passport-contracts`: shared types and contracts
-- `packages/passport-ui-flows`: shared themed transaction flows
-- `packages/passport-sdk`: integration helpers for SHCW and future partner channels
+```txt
+apps/
+  passport-web/
+packages/
+  passport-contracts/
+  passport-sdk/
+  passport-ui-flows/
+prisma/
+docs/
+```
 
-This structure keeps platform logic centralized while still allowing branded delivery in multiple shells.
+Target monorepo direction:
+
+```txt
+apps/
+  passport-web/
+  passport-admin/
+  passport-api/
+packages/
+  passport-core/
+  passport-contracts/
+  passport-sdk/
+  passport-ui/
+```
+
+`packages/passport-ui-flows` is an earlier placeholder and should evolve into or be replaced by `packages/passport-ui`.
 
 ## 4. Domain Boundaries
 
-### 4.1 Identity Hub
+### 4.1 Identity And Account
 
 Owns:
 
-- accounts
-- authentication
-- session issuance
-- password reset
-- email verification
-- role and access model
-- channel account linkage
+- accounts;
+- authentication;
+- session issuance;
+- password reset;
+- email verification;
+- role and access model;
+- channel account linkage;
+- channel session bridge rules.
 
-### 4.2 People Hub
-
-Owns:
-
-- user profiles
-- speaker profiles
-- moderator or host profiles
-- organizations
-- role overlays for a single person across multiple contexts
-
-### 4.3 Event Hub
+### 4.2 Passport Identity
 
 Owns:
 
-- events
-- agenda and schedule blocks
-- venues and date slots
-- tracks and themes
-- public visibility and channel visibility
+- Climate Passport ID;
+- passport profile;
+- identity QR;
+- privacy and visibility rules;
+- cross-channel identity continuity.
 
-### 4.4 Participation Hub
+Passport ID must be globally unique, stable, non-predictable, and non-sequential. It must not encode year, event, channel, source, user count, or registration order.
 
-Owns:
+Final public format is no-prefix `XXXXXXX-XXXXXX`, using 13 random uppercase Crockford Base32 characters excluding ambiguous characters such as `I`, `L`, `O`, and `U`. Internal database IDs remain UUID/CUID.
 
-- registrations
-- approvals and waitlists
-- invitations
-- attendance and check-in
-- verifier assignment
-
-### 4.5 Passport Ledger
+### 4.3 Event And Participation
 
 Owns:
 
-- passport identity
-- passport QR payload ownership
-- points ledger
-- achievements
-- milestones
+- event registration;
+- registration status;
+- approvals and waitlists;
+- attendance and check-in;
+- verifier assignment;
+- participation record;
+- event-specific access rules.
+
+Channel shells may display event and agenda content, but registration and participation state are Core-owned.
+
+### 4.4 Verifier And QR
+
+Owns:
+
+- verifier identity;
+- verifier permission;
+- QR decoding;
+- QR signing/encryption policy;
+- check-in validation;
+- attendance confirmation;
+- verification logs;
+- event-specific access rules.
+
+Verifier remains inside Climate Passport Core for now, but verifier capability must be exposed through independent APIs.
+
+Opaque tokens are the default QR strategy. The server must always validate the token and return the allowed view. Offline QR authentication is not required at this stage.
+
+### 4.5 People And Institution Master Data
+
+Owns:
+
+- reusable Person records;
+- reusable Institution records;
+- SpeakerProfile, MentorProfile, and ExpertProfile role profiles;
+- EventSpeakerAssignment relationships;
+- InstitutionRole and PartnerRole relationships;
+- read models consumed by SHCW speaker cards and agenda pages.
+
+Speaker and Institution must not be hard-coded only inside SHCW modules. The same Person or Institution should be reusable across Climate Passport, GCA, SHCW, Learning Experience, certificates, public profiles, and future AI matching services.
 
 ### 4.6 Certificate Hub
 
 Owns:
 
-- certificate categories
-- certificate definitions and names
-- certificate template settings and versioning
-- certificate generation jobs
-- approval workflows before issuance when required
-- verification and authenticity lookup
-- user download and archive access
-- linkage to achievements, points, milestones, and completion artifacts
+- certificate categories;
+- certificate definitions and naming;
+- certificate template settings and versioning;
+- generation and rendering jobs;
+- approval workflows;
+- issuing and revocation;
+- verification and authenticity lookup;
+- download authorization and archive access;
+- linkage to achievements, points, milestones, learning experiences, and participation records.
 
-Certificate Hub is a required platform module, not only a presentation layer.
-
-### 4.7 Channel Delivery
+### 4.7 Learning Experiences
 
 Owns:
 
-- public read APIs for channel shells
-- themed transaction flow delivery
-- channel configuration and branding
-- session bridge support for branded shells
+- program categories;
+- programs;
+- application schema;
+- applications;
+- review stages;
+- participation;
+- completion;
+- links to related events;
+- completion writeback to certificates, points, achievements, and milestones.
+
+Learning Experiences are not Events. They can link to Events.
+
+### 4.8 Channel Delivery
+
+Owns:
+
+- Core APIs for shells;
+- SDK helpers;
+- embedded Core flows;
+- channel configuration;
+- session bridge;
+- target path allowlists;
+- channel audit and abuse controls.
 
 ## 5. Delivery Model
 
-There are two delivery modes for the same platform capabilities.
+### 5.1 Passport Native Mode
 
-### 5.1 Passport-native mode
+Rendered under Climate Passport domains:
 
-Rendered under `climatepass.org` with Climate Passport branding.
+- `www.climatepassport.org`
+- `admin.climatepassport.org`
+- `api.climatepassport.org`
+- `verify.climatepassport.org`
 
-### 5.2 SHCW shell mode
+### 5.2 SHCW Shell Mode
 
-Rendered under SHCW with SHCW branding, but backed by Climate Passport business logic, identity, and data ownership.
+Rendered under SHCW branding, but backed by Climate Passport Core.
 
-The user should be able to feel that they are operating inside SHCW, while the platform still owns:
+SHCW owns CMS content, news, agenda display, event pages, speakers presentation, media center, partner display, and SHCW branding.
 
-- identity
-- main session trust
-- business rules
-- source data
+Core owns all account, identity, registration, verifier, QR, certificate, points, achievements, milestones, learning application, verification, and participation state.
 
-## 6. Migration Rules
+## 6. Migration And Preservation Rules
 
-### 6.1 Preserve Mature Flows
+Migration must preserve mature behavior and data where it is still compatible with the latest product decisions.
 
-The following flows must be treated as migration baselines:
+Preserve:
 
-- login
-- register
-- forgot password / reset password
-- dashboard summary
-- passport card and QR
-- event registration
-- verifier check-in
+- user records;
+- existing stable Passport IDs where already issued and still acceptable;
+- pass codes or compatibility mappings;
+- event records;
+- registrations;
+- check-in history;
+- verifier assignments;
+- point transactions;
+- invitation and special pass records;
+- certificate records;
+- learning experience records;
+- historical timestamps.
 
-Change them only when required by:
+Do not preserve outdated assumptions such as year-based ID formats, plain URL QR payloads, or SHCW-local ownership of Core flows.
 
-- platform multi-channel delivery
-- security hardening
-- domain ownership separation
-- explicit product change requests
+## 7. Web/Admin/API/Verify Split
 
-When migrating mature features, preserve current logic, interaction sequence, and accepted UI structure wherever feasible.
+Current implementation can temporarily live in `apps/passport-web`.
 
-### 6.2 Preserve Existing Data
+Future architecture should split:
 
-Do not discard or overwrite current production data.
+- `apps/passport-web` for public web and user entry;
+- `apps/passport-admin` for operations and admin;
+- `apps/passport-api` for Core APIs;
+- `verify.climatepassport.org` for public verification.
 
-Migration must preserve, at minimum:
+New work should avoid coupling that makes this extraction harder.
 
-- user records
-- passport IDs
-- pass codes or compatible successor identity values
-- event records
-- speaker records
-- registrations
-- check-in history
-- points history
+## 8. Closed Decisions
 
-### 6.3 Avoid Dual Ownership
+These are no longer open:
 
-SHCW may temporarily proxy or wrap flows, but long-term ownership must converge into Climate Passport.
+- Verifier currently stays in Core, not a separate app.
+- Web and Admin should split in the target architecture.
+- SHCW shell uses API, SDK, or embedded flows and must not duplicate Core platform capabilities.
 
-## 7. First Build Sequence
+## 9. Open Architecture Questions
 
-1. scaffold the repository and architecture documents
-2. define source-to-target schema mapping from SHCW
-3. implement first-pass Passport domain schema
-4. build Passport-native baseline screens using accepted SHCW patterns
-5. add SHCW themed shell integration path
-6. add Certificate Hub domain models and issuance workflows
-
-## 8. Immediate Decisions Still Open
-
-- whether verifier stays inside `passport-web` or becomes a separate operations app
-- whether the first release uses a single app or web plus admin split
-- whether SHCW shell pages proxy server-side or embed Passport flow components directly
+- QR signing standard and key management for signed opaque event tokens.
+- Final shape of `packages/passport-core`.
+- First extraction boundary between `passport-web`, `passport-admin`, and `passport-api`.
+- Exact public verification URL pattern under `verify.climatepassport.org`.
