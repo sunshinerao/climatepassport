@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
+import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { getPrismaClient } from "@/lib/server/prisma";
 
-export async function POST(_request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   const user = await requireAuthenticatedUser("en", "/en/certificates");
   const prisma = getPrismaClient();
 
@@ -38,6 +39,16 @@ export async function POST(_request: Request, { params }: { params: { id: string
     where: { id: issue.id },
     data: { downloadCount: { increment: 1 } },
     select: { downloadCount: true },
+  });
+
+  await writeCoreAuditLog({
+    actorUserId: user.id,
+    action: "certificate.download",
+    subjectType: "certificate_issue",
+    subjectId: issue.id,
+    result: "download_authorized",
+    metadataJson: { fileName: issue.generatedFileName ?? null },
+    ...getRequestAuditContext(request),
   });
 
   return NextResponse.json({

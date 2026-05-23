@@ -10,8 +10,9 @@ Read these files first for current product and architecture decisions:
 2. `CURRENT_ARCHITECTURE_DECISIONS.md`
 3. `PASSPORT_ID_AND_QR_SPEC.md`
 4. `CHANNEL_SHELL_INTEGRATION_SPEC.md`
-5. `CURRENT_IMPLEMENTATION_STATUS.md`
-6. `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`
+5. `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`
+6. `CURRENT_IMPLEMENTATION_STATUS.md`
+7. `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`
 
 Supporting current references:
 
@@ -20,6 +21,8 @@ Supporting current references:
 - `climate-passport-design-foundation.md`: current visual design foundation.
 - `DOCS_AUDIT_REPORT.md`: 2026-05-23 documentation audit and archive rationale.
 - `UI_PROTOTYPE_ALIGNMENT_AUDIT.md`: current audit of implemented pages versus UI prototypes.
+- `PHASED_EXECUTION_P0_P2_20260523.md`: phase-by-phase execution record with done/pending items and baseline test results.
+- `trackers/`: module-level pending-feature trackers (currently certificate and summer-school modules).
 - `ui-prototypes/`: static UI prototype artifacts. For future development, ignore prototype hero/footer as binding references; use the rest of each prototype as the preferred layout and UI/UX reference when content is consistent with current product requirements. Data logic remains governed by Core platform docs.
 
 ## Product Direction
@@ -45,6 +48,7 @@ Do not use archived files to override current decisions.
 - New product decisions should update `CURRENT_PRODUCT_REQUIREMENTS.md` and `CURRENT_ARCHITECTURE_DECISIONS.md` first.
 - New ID or QR work should update `PASSPORT_ID_AND_QR_SPEC.md`.
 - New channel integration work should update `CHANNEL_SHELL_INTEGRATION_SPEC.md`.
+- New certificate product decisions should update `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`.
 - New implementation progress should update `CURRENT_IMPLEMENTATION_STATUS.md` and `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`.
 - New UI prototype/page alignment decisions should update `UI_PROTOTYPE_ALIGNMENT_AUDIT.md`.
 - Historical notes should go to `docs/archive/` after their useful content has been merged.

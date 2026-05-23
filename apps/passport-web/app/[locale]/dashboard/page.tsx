@@ -227,7 +227,7 @@ export default async function LocalizedDashboardPage({ params }: { params: { loc
           <section className="proto-dashboard-panel">
             <div className="proto-dashboard-panel-head">
               <h2>{isZh ? "证书与归档" : "Certificates & archive"}</h2>
-              <Link href={`/${params.locale}/certificates`}>{isZh ? "证书中心" : "Certificate hub"}</Link>
+              <Link href={`/${params.locale}/dashboard/certificates`}>{isZh ? "我的证书" : "My certificates"}</Link>
             </div>
             <div className="proto-dashboard-certs">
               {(recentCerts as Array<{
@@ -286,4 +286,3 @@ export default async function LocalizedDashboardPage({ params }: { params: { loc
     </div>
   );
 }
-

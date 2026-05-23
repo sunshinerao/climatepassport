@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
+import { renderCertificateHtml } from "@/lib/server/certificate-module";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const issueSchema = z.object({
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   // Find recipient user
   const recipient = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
-    select: { id: true },
+    select: { id: true, name: true },
   });
   if (!recipient) {
     return NextResponse.json({ error: "No user found with that email address." }, { status: 404 });
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   // Find an active definition for this template
   const definition = await prisma.certificateDefinition.findFirst({
     where: { templateId, isActive: true },
-    select: { id: true },
+    include: { category: true },
   });
   if (!definition) {
     return NextResponse.json({ error: "No active certificate definition found for this template." }, { status: 404 });
@@ -59,15 +60,27 @@ export async function POST(request: Request) {
     return Boolean(existing);
   });
 
+  const issuedAt = new Date();
+  const fileName = `${verificationCode}.html`;
+  const html = renderCertificateHtml({
+    holderName: recipient.name,
+    certificateName: definition.nameEn ?? definition.name,
+    categoryName: definition.category.nameEn ?? definition.category.name,
+    issueDate: issuedAt.toISOString().slice(0, 10),
+    certificateNumber: verificationCode,
+  });
+
   await prisma.certificateIssue.create({
     data: {
       definitionId: definition.id,
       userId: recipient.id,
       status: "ISSUED",
       approvedBy: admin.id,
-      approvedAt: new Date(),
-      issuedAt: new Date(),
+      approvedAt: issuedAt,
+      issuedAt,
       verificationCode,
+      generatedFileName: fileName,
+      generatedFileUrl: `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
     },
   });
 

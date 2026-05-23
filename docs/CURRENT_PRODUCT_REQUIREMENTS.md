@@ -120,6 +120,7 @@ SHCW must call Climate Passport Core through API, SDK, or embedded flows for Cor
 - Certificate Hub is a Core module, not a presentation layer.
 - It must cover certificate category, definition, template, rendering configuration, issue, approval, generation, revocation, verification, download, and audit history.
 - Certificates must link to Passport identity and may link to achievements, points, milestones, learning experiences, and event participation.
+- Detailed certificate product requirements, pages, workflows, admin operations, and phased development plan live in `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`.
 
 ### Points, Achievements, Milestones
 

@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 import { AdminEventsManager } from "@/components/admin-events-manager";
 import { serializeAdminEvent } from "@/lib/server/admin-events";
 import { requireRoleAccess } from "@/lib/server/auth";
@@ -48,6 +49,25 @@ export default async function LocalizedAdminEventsPage({ params }: { params: { l
             : "This page is now connected to the live database, live role gates, and live sessions. You can create new events and update the events your role is allowed to manage."}
         </p>
       </div>
+
+      <section className="section panel">
+        <span className="label">{params.locale === "zh" ? "后台快捷入口" : "Admin quick links"}</span>
+        <div className="certificate-operation-links">
+          <Link href={`/${params.locale}/admin`}>{params.locale === "zh" ? "控制台总览" : "Dashboard"}</Link>
+          <Link href={`/${params.locale}/admin/events`}>{params.locale === "zh" ? "活动管理" : "Event management"}</Link>
+          <Link href={`/${params.locale}/admin/learning-experiences`}>{params.locale === "zh" ? "学习项目" : "Learning experiences"}</Link>
+          {user.role === "ADMIN" ? (
+            <Link href={`/${params.locale}/admin/summer-school/applications`}>
+              {params.locale === "zh" ? "夏校申请" : "Summer school apps"}
+            </Link>
+          ) : null}
+          {user.role === "ADMIN" ? (
+            <Link href={`/${params.locale}/admin/certificates`}>
+              {params.locale === "zh" ? "证书中心" : "Certificate hub"}
+            </Link>
+          ) : null}
+        </div>
+      </section>
 
       <AdminEventsManager
         initialEvents={events.map(serializeAdminEvent)}

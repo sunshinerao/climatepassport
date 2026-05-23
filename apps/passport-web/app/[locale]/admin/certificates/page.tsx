@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { AdminCertManager } from "@/components/admin-certificate-manager";
@@ -102,6 +103,19 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
           <h3>{isZh ? "近期颁发" : "Recent issues"}</h3>
           <p>{isZh ? "最近 20 条颁发记录" : "Latest 20 certificate issue records"}</p>
         </article>
+      </section>
+
+      <section className="section panel">
+        <span className="label">{isZh ? "证书运营入口" : "Certificate operations"}</span>
+        <div className="certificate-operation-links">
+          <Link href={`/${params.locale}/admin/certificates/records`}>{isZh ? "证书记录" : "Records"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/issue`}>{isZh ? "签发证书" : "Issue"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/templates`}>{isZh ? "模板管理" : "Templates"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/categories`}>{isZh ? "分类管理" : "Categories"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/applications`}>{isZh ? "申请审核" : "Applications"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/rules`}>{isZh ? "自动规则" : "Rules"}</Link>
+          <Link href={`/${params.locale}/admin/certificates/audit-logs`}>{isZh ? "审计日志" : "Audit logs"}</Link>
+        </div>
       </section>
 
       <section className="section">

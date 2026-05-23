@@ -902,6 +902,7 @@ model CertificateIssue {
   generatedFileUrl  String?
   generatedFileName String?
   verificationCode  String?               @unique
+  publicVisible     Boolean               @default(false)
   approvedBy        String?
   approvedAt        DateTime?
   issuedAt          DateTime?

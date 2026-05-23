@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 import { AdminLearningApplicationsManager } from "@/components/admin-learning-applications-manager";
 import { AdminLearningProgramsManager } from "@/components/admin-learning-programs-manager";
 import { requireRoleAccess } from "@/lib/server/auth";
@@ -139,6 +140,25 @@ export default async function LocalizedAdminLearningExperiencesPage({
             : "Learning Experiences now has a runnable admin entry. Programs, applications, and Event linkage will continue as an independent domain."}
         </p>
       </div>
+
+      <section className="section panel">
+        <span className="label">{params.locale === "zh" ? "后台快捷入口" : "Admin quick links"}</span>
+        <div className="certificate-operation-links">
+          <Link href={`/${params.locale}/admin`}>{params.locale === "zh" ? "控制台总览" : "Dashboard"}</Link>
+          <Link href={`/${params.locale}/admin/events`}>{params.locale === "zh" ? "活动管理" : "Event management"}</Link>
+          <Link href={`/${params.locale}/admin/learning-experiences`}>{params.locale === "zh" ? "学习项目" : "Learning experiences"}</Link>
+          {user.role === "ADMIN" ? (
+            <Link href={`/${params.locale}/admin/summer-school/applications`}>
+              {params.locale === "zh" ? "夏校申请" : "Summer school apps"}
+            </Link>
+          ) : null}
+          {user.role === "ADMIN" ? (
+            <Link href={`/${params.locale}/admin/certificates`}>
+              {params.locale === "zh" ? "证书中心" : "Certificate hub"}
+            </Link>
+          ) : null}
+        </div>
+      </section>
 
       <AdminLearningProgramsManager
         categories={categories}

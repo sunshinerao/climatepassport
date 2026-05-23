@@ -15,6 +15,7 @@ Last updated: 2026-05-23
 - [x] CP-TODO-047 `done` create current docs entrypoint and authority set.
 - [x] CP-TODO-048 `done` codify Climate Passport Core vs SHCW Channel Shell boundary.
 - [x] CP-TODO-049 `done` close old architecture decisions for verifier integration and Web/Admin/API/Verify split.
+- [x] CP-TODO-095 `done` merge Certificate Hub notes and latest product input into `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`.
 - [ ] CP-TODO-050 `todo` add a lightweight docs update checklist to future PR workflow.
 
 ## 2. Platform Foundation
@@ -103,6 +104,18 @@ Last updated: 2026-05-23
 - [x] CP-TODO-081 `done` implement certificate download authorization and download count tracking.
 - [x] CP-TODO-082 `done` implement certificate revocation.
 - [ ] CP-TODO-083 `doing` connect certificate issue to points, achievements, and milestones according to definition rules (Learning Experience completion linkage shipped; general certificate rule engine pending).
+- [x] CP-TODO-096 `done` implement `/dashboard/certificates` user certificate list with overview, filters, search, cards, download, share, and verification actions.
+- [x] CP-TODO-097 `done` implement `/dashboard/certificates/[id]` certificate detail with preview, metadata, capability tags, QR verification area, share actions, and public profile visibility toggle.
+- [x] CP-TODO-098 `done` implement `/verify/certificate/[code]` public verification UI with minimum necessary disclosure.
+- [ ] CP-TODO-099 `todo` implement `/admin/certificates/records` certificate records list with status, verification count, revoke, restore, download, notification, link copy, and log entry actions.
+- [ ] CP-TODO-100 `todo` implement `/admin/certificates/issue` manual issue UI for single user and first batch-oriented issue flow.
+- [ ] CP-TODO-101 `todo` implement `/admin/certificates/templates` and `/admin/certificates/templates/[id]` with configuration form and preview placeholder.
+- [ ] CP-TODO-102 `todo` implement `/admin/certificates/categories` category management.
+- [ ] CP-TODO-103 `todo` implement `/admin/certificates/applications` user certificate application review workflow.
+- [ ] CP-TODO-104 `todo` implement `/admin/certificates/rules` automatic issuing rules for course, event, Learning Experience, role, points, achievement, and milestone triggers.
+- [ ] CP-TODO-105 `doing` implement `/admin/certificates/audit-logs` verification, download, admin operation, revocation, template modification, and batch issue logs (first verification/admin audit view plus download/visibility audit writes shipped; deeper analytics pending).
+- [x] CP-TODO-106 `done` implement `/profile/[userId]/credentials` public profile credential display with user-controlled visibility.
+- [ ] CP-TODO-107 `doing` add certificate module regression tests for issue, verify, download, revoke, public disclosure, and authorization boundaries (helper-level coverage now includes lookup filters plus certificate verification serialization/minimum-disclosure mapping; API-level boundary tests still pending).
 
 ## 9. Learning Experiences
 
@@ -131,6 +144,15 @@ Last updated: 2026-05-23
 - [x] CP-TODO-043 `done` add notification preference mutation and contact message submit APIs.
 - [x] CP-TODO-045 `done` ship first SHCW-aligned visual and copy productization pass.
 - [ ] CP-TODO-018 `todo` design phased cutover plan from SHCW monolith to Climate Passport platform.
-- [ ] CP-TODO-019 `todo` list regression checks for login, event registration, Passport QR, verifier, certificate verification, and channel bridge flows.
+- [ ] CP-TODO-019 `doing` list regression checks for login, event registration, Passport QR, verifier, certificate verification, and channel bridge flows (P0-P2 execution checklist documented; full automated flow coverage pending).
 - [ ] CP-TODO-020 `todo` define launch criteria for independent Climate Passport deployment.
 - [ ] CP-TODO-091 `todo` define deployment plan for `www`, `admin`, `api`, and `verify` domains.
+
+## 12. Phase Execution Log (2026-05-23)
+
+- [x] CP-TODO-108 `done` phase P0 unblock: fixed certificate rules Prisma select mismatch and restored successful workspace build.
+- [x] CP-TODO-109 `done` phase P0 behavior fix: aligned summer-school duplicate lookup API with form UX by supporting email-or-passport-id matching.
+- [x] CP-TODO-110 `done` phase P1 navigation hardening: added cross-module admin quick-link panels on events and learning-experiences admin pages.
+- [x] CP-TODO-111 `done` phase P2 test scaffolding: extracted summer-school lookup filter helper and added regression tests in `tests/summer-school-lookup.test.mjs`.
+- [ ] CP-TODO-112 `doing` phase P2 expansion: extend automated coverage from helper-level tests to API permission boundaries and certificate lifecycle end-to-end cases.
+- [x] CP-TODO-113 `done` certificate profile visibility persistence: added `CertificateIssue.publicVisible`, owner/admin visibility API, public profile filtering, and migration `20260523001000_certificate_public_visibility`.

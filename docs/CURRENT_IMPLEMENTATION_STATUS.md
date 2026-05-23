@@ -38,6 +38,7 @@ Last updated: 2026-05-23
 - Dashboard routes: overview, Climate Passport, learning experiences, messages, notifications, summer school.
 - Admin routes: events, learning experiences, learning applications, certificates, summer school applications.
 - Summer school application route.
+- Certificate routes now include user list/detail and public verification page shells: `/[locale]/dashboard/certificates`, `/[locale]/dashboard/certificates/[id]`, `/verify/certificate/[code]`.
 
 ### Current APIs
 
@@ -76,12 +77,26 @@ Last updated: 2026-05-23
 ### Certificate Hub
 
 - Prisma models exist for category, template, definition, issue, verification.
+- `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md` is now the current Certificate module PRD and development plan.
 - Admin certificate issue API exists.
 - Admin certificate issue API exists and uses opaque verification codes.
 - Public certificate verification API exists.
 - Authenticated certificate download authorization and download count tracking API exists.
 - Admin certificate revocation API exists.
-- Full certificate rendering/storage and productized audit UX remain pending.
+- User certificate list/detail UI and public verify UI are now runnable in first version.
+- User certificate list has search, category filter, and status filter.
+- Certificate detail public profile visibility toggle is persisted through `CertificateIssue.publicVisible`.
+- Public profile credentials route only displays issued certificates explicitly marked public.
+- Certificate download and visibility changes write Core audit logs.
+- Admin records/issue/templates/categories/applications/rules/audit pages now have first route/page shells in place.
+- Full external file storage, rule automation depth, admin action completeness, richer public profile publishing controls, and productized audit analytics remain pending.
+
+### Phase Execution (P0-P2, 2026-05-23)
+
+- P0: fixed certificate rules page Prisma select mismatch that blocked `npm run build`.
+- P0: aligned summer-school duplicate lookup behavior with form UX (email OR passport ID match).
+- P1: added cross-module admin quick-link panels on events and learning-experiences admin pages to improve discoverability.
+- P2: extracted summer-school lookup filter helper and added regression tests in `tests/summer-school-lookup.test.mjs`.
 
 ### Channel Session Bridge
 
@@ -109,6 +124,7 @@ Last updated: 2026-05-23
 - Learning Experience completion now writes back participation completion, certificate issue when configured, points, point ledger, and milestones. Cohort operations and deeper reviewer workflow remain partial.
 - Channel bridge still needs replay monitoring and production-grade distributed rate limits.
 - Points and milestones writeback exist for Learning Experience completion; broader achievement rules and productized UI remain partial.
+- Certificate user/admin surfaces are now available in first phase, but operational depth (filters, batch workflows, persistence toggles, richer actions) remains partial.
 
 ## 3. Pending
 
@@ -123,7 +139,7 @@ Last updated: 2026-05-23
 - `packages/passport-ui` replacement for the older `passport-ui-flows` direction.
 - Certificate rendering/storage and user/admin UI expansion.
 - Embedded flow contracts.
-- Regression tests for auth, event registration, QR, verifier, certificate verification, and channel bridge.
+- Full API/E2E regression tests for auth, event registration, QR, verifier, certificate lifecycle, and channel bridge.
 
 ## 4. Deprecated / Superseded
 
@@ -138,7 +154,7 @@ Last updated: 2026-05-23
 ## 5. Current Development Priorities
 
 1. Add scanner UI or embedded verifier flow.
-2. Implement certificate rendering/storage and user-facing portfolio/download UX.
+2. Implement Certificate module Phase 1 from `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`: user list/detail, public verify UI, admin records, admin issue UI, and template management skeleton.
 3. Add invitation / special pass QR support.
 4. Add production-grade replay monitoring and distributed rate limits.
 5. Define remaining achievement writeback rules.

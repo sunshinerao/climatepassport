@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { normalizeUserEmail } from "@/lib/server/auth";
+import { buildSummerSchoolLookupOrFilters } from "@/lib/server/summer-school-lookup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,16 +17,16 @@ export async function GET(request: Request) {
   const passportIdRaw = url.searchParams.get("passportId") ?? "";
   const email = normalizeUserEmail(emailRaw);
   const passportId = passportIdRaw.trim();
+  const whereOr = buildSummerSchoolLookupOrFilters({ email, passportId });
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !passportId) {
+  if (whereOr.length === 0) {
     return NextResponse.json({ found: false }, { status: 200 });
   }
 
   const application = await prisma.summerSchoolApplication.findFirst({
     where: {
       projectSlug: "gca-yungu-summer-school-2026",
-      email,
-      climatePassportId: passportId,
+      OR: whereOr,
     },
     orderBy: { submittedAt: "desc" },
     select: {
