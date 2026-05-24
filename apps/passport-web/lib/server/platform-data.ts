@@ -45,12 +45,29 @@ export async function getHomePageData(locale: Locale) {
 
   return withPrismaFallback(
     async (prisma) => {
-      const [userCount, eventCount, certificateCount, checkinCount] = await Promise.all([
+      const [userCount, eventCount, certificateCount, checkinCount, upcomingEvents] = await Promise.all([
         prisma.user.count(),
         prisma.event.count({ where: { isPublished: true } }),
         prisma.certificateIssue.count({ where: { status: "ISSUED" } }),
         prisma.checkIn.count(),
+        prisma.event.findMany({
+          where: { isPublished: true },
+          orderBy: [{ isPinned: "desc" }, { startDate: "asc" }],
+          take: 3,
+          select: {
+            id: true,
+            title: true,
+            titleEn: true,
+            venue: true,
+            venueEn: true,
+            startDate: true,
+            endDate: true,
+            isClosed: true,
+          },
+        }),
       ]);
+
+      const dateRangeSeparator = locale === "zh" ? " 至 " : " to ";
 
       return {
         locale,
@@ -63,11 +80,22 @@ export async function getHomePageData(locale: Locale) {
             { ...dictionary.home.metrics[3], value: checkinCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },
           ],
         },
+        upcomingEvents: upcomingEvents.map((event) => ({
+          id: event.id,
+          title: getLocalizedText(locale, event.title, event.titleEn),
+          venue: getLocalizedText(locale, event.venue, event.venueEn),
+          startDate: event.startDate,
+          dateRange: `${formatDateLabel(locale, event.startDate)}${dateRangeSeparator}${formatDateLabel(locale, event.endDate)}`,
+          status: event.isClosed
+            ? (locale === "zh" ? "已结束" : "Ended")
+            : (locale === "zh" ? "即将开始" : "Upcoming"),
+        })),
       };
     },
     async () => ({
       locale,
       home: dictionary.home,
+      upcomingEvents: [] as { id: string; title: string; venue: string; startDate: Date | null; dateRange: string; status: string }[],
     }),
   );
 }

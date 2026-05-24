@@ -51,7 +51,7 @@ Last updated: 2026-05-23
 - [x] CP-TODO-066 `done` implement verifier permission checks based on verifier identity and event-specific access.
 - [x] CP-TODO-067 `done` implement Event Check-in QR validation and attendance confirmation.
 - [x] CP-TODO-068 `done` implement verification logs for verifier outcomes through CoreAuditLog.
-- [ ] CP-TODO-069 `todo` add scanner UI or embedded verifier flow.
+- [x] CP-TODO-069 `done` add scanner UI or embedded verifier flow. Implemented at `/[locale]/verifier` with camera (BarcodeDetector) and manual fallback.
 - [ ] CP-TODO-070 `doing` add abuse controls and rate limits for verifier APIs (bridge rate limits exist; verifier distributed abuse controls remain pending).
 
 ## 5. Data Migration And Continuity

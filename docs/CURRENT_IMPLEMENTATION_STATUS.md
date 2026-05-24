@@ -116,11 +116,12 @@ Last updated: 2026-05-23
 - Event check-in QR issue API exists.
 - Verifier scan API exists for identity validation and event check-in.
 - Verifier scan writes Core audit logs and enforces event-specific verifier access.
+- Verifier scanner UI is implemented at `/[locale]/verifier` with camera-based QR scanning (BarcodeDetector) and manual token fallback, gated by ADMIN / EVENT_MANAGER / VERIFIER roles.
 
 ## 2. In Progress / Partial
 
-- QR Code issuing and verifier APIs now exist as a minimum server-side closed loop; signed/encrypted token wrappers, rotation policy, and scanner UI remain partial.
-- Verifier is implemented as an API capability; scanner UI still needs implementation.
+- QR Code issuing and verifier APIs now exist as a minimum server-side closed loop; signed/encrypted token wrappers and rotation policy remain partial.
+- Verifier scanner UI is now available; signed/encrypted token wrappers and key rotation still need implementation.
 - Admin and Web are currently in one app and need target split planning.
 - Certificate Hub has issue, verify, download count, and revoke APIs; rendering/storage and admin/user UI still need completion.
 - Learning Experience completion now writes back participation completion, certificate issue when configured, points, point ledger, and milestones. Cohort operations and deeper reviewer workflow remain partial.
@@ -155,11 +156,10 @@ Last updated: 2026-05-23
 
 ## 5. Current Development Priorities
 
-1. Add scanner UI or embedded verifier flow.
-2. Implement Certificate module Phase 1 from `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`: user list/detail, public verify UI, admin records, admin issue UI, and template management skeleton.
-3. Add invitation / special pass QR support.
-4. Add production-grade replay monitoring and distributed rate limits.
-5. Define remaining achievement writeback rules.
-6. Plan `passport-admin` and `passport-api` extraction.
-7. Continue moving shared business rules into `packages/passport-core`.
-8. Add broader regression tests for authenticated Core flows.
+1. Implement Certificate module Phase 1 from `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`: user list/detail, public verify UI, admin records, admin issue UI, and template management skeleton.
+2. Add invitation / special pass QR support.
+3. Add production-grade replay monitoring and distributed rate limits.
+4. Define remaining achievement writeback rules.
+5. Plan `passport-admin` and `passport-api` extraction.
+6. Continue moving shared business rules into `packages/passport-core`.
+7. Add broader regression tests for authenticated Core flows.

@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/auth";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const loginSchema = z.object({
   locale: z.enum(locales).default("en"),
@@ -35,6 +36,16 @@ export async function POST(request: Request) {
 
   const { locale, next, email, password } = payload.data;
   const normalizedEmail = normalizeUserEmail(email);
+
+  const rateLimit = checkRateLimit(`${getRequestRateLimitKey(request, "auth-login")}:${normalizedEmail}`, {
+    limit: 8,
+    windowMs: 5 * 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Too many login attempts. Please try again later." }, { status: 429 });
+  }
+
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
     select: {

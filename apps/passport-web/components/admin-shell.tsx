@@ -147,6 +147,12 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
       roles: ["ADMIN"],
     },
     {
+      href: `${prefix}/verifier`,
+      icon: "◇",
+      label: t(locale, "扫码与签到", "Verifier console"),
+      roles: ["ADMIN", "EVENT_MANAGER"],
+    },
+    {
       href: `${prefix}/dashboard`,
       icon: "◇",
       label: t(locale, "返回用户工作台", "Return workspace"),

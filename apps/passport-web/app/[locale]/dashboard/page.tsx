@@ -278,6 +278,9 @@ export default async function LocalizedDashboardPage({ params }: { params: { loc
               <Link href={`/${params.locale}/dashboard/summer-school`}>{isZh ? "可持续夏校申请" : "Summer school apply"}</Link>
               <Link href={`/${params.locale}/dashboard/notifications`}>{isZh ? "通知偏好" : "Notification preferences"}</Link>
               <Link href={`/${params.locale}/dashboard/messages`}>{isZh ? "消息中心" : "Messages center"}</Link>
+              {(user.role === "VERIFIER" || isAdminUser) ? (
+                <Link href={`/${params.locale}/verifier`}>{isZh ? "扫码与签到" : "Verifier console"}</Link>
+              ) : null}
               {isAdminUser ? <Link href={getDashboardPathForRole(params.locale, user.role)}>{isZh ? "进入后台" : "Open admin"}</Link> : null}
             </div>
           </section>

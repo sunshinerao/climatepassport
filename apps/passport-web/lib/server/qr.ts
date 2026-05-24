@@ -49,3 +49,7 @@ export async function issueQrToken(input: {
 export function getEventCheckinQrExpiry() {
   return new Date(Date.now() + 1000 * 60 * 10);
 }
+
+export function getIdentityQrExpiry() {
+  return new Date(Date.now() + 1000 * 60 * 2);
+}

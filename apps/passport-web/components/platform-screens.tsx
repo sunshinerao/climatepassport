@@ -21,110 +21,229 @@ import {
   getSpeakersPageData,
 } from "@/lib/server/platform-data";
 
+function formatEventDateBadge(date: Date | null, locale: Locale) {
+  if (!date) return { day: "--", month: "--" };
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = locale === "zh"
+    ? `${d.getMonth() + 1}月`
+    : d.toLocaleDateString("en-US", { month: "short" });
+  return { day: String(day), month };
+}
+
 export async function HomeScreen({ locale }: { locale: Locale }) {
-  const { home } = await getHomePageData(locale);
+  const { home, upcomingEvents } = await getHomePageData(locale);
   const isZh = locale === "zh";
-  const summerSchoolApplyHref = `/learning-experience/summer-school-2026/apply?lang=${isZh ? "zh" : "en"}`;
 
   return (
-    <>
+    <div className="proto-home">
+      {/* Hero */}
       <section className="proto-home-hero">
-        <div>
-          <div className="eyebrow">{home.kicker}</div>
-          <h1
-            className="proto-title"
-            dangerouslySetInnerHTML={{
-              __html: isZh
-                ? home.title.replace("气候", '<span class="proto-title-accent">气候</span>')
-                : home.title.replace("Climate", "<em>Climate</em>"),
-            }}
-          />
-          <p className="proto-subtitle">{home.body}</p>
-          <div className="button-row">
-            <Link className="button button-amber" href={`/${locale}/auth/register`}>
-              {home.primaryCta}
-            </Link>
-            <Link className="button-outline" href={`/${locale}/events`}>
-              {isZh ? "浏览活动" : "Browse Events"}
-            </Link>
-            <Link className="button-outline" href={summerSchoolApplyHref}>
-              {isZh ? "夏校申请" : "Summer School Apply"}
-            </Link>
+        <svg className="hero-leaf-deco one" viewBox="0 0 100 100" fill="currentColor">
+          <path d="M50 10 C30 30, 10 50, 50 90 C70 70, 90 50, 50 10Z"/>
+        </svg>
+        <svg className="hero-leaf-deco two" viewBox="0 0 100 100" fill="currentColor">
+          <path d="M50 10 C30 30, 10 50, 50 90 C70 70, 90 50, 50 10Z"/>
+        </svg>
+
+        <div className="proto-home-inner proto-home-hero-inner">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>{isZh ? "超过10,000名气候先锋信赖" : "Trusted by 10,000+ climate champions"}</span>
+            </div>
+            <h1
+              className="proto-title"
+              dangerouslySetInnerHTML={{
+                __html: isZh
+                  ? home.title.replace("气候", '<em>气候</em>')
+                  : home.title.replace("Climate", "<em>Climate</em>"),
+              }}
+            />
+            <p className="hero-subtitle">{home.subtitle}</p>
+            <p className="hero-desc">{home.body}</p>
+            <div className="hero-ctas">
+              <Link className="button button-amber" href={`/${locale}/auth/register`}>
+                {isZh ? "获取护照" : "Get Your Passport"}
+              </Link>
+              <Link className="button-outline" href={`/${locale}/events`}>
+                {isZh ? "探索活动" : "Explore Events"}
+              </Link>
+            </div>
           </div>
-        </div>
-        <div className="proto-passport-card">
-          <span className="chip">Climate Passport</span>
-          <h3>{isZh ? "统一气候身份" : "Unified Climate Identity"}</h3>
-          <p>{isZh ? "连接活动、学习与证书验证，形成可持续行动档案。" : "Link events, learning and credential verification into a trusted action profile."}</p>
-          <div className="proto-passport-meta">
-            <div><strong>1,240</strong><span>{isZh ? "积分" : "Points"}</span></div>
-            <div><strong>12</strong><span>{isZh ? "活动" : "Events"}</span></div>
-            <div><strong>7</strong><span>{isZh ? "证书" : "Certificates"}</span></div>
+
+          <div className="hero-visual">
+            <div className="passport-card-visual">
+              <div className="passport-card-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.6C11.5 4.7 14.3 3.8 17 4c.5 0 1 .1 1.4.2.4.1.7.3 1 .5l-1.8 8.2a7 7 0 0 1-6.6 7.1z"/>
+                  <path d="M12 20a7 7 0 0 0 6.3-9.8c-2.3 1.1-4.3 3-5.6 5.3A10.5 10.5 0 0 0 11 20z"/>
+                </svg>
+                <span>Climate Passport</span>
+              </div>
+              <div className="passport-avatar">L</div>
+              <div className="passport-name">Lin Wei</div>
+              <div className="passport-id">ID: K7M9QF2-T8N4PZ</div>
+              <div className="passport-qr">
+                <div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
+                <div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div>
+                <div className="qr-cell filled"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
+                <div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div>
+                <div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
+              </div>
+              <div className="passport-card-footer">
+                <span className="passport-status">
+                  <span className="passport-status-dot"></span>
+                  <span>{isZh ? "有效" : "Active"}</span>
+                </span>
+                <span className="passport-level">{isZh ? "等级 3" : "Level 3"}</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Stats */}
       <section className="proto-stats-strip">
-        {home.metrics.map((metric) => (
-          <article key={metric.label}>
-            <strong>{metric.value}</strong>
-            <span>{metric.label}</span>
-          </article>
-        ))}
-      </section>
-
-      <section className="proto-feature-grid">
-        <article className="data-card">
-          <h3>{isZh ? "活动网络" : "Events Network"}</h3>
-          <p>{isZh ? "覆盖峰会、工作坊、展览和在线项目。" : "Across summits, workshops, exhibitions and online programs."}</p>
-        </article>
-        <article className="data-card">
-          <h3>{isZh ? "可信证书" : "Trusted Credentials"}</h3>
-          <p>{isZh ? "证书可核验，关联个人成长路径。" : "Verifiable certificates linked to personal growth pathways."}</p>
-        </article>
-        <article className="data-card">
-          <h3>{isZh ? "学习体验" : "Learning Experiences"}</h3>
-          <p>{isZh ? "通过项目化学习形成真实气候行动能力。" : "Project-based learning for practical climate action capabilities."}</p>
-        </article>
-      </section>
-
-      <section className="proto-how-it-works">
-        <header>
-          <span className="label">{isZh ? "使用流程" : "How it works"}</span>
-          <h2>{isZh ? "三步开启你的气候护照" : "Three steps to launch your climate passport"}</h2>
-        </header>
-        <ol className="proto-how-it-works-steps">
-          <li>
-            <span className="proto-step-num">01</span>
-            <strong>{isZh ? "创建护照账号" : "Create your passport"}</strong>
-            <p>{isZh ? "免费注册并领取全球唯一的 Climate Passport ID。" : "Register for free and claim your globally unique Climate Passport ID."}</p>
-          </li>
-          <li>
-            <span className="proto-step-num">02</span>
-            <strong>{isZh ? "参与活动与学习" : "Participate and learn"}</strong>
-            <p>{isZh ? "报名峰会、工作坊与学习项目，自动积累参与记录。" : "Attend summits, workshops and learning programs — records accumulate automatically."}</p>
-          </li>
-          <li>
-            <span className="proto-step-num">03</span>
-            <strong>{isZh ? "获取证书与成就" : "Earn verified credentials"}</strong>
-            <p>{isZh ? "获取可验证的证书、成就与积分，随时分享到任何平台。" : "Receive verifiable certificates, achievements and points — shareable anywhere."}</p>
-          </li>
-        </ol>
-      </section>
-
-      <section className="proto-newsletter">
-        <div>
-          <span className="label">{isZh ? "保持连接" : "Stay Updated"}</span>
-          <h2>{isZh ? "加入全球气候行动者网络" : "Join the Global Climate Action Network"}</h2>
-        </div>
-        <div className="newsletter-form-row">
-          <input type="email" placeholder={isZh ? "输入邮箱" : "Enter your email"} aria-label={isZh ? "邮箱" : "Email"} />
-          <Link className="button button-amber" href={`/${locale}/auth/register`}>
-            {isZh ? "立即加入" : "Get Started"}
-          </Link>
+        <div className="proto-home-inner proto-stats-inner">
+          {home.metrics.map((metric) => (
+            <div className="stat-item" key={metric.label}>
+              <div className="stat-value">{metric.value}</div>
+              <div className="stat-label">{metric.label}</div>
+            </div>
+          ))}
         </div>
       </section>
-    </>
+
+      {/* How It Works */}
+      <section className="proto-section how-it-works">
+        <div className="proto-home-inner">
+          <header className="section-header">
+            <span className="section-label">{isZh ? "使用方式" : "How It Works"}</span>
+            <h2 className="section-title">{isZh ? "三个简单步骤" : "Three Simple Steps"}</h2>
+            <p className="section-desc">{isZh ? "几分钟内开始，成为有意义运动的一部分。" : "Get started in minutes and become part of a movement that matters."}</p>
+          </header>
+          <div className="steps">
+            <div className="step">
+              <div className="step-number">1</div>
+              <h3>{isZh ? "创建档案" : "Create Your Profile"}</h3>
+              <p>{isZh ? "注册并建立您的个人气候身份，包含您的目标、兴趣和背景。" : "Sign up and build your personal climate identity with your goals, interests, and background."}</p>
+            </div>
+            <div className="step">
+              <div className="step-number">2</div>
+              <h3>{isZh ? "参加活动" : "Join Events"}</h3>
+              <p>{isZh ? "发现并注册全球各地的研讨会、峰会和实地体验活动。" : "Discover and register for workshops, summits, and field experiences around the world."}</p>
+            </div>
+            <div className="step">
+              <div className="step-number">3</div>
+              <h3>{isZh ? "获取与分享" : "Earn & Share"}</h3>
+              <p>{isZh ? "收集认证证书，追踪您的影响力，并与社区分享您的旅程。" : "Collect verified certificates, track your impact, and share your journey with the community."}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Events */}
+      {upcomingEvents.length > 0 && (
+        <section className="proto-section events">
+          <div className="proto-home-inner">
+            <header className="section-header">
+              <span className="section-label">{isZh ? "近期活动" : "Upcoming Events"}</span>
+              <h2 className="section-title">{isZh ? "探索未来" : "Discover What&apos;s Next"}</h2>
+              <p className="section-desc">{isZh ? "在我们的精选气候活动中与专家、创新者和变革者建立联系。" : "Connect with experts, innovators, and changemakers at our curated climate events."}</p>
+            </header>
+            <div className="event-cards">
+              {upcomingEvents.map((event) => {
+                const badge = formatEventDateBadge(event.startDate, locale);
+                return (
+                  <div className="event-card" key={event.id}>
+                    <div className="event-image">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      <div className="event-date-badge">
+                        <span className="day">{badge.day}</span>
+                        <span className="month">{badge.month}</span>
+                      </div>
+                    </div>
+                    <div className="event-content">
+                      <h3>{event.title}</h3>
+                      <div className="event-location">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span>{event.venue || (isZh ? "线上活动" : "Virtual Event")}</span>
+                      </div>
+                      <Link className="button-outline event-btn" href={`/${locale}/events`}>
+                        {isZh ? "了解更多" : "Learn More"}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Features */}
+      <section className="proto-section features">
+        <div className="proto-home-inner">
+          <header className="section-header">
+            <span className="section-label">{isZh ? "功能" : "Features"}</span>
+            <h2 className="section-title">{isZh ? "您所需的一切" : "Everything You Need"}</h2>
+            <p className="section-desc">{isZh ? "一个完整的生态系统，旨在赋能您的气候行动和职业成长。" : "A complete ecosystem designed to empower your climate action and professional growth."}</p>
+          </header>
+          <div className="feature-cards">
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "数字身份" : "Digital Identity"}</h3>
+              <p>{isZh ? "一个统一的、可随身携带的档案，伴随您的气候旅程成长。展示成就、技能和承诺。" : "A unified, portable profile that grows with your climate journey. Showcase achievements, skills, and commitments."}</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                  <path d="M8 14h.01"/>
+                  <path d="M12 14h.01"/>
+                  <path d="M16 14h.01"/>
+                  <path d="M8 18h.01"/>
+                  <path d="M12 18h.01"/>
+                  <path d="M16 18h.01"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "活动访问" : "Event Access"}</h3>
+              <p>{isZh ? "无缝注册、数字签到，以及符合您目标的活动的个性化推荐。" : "Seamless registration, digital check-in, and personalized recommendations for events that match your goals."}</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="7"/>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "认证证书" : "Verified Certificates"}</h3>
+              <p>{isZh ? "区块链支持的证书，证明您的专业知识。可分享、可验证，并获得全球雇主信赖。" : "Blockchain-backed credentials that prove your expertise. Shareable, verifiable, and trusted by employers worldwide."}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 

@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
-import { issueQrToken } from "@/lib/server/qr";
+import { getCurrentUser } from "@/lib/server/auth";
+import { getIdentityQrExpiry, issueQrToken } from "@/lib/server/qr";
 
 export async function POST() {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/climate-passport");
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
 
   const qr = await issueQrToken({
     type: "IDENTITY",
     userId: user.id,
     subjectType: "user",
     subjectId: user.id,
+    expiresAt: getIdentityQrExpiry(),
     metadataJson: {
       climatePassportId: user.climatePassportId,
     },

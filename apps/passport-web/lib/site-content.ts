@@ -137,6 +137,7 @@ type SiteDictionary = {
   home: {
     kicker: string;
     title: string;
+    subtitle: string;
     body: string;
     primaryCta: string;
     secondaryCta: string;
@@ -344,6 +345,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     home: {
       kicker: "Climate Identity Infrastructure",
       title: "Your verified record for the climate era.",
+      subtitle: "For the planet, for yourself, for the future",
       body:
         "Climate Passport records your credentials, events, learning, and climate action into a trusted digital profile you own and can share anywhere.",
       primaryCta: "Create my Passport",
@@ -689,6 +691,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     home: {
       kicker: "气候身份基础设施",
       title: "属于你的气候时代可信档案",
+      subtitle: "为地球，为自己，为未来",
       body: "Climate Passport 将你的凭证、活动参与、学习记录和气候行动，汇聚成一份你拥有、可随时分享的可信数字档案。",
       primaryCta: "创建我的护照",
       secondaryCta: "查看证书",

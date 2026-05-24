@@ -2,7 +2,7 @@ import { hashOpaqueToken } from "@climate-passport/passport-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const scanSchema = z.object({
@@ -37,7 +37,15 @@ async function canVerifyEvent(prisma: NonNullable<ReturnType<typeof getPrismaCli
 }
 
 export async function POST(request: Request) {
-  const verifier = await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER", "VERIFIER"], "/en/dashboard");
+  const verifier = await getCurrentUser();
+  if (!verifier) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  if (!["ADMIN", "EVENT_MANAGER", "VERIFIER"].includes(verifier.role)) {
+    return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
+  }
+
   const prisma = getPrismaClient();
   const auditContext = getRequestAuditContext(request);
 

@@ -54,11 +54,17 @@ export function AuthForm(props: AuthFormProps) {
 
     if (props.mode === "register") {
       payload.name = String(formData.get("name") ?? "");
-      payload.salutation = String(formData.get("salutation") ?? "");
-      payload.title = String(formData.get("title") ?? "");
-      payload.phone = String(formData.get("phone") ?? "");
-      payload.country = String(formData.get("country") ?? "");
-      payload.organizationName = String(formData.get("organizationName") ?? "");
+      const salutation = String(formData.get("salutation") ?? "").trim();
+      const title = String(formData.get("title") ?? "").trim();
+      const phone = String(formData.get("phone") ?? "").trim();
+      const country = String(formData.get("country") ?? "").trim();
+      const organizationName = String(formData.get("organizationName") ?? "").trim();
+
+      if (salutation) payload.salutation = salutation;
+      if (title) payload.title = title;
+      if (phone) payload.phone = phone;
+      if (country) payload.country = country;
+      if (organizationName) payload.organizationName = organizationName;
     }
 
     try {
