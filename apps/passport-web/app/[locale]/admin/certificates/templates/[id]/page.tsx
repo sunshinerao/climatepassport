@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { requireRoleAccess } from "@/lib/server/auth";
-import { getCertificateName } from "@/lib/server/certificate-module";
+import { CertificateTemplateForm } from "@/components/admin-certificate-config-forms";
+import {
+  getCertificateName,
+  parseCertificateRenderConfig,
+  renderCertificateHtml,
+} from "@/lib/server/certificate-module";
 import { getPrismaClient } from "@/lib/server/prisma";
 import type { Locale } from "@/lib/site-content";
 
@@ -20,10 +25,29 @@ export default async function AdminCertificateTemplateDetailPage({
         include: { category: true, definitions: true },
       })
     : null;
+  const categories = prisma
+    ? await prisma.certificateCategory.findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+        select: { id: true, key: true, name: true, nameEn: true },
+      })
+    : [];
 
   if (!template) {
     notFound();
   }
+
+  const renderConfig = parseCertificateRenderConfig(template.renderConfigJson);
+  const primaryDefinition = template.definitions[0] ?? null;
+  const previewHtml = renderCertificateHtml({
+    holderName: isZh ? "证书持有人" : "Credential Holder",
+    certificateName: getCertificateName(params.locale, primaryDefinition ?? template),
+    categoryName: getCertificateName(params.locale, template.category),
+    issueDate: new Date().toISOString().slice(0, 10),
+    certificateNumber: "CV-PREVIEW",
+    verificationUrl: "/verify/certificate/CV-PREVIEW",
+    renderConfig,
+  });
 
   return (
     <>
@@ -38,43 +62,36 @@ export default async function AdminCertificateTemplateDetailPage({
       <section className="section certificate-detail-layout">
         <article className="panel">
           <span className="label">{isZh ? "配置表单" : "Configuration form"}</span>
-          <div className="form-grid">
-            <label className="field">
-              <span>{isZh ? "模板名称" : "Template name"}</span>
-              <input defaultValue={template.name} readOnly />
-            </label>
-            <label className="field">
-              <span>{isZh ? "英文名称" : "English name"}</span>
-              <input defaultValue={template.nameEn ?? ""} readOnly />
-            </label>
-            <label className="field">
-              <span>{isZh ? "分类" : "Category"}</span>
-              <input defaultValue={getCertificateName(params.locale, template.category)} readOnly />
-            </label>
-            <label className="field">
-              <span>{isZh ? "页面尺寸" : "Page size"}</span>
-              <input defaultValue="A4 landscape" readOnly />
-            </label>
-            <label className="field">
-              <span>{isZh ? "二维码位置" : "QR position"}</span>
-              <input defaultValue="bottom-right" readOnly />
-            </label>
-            <label className="field">
-              <span>{isZh ? "编号格式" : "Number format"}</span>
-              <input defaultValue="CV-{opaque-code}" readOnly />
-            </label>
-          </div>
+          <CertificateTemplateForm
+            categories={categories}
+            initialTemplate={{
+              id: template.id,
+              categoryId: template.categoryId,
+              name: template.name,
+              nameEn: template.nameEn,
+              templateType: template.templateType,
+              isActive: template.isActive,
+              renderConfig,
+              definition: primaryDefinition
+                ? {
+                    name: primaryDefinition.name,
+                    nameEn: primaryDefinition.nameEn,
+                    approvalMode: primaryDefinition.approvalMode,
+                  }
+                : null,
+            }}
+            locale={params.locale}
+          />
         </article>
 
         <article className="certificate-preview-panel">
-          <span className="label">Preview</span>
-          <h2>{getCertificateName(params.locale, template)}</h2>
-          <div className="certificate-holder-name">{isZh ? "持有人姓名" : "Holder Name"}</div>
-          <p>{isZh ? "模板预览会在 Phase 2 接入真实渲染服务。" : "Template preview will use the real rendering service in Phase 2."}</p>
-          <div className="certificate-signature-row">
-            <div><span>{isZh ? "签名" : "Signature"}</span><strong>Signer</strong></div>
-            <div><span>{isZh ? "盖章" : "Seal"}</span><strong>Climate Passport</strong></div>
-          </div>
+          <span className="label">{isZh ? "无边框预览" : "Borderless preview"}</span>
+          <iframe
+            className="certificate-preview-frame"
+            sandbox="allow-scripts"
+            srcDoc={previewHtml}
+            title={isZh ? "证书模板预览" : "Certificate template preview"}
+          />
         </article>
       </section>
     </>

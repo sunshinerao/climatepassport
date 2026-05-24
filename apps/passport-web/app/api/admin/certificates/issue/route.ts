@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
-import { renderCertificateHtml } from "@/lib/server/certificate-module";
+import { buildCertificateArtifactWithQr } from "@/lib/server/certificate-module";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const issueSchema = z.object({
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   // Find an active definition for this template
   const definition = await prisma.certificateDefinition.findFirst({
     where: { templateId, isActive: true },
-    include: { category: true },
+    include: { category: true, template: true },
   });
   if (!definition) {
     return NextResponse.json({ error: "No active certificate definition found for this template." }, { status: 404 });
@@ -61,16 +61,18 @@ export async function POST(request: Request) {
   });
 
   const issuedAt = new Date();
-  const fileName = `${verificationCode}.html`;
-  const html = renderCertificateHtml({
+  const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(verificationCode)}`, request.url).toString();
+  const artifact = await buildCertificateArtifactWithQr({
     holderName: recipient.name,
     certificateName: definition.nameEn ?? definition.name,
     categoryName: definition.category.nameEn ?? definition.category.name,
-    issueDate: issuedAt.toISOString().slice(0, 10),
+    issueDate: issuedAt,
     certificateNumber: verificationCode,
+    verificationUrl,
+    renderConfigJson: definition.template.renderConfigJson,
   });
 
-  await prisma.certificateIssue.create({
+  const issue = await prisma.certificateIssue.create({
     data: {
       definitionId: definition.id,
       userId: recipient.id,
@@ -79,10 +81,17 @@ export async function POST(request: Request) {
       approvedAt: issuedAt,
       issuedAt,
       verificationCode,
-      generatedFileName: fileName,
-      generatedFileUrl: `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
+      generatedFileName: artifact.fileName,
+      generatedFileUrl: artifact.dataUrl,
     },
+    select: { id: true, verificationCode: true, generatedFileName: true },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    issueId: issue.id,
+    verificationCode: issue.verificationCode,
+    verificationUrl,
+    fileName: issue.generatedFileName,
+  });
 }

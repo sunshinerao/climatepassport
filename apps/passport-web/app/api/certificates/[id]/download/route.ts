@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { canDownloadCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -31,7 +32,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (issue.status !== "ISSUED") {
+  if (!canDownloadCertificateStatus(issue.status)) {
     return NextResponse.json({ error: "Certificate is not downloadable." }, { status: 409 });
   }
 

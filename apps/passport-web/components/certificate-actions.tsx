@@ -29,10 +29,17 @@ export function CertificateDownloadButton({
       }
 
       if (payload.download?.url) {
-        window.open(payload.download.url, "_blank", "noopener,noreferrer");
+        const link = document.createElement("a");
+        link.href = payload.download.url;
+        link.download = payload.download.fileName ?? "certificate.html";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
       }
 
-      setMessage(payload.download?.url ? "Download opened." : "Download counted. Rendered file is not available yet.");
+      setMessage(payload.download?.url ? "Download started. Open the file and use Print / Save PDF for PDF output." : "Download counted. Rendered file is not available yet.");
     } catch {
       setMessage("Network error.");
     } finally {

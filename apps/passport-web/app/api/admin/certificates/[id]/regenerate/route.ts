@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
-import { renderCertificateHtml } from "@/lib/server/certificate-module";
+import { buildCertificateArtifactWithQr } from "@/lib/server/certificate-module";
+import {
+  canRegenerateCertificateStatus,
+  getCertificateStatusAfterRegeneration,
+} from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -20,7 +24,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     where: { id: params.id },
     include: {
       user: { select: { name: true } },
-      definition: { include: { category: true } },
+      definition: { include: { category: true, template: true } },
     },
   });
 
@@ -28,22 +32,28 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
   }
 
-  const fileName = `${issue.verificationCode ?? issue.id}.html`;
-  const html = renderCertificateHtml({
+  if (!canRegenerateCertificateStatus(issue.status)) {
+    return NextResponse.json({ error: "Revoked certificates cannot be regenerated." }, { status: 409 });
+  }
+
+  const certificateNumber = issue.verificationCode ?? issue.id;
+  const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(certificateNumber)}`, request.url).toString();
+  const artifact = await buildCertificateArtifactWithQr({
     holderName: issue.user.name,
     certificateName: issue.definition.nameEn ?? issue.definition.name,
     categoryName: issue.definition.category.nameEn ?? issue.definition.category.name,
-    issueDate: (issue.issuedAt ?? issue.createdAt).toISOString().slice(0, 10),
-    certificateNumber: issue.verificationCode ?? issue.id,
+    issueDate: issue.issuedAt ?? issue.createdAt,
+    certificateNumber,
+    verificationUrl,
+    renderConfigJson: issue.definition.template.renderConfigJson,
   });
-  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 
   await prisma.certificateIssue.update({
     where: { id: issue.id },
     data: {
-      generatedFileName: fileName,
-      generatedFileUrl: dataUrl,
-      status: issue.status === "DRAFT" ? "GENERATED" : issue.status,
+      generatedFileName: artifact.fileName,
+      generatedFileUrl: artifact.dataUrl,
+      status: getCertificateStatusAfterRegeneration(issue.status),
     },
   });
 
@@ -53,9 +63,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     subjectType: "certificate_issue",
     subjectId: issue.id,
     result: "generated",
-    metadataJson: { fileName },
+    metadataJson: { fileName: artifact.fileName, pdfFileName: artifact.pdfFileName, mimeType: artifact.mimeType },
     ...getRequestAuditContext(request),
   });
 
-  return NextResponse.json({ ok: true, fileName });
+  return NextResponse.json({ ok: true, fileName: artifact.fileName });
 }

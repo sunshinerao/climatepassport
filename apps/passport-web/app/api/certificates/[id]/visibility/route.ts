@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { writeCoreAuditLog, getRequestAuditContext } from "@/lib/server/audit";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
+import { canMakeCertificatePublicStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const visibilitySchema = z.object({
@@ -34,7 +35,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (issue.status !== "ISSUED" && payload.data.publicVisible) {
+  if (!canMakeCertificatePublicStatus(issue.status) && payload.data.publicVisible) {
     return NextResponse.json({ error: "Only issued certificates can be public." }, { status: 409 });
   }
 

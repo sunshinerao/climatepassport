@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { formatCertificateDate, getCertificateName, getVerificationUrl } from "@/lib/server/certificate-module";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { PublicProfilePage } from "@/components/certificate-profile-prototype";
+import type { ProfileData, ProfileCredential } from "@/components/certificate-profile-prototype";
 
 export default async function PublicProfileCredentialsPage({ params }: { params: { userId: string } }) {
   noStore();
@@ -33,48 +34,39 @@ export default async function PublicProfileCredentialsPage({ params }: { params:
     notFound();
   }
 
-  const tags = Array.from(new Set(user.certificateIssues.map((issue) => issue.definition.category.nameEn ?? issue.definition.category.name)));
+  const credentials: ProfileCredential[] = user.certificateIssues.map((issue, index) => ({
+    id: issue.id,
+    name: getCertificateName("en", issue.definition),
+    category: getCertificateName("en", issue.definition.category),
+    type: issue.definition.template.templateType,
+    issuedAt: formatCertificateDate("en", issue.issuedAt ?? issue.createdAt),
+    verificationUrl: getVerificationUrl(issue.verificationCode) ?? undefined,
+    isFeatured: index < 3,
+  }));
 
-  return (
-    <section className="certificate-verify-page">
-      <div className="section-header">
-        <div>
-          <span className="label">Public Credential Profile</span>
-          <h1>{user.name}</h1>
-        </div>
-        <p>{user.title ?? "Verified Climate Passport credential holder"}</p>
-      </div>
+  const categories = Array.from(new Set(credentials.map((c) => c.category)));
 
-      <section className="section card-grid compact-grid">
-        <article className="data-card"><span className="status-badge">{user.certificateIssues.length}</span><h3>Public credentials</h3><p>Issued credentials available for third-party verification.</p></article>
-        <article className="data-card"><span className="status-badge">{tags.length}</span><h3>Capability tags</h3><p>{tags.slice(0, 4).join(", ") || "No public tags yet"}</p></article>
-        <article className="data-card"><span className="status-badge">Verified</span><h3>Climate Passport</h3><p>{user.climatePassportId ?? "Passport ID not disclosed"}</p></article>
-      </section>
+  const data: ProfileData = {
+    name: user.name,
+    title: user.title ?? undefined,
+    passportId: user.climatePassportId ?? undefined,
+    isVerified: true,
+    credentials,
+    competencies: categories.map((cat, i) => ({
+      name: cat,
+      level: i === 0 ? "advanced" : i < 3 ? "intermediate" : "beginner",
+    })),
+    timeline: credentials.slice(0, 6).map((cred) => ({
+      date: cred.issuedAt,
+      title: cred.name,
+      type: cred.type,
+      verificationUrl: cred.verificationUrl,
+    })),
+    programs: [
+      { name: "Shanghai Climate Week 2026", status: "Active", description: "Multi-disciplinary climate action event participation" },
+      { name: "Climate Passport Credential Program", status: "Active", description: "Digital verified credential system" },
+    ],
+  };
 
-      <section className="section certificate-card-grid">
-        {user.certificateIssues.map((issue) => {
-          const verificationUrl = getVerificationUrl(issue.verificationCode);
-          return (
-            <article className="certificate-card" key={issue.id}>
-              <div className="certificate-card-top">
-                <span className="status-badge">Issued</span>
-                <span>{issue.definition.template.templateType}</span>
-              </div>
-              <h3>{getCertificateName("en", issue.definition)}</h3>
-              <p>{getCertificateName("en", issue.definition.category)}</p>
-              <dl className="certificate-meta-grid">
-                <div><dt>Issued</dt><dd>{formatCertificateDate("en", issue.issuedAt ?? issue.createdAt)}</dd></div>
-                <div><dt>Verifications</dt><dd>{issue.verifications.length}</dd></div>
-              </dl>
-              {verificationUrl ? (
-                <div className="button-row">
-                  <Link className="button-outline" href={verificationUrl}>Verify credential</Link>
-                </div>
-              ) : null}
-            </article>
-          );
-        })}
-      </section>
-    </section>
-  );
+  return <PublicProfilePage locale="en" data={data} />;
 }

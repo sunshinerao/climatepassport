@@ -157,6 +157,19 @@ Only user-approved credentials should be public.
 
 ## 4. Admin Pages
 
+Certificate Hub admin pages are module-internal pages. They should be exposed as the Certificate Hub secondary menu inside the shared admin shell, not flattened into the global admin primary menu.
+
+Required Certificate Hub secondary menu order:
+
+1. Certificate overview: `/admin/certificates`
+2. Certificate records: `/admin/certificates/records`
+3. Issue certificates: `/admin/certificates/issue`
+4. Application review: `/admin/certificates/applications`
+5. Category management: `/admin/certificates/categories`
+6. Template management: `/admin/certificates/templates`
+7. Automatic issuing rules: `/admin/certificates/rules`
+8. Verification and audit logs: `/admin/certificates/audit-logs`
+
 ### 4.1 Certificate Admin Dashboard
 
 Route: `/admin/certificates`

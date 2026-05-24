@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
+import { canRevokeCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const revokeSchema = z.object({
@@ -34,6 +35,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   if (!issue) {
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+  }
+
+  if (!canRevokeCertificateStatus(issue.status)) {
+    return NextResponse.json({ error: "Certificate is already revoked." }, { status: 409 });
   }
 
   await prisma.certificateIssue.update({

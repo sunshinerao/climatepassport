@@ -134,7 +134,61 @@ SHCW must call Climate Passport Core through API, SDK, or embedded flows for Cor
 - Channel shells must not duplicate account, QR, verifier, registration, certificate, points, achievement, milestone, or participation logic.
 - Detailed rules live in `CHANNEL_SHELL_INTEGRATION_SPEC.md`.
 
-## 5. Public Product Surfaces
+## 5. Admin Information Architecture
+
+Admin pages must use a shared operations shell: the left side is the admin navigation, and the right side is the concrete feature page. The current `/[locale]/admin` sidebar pattern is the reference layout for all `/[locale]/admin/**` routes.
+
+The global admin menu is module-level. It must not flatten every module's internal pages into the top-level navigation.
+
+### 5.1 Global Admin Primary Menu
+
+Required primary menu items:
+
+1. Dashboard overview: `/{locale}/admin`
+2. Event management: `/{locale}/admin/events`
+3. Learning Experiences: `/{locale}/admin/learning-experiences`
+4. Certificate Hub: `/{locale}/admin/certificates`
+5. System and operations: reserved for future user management, notifications, site settings, and platform-level operations.
+6. Return to user workspace: `/{locale}/dashboard`
+
+### 5.2 Learning Experiences Secondary Menu
+
+Learning Experiences owns its internal secondary menu:
+
+1. Program overview / program management: `/{locale}/admin/learning-experiences`
+2. Application management: `/{locale}/admin/learning-experiences/applications`
+3. Summer School applications, temporary function: `/{locale}/admin/summer-school/applications`
+
+Summer School remains a temporary function under Learning Experiences. Its existing business state and page behavior should not be changed unless explicitly requested.
+
+### 5.3 Certificate Hub Secondary Menu
+
+Certificate Hub owns its internal secondary menu. The global admin menu should show Certificate Hub as one module, then expand these module-owned items in this order:
+
+1. Certificate overview: `/{locale}/admin/certificates`
+2. Certificate records: `/{locale}/admin/certificates/records`
+3. Issue certificates: `/{locale}/admin/certificates/issue`
+4. Application review: `/{locale}/admin/certificates/applications`
+5. Category management: `/{locale}/admin/certificates/categories`
+6. Template management: `/{locale}/admin/certificates/templates`
+7. Automatic issuing rules: `/{locale}/admin/certificates/rules`
+8. Verification and audit logs: `/{locale}/admin/certificates/audit-logs`
+
+### 5.4 Role-Based Menu Visibility
+
+- `ADMIN` sees all implemented admin modules and Certificate Hub secondary items.
+- `EVENT_MANAGER` sees dashboard overview, Event management, Learning Experiences, and return to user workspace.
+- Certificate Hub is currently `ADMIN` only.
+- Summer School temporary entry is currently `ADMIN` only and appears under Learning Experiences.
+
+### 5.5 Layout And Active-State Requirements
+
+- All `/zh/admin/**` and `/en/admin/**` pages must use the same shared admin shell.
+- The active primary menu item must be highlighted.
+- If the current path belongs to a module, that module's secondary menu must expand and highlight the active secondary item.
+- Existing non-locale `/admin/**` redirects should continue to redirect to `/en/admin/**`.
+
+## 6. Public Product Surfaces
 
 Recommended future domain split:
 
@@ -145,7 +199,7 @@ Recommended future domain split:
 
 The public verification page should verify the credential, not expose the person. It may show verification status, certificate title, holder display name as printed, masked Passport ID, issuing organization, issue date, expiry date if applicable, credential type, related program/event, certificate number, and verification timestamp. It must not show email, phone, government ID, date of birth, application materials, internal user ID, admin notes, full user profile, or private Passport records.
 
-## 6. MVP Priorities
+## 7. MVP Priorities
 
 1. Stable Passport ID and QR specification.
 2. Core/Shell integration contract for SHCW.
@@ -158,7 +212,7 @@ The public verification page should verify the credential, not expose the person
 9. Points, achievements, and milestones writeback rules.
 10. Audit logs, regression checks, and launch criteria.
 
-## 7. Non-Goals
+## 8. Non-Goals
 
 - Climate Passport is not a normal event website.
 - Climate Passport is not a generic CMS.

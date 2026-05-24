@@ -37,6 +37,7 @@ Last updated: 2026-05-23
 - Auth routes: login and register.
 - Dashboard routes: overview, Climate Passport, learning experiences, messages, notifications, summer school.
 - Admin routes: events, learning experiences, learning applications, certificates, summer school applications.
+- Admin information architecture requirement is now defined: all `/[locale]/admin/**` pages should share one left-sidebar admin shell with module-level primary menu and module-owned secondary menus. Current implementation is partial: `/[locale]/admin` has the target sidebar, while many admin feature pages still use ordinary page layout or cross-module quick-link panels.
 - Summer school application route.
 - Certificate routes now include user list/detail and public verification page shells: `/[locale]/dashboard/certificates`, `/[locale]/dashboard/certificates/[id]`, `/verify/certificate/[code]`.
 
@@ -78,6 +79,7 @@ Last updated: 2026-05-23
 
 - Prisma models exist for category, template, definition, issue, verification.
 - `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md` is now the current Certificate module PRD and development plan.
+- Certificate Hub admin pages should sit inside the Certificate Hub secondary menu in this order: overview, records, issue, applications, categories, templates, rules, audit logs. They should not be flattened into the global admin primary menu.
 - Admin certificate issue API exists.
 - Admin certificate issue API exists and uses opaque verification codes.
 - Public certificate verification API exists.

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
+import { canRestoreCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -22,6 +23,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   if (!issue) {
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+  }
+
+  if (!canRestoreCertificateStatus(issue.status)) {
+    return NextResponse.json({ error: "Only revoked certificates can be restored." }, { status: 409 });
   }
 
   await prisma.certificateIssue.update({

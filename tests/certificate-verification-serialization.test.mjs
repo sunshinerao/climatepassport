@@ -56,6 +56,12 @@ function loadCertificatesModule(passportCoreStub) {
 const passportCoreStub = loadQrTokenModule();
 const {
   allocateCertificateVerificationCode,
+  canDownloadCertificateStatus,
+  canMakeCertificatePublicStatus,
+  canRegenerateCertificateStatus,
+  canRestoreCertificateStatus,
+  canRevokeCertificateStatus,
+  getCertificateStatusAfterRegeneration,
   serializePublicCertificateVerification,
 } = loadCertificatesModule(passportCoreStub);
 
@@ -64,6 +70,25 @@ test("allocateCertificateVerificationCode retries collisions", async () => {
   assert.equal(typeof allocated, "string");
   assert.equal(allocated.startsWith("CV-"), true);
   assert.notEqual(allocated, "CV-COLLISION");
+});
+
+test("certificate lifecycle status guards enforce issued and revoked boundaries", () => {
+  assert.equal(canDownloadCertificateStatus("ISSUED"), true);
+  assert.equal(canDownloadCertificateStatus("GENERATED"), false);
+  assert.equal(canMakeCertificatePublicStatus("ISSUED"), true);
+  assert.equal(canMakeCertificatePublicStatus("REVOKED"), false);
+
+  assert.equal(canRevokeCertificateStatus("ISSUED"), true);
+  assert.equal(canRevokeCertificateStatus("REVOKED"), false);
+  assert.equal(canRestoreCertificateStatus("REVOKED"), true);
+  assert.equal(canRestoreCertificateStatus("ISSUED"), false);
+
+  assert.equal(canRegenerateCertificateStatus("APPROVED"), true);
+  assert.equal(canRegenerateCertificateStatus("REVOKED"), false);
+  assert.equal(getCertificateStatusAfterRegeneration("DRAFT"), "GENERATED");
+  assert.equal(getCertificateStatusAfterRegeneration("APPROVED"), "GENERATED");
+  assert.equal(getCertificateStatusAfterRegeneration("ISSUED"), "ISSUED");
+  assert.throws(() => getCertificateStatusAfterRegeneration("REVOKED"), /cannot be regenerated/);
 });
 
 test("serializePublicCertificateVerification maps issued status to VALID", () => {

@@ -147,6 +147,7 @@ Last updated: 2026-05-23
 - [ ] CP-TODO-019 `doing` list regression checks for login, event registration, Passport QR, verifier, certificate verification, and channel bridge flows (P0-P2 execution checklist documented; full automated flow coverage pending).
 - [ ] CP-TODO-020 `todo` define launch criteria for independent Climate Passport deployment.
 - [ ] CP-TODO-091 `todo` define deployment plan for `www`, `admin`, `api`, and `verify` domains.
+- [ ] CP-TODO-114 `todo` implement shared admin shell for all `/[locale]/admin/**` routes: module-level primary menu, module-owned secondary menus, active state, and role-based visibility. Certificate Hub secondary order must be overview, records, issue, applications, categories, templates, rules, audit logs. Summer School stays a temporary Learning Experiences child and its business logic must remain untouched.
 
 ## 12. Phase Execution Log (2026-05-23)
 
