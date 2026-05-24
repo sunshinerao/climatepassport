@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply — Sustainability Summer School 2026 | Climate Passport</title>
+<style>
+:root{--forest-deep:#0b3d2e;--forest:#1a5d48;--moss:#4a8a6a;--sage:#8fb89a;--leaf-light:#c4dcc8;--amber-warm:#c4893f;--amber-soft:#e8c88a;--cream:#faf8f3;--paper:#f5f2ec;--ink:#0f2a20;--ink-soft:#2d5245;--gold:#b8860b;--verify-green:#16a34a}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Noto Sans SC","PingFang SC",sans-serif;color:var(--ink);background:var(--cream);line-height:1.6;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit}
+
+/* Top Bar */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(250,248,243,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(11,61,46,.06);padding:0 24px;display:flex;align-items:center;justify-content:space-between;min-height:64px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:17px;color:var(--forest-deep)}
+.brand svg{width:30px;height:30px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.lang-btn{padding:6px 14px;border-radius:999px;border:1.5px solid rgba(11,61,46,.12);font-size:13px;font-weight:600;color:var(--ink-soft);background:#fff;cursor:pointer;transition:.2s}
+.lang-btn:hover{border-color:var(--moss);color:var(--forest)}
+.save-btn{padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--paper);transition:.2s}
+.save-btn:hover{background:var(--leaf-light);color:var(--forest-deep)}
+
+/* Layout */
+.page-layout{display:grid;grid-template-columns:300px 1fr;max-width:1200px;margin:0 auto;min-height:calc(100vh - 64px)}
+
+/* Sidebar */
+.sidebar{padding:40px 28px;border-right:1px solid rgba(11,61,46,.06);position:sticky;top:64px;height:fit-content}
+.program-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,var(--leaf-light),#d4ecd8);color:var(--forest-deep);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px}
+.program-badge svg{width:14px;height:14px}
+.sidebar h1{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:400;color:var(--forest-deep);line-height:1.25;margin-bottom:10px}
+.sidebar .desc{font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:28px}
+.sidebar .note{font-size:13px;color:var(--ink-soft);line-height:1.6;padding:14px;border-radius:14px;background:var(--paper);border:1px solid rgba(11,61,46,.06);margin-bottom:24px}
+.sidebar .note strong{display:block;font-size:12px;color:var(--forest-deep);margin-bottom:4px}
+
+/* Progress steps */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;position:relative}
+.step:not(:last-child)::after{content:"";position:absolute;left:15px;top:38px;bottom:0;width:2px;background:rgba(11,61,46,.08)}
+.step-num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;border:2px solid rgba(11,61,46,.1);color:var(--ink-soft);background:#fff;position:relative;z-index:1;transition:.3s}
+.step.active .step-num{background:var(--amber-warm);color:#fff;border-color:var(--amber-warm);box-shadow:0 2px 8px rgba(196,137,63,.3)}
+.step.done .step-num{background:var(--verify-green);color:#fff;border-color:var(--verify-green)}
+.step-text{padding-top:5px}
+.step-text strong{display:block;font-size:13px;font-weight:600;color:var(--forest-deep)}
+.step-text span{font-size:12px;color:var(--ink-soft)}
+.step.active .step-text strong{color:var(--amber-warm)}
+
+/* Main form area */
+.form-area{padding:40px 48px;max-width:720px}
+.form-header{margin-bottom:32px}
+.step-indicator{font-size:12px;font-weight:700;color:var(--amber-warm);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.form-title{font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:400;color:var(--forest-deep);line-height:1.2;margin-bottom:6px}
+.form-subtitle{font-size:15px;color:var(--ink-soft)}
+
+/* Form */
+.form-grid{display:grid;gap:20px}
+.field{display:grid;gap:6px}
+.field label{font-size:13px;font-weight:600;color:var(--ink-soft)}
+.field label .req{color:var(--amber-warm)}
+.field input,.field select,.field textarea{padding:12px 16px;border-radius:14px;border:1.5px solid rgba(11,61,46,.1);background:#fff;font-size:15px;color:var(--ink);transition:.2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.field textarea{resize:vertical;min-height:120px;line-height:1.6}
+.field .hint{font-size:12px;color:var(--ink-soft);opacity:.7;margin-top:2px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field-section{margin-top:8px;padding-top:20px;border-top:1px solid rgba(11,61,46,.06)}
+.field-section-title{font-size:14px;font-weight:700;color:var(--forest-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.field-section-title svg{width:18px;height:18px;color:var(--moss)}
+
+/* Radio / Checkbox groups */
+.option-group{display:grid;gap:8px}
+.option-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:14px;border:1.5px solid rgba(11,61,46,.08);background:#fff;cursor:pointer;transition:.2s}
+.option-item:hover{border-color:var(--leaf-light);background:rgba(196,220,200,.08)}
+.option-item.selected{border-color:var(--amber-warm);background:rgba(196,137,63,.04)}
+.option-item input{margin-top:2px;accent-color:var(--amber-warm)}
+.option-item .opt-label{font-size:14px;font-weight:600;color:var(--forest-deep)}
+.option-item .opt-desc{font-size:13px;color:var(--ink-soft);margin-top:2px}
+
+/* Buttons */
+.form-actions{display:flex;align-items:center;justify-content:space-between;margin-top:32px;padding-top:24px;border-top:1px solid rgba(11,61,46,.06)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 28px;border-radius:999px;font-size:14px;font-weight:600;transition:.2s}
+.btn-primary{background:var(--amber-warm);color:#fff;box-shadow:0 2px 8px rgba(196,137,63,.2)}
+.btn-primary:hover{background:#a87332;transform:translateY(-1px);box-shadow:0 4px 12px rgba(196,137,63,.3)}
+.btn-secondary{background:transparent;color:var(--ink-soft);border:1.5px solid rgba(11,61,46,.12)}
+.btn-secondary:hover{border-color:var(--forest);color:var(--forest)}
+.btn-ghost{color:var(--ink-soft);padding:12px 16px}
+.btn-ghost:hover{color:var(--forest-deep)}
+
+/* Confirm step */
+.confirm-card{padding:24px;border-radius:20px;background:#fff;border:1px solid rgba(11,61,46,.06);margin-bottom:16px}
+.confirm-card h3{font-size:15px;font-weight:700;color:var(--forest-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.confirm-card h3 .edit-link{margin-left:auto;font-size:12px;font-weight:600;color:var(--amber-warm);cursor:pointer}
+.confirm-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(11,61,46,.04);font-size:14px}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row .label{color:var(--ink-soft)}
+.confirm-row .value{font-weight:600;color:var(--forest-deep);text-align:right;max-width:60%}
+.consent-box{padding:16px;border-radius:14px;background:var(--paper);border:1px solid rgba(11,61,46,.06);margin-top:20px}
+.consent-box label{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.5;cursor:pointer}
+.consent-box input{margin-top:3px;accent-color:var(--amber-warm)}
+
+/* Success state */
+.success-view{text-align:center;padding:60px 20px}
+.success-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--verify-green),#34d399);display:grid;place-items:center;margin:0 auto 24px;box-shadow:0 8px 24px rgba(22,163,74,.2)}
+.success-icon svg{width:40px;height:40px;color:#fff}
+.success-view h2{font-family:Georgia,serif;font-size:28px;color:var(--forest-deep);margin-bottom:10px}
+.success-view p{font-size:15px;color:var(--ink-soft);max-width:480px;margin:0 auto 24px;line-height:1.6}
+.passport-id-card{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:16px;background:linear-gradient(135deg,var(--forest-deep),var(--forest));color:#fff;font-size:16px;font-weight:700;letter-spacing:.03em;margin-bottom:24px}
+.passport-id-card svg{width:20px;height:20px}
+
+/* Mobile */
+@media(max-width:900px){
+.page-layout{grid-template-columns:1fr}
+.sidebar{position:relative;top:0;border-right:none;border-bottom:1px solid rgba(11,61,46,.06);padding:28px 24px}
+.steps{flex-direction:row;overflow-x:auto;gap:0}
+.step{flex-direction:column;align-items:center;text-align:center;min-width:80px;padding:0 8px}
+.step:not(:last-child)::after{display:none}
+.step-text span{display:none}
+.form-area{padding:28px 24px}
+}
+@media(max-width:640px){
+.field-row{grid-template-columns:1fr}
+.form-area{padding:20px 16px}
+.sidebar{padding:20px 16px}
+.sidebar h1{font-size:20px}
+.sidebar .desc{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="topbar">
+  <a href="index.html" class="brand">
+    <svg viewBox="0 0 32 32" fill="none"><path d="M16 2C10 8 6 14 6 20c0 5.5 4.5 10 10 10s10-4.5 10-10c0-6-4-12-10-18z" fill="var(--sage)"/><path d="M16 8v18" stroke="var(--forest-deep)" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>Climate Passport</span>
+  </a>
+  <div class="topbar-right">
+    <button class="save-btn">Save Draft</button>
+    <button class="lang-btn" onclick="toggleLang()">EN / 中文</button>
+  </div>
+</header>
+
+<div class="page-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="program-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M12 20V4M12 4l-7 4h14l-7-4z"/></svg>
+      Learning Experience
+    </div>
+    <h1 data-en="Sustainability Summer School 2026" data-zh="2026可持续发展夏校">Sustainability Summer School 2026</h1>
+    <p class="desc" data-en="Submit your application to join a transformative learning experience on climate action, sustainability, and future leadership." data-zh="提交申请，加入一段关于气候行动、可持续发展和未来领导力的变革性学习体验。">Submit your application to join a transformative learning experience on climate action, sustainability, and future leadership.</p>
+    
+    <div class="note">
+      <strong data-en="Note" data-zh="提示">Note</strong>
+      <span data-en="A Climate Passport ID will be created automatically after submission." data-zh="提交后将自动为您创建 Climate Passport ID。">A Climate Passport ID will be created automatically after submission.</span>
+    </div>
+
+    <div class="steps">
+      <div class="step active" data-step="1">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong data-en="Basic Info" data-zh="基本信息">Basic Info</strong><span data-en="Contact & identity" data-zh="联系方式和身份">Contact & identity</span></div>
+      </div>
+      <div class="step" data-step="2">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong data-en="Climate Concern" data-zh="气候关注">Climate Concern</strong><span data-en="Your motivation" data-zh="你的动机">Your motivation</span></div>
+      </div>
+      <div class="step" data-step="3">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong data-en="AI Collaboration" data-zh="AI协作">AI Collaboration</strong><span data-en="Tech & innovation" data-zh="科技与创新">Tech & innovation</span></div>
+      </div>
+      <div class="step" data-step="4">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong data-en="Vision" data-zh="愿景">Vision</strong><span data-en="Your aspirations" data-zh="你的愿望">Your aspirations</span></div>
+      </div>
+      <div class="step" data-step="5">
+        <div class="step-num">5</div>
+        <div class="step-text"><strong data-en="Logistics" data-zh="后勤信息">Logistics</strong><span data-en="Practical details" data-zh="实际细节">Practical details</span></div>
+      </div>
+      <div class="step" data-step="6">
+        <div class="step-num">6</div>
+        <div class="step-text"><strong data-en="Confirm & Submit" data-zh="确认提交">Confirm & Submit</strong><span data-en="Review & send" data-zh="复查并发送">Review & send</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Form Area -->
+  <main class="form-area">
+
+    <!-- Step 1: Basic Info -->
+    <div class="form-step" id="step1">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 1 of 6" data-zh="第1步 / 共6步">Step 1 of 6</div>
+        <h2 class="form-title" data-en="Basic Info" data-zh="基本信息">Basic Info</h2>
+        <p class="form-subtitle" data-en="Your basic information and contact details" data-zh="您的基本信息和联系方式">Your basic information and contact details</p>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label data-en="Full name (romanized)" data-zh="全名（拼音）">Full name (romanized) <span class="req">*</span></label>
+          <input type="text" placeholder="e.g. Zhang Wei">
+        </div>
+        <div class="field">
+          <label data-en="Preferred name" data-zh="常用名">Preferred name</label>
+          <input type="text" placeholder="How you'd like to be called">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label data-en="Date of birth" data-zh="出生日期">Date of birth <span class="req">*</span></label>
+            <input type="date">
+          </div>
+          <div class="field">
+            <label data-en="Nationality" data-zh="国籍">Nationality <span class="req">*</span></label>
+            <select>
+              <option value="">Select nationality...</option>
+              <option>China</option><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>New Zealand</option><option>Germany</option><option>France</option><option>Japan</option><option>South Korea</option><option>Singapore</option><option>Malaysia</option><option>Thailand</option><option>Indonesia</option><option>India</option><option>Brazil</option><option>Mexico</option><option>South Africa</option><option>Nigeria</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label data-en="School" data-zh="学校">School <span class="req">*</span></label>
+            <input type="text" placeholder="Your current school">
+          </div>
+          <div class="field">
+            <label data-en="Grade" data-zh="年级">Grade <span class="req">*</span></label>
+            <select>
+              <option value="">Select...</option>
+              <option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label data-en="Applicant email" data-zh="申请人邮箱">Applicant email <span class="req">*</span></label>
+            <input type="email" placeholder="your@email.com">
+          </div>
+          <div class="field">
+            <label data-en="Applicant phone" data-zh="申请人电话">Applicant phone <span class="req">*</span></label>
+            <input type="tel" placeholder="+86 138 0000 0000">
+          </div>
+        </div>
+
+        <div class="field-section">
+          <div class="field-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span data-en="Guardian Information" data-zh="监护人信息">Guardian Information</span>
+          </div>
+          <div class="form-grid" style="gap:16px">
+            <div class="field">
+              <label data-en="Guardian name" data-zh="监护人姓名">Guardian name <span class="req">*</span></label>
+              <input type="text" placeholder="Parent or guardian's full name">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label data-en="Guardian email" data-zh="监护人邮箱">Guardian email <span class="req">*</span></label>
+                <input type="email" placeholder="guardian@email.com">
+              </div>
+              <div class="field">
+                <label data-en="Guardian phone" data-zh="监护人电话">Guardian phone <span class="req">*</span></label>
+                <input type="tel" placeholder="+86 138 0000 0000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label data-en="How did you hear about us?" data-zh="您是如何了解到我们的？">How did you hear about us?</label>
+          <select>
+            <option value="">Select...</option>
+            <option>School recommendation</option>
+            <option>Teacher recommendation</option>
+            <option>Social media</option>
+            <option>Friend recommendation</option>
+            <option>GCA</option>
+            <option>SHCW</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <div></div>
+        <button class="btn btn-primary" onclick="goStep(2)">Next <span style="margin-left:4px">→</span></button>
+      </div>
+    </div>
+
+    <!-- Step 2: Climate Concern -->
+    <div class="form-step" id="step2" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 2 of 6" data-zh="第2步 / 共6步">Step 2 of 6</div>
+        <h2 class="form-title" data-en="Climate Concern" data-zh="气候关注">Climate Concern</h2>
+        <p class="form-subtitle" data-en="Tell us about your interest in sustainability and climate action" data-zh="告诉我们你对可持续发展和气候行动的兴趣">Tell us about your interest in sustainability and climate action</p>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label data-en="Which climate or sustainability issue concerns you the most?" data-zh="哪个气候或可持续发展问题最让你关注？">Which climate or sustainability issue concerns you the most? <span class="req">*</span></label>
+          <div class="option-group">
+            <label class="option-item"><input type="radio" name="concern" value="energy"><div><div class="opt-label">Energy Transition</div><div class="opt-desc">Renewable energy, fossil fuel phase-out, grid modernization</div></div></label>
+            <label class="option-item"><input type="radio" name="concern" value="food"><div><div class="opt-label">Sustainable Food Systems</div><div class="opt-desc">Agriculture, food waste, plant-based alternatives</div></div></label>
+            <label class="option-item"><input type="radio" name="concern" value="ocean"><div><div class="opt-label">Ocean & Marine Conservation</div><div class="opt-desc">Ocean pollution, marine biodiversity, blue economy</div></div></label>
+            <label class="option-item"><input type="radio" name="concern" value="urban"><div><div class="opt-label">Sustainable Cities</div><div class="opt-desc">Green buildings, urban mobility, circular economy</div></div></label>
+            <label class="option-item"><input type="radio" name="concern" value="justice"><div><div class="opt-label">Climate Justice & Equity</div><div class="opt-desc">Vulnerable communities, intergenerational equity</div></div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label data-en="Why does this issue matter to you personally? (150-300 words)" data-zh="为什么这个问题对你个人很重要？（150-300字）">Why does this issue matter to you personally? <span class="req">*</span></label>
+          <textarea placeholder="Share your personal connection to this issue..."></textarea>
+          <div class="hint">150-300 words recommended</div>
+        </div>
+        <div class="field">
+          <label data-en="Have you taken any action on sustainability? (school projects, community activities, lifestyle changes)" data-zh="你是否采取过任何可持续发展行动？（学校项目、社区活动、生活方式改变）">Have you taken any action on sustainability?</label>
+          <textarea placeholder="Describe any relevant experiences, projects, or actions..."></textarea>
+          <div class="hint">School projects, community activities, lifestyle changes, etc.</div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: AI Collaboration -->
+    <div class="form-step" id="step3" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 3 of 6" data-zh="第3步 / 共6步">Step 3 of 6</div>
+        <h2 class="form-title" data-en="AI Collaboration" data-zh="AI协作">AI Collaboration</h2>
+        <p class="form-subtitle" data-en="How do you see AI and technology contributing to sustainability?" data-zh="你如何看待AI和技术对可持续发展的贡献？">How do you see AI and technology contributing to sustainability?</p>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label data-en="How familiar are you with AI tools? (ChatGPT, Claude, etc.)" data-zh="你对AI工具的熟悉程度如何？（ChatGPT、Claude等）">How familiar are you with AI tools? <span class="req">*</span></label>
+          <select>
+            <option value="">Select your level...</option>
+            <option>Never used</option>
+            <option>Beginner - tried a few times</option>
+            <option>Intermediate - use regularly</option>
+            <option>Advanced - use for complex tasks</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Describe one way AI could help solve a climate challenge" data-zh="描述AI可以帮助解决气候挑战的一种方式">Describe one way AI could help solve a climate challenge <span class="req">*</span></label>
+          <textarea placeholder="Think creatively about how AI might address your chosen climate concern..."></textarea>
+          <div class="hint">This can be speculative - we want to see your creative thinking</div>
+        </div>
+        <div class="field">
+          <label data-en="Would you be interested in an AI-assisted project during the summer school?" data-zh="你是否有兴趣在夏校期间参与AI辅助项目？">Would you be interested in an AI-assisted project during the summer school?</label>
+          <div class="option-group">
+            <label class="option-item"><input type="radio" name="ai_interest" value="yes"><div><div class="opt-label">Yes, very interested</div><div class="opt-desc">I'd love to use AI tools in a sustainability project</div></div></label>
+            <label class="option-item"><input type="radio" name="ai_interest" value="maybe"><div><div class="opt-label">Open to it</div><div class="opt-desc">I'd like to learn more before committing</div></div></label>
+            <label class="option-item"><input type="radio" name="ai_interest" value="no"><div><div class="opt-label">Prefer traditional methods</div><div class="opt-desc">I'd rather focus on non-tech approaches</div></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Vision -->
+    <div class="form-step" id="step4" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 4 of 6" data-zh="第4步 / 共6步">Step 4 of 6</div>
+        <h2 class="form-title" data-en="Vision" data-zh="愿景">Vision</h2>
+        <p class="form-subtitle" data-en="Share your aspirations and what you hope to achieve" data-zh="分享你的抱负和希望实现的目标">Share your aspirations and what you hope to achieve</p>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label data-en="What do you hope to gain from the Sustainability Summer School?" data-zh="你希望从可持续发展夏校中获得什么？">What do you hope to gain from the Sustainability Summer School? <span class="req">*</span></label>
+          <textarea placeholder="Describe your learning goals and expectations..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="Where do you see yourself in 10 years in relation to sustainability?" data-zh="10年后你在可持续发展方面的自我定位是什么？">Where do you see yourself in 10 years in relation to sustainability? <span class="req">*</span></label>
+          <textarea placeholder="Share your long-term vision..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="What unique perspective or skill would you bring to the cohort?" data-zh="你会为这个群体带来什么独特的视角或技能？">What unique perspective or skill would you bring to the cohort?</label>
+          <textarea placeholder="Think about what makes your voice valuable in this community..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(5)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Logistics -->
+    <div class="form-step" id="step5" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 5 of 6" data-zh="第5步 / 共6步">Step 5 of 6</div>
+        <h2 class="form-title" data-en="Logistics" data-zh="后勤信息">Logistics</h2>
+        <p class="form-subtitle" data-en="Practical information for program planning" data-zh="项目规划的实际信息">Practical information for program planning</p>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label data-en="Dietary requirements" data-zh="饮食需求">Dietary requirements</label>
+          <select>
+            <option value="">None</option>
+            <option>Vegetarian</option>
+            <option>Vegan</option>
+            <option>Halal</option>
+            <option>Gluten-free</option>
+            <option>Other (please specify below)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Allergies or medical conditions we should know about" data-zh="过敏或我们应了解的医疗状况">Allergies or medical conditions we should know about</label>
+          <input type="text" placeholder="Leave blank if none">
+        </div>
+        <div class="field">
+          <label data-en="T-shirt size" data-zh="T恤尺码">T-shirt size</label>
+          <select>
+            <option value="">Select...</option>
+            <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Do you need accommodation assistance?" data-zh="是否需要住宿安排协助？">Do you need accommodation assistance? <span class="req">*</span></label>
+          <div class="option-group">
+            <label class="option-item"><input type="radio" name="accommodation" value="yes"><div><div class="opt-label">Yes, I need assistance</div><div class="opt-desc">I would like help arranging accommodation</div></div></label>
+            <label class="option-item"><input type="radio" name="accommodation" value="no"><div><div class="opt-label">No, I'll arrange my own</div><div class="opt-desc">I have my own accommodation plans</div></div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label data-en="Any other information or special requests?" data-zh="其他信息或特殊需求？">Any other information or special requests?</label>
+          <textarea placeholder="Anything else we should know..." style="min-height:80px"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="goStep(4)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(6)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Confirm & Submit -->
+    <div class="form-step" id="step6" style="display:none">
+      <div class="form-header">
+        <div class="step-indicator" data-en="Step 6 of 6" data-zh="第6步 / 共6步">Step 6 of 6</div>
+        <h2 class="form-title" data-en="Confirm & Submit" data-zh="确认提交">Confirm & Submit</h2>
+        <p class="form-subtitle" data-en="Review your application before submitting" data-zh="提交前请核对您的申请信息">Review your application before submitting</p>
+      </div>
+
+      <div class="confirm-card">
+        <h3>Basic Info <span class="edit-link" onclick="goStep(1)">Edit</span></h3>
+        <div class="confirm-row"><span class="label">Full name</span><span class="value">Zhang Wei</span></div>
+        <div class="confirm-row"><span class="label">Date of birth</span><span class="value">2009-03-15</span></div>
+        <div class="confirm-row"><span class="label">Nationality</span><span class="value">China</span></div>
+        <div class="confirm-row"><span class="label">School</span><span class="value">Shanghai World Foreign Language Academy</span></div>
+        <div class="confirm-row"><span class="label">Grade</span><span class="value">Grade 11</span></div>
+        <div class="confirm-row"><span class="label">Email</span><span class="value">zhangwei@email.com</span></div>
+        <div class="confirm-row"><span class="label">Guardian</span><span class="value">Zhang Ming (father)</span></div>
+      </div>
+
+      <div class="confirm-card">
+        <h3>Climate Concern <span class="edit-link" onclick="goStep(2)">Edit</span></h3>
+        <div class="confirm-row"><span class="label">Primary concern</span><span class="value">Sustainable Food Systems</span></div>
+        <div class="confirm-row"><span class="label">Personal statement</span><span class="value" style="font-size:13px;opacity:.8">Submitted (286 words)</span></div>
+      </div>
+
+      <div class="confirm-card">
+        <h3>AI Collaboration <span class="edit-link" onclick="goStep(3)">Edit</span></h3>
+        <div class="confirm-row"><span class="label">AI familiarity</span><span class="value">Intermediate</span></div>
+        <div class="confirm-row"><span class="label">AI project interest</span><span class="value">Yes, very interested</span></div>
+      </div>
+
+      <div class="confirm-card">
+        <h3>Vision <span class="edit-link" onclick="goStep(4)">Edit</span></h3>
+        <div class="confirm-row"><span class="label">Learning goals</span><span class="value" style="font-size:13px;opacity:.8">Submitted (192 words)</span></div>
+        <div class="confirm-row"><span class="label">10-year vision</span><span class="value" style="font-size:13px;opacity:.8">Submitted (165 words)</span></div>
+      </div>
+
+      <div class="confirm-card">
+        <h3>Logistics <span class="edit-link" onclick="goStep(5)">Edit</span></h3>
+        <div class="confirm-row"><span class="label">Dietary</span><span class="value">None</span></div>
+        <div class="confirm-row"><span class="label">T-shirt</span><span class="value">M</span></div>
+        <div class="confirm-row"><span class="label">Accommodation</span><span class="value">Yes, need assistance</span></div>
+      </div>
+
+      <div class="consent-box">
+        <label><input type="checkbox"> <span data-en="I confirm that all information provided is accurate and complete. I understand that my application will be reviewed and a Climate Passport ID will be created upon submission. I agree to the Terms of Service and Privacy Policy." data-zh="我确认所提供的所有信息准确完整。我了解我的申请将被审核，提交后将创建 Climate Passport ID。我同意服务条款和隐私政策。">I confirm that all information provided is accurate and complete. I understand that my application will be reviewed and a Climate Passport ID will be created upon submission. I agree to the <a href="#" style="color:var(--amber-warm);font-weight:600">Terms of Service</a> and <a href="#" style="color:var(--amber-warm);font-weight:600">Privacy Policy</a>.</span></label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="goStep(5)">← Back</button>
+        <button class="btn btn-primary" onclick="submitApp()" style="padding:14px 36px;font-size:15px">Submit Application</button>
+      </div>
+    </div>
+
+    <!-- Success View -->
+    <div class="form-step" id="stepSuccess" style="display:none">
+      <div class="success-view">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h2 data-en="Application Submitted!" data-zh="申请已提交！">Application Submitted!</h2>
+        <p data-en="Thank you for applying to the Sustainability Summer School 2026. Your Climate Passport ID has been created. We'll review your application and get back to you within 5-7 business days." data-zh="感谢您申请2026可持续发展夏校。您的 Climate Passport ID 已创建。我们将在5-7个工作日内审核您的申请并回复您。">Thank you for applying to the Sustainability Summer School 2026. Your Climate Passport ID has been created. We'll review your application and get back to you within 5-7 business days.</p>
+        <div class="passport-id-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          CP-2026-9847
+        </div>
+        <p style="font-size:13px;color:var(--ink-soft)">Your Climate Passport ID</p>
+        <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="dashboard.html" class="btn btn-primary" data-en="Go to Dashboard" data-zh="前往工作台">Go to Dashboard</a>
+          <a href="index.html" class="btn btn-secondary" data-en="Back to Home" data-zh="返回首页">Back to Home</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+let currentStep = 1;
+function goStep(n) {
+  document.querySelectorAll('.form-step').forEach(s => s.style.display = 'none');
+  document.getElementById('step' + n).style.display = 'block';
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i + 1 < n) s.classList.add('done');
+    if (i + 1 === n) s.classList.add('active');
+  });
+  currentStep = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function submitApp() {
+  document.querySelectorAll('.form-step').forEach(s => s.style.display = 'none');
+  document.getElementById('stepSuccess').style.display = 'block';
+  document.querySelectorAll('.step').forEach(s => s.classList.add('done'));
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+let lang = 'en';
+function toggleLang() {
+  lang = lang === 'en' ? 'zh' : 'en';
+  document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+    if (el.tagName === 'INPUT') el.placeholder = el.getAttribute('data-' + lang);
+    else el.innerHTML = el.getAttribute('data-' + lang);
+  });
+}
+</script>
+
+</body>
+</html>
