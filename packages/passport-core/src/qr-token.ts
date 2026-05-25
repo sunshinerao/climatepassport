@@ -12,7 +12,7 @@ export function hashOpaqueToken(token: string) {
 }
 
 export function createCertificateVerificationCode() {
-  return `CV-${createOpaqueToken(CERTIFICATE_VERIFICATION_CODE_BYTES).toUpperCase()}`;
+  return `CV-${createOpaqueToken(CERTIFICATE_VERIFICATION_CODE_BYTES).toUpperCase().replace(/[^0-9A-Z]/g, "")}`;
 }
 
 export function maskPassportId(passportId: string | null | undefined) {

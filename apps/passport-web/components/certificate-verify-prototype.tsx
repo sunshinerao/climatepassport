@@ -9,8 +9,9 @@ function t(locale: Locale, zh: string, en: string) {
 }
 
 export type VerificationData = {
-  status: "valid" | "expired" | "revoked" | "not-found";
+  status: "valid" | "expired" | "revoked" | "not-found" | "preview" | "invalid";
   certificateName?: string;
+  certificateNameEn?: string;
   holderName?: string;
   maskedPassportId?: string;
   issuer?: string;
@@ -22,6 +23,15 @@ export type VerificationData = {
   verifiedAt?: string;
   competencies?: string[];
   revocationDate?: string;
+  verificationMessage?: string;
+  accessLevel?: "PUBLIC" | "HOLDER" | "STAFF";
+  isAuthenticatedViewer?: boolean;
+  verificationCount?: number;
+  queryCount?: number;
+  holderEmail?: string;
+  internalStatus?: string;
+  verificationMode?: string;
+  publicVerifyEnabled?: boolean;
 };
 
 export function CertificateVerifyPage({
@@ -81,6 +91,26 @@ export function CertificateVerifyPage({
       ),
       className: "cpv-state-notfound",
     },
+    invalid: {
+      icon: "!",
+      title: t(locale, "证书不可公开验证", "Certificate Not Publicly Verifiable"),
+      subtitle: t(
+        locale,
+        "该凭证当前不满足公开验证策略，或不处于可公开验证状态。",
+        "This credential does not currently satisfy public verification policy, or is not in a publicly verifiable state."
+      ),
+      className: "cpv-state-expired",
+    },
+    preview: {
+      icon: "i",
+      title: t(locale, "预览证书二维码", "Preview Certificate QR"),
+      subtitle: t(
+        locale,
+        "该二维码来自证书模板预览，仅用于排版与样式确认，不代表正式签发结果。",
+        "This QR code comes from a certificate template preview. It is for layout review only and does not represent an officially issued credential."
+      ),
+      className: "cpv-state-preview",
+    },
   };
 
   const config = statusConfig[data.status];
@@ -97,6 +127,7 @@ export function CertificateVerifyPage({
         <div className="cpv-verified-time">
           {t(locale, "验证时间", "Verified at")}: {data.verifiedAt ?? new Date().toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}
         </div>
+        {data.verificationMessage ? <p className="cpv-notice-detail">{data.verificationMessage}</p> : null}
       </div>
 
       {/* Expiry Notice */}
@@ -187,7 +218,7 @@ export function CertificateVerifyPage({
             {data.credentialType && (
               <div>
                 <dt>{t(locale, "证书类型", "Credential Type")}</dt>
-                <dd>{data.credentialType}</dd>
+                <dd>{data.credentialTypeEn ?? data.credentialType}</dd>
               </div>
             )}
             {data.relatedSource && (
@@ -209,6 +240,54 @@ export function CertificateVerifyPage({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {(data.isAuthenticatedViewer || data.accessLevel === "STAFF") && data.status !== "not-found" && (
+        <div className="cpv-verification-details">
+          <h3>{t(locale, "登录视图信息", "Signed-in Verification Context")}</h3>
+          <div className="cpv-verify-items">
+            <div className="cpv-verify-item">
+              <dt>{t(locale, "访问级别", "Access Level")}</dt>
+              <dd>{data.accessLevel ?? "PUBLIC"}</dd>
+            </div>
+            {typeof data.verificationCount === "number" && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "累计验证次数", "Verification Count")}</dt>
+                <dd>{data.verificationCount}</dd>
+              </div>
+            )}
+            {typeof data.queryCount === "number" && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "累计查询次数", "Query Count")}</dt>
+                <dd>{data.queryCount}</dd>
+              </div>
+            )}
+            {data.internalStatus && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "内部状态", "Internal Status")}</dt>
+                <dd>{data.internalStatus}</dd>
+              </div>
+            )}
+            {data.verificationMode && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "验证模式", "Verification Mode")}</dt>
+                <dd>{data.verificationMode}</dd>
+              </div>
+            )}
+            {typeof data.publicVerifyEnabled === "boolean" && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "分类公开验证开关", "Category Public Verify")}</dt>
+                <dd>{data.publicVerifyEnabled ? t(locale, "开启", "Enabled") : t(locale, "关闭", "Disabled")}</dd>
+              </div>
+            )}
+            {data.accessLevel === "STAFF" && data.holderEmail && (
+              <div className="cpv-verify-item">
+                <dt>{t(locale, "持有人邮箱", "Holder Email")}</dt>
+                <dd className="cpv-mono">{data.holderEmail}</dd>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

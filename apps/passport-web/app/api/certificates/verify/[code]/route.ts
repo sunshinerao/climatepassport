@@ -1,46 +1,25 @@
 import { NextResponse } from "next/server";
 import { getRequestAuditContext } from "@/lib/server/audit";
-import { serializePublicCertificateVerification } from "@/lib/server/certificates";
-import { getPrismaClient } from "@/lib/server/prisma";
+import { getCurrentUser } from "@/lib/server/auth";
+import { resolvePublicCertificateVerification } from "@/lib/server/certificate-verification";
 
 export async function GET(request: Request, { params }: { params: { code: string } }) {
-  const prisma = getPrismaClient();
-
-  if (!prisma) {
-    return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
-  }
-
-  const code = params.code.trim();
-  const auditContext = getRequestAuditContext(request);
-  const issue = await prisma.certificateIssue.findUnique({
-    where: { verificationCode: code },
-    include: {
-      user: { select: { name: true, climatePassportId: true } },
-      definition: {
-        select: {
-          name: true,
-          nameEn: true,
-          verificationMode: true,
-          category: { select: { name: true, nameEn: true } },
-        },
-      },
+  const code = params.code;
+  const isPreviewRequest = code.toUpperCase() === "CV-PREVIEW"
+    || new URL(request.url).searchParams.get("preview") === "1";
+  const currentUser = await getCurrentUser();
+  const querySource = new URL(request.url).searchParams.get("source") === "qr" ? "QR_SCAN" : "WEB_QUERY";
+  const verification = await resolvePublicCertificateVerification({
+    code,
+    isPreviewRequest,
+    channel: "PUBLIC_API",
+    querySource,
+    requester: {
+      userId: currentUser?.id,
+      role: currentUser?.role,
     },
+    auditContext: getRequestAuditContext(request),
   });
 
-  if (!issue) {
-    return NextResponse.json({ valid: false, result: "NOT_FOUND" }, { status: 404 });
-  }
-
-  const result = issue.status === "REVOKED" ? "REVOKED" : issue.status === "ISSUED" ? "VALID" : "INVALID";
-
-  await prisma.certificateVerification.create({
-    data: {
-      certificateIssueId: issue.id,
-      verificationChannel: "PUBLIC_API",
-      result,
-      metadataJson: auditContext,
-    },
-  });
-
-  return NextResponse.json(serializePublicCertificateVerification(issue));
+  return NextResponse.json(verification, { status: verification.httpStatus });
 }

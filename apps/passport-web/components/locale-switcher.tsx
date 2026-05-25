@@ -11,6 +11,15 @@ const LOCALE_OPTIONS = [
   { code: "de" as const, flag: "🇩🇪", label: "Deutsch" },
 ];
 
+const LOCALE_SWITCH_PRESERVE_STORAGE_KEY = "locale-switch-preserve-path-v1";
+
+function getLocaleIndependentPath(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean);
+  const knownLocales = new Set(["en", "zh", "fr", "de"]);
+  const tail = knownLocales.has(segments[0]) ? segments.slice(1) : segments;
+  return `/${tail.join("/")}`;
+}
+
 export function LocaleSwitcher({ locale, label }: { locale: Locale; label: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -33,6 +42,14 @@ export function LocaleSwitcher({ locale, label }: { locale: Locale; label: strin
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  function markLocaleSwitchPreserve() {
+    try {
+      window.sessionStorage.setItem(LOCALE_SWITCH_PRESERVE_STORAGE_KEY, getLocaleIndependentPath(pathname));
+    } catch {
+      // Ignore storage write errors.
+    }
+  }
 
   return (
     <div className="locale-switcher" ref={ref} aria-label={label}>
@@ -59,7 +76,7 @@ export function LocaleSwitcher({ locale, label }: { locale: Locale; label: strin
                 aria-selected={opt.code === locale}
                 className={opt.code === locale ? "locale-option locale-option-active" : "locale-option"}
               >
-                <a href={href} onClick={() => setOpen(false)}>
+                <a href={href} onClick={() => { markLocaleSwitchPreserve(); setOpen(false); }}>
                   <span className="locale-flag" aria-hidden="true">{opt.flag}</span>
                   <span className="locale-name">{opt.label}</span>
                 </a>

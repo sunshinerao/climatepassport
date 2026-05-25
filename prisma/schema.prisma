@@ -834,6 +834,10 @@ model CertificateCategory {
   description   String?                @db.Text
   descriptionEn String?                @db.Text
   order         Int                    @default(0)
+  autoIssueEnabled   Boolean           @default(true)
+  userRequestEnabled Boolean           @default(false)
+  pdfEnabled         Boolean           @default(true)
+  publicVerifyEnabled Boolean          @default(true)
   isActive      Boolean                @default(true)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
@@ -901,6 +905,7 @@ model CertificateIssue {
   status            CertificateIssueStatus @default(DRAFT)
   generatedFileUrl  String?
   generatedFileName String?
+  variableValuesJson Json?
   verificationCode  String?               @unique
   publicVisible     Boolean               @default(false)
   approvedBy        String?

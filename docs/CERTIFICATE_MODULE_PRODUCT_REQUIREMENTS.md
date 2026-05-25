@@ -245,21 +245,67 @@ Required capabilities:
 
 Template variables:
 
-- user name;
-- English user name;
-- certificate name;
-- program name;
-- event name;
-- course name;
-- completion date;
-- issue date;
-- certificate number;
-- issuing organization;
-- role;
-- learning hours;
-- capability tags;
-- signer;
-- institution name.
+The template variable model uses layered semantics:
+
+1. Core fixed variables that all certificate templates should support.
+2. Fields that must keep independent Chinese and English values when the wording is not safely interchangeable across languages.
+3. Scene semantic families that represent the same concept under different template contexts.
+
+### 1) Core fixed variables
+
+- `issueDate` / issue date;
+- `completionDate` / completion date;
+- `certificateNumber` / certificate number;
+- `issuerName` / issuing organization name;
+- `signer` / signer name;
+- `learningHours` / learning hours;
+- `capabilityTags` / capability tags;
+- `verificationUrl` / public verification link.
+
+### 2) Variables that should keep independent Chinese and English fields
+
+These fields should be modeled as paired values such as `xxxName` and `xxxNameEn` when the Chinese and English phrasing may not be directly translated one-to-one in certificate contexts:
+
+- `holderName` / `holderNameEn`;
+- `certificateName` / `certificateNameEn`;
+- `categoryName` / `categoryNameEn`;
+- `workName` / `workNameEn`;
+- `eventName` / `eventNameEn`;
+- `projectName` / `projectNameEn`;
+- `programName` / `programNameEn`;
+- `courseName` / `courseNameEn`;
+- `roleName` / `roleNameEn`;
+- `organizationName` / `organizationNameEn`;
+- `institutionName` / `institutionNameEn`;
+- `achievementName` / `achievementNameEn`;
+- `milestoneName` / `milestoneNameEn`;
+- `sessionName` / `sessionNameEn`;
+- `topicName` / `topicNameEn`;
+- `trackName` / `trackNameEn`;
+- `speakerName` / `speakerNameEn`;
+- `mentorName` / `mentorNameEn`;
+- `cohortName` / `cohortNameEn`;
+- `locationName` / `locationNameEn`.
+
+### 3) Scene semantic families
+
+The following variables belong to shared semantic families and should be reused across different templates with different display labels rather than modeled as unrelated one-off fields:
+
+- `workName` family: work / project output / creation name;
+- `eventName` family: event / meeting / ceremony / live session name;
+- `courseName` family: course / training / learning unit name;
+- `programName` family: program / plan / initiative name;
+- `roleName` family: role / identity / position name;
+- `organizationName` family: organization / institution / unit name;
+- `achievementName` family: achievement / honor / outcome name;
+- `milestoneName` family: milestone / phase outcome name.
+
+### 4) Display and reuse guidance
+
+- Keep the semantic variable stable in JSON and let the UI choose the display label based on template category.
+- Use `label` for template-side hints and `content` for pure text when the field is not data-driven.
+- Prefer suffix pairs like `eventName` and `eventNameEn` for bilingual naming, instead of creating separate unrelated variables for each locale.
+- Avoid introducing a new variable when the need is only a different display name for the same semantic concept.
 
 The first implementation may use a configuration form plus certificate preview. A complex visual editor is not required for the first phase.
 

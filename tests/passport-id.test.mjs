@@ -135,6 +135,6 @@ test("sanitizeChannelBridgeTargetPath rejects unsafe or non-allowlisted paths", 
 test("QR token helpers hash and mask public values", () => {
   assert.equal(hashOpaqueToken("abc"), hashOpaqueToken("abc"));
   assert.notEqual(hashOpaqueToken("abc"), "abc");
-  assert.match(createCertificateVerificationCode(), /^CV-[0-9A-Z_-]+$/);
+  assert.match(createCertificateVerificationCode(), /^CV-[0-9A-Z]+$/);
   assert.equal(maskPassportId("K7M9QF2-T8N4PZ"), "K7••••4PZ");
 });

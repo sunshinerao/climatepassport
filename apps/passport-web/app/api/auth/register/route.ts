@@ -74,10 +74,9 @@ export async function POST(request: Request) {
 
   const user = await prisma.$transaction(async (tx) => {
     if (existingUser) {
-      const isTemporarySummerSchoolUser =
-        existingUser.status === "PENDING" && existingUser.summerSchoolApplications.length > 0;
+      const isTemporaryProvisionedUser = existingUser.status === "PENDING";
 
-      if (!isTemporarySummerSchoolUser) {
+      if (!isTemporaryProvisionedUser) {
         throw new Error("ACCOUNT_EXISTS");
       }
 
@@ -123,9 +122,13 @@ export async function POST(request: Request) {
               kind: "SYSTEM",
               title: "Welcome to Climate Passport",
               titleEn: "Welcome to Climate Passport",
-              body: "Your account is now fully activated and linked to your Summer School application.",
+              body: existingUser.summerSchoolApplications.length > 0
+                ? "Your account is now fully activated and linked to your Summer School application."
+                : "Your Climate Passport account is now fully activated and ready to use.",
               bodyEn:
-                "Your account is now fully activated and linked to your Summer School application.",
+                existingUser.summerSchoolApplications.length > 0
+                  ? "Your account is now fully activated and linked to your Summer School application."
+                  : "Your Climate Passport account is now fully activated and ready to use.",
               deliveredAt: new Date(),
             },
           },

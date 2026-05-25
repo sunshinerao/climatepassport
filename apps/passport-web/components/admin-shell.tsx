@@ -87,7 +87,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
         {
           href: `${prefix}/admin/summer-school/applications`,
           icon: "·",
-          label: t(locale, "夏校申请，临时功能", "Summer School applications"),
+          label: t(locale, "*夏校申请列表", "Summer School applications list"),
           roles: ["ADMIN"],
         },
       ],

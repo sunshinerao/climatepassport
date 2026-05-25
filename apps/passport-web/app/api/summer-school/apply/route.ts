@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { locales } from "@/lib/site-content";
 import {
-  generateClimatePassportId,
-  hashUserPassword,
   normalizeUserEmail,
 } from "@/lib/server/auth";
+import { ensurePassportUserByEmail } from "@/lib/server/passport-user-provisioning";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export const runtime = "nodejs";
@@ -87,60 +85,14 @@ export async function POST(request: Request) {
         return { duplicate: true as const };
       }
 
-      let user = await tx.user.findUnique({
-        where: { email: normalizedEmail },
-        select: {
-          id: true,
-          climatePassportId: true,
-          role: true,
-          status: true,
-        },
+      const user = await ensurePassportUserByEmail(tx, {
+        email: normalizedEmail,
+        fallbackName: data.fullName,
+        phone: data.phone,
+        country: data.nationality,
+        role: "ATTENDEE",
+        status: "PENDING",
       });
-
-      if (!user) {
-        const [passwordHash, climatePassportId] = await Promise.all([
-          hashUserPassword(randomBytes(24).toString("hex")),
-          generateClimatePassportId(),
-        ]);
-
-        user = await tx.user.create({
-          data: {
-            name: data.fullName.trim(),
-            email: normalizedEmail,
-            password: passwordHash,
-            role: "ATTENDEE",
-            status: "PENDING",
-            climatePassportId,
-            phone: data.phone || null,
-            country: data.nationality || null,
-            notificationPreference: {
-              create: {
-                emailEnabled: true,
-                inAppEnabled: true,
-                smsEnabled: false,
-              },
-            },
-          },
-          select: {
-            id: true,
-            climatePassportId: true,
-            role: true,
-            status: true,
-          },
-        });
-      } else if (!user.climatePassportId) {
-        const climatePassportId = await generateClimatePassportId();
-        user = await tx.user.update({
-          where: { id: user.id },
-          data: { climatePassportId },
-          select: {
-            id: true,
-            climatePassportId: true,
-            role: true,
-            status: true,
-          },
-        });
-      }
 
       const program = await tx.learningExperienceProgram.findFirst({
         where: { slug: data.projectSlug },

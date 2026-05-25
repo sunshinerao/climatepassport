@@ -1,8 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { requireRoleAccess } from "@/lib/server/auth";
+import { parseCertificateRenderConfig } from "@/lib/server/certificate-module";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { CertificateTemplateForm } from "@/components/admin-certificate-config-forms";
-import { CertificateAdminTemplates } from "@/components/certificate-admin-prototype";
+import { CertificateAdminTemplatesClient } from "@/components/certificate-admin-templates-client";
 import type { Locale } from "@/lib/site-content";
 
 export default async function AdminCertificateTemplatesPage({ params }: { params: { locale: Locale } }) {
@@ -14,7 +14,21 @@ export default async function AdminCertificateTemplatesPage({ params }: { params
     ? await Promise.all([
         prisma.certificateTemplate.findMany({
           orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
-          include: { category: true, definitions: { select: { id: true } } },
+          include: {
+            category: true,
+            definitions: {
+              orderBy: { createdAt: "asc" },
+              select: {
+                id: true,
+                name: true,
+                nameEn: true,
+                approvalMode: true,
+                _count: {
+                  select: { issues: true },
+                },
+              },
+            },
+          },
         }),
         prisma.certificateCategory.findMany({
           where: { isActive: true },
@@ -25,20 +39,32 @@ export default async function AdminCertificateTemplatesPage({ params }: { params
     : [[], []];
 
   return (
-    <CertificateAdminTemplates
+    <CertificateAdminTemplatesClient
+      categories={categories}
       locale={params.locale}
-      templates={templates.map((template) => ({
-        id: template.id,
-        name: template.name,
-        nameEn: template.nameEn,
-        templateType: template.templateType,
-        isActive: template.isActive,
-        version: template.version,
-        categoryName: template.category.name,
-        categoryNameEn: template.category.nameEn,
-        issuedCount: template.definitions.length,
-      }))}
-      form={<CertificateTemplateForm categories={categories} locale={params.locale} />}
+      templates={templates.map((template) => {
+        const primaryDefinition = template.definitions[0] ?? null;
+        const issuedCount = template.definitions.reduce((sum, definition) => sum + definition._count.issues, 0);
+        return {
+          id: template.id,
+          categoryId: template.categoryId,
+          name: template.name,
+          nameEn: template.nameEn,
+          templateType: template.templateType,
+          isActive: template.isActive,
+          version: template.version,
+          updatedAt: template.updatedAt.toISOString(),
+          categoryName: template.category.name,
+          categoryNameEn: template.category.nameEn,
+          issuedCount,
+          renderConfig: parseCertificateRenderConfig(template.renderConfigJson),
+          definition: primaryDefinition ? {
+            name: primaryDefinition.name,
+            nameEn: primaryDefinition.nameEn,
+            approvalMode: primaryDefinition.approvalMode,
+          } : null,
+        };
+      })}
     />
   );
 }

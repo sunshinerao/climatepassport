@@ -37,9 +37,69 @@ export function getVerificationUrl(code: string | null | undefined) {
   return code ? `/verify/certificate/${encodeURIComponent(code)}` : null;
 }
 
+const CERTIFICATE_VARIABLE_NAMES = [
+  "holderName",
+  "holderNameEn",
+  "certificateName",
+  "certificateNameEn",
+  "categoryName",
+  "categoryNameEn",
+  "workName",
+  "workNameEn",
+  "eventName",
+  "eventNameEn",
+  "projectName",
+  "projectNameEn",
+  "programName",
+  "programNameEn",
+  "courseName",
+  "courseNameEn",
+  "roleName",
+  "roleNameEn",
+  "organizationName",
+  "organizationNameEn",
+  "institutionName",
+  "institutionNameEn",
+  "achievementName",
+  "achievementNameEn",
+  "milestoneName",
+  "milestoneNameEn",
+  "sessionName",
+  "sessionNameEn",
+  "topicName",
+  "topicNameEn",
+  "trackName",
+  "trackNameEn",
+  "speakerName",
+  "speakerNameEn",
+  "mentorName",
+  "mentorNameEn",
+  "cohortName",
+  "cohortNameEn",
+  "locationName",
+  "locationNameEn",
+  "completionDate",
+  "issueDate",
+  "certificateNumber",
+  "issuerName",
+  "signer",
+  "learningHours",
+  "capabilityTags",
+  "verificationUrl",
+] as const;
+
+type CertificateVariableName = typeof CERTIFICATE_VARIABLE_NAMES[number];
+
+function isCertificateVariableName(value: unknown): value is CertificateVariableName {
+  return typeof value === "string" && CERTIFICATE_VARIABLE_NAMES.includes(value as CertificateVariableName);
+}
+
 type CertificateRenderConfig = {
   issuerName?: string;
+  signerName?: string;
   pageSize?: "A4_LANDSCAPE" | "A4_PORTRAIT" | "DIGITAL_CARD";
+  pageWidthMm?: number;
+  pageHeightMm?: number;
   accentColor?: string;
   backgroundColor?: string;
   backgroundImageUrl?: string;
@@ -54,8 +114,11 @@ type CertificateRenderElement = {
   kind: "TEXT" | "VARIABLE" | "IMAGE" | "QR" | "NOTE";
   label?: string;
   content?: string;
-  variable?: "holderName" | "certificateName" | "categoryName" | "issueDate" | "certificateNumber" | "issuerName" | "verificationUrl";
+  variable?: CertificateVariableName;
   imageKey?: "logo" | "signature" | "seal";
+  qrLabelGap?: number;
+  qrLabelOffsetY?: number;
+  qrLabelFontSize?: number;
   x: number;
   y: number;
   width: number;
@@ -111,15 +174,7 @@ function sanitizeRenderElement(value: unknown): CertificateRenderElement | null 
     return null;
   }
 
-  const variable = input.variable === "holderName" ||
-    input.variable === "certificateName" ||
-    input.variable === "categoryName" ||
-    input.variable === "issueDate" ||
-    input.variable === "certificateNumber" ||
-    input.variable === "issuerName" ||
-    input.variable === "verificationUrl"
-    ? input.variable
-    : undefined;
+  const variable = isCertificateVariableName(input.variable) ? input.variable : undefined;
   const imageKey = input.imageKey === "logo" || input.imageKey === "signature" || input.imageKey === "seal"
     ? input.imageKey
     : undefined;
@@ -132,6 +187,15 @@ function sanitizeRenderElement(value: unknown): CertificateRenderElement | null 
     content: typeof input.content === "string" ? input.content.trim().slice(0, 1000) : undefined,
     variable,
     imageKey,
+    qrLabelGap: typeof input.qrLabelGap === "number" || typeof input.qrLabelGap === "string"
+      ? sanitizePercent(input.qrLabelGap, 6, 0, 40)
+      : undefined,
+    qrLabelOffsetY: typeof input.qrLabelOffsetY === "number" || typeof input.qrLabelOffsetY === "string"
+      ? sanitizePercent(input.qrLabelOffsetY, 0, -40, 40)
+      : undefined,
+    qrLabelFontSize: typeof input.qrLabelFontSize === "number" || typeof input.qrLabelFontSize === "string"
+      ? sanitizePercent(input.qrLabelFontSize, 10, 8, 24)
+      : undefined,
     x: sanitizePercent(input.x, 0),
     y: sanitizePercent(input.y, 0),
     width: sanitizePercent(input.width, 20, 1),
@@ -161,7 +225,10 @@ export function parseCertificateRenderConfig(value: unknown): CertificateRenderC
 
   return {
     issuerName: typeof input.issuerName === "string" && input.issuerName.trim() ? input.issuerName.trim() : undefined,
+    signerName: typeof input.signerName === "string" && input.signerName.trim() ? input.signerName.trim() : undefined,
     pageSize,
+    pageWidthMm: Number.isFinite(Number(input.pageWidthMm)) ? sanitizePercent(input.pageWidthMm, 0, 80, 1200) : undefined,
+    pageHeightMm: Number.isFinite(Number(input.pageHeightMm)) ? sanitizePercent(input.pageHeightMm, 0, 80, 1200) : undefined,
     accentColor: isSafeHexColor(input.accentColor) ? input.accentColor : undefined,
     backgroundColor: isSafeHexColor(input.backgroundColor) ? input.backgroundColor : undefined,
     backgroundImageUrl: isSafeDataImage(input.backgroundImageUrl) ? input.backgroundImageUrl : undefined,
@@ -200,6 +267,21 @@ function getElementValue(element: CertificateRenderElement, values: Record<strin
   }
 
   return element.content ?? "";
+}
+
+function normalizeVariableValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return String(value).trim();
 }
 
 function getImageForElement(element: CertificateRenderElement, renderConfig: CertificateRenderConfig) {
@@ -272,7 +354,13 @@ function renderConfiguredElement(
 
   if (element.kind === "QR") {
     const verificationUrl = values.verificationUrl;
-    return `<div class="cert-el cert-qr" data-verification-url="${escapeHtml(verificationUrl)}" style="${style.join(";")}">${verificationQrSvg ?? buildPseudoQrSvg(verificationUrl, renderConfig.accentColor ?? "#1f5a4e")}<span>${escapeHtml(element.content || "Scan to verify this credential")}</span></div>`;
+    const qrStyle = [...style, `gap:${element.qrLabelGap ?? 6}px`];
+    const qrLabelStyle = [
+      `font-size:${element.qrLabelFontSize ?? 10}px`,
+      `transform:translateY(${element.qrLabelOffsetY ?? 0}px)`,
+      "line-height:1.35",
+    ];
+    return `<div class="cert-el cert-qr" data-verification-url="${escapeHtml(verificationUrl)}" style="${qrStyle.join(";")}">${verificationQrSvg ?? buildPseudoQrSvg(verificationUrl, renderConfig.accentColor ?? "#1f5a4e")}<span style="${qrLabelStyle.join(";")}">${escapeHtml(element.content || "Scan to verify this credential")}</span></div>`;
   }
 
   const value = getElementValue(element, values);
@@ -296,6 +384,8 @@ export function renderCertificateHtml(input: {
   categoryName: string;
   issueDate: string;
   certificateNumber: string;
+  variableValues?: Record<string, unknown>;
+  documentTitle?: string;
   verificationUrl?: string;
   verificationQrSvg?: string;
   renderConfig?: CertificateRenderConfig;
@@ -314,23 +404,72 @@ export function renderCertificateHtml(input: {
   const safeCategoryName = escapeHtml(input.categoryName);
   const safeIssueDate = escapeHtml(input.issueDate);
   const safeCertificateNumber = escapeHtml(input.certificateNumber);
+  const safeDocumentTitle = escapeHtml(input.documentTitle ?? input.certificateName);
   const safeIssuerName = escapeHtml(issuerName);
   const verificationUrl = input.verificationUrl ?? getVerificationUrl(input.certificateNumber) ?? "";
-  const values = {
+  const values: Record<string, string> = {
     holderName: input.holderName,
+    holderNameEn: input.holderName,
     certificateName: input.certificateName,
+    certificateNameEn: input.certificateName,
     categoryName: input.categoryName,
+    categoryNameEn: input.categoryName,
+    workName: "",
+    workNameEn: "",
+    eventName: "",
+    eventNameEn: "",
+    projectName: "",
+    projectNameEn: "",
+    programName: "",
+    programNameEn: "",
+    courseName: "",
+    courseNameEn: "",
+    roleName: "",
+    roleNameEn: "",
+    organizationName: issuerName,
+    organizationNameEn: issuerName,
+    institutionName: issuerName,
+    institutionNameEn: issuerName,
+    achievementName: "",
+    achievementNameEn: "",
+    milestoneName: "",
+    milestoneNameEn: "",
+    sessionName: "",
+    sessionNameEn: "",
+    topicName: "",
+    topicNameEn: "",
+    trackName: "",
+    trackNameEn: "",
+    speakerName: "",
+    speakerNameEn: "",
+    mentorName: "",
+    mentorNameEn: "",
+    cohortName: "",
+    cohortNameEn: "",
+    locationName: "",
+    locationNameEn: "",
+    completionDate: input.issueDate,
     issueDate: input.issueDate,
     certificateNumber: input.certificateNumber,
     issuerName,
+    signer: issuerName,
+    learningHours: "",
+    capabilityTags: "",
     verificationUrl,
   };
+
+  for (const [key, rawValue] of Object.entries(input.variableValues ?? {})) {
+    if (!isCertificateVariableName(key)) {
+      continue;
+    }
+    values[key] = normalizeVariableValue(rawValue);
+  }
   const configuredElements = renderConfig.elements?.length
     ? renderConfig.elements.map((element) => renderConfiguredElement(element, values, renderConfig, input.verificationQrSvg)).join("\n")
     : "";
   const fallbackQrSvg = input.verificationQrSvg ?? buildPseudoQrSvg(verificationUrl, accentColor);
-  const backgroundImageCss = renderConfig.backgroundImageUrl
-    ? `background-image: url("${renderConfig.backgroundImageUrl}"); background-size: cover; background-position: center;`
+  const backgroundImageLayer = renderConfig.backgroundImageUrl
+    ? `<img class="cert-background-image" src="${renderConfig.backgroundImageUrl}" alt="" aria-hidden="true" />`
     : "";
   const fallbackContent = configuredElements
     ? configuredElements
@@ -356,13 +495,15 @@ export function renderCertificateHtml(input: {
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>${safeCertificateName}</title>
+  <title>${safeDocumentTitle}</title>
   <style>
     @page { size: A4 landscape; margin: 0; }
-    body { margin: 0; font-family: Inter, Arial, sans-serif; color: #12382f; background: ${backgroundColor}; }
-    .certificate { position: relative; overflow: hidden; width: 1120px; min-height: 780px; margin: 0 auto; padding: 72px; background: #fff; border: 0; box-shadow: none; box-sizing: border-box; ${backgroundImageCss} }
+    body { margin: 0; min-height: 100vh; font-family: Inter, Arial, sans-serif; color: #12382f; background: ${backgroundColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .certificate { position: relative; overflow: hidden; width: 1120px; min-height: 780px; margin: 0 auto; padding: 72px; background: #fff; border: 0; box-shadow: none; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .certificate.portrait { width: 780px; min-height: 1120px; }
     .certificate.digital-card { width: 760px; min-height: 480px; padding: 48px; }
+    .cert-background-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; user-select: none; }
+    main > :not(.cert-background-image) { position: relative; }
     .kicker { letter-spacing: .18em; text-transform: uppercase; font-size: 13px; color: #60766f; font-weight: 700; }
     h1 { margin: 44px 0 16px; font-size: 54px; line-height: 1.04; font-weight: 650; }
     .holder { margin: 36px 0; font-size: 36px; border-bottom: 1px solid #bfd0c8; padding-bottom: 18px; }
@@ -383,16 +524,64 @@ export function renderCertificateHtml(input: {
     .print-actions button { border: 0; border-radius: 999px; padding: 10px 14px; background: ${accentColor}; color: white; font-weight: 700; cursor: pointer; }
     @media print {
       body { background: #fff; }
+      .certificate { transform: none !important; margin: 0 !important; }
       .certificate { width: 297mm; height: 210mm; min-height: 210mm; margin: 0; }
       .certificate.portrait { width: 210mm; height: 297mm; min-height: 297mm; }
       .certificate.digital-card { width: 210mm; height: 132mm; min-height: 132mm; }
       .print-actions { display: none; }
     }
   </style>
+  <script>
+    function fitCertificateForEmbeddedPreview() {
+      if (window.self === window.top) {
+        return;
+      }
+
+      const certificate = document.querySelector("main.certificate");
+      if (!certificate) {
+        return;
+      }
+
+      certificate.style.transform = "none";
+      certificate.style.margin = "0 auto";
+
+      const naturalWidth = certificate.offsetWidth;
+      const naturalHeight = certificate.offsetHeight;
+      if (!naturalWidth || !naturalHeight) {
+        return;
+      }
+
+      const horizontalPadding = 24;
+      const verticalPadding = 24;
+      const availableWidth = Math.max(window.innerWidth - horizontalPadding, 240);
+      const availableHeight = Math.max(window.innerHeight - verticalPadding, 240);
+      const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight, 1);
+
+      certificate.style.transformOrigin = "top center";
+      certificate.style.transform = "scale(" + scale + ")";
+      certificate.style.margin = "8px auto 12px";
+    }
+
+    function printCertificate() {
+      try {
+        window.parent.postMessage({ type: "certificate-preview-title", title: document.title }, "*");
+      } catch (error) {
+        // no-op for standalone rendering contexts
+      }
+      window.print();
+    }
+
+    window.addEventListener("load", fitCertificateForEmbeddedPreview);
+    window.addEventListener("resize", fitCertificateForEmbeddedPreview);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(fitCertificateForEmbeddedPreview);
+    }
+  </script>
 </head>
 <body>
-  <div class="print-actions"><button onclick="window.print()">Print / Save PDF</button></div>
+  <div class="print-actions"><button onclick="printCertificate()">Print / Save PDF</button></div>
   <main class="${pageClass}">
+    ${backgroundImageLayer}
     ${fallbackContent}
   </main>
 </body>
@@ -407,6 +596,7 @@ export function buildCertificateArtifact(input: {
   certificateNumber: string;
   verificationUrl?: string;
   renderConfigJson?: unknown;
+  variableValues?: Record<string, unknown>;
 }) {
   const renderConfig = parseCertificateRenderConfig(input.renderConfigJson);
   const fileBaseName = buildCertificateFileBaseName(input);
@@ -419,6 +609,7 @@ export function buildCertificateArtifact(input: {
     categoryName: input.categoryName,
     issueDate: input.issueDate.toISOString().slice(0, 10),
     certificateNumber: input.certificateNumber,
+    variableValues: input.variableValues,
     verificationUrl,
     renderConfig,
   });
@@ -440,6 +631,7 @@ export async function buildCertificateArtifactWithQr(input: {
   certificateNumber: string;
   verificationUrl: string;
   renderConfigJson?: unknown;
+  variableValues?: Record<string, unknown>;
 }) {
   const renderConfig = parseCertificateRenderConfig(input.renderConfigJson);
   const verificationQrSvg = await buildCertificateVerificationQrSvg(
@@ -455,6 +647,7 @@ export async function buildCertificateArtifactWithQr(input: {
     categoryName: input.categoryName,
     issueDate: input.issueDate.toISOString().slice(0, 10),
     certificateNumber: input.certificateNumber,
+    variableValues: input.variableValues,
     verificationUrl: input.verificationUrl,
     verificationQrSvg,
     renderConfig,

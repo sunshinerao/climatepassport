@@ -4,6 +4,12 @@ import type { LearningExperienceApplicationStatus } from "@prisma/client";
 import { learningApplicationStatusOptions } from "@/lib/server/admin-learning-experiences";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
+import { buildCertificateArtifactWithQr, parseCertificateRenderConfig } from "@/lib/server/certificate-module";
+import {
+  buildIssuedCertificateVariableValues,
+  extractCapabilityTags,
+  extractLearningHoursFromProgramConfig,
+} from "@/lib/server/certificate-variables";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const statusTransitionMap: Record<LearningExperienceApplicationStatus, LearningExperienceApplicationStatus[]> = {
@@ -57,6 +63,7 @@ export async function PATCH(
           pointReward: true,
           title: true,
           titleEn: true,
+          programConfigJson: true,
           stages: {
             orderBy: { order: "asc" },
             select: {
@@ -263,6 +270,18 @@ export async function PATCH(
         if (existingIssue) {
           certificateIssueId = existingIssue.id;
         } else {
+          const definition = await tx.certificateDefinition.findUnique({
+            where: { id: current.program.certificateDefinitionId },
+            include: {
+              category: true,
+              template: true,
+            },
+          });
+
+          if (!definition) {
+            throw new Error("Certificate definition not found for learning experience completion.");
+          }
+
           const verificationCode = await allocateCertificateVerificationCode(async (candidate) => {
             const existing = await tx.certificateIssue.findUnique({
               where: { verificationCode: candidate },
@@ -270,6 +289,49 @@ export async function PATCH(
             });
 
             return Boolean(existing);
+          });
+
+          const verificationUrl = new URL(
+            `/verify/certificate/${encodeURIComponent(verificationCode)}`,
+            request.url,
+          ).toString();
+          const renderConfig = parseCertificateRenderConfig(definition.template.renderConfigJson);
+          const learningHours = extractLearningHoursFromProgramConfig(current.program.programConfigJson);
+          const capabilityTags = extractCapabilityTags(current.program.programConfigJson);
+          const variableValues = buildIssuedCertificateVariableValues({
+            holderName: updated.user.name,
+            certificateName: definition.nameEn ?? definition.name,
+            certificateNameZh: definition.name,
+            certificateNameEn: definition.nameEn,
+            categoryName: definition.category.nameEn ?? definition.category.name,
+            categoryNameZh: definition.category.name,
+            categoryNameEn: definition.category.nameEn,
+            issueDate: now,
+            certificateNumber: verificationCode,
+            verificationUrl,
+            issuerName: renderConfig.issuerName,
+            signer: user.name,
+            source: {
+              programName: current.program.title,
+              programNameEn: current.program.titleEn,
+              courseName: current.program.title,
+              courseNameEn: current.program.titleEn,
+              projectName: current.program.title,
+              projectNameEn: current.program.titleEn,
+              completionDate: now,
+              learningHours,
+              capabilityTags,
+            },
+          });
+          const artifact = await buildCertificateArtifactWithQr({
+            holderName: updated.user.name,
+            certificateName: definition.nameEn ?? definition.name,
+            categoryName: definition.category.nameEn ?? definition.category.name,
+            issueDate: now,
+            certificateNumber: verificationCode,
+            verificationUrl,
+            renderConfigJson: definition.template.renderConfigJson,
+            variableValues,
           });
 
           const issue = await tx.certificateIssue.create({
@@ -283,6 +345,8 @@ export async function PATCH(
               approvedAt: now,
               issuedAt: now,
               verificationCode,
+              generatedFileName: artifact.fileName,
+              generatedFileUrl: artifact.dataUrl,
             },
             select: { id: true },
           });

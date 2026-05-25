@@ -1,11 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { getPrismaClient } from "@/lib/server/prisma";
 
-export function getRequestAuditContext(request: Request) {
+export function getHeaderAuditContext(headers: Headers) {
   return {
-    ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? null,
-    userAgent: request.headers.get("user-agent")?.slice(0, 240) ?? null,
+    ipAddress: headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? headers.get("x-real-ip") ?? null,
+    userAgent: headers.get("user-agent")?.slice(0, 240) ?? null,
   };
+}
+
+export function getRequestAuditContext(request: Request) {
+  return getHeaderAuditContext(request.headers);
 }
 
 export async function writeCoreAuditLog(input: {

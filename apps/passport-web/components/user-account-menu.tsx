@@ -36,7 +36,7 @@ function Avatar({ className = "", user }: { className?: string; user: MenuUser }
       className={`account-avatar ${className}`}
       style={user.avatar ? { backgroundImage: `url(${user.avatar})` } : undefined}
     >
-      {user.avatar ? null : initial}
+      {user.avatar ? <img alt="" className="account-avatar-image" src={user.avatar} /> : initial}
     </span>
   );
 }

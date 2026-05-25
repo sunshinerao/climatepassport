@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { FormErrorText, FormHelpText, FormMessageText, FormSuccessText } from "@/components/form-feedback";
+import { FieldLabelWithInfo } from "@/components/info-tooltip";
 import type { Locale } from "@/lib/site-content";
 
 export type CertificateAdminCategory = {
@@ -12,21 +14,50 @@ export type CertificateAdminCategory = {
   name: string;
   nameEn?: string | null;
   description?: string | null;
+  descriptionEn?: string | null;
+  order?: number;
+  autoIssueEnabled?: boolean;
+  userRequestEnabled?: boolean;
+  pdfEnabled?: boolean;
+  publicVerifyEnabled?: boolean;
+  createdAt?: string;
   isActive: boolean;
   templateCount?: number;
   definitionCount?: number;
+  issuedCount?: number;
 };
 
 export type CertificateAdminTemplate = {
   id: string;
+  categoryId?: string;
   name: string;
   nameEn?: string | null;
   templateType: string;
   isActive: boolean;
   version: number;
+  updatedAt?: string;
   categoryName?: string | null;
   categoryNameEn?: string | null;
   issuedCount?: number;
+  renderConfig?: {
+    issuerName?: string;
+    signerName?: string;
+    pageSize?: string;
+    pageWidthMm?: number;
+    pageHeightMm?: number;
+    accentColor?: string;
+    backgroundColor?: string;
+    backgroundImageUrl?: string;
+    logoImageUrl?: string;
+    signatureImageUrl?: string;
+    sealImageUrl?: string;
+    elements?: unknown;
+  };
+  definition?: {
+    name: string;
+    nameEn?: string | null;
+    approvalMode?: string | null;
+  } | null;
 };
 
 export type CertificateAdminIssue = {
@@ -40,6 +71,10 @@ export type CertificateAdminIssue = {
   status: string;
   source?: string | null;
   verificationCount?: number;
+  generatedFileUrl?: string | null;
+  generatedFileName?: string | null;
+  templateId?: string;
+  issueVariableValues?: Record<string, unknown> | null;
 };
 
 export type CertificateAdminAuditLog = {
@@ -50,6 +85,201 @@ export type CertificateAdminAuditLog = {
   result: string;
   channel?: string;
   region?: string;
+};
+
+type CertificateTemplateRenderElementInput = {
+  kind?: string;
+  variable?: string;
+  label?: string;
+  visible?: boolean;
+};
+
+type CertificateTemplateVariableField = {
+  variable: string;
+  label: string;
+  multiline: boolean;
+};
+
+const RESERVED_MANUAL_ISSUE_VARIABLES = new Set(["certificateNumber", "verificationUrl", "issueDate", "holderName"]);
+const MULTILINE_TEMPLATE_VARIABLES = new Set(["capabilityTags"]);
+
+function formatTodayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getCertificateVariableLabel(locale: Locale, variable: string) {
+  const labels: Record<string, { zh: string; en: string }> = {
+    holderName: { zh: "证书持有人", en: "Certificate holder" },
+    holderNameEn: { zh: "持有人英文名", en: "Holder name (EN)" },
+    certificateName: { zh: "证书名称", en: "Certificate name" },
+    certificateNameEn: { zh: "证书英文名", en: "Certificate name (EN)" },
+    categoryName: { zh: "证书分类", en: "Certificate category" },
+    categoryNameEn: { zh: "分类英文名", en: "Category name (EN)" },
+    workName: { zh: "作品名称", en: "Work name" },
+    workNameEn: { zh: "作品英文名", en: "Work name (EN)" },
+    eventName: { zh: "活动名称", en: "Event name" },
+    eventNameEn: { zh: "活动英文名", en: "Event name (EN)" },
+    projectName: { zh: "项目名称", en: "Project name" },
+    projectNameEn: { zh: "项目英文名", en: "Project name (EN)" },
+    programName: { zh: "计划名称", en: "Program name" },
+    programNameEn: { zh: "计划英文名", en: "Program name (EN)" },
+    courseName: { zh: "课程名称", en: "Course name" },
+    courseNameEn: { zh: "课程英文名", en: "Course name (EN)" },
+    roleName: { zh: "角色", en: "Role" },
+    roleNameEn: { zh: "角色英文名", en: "Role (EN)" },
+    organizationName: { zh: "机构名称", en: "Organization name" },
+    organizationNameEn: { zh: "机构英文名", en: "Organization name (EN)" },
+    institutionName: { zh: "单位名称", en: "Institution name" },
+    institutionNameEn: { zh: "单位英文名", en: "Institution name (EN)" },
+    achievementName: { zh: "成就名称", en: "Achievement name" },
+    achievementNameEn: { zh: "成就英文名", en: "Achievement name (EN)" },
+    milestoneName: { zh: "里程碑名称", en: "Milestone name" },
+    milestoneNameEn: { zh: "里程碑英文名", en: "Milestone name (EN)" },
+    sessionName: { zh: "场次名称", en: "Session name" },
+    sessionNameEn: { zh: "场次英文名", en: "Session name (EN)" },
+    topicName: { zh: "主题名称", en: "Topic name" },
+    topicNameEn: { zh: "主题英文名", en: "Topic name (EN)" },
+    trackName: { zh: "赛道名称", en: "Track name" },
+    trackNameEn: { zh: "赛道英文名", en: "Track name (EN)" },
+    speakerName: { zh: "讲者姓名", en: "Speaker name" },
+    speakerNameEn: { zh: "讲者英文名", en: "Speaker name (EN)" },
+    mentorName: { zh: "导师姓名", en: "Mentor name" },
+    mentorNameEn: { zh: "导师英文名", en: "Mentor name (EN)" },
+    cohortName: { zh: "届别名称", en: "Cohort name" },
+    cohortNameEn: { zh: "届别英文名", en: "Cohort name (EN)" },
+    locationName: { zh: "地点", en: "Location" },
+    locationNameEn: { zh: "地点英文名", en: "Location (EN)" },
+    completionDate: { zh: "完成日期", en: "Completion date" },
+    issuerName: { zh: "签发机构", en: "Issuer" },
+    signer: { zh: "签字人", en: "Signer" },
+    learningHours: { zh: "学习时长", en: "Learning hours" },
+    capabilityTags: { zh: "能力标签", en: "Capability tags" },
+  };
+
+  return labels[variable]?.[locale === "zh" ? "zh" : "en"] ?? variable;
+}
+
+function getVisibleTemplateVariableFields(template: CertificateAdminTemplate | null, locale: Locale): CertificateTemplateVariableField[] {
+  if (!template || !Array.isArray(template.renderConfig?.elements)) {
+    return [];
+  }
+
+  const fields: CertificateTemplateVariableField[] = [];
+  const seen = new Set<string>();
+
+  for (const rawElement of template.renderConfig.elements as CertificateTemplateRenderElementInput[]) {
+    if (!rawElement || rawElement.kind !== "VARIABLE" || rawElement.visible === false || typeof rawElement.variable !== "string") {
+      continue;
+    }
+
+    const variable = rawElement.variable.trim();
+    if (!variable || RESERVED_MANUAL_ISSUE_VARIABLES.has(variable) || seen.has(variable)) {
+      continue;
+    }
+
+    seen.add(variable);
+    fields.push({
+      variable,
+      label: rawElement.label?.trim() || getCertificateVariableLabel(locale, variable),
+      multiline: MULTILINE_TEMPLATE_VARIABLES.has(variable),
+    });
+  }
+
+  return fields;
+}
+
+function buildInitialManualVariableValues(template: CertificateAdminTemplate | null) {
+  return {
+    holderName: "",
+    holderNameEn: "",
+    certificateName: template?.definition?.name ?? template?.name ?? "",
+    certificateNameEn: template?.definition?.nameEn ?? template?.nameEn ?? template?.definition?.name ?? template?.name ?? "",
+    categoryName: template?.categoryName ?? "",
+    categoryNameEn: template?.categoryNameEn ?? template?.categoryName ?? "",
+    issuerName: template?.renderConfig?.issuerName ?? "",
+    signer: template?.renderConfig?.signerName ?? template?.renderConfig?.issuerName ?? "",
+    completionDate: "",
+    learningHours: "",
+    capabilityTags: "",
+  } as Record<string, string>;
+}
+
+function normalizeManualVariablePayload(values: Record<string, string>) {
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value.trim().length > 0),
+  );
+}
+
+function parseManualIssueEmails(value: string) {
+  return Array.from(new Set(
+    value
+      .split(/[\n,;]+/)
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean),
+  ));
+}
+
+function isLikelyEmailAddress(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function normalizeIssuedVariableValues(values: Record<string, unknown> | null | undefined) {
+  const normalized: Record<string, string> = {};
+
+  for (const [key, rawValue] of Object.entries(values ?? {})) {
+    if (Array.isArray(rawValue)) {
+      normalized[key] = rawValue
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+        .join(", ");
+      continue;
+    }
+
+    if (rawValue === null || rawValue === undefined) {
+      continue;
+    }
+
+    normalized[key] = String(rawValue).trim();
+  }
+
+  return normalized;
+}
+
+function decodeHtmlDataUrl(url: string | null | undefined) {
+  if (!url || !url.startsWith("data:text/html")) {
+    return null;
+  }
+
+  const commaIndex = url.indexOf(",");
+  if (commaIndex < 0) {
+    return null;
+  }
+
+  const payload = url.slice(commaIndex + 1);
+  return decodeURIComponent(payload);
+}
+
+const CERTIFICATE_ISSUE_DRAFT_STORAGE_KEY = "certificate-issue-form-draft-v1";
+const LOCALE_SWITCH_PRESERVE_STORAGE_KEY = "locale-switch-preserve-path-v1";
+
+function getLocaleIndependentPath(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean);
+  const knownLocales = new Set(["en", "zh", "fr", "de"]);
+  const tail = knownLocales.has(segments[0]) ? segments.slice(1) : segments;
+  return `/${tail.join("/")}`;
+}
+
+type CertificateIssueDraft = {
+  mode: "single" | "batch";
+  email: string;
+  batchEmails: string;
+  templateId: string;
+  issueDate: string;
+  batchIssueDate: string;
+  editingIssueId?: string | null;
+  editingCertificateNumber?: string;
+  singleVariableValues: Record<string, string>;
+  batchVariableValues: Record<string, string>;
 };
 
 function t(locale: Locale, zh: string, en: string) {
@@ -67,38 +297,70 @@ const certificateAdminSections = [
   { key: "logs", href: "/admin/certificates/audit-logs", zh: "验证与审计日志", en: "Audit Logs" },
 ];
 
-function CertificateModuleNav({ locale }: { locale: Locale }) {
+function CertificateModuleNav({
+  locale,
+  breadcrumbOnly = false,
+  hideSectionLinks = false,
+}: {
+  locale: Locale;
+  breadcrumbOnly?: boolean;
+  hideSectionLinks?: boolean;
+}) {
   const pathname = usePathname();
   const prefix = `/${locale}`;
   const activeSection = certificateAdminSections.find((section) => pathname === `${prefix}${section.href}`) ?? certificateAdminSections[0];
+  const adminHomeHref = `${prefix}/admin`;
+  const certificateHomeHref = `${prefix}/admin/certificates`;
+  const activeSectionHref = `${prefix}${activeSection.href}`;
 
   return (
-    <div className="cpca-module-nav" aria-label={t(locale, "证书中心导航", "Certificate module navigation")}>
+    <div
+      className={`cpca-module-nav${breadcrumbOnly ? " is-breadcrumb-only" : ""}`}
+      aria-label={t(locale, "证书中心导航", "Certificate module navigation")}
+    >
       <div className="cpca-breadcrumb">
-        <span>Climate Passport</span>
+        <Link className="cpca-breadcrumb-link" href={adminHomeHref}>
+          {t(locale, "Climate Passport 管理首页", "Climate Passport Admin Home")}
+        </Link>
         <span aria-hidden="true">›</span>
-        <span>{t(locale, "证书中心", "Certificates")}</span>
+        <Link className="cpca-breadcrumb-link" href={certificateHomeHref}>
+          {t(locale, "证书中心", "Certificates")}
+        </Link>
         <span aria-hidden="true">›</span>
-        <strong>{t(locale, activeSection.zh, activeSection.en)}</strong>
+        <Link aria-current="page" className="cpca-breadcrumb-link is-current" href={activeSectionHref}>
+          {t(locale, activeSection.zh, activeSection.en)}
+        </Link>
       </div>
-      <div className="cpca-section-links">
-        {certificateAdminSections.map((section) => {
-          const href = `${prefix}${section.href}`;
-          return (
-            <Link className={pathname === href ? "is-active" : undefined} href={href} key={section.key}>
-              {t(locale, section.zh, section.en)}
-            </Link>
-          );
-        })}
-      </div>
+      {breadcrumbOnly || hideSectionLinks ? null : (
+        <div className="cpca-section-links">
+          {certificateAdminSections.map((section) => {
+            const href = `${prefix}${section.href}`;
+            return (
+              <Link className={pathname === href ? "is-active" : undefined} href={href} key={section.key}>
+                {t(locale, section.zh, section.en)}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function CertificateAdminFrame({ locale, children }: { locale: Locale; children: ReactNode }) {
+function CertificateAdminFrame({
+  locale,
+  children,
+  breadcrumbOnly = false,
+  hideSectionLinks = false,
+}: {
+  locale: Locale;
+  children: ReactNode;
+  breadcrumbOnly?: boolean;
+  hideSectionLinks?: boolean;
+}) {
   return (
-    <div className="cpca">
-      <CertificateModuleNav locale={locale} />
+    <div className={`cpca${breadcrumbOnly ? " is-breadcrumb-only-layout" : ""}`}>
+      <CertificateModuleNav locale={locale} breadcrumbOnly={breadcrumbOnly} hideSectionLinks={hideSectionLinks} />
       {children}
     </div>
   );
@@ -106,6 +368,62 @@ function CertificateAdminFrame({ locale, children }: { locale: Locale; children:
 
 function localName(locale: Locale, item: { name: string; nameEn?: string | null }) {
   return locale === "zh" ? item.name : item.nameEn ?? item.name;
+}
+
+function localizeTemplateDeleteError(locale: Locale, message?: string) {
+  if (!message) {
+    return t(locale, "删除失败，请稍后重试。", "Delete failed. Please retry.");
+  }
+
+  const normalized = message.toLowerCase();
+  if (normalized.includes("issued certificates") || normalized.includes("cannot be deleted")) {
+    return t(locale, "该模板已有签发记录，无法删除。", "This template has issued certificates and cannot be deleted.");
+  }
+
+  if (normalized.includes("not found")) {
+    return t(locale, "模板不存在或已被删除。", "Template not found or already deleted.");
+  }
+
+  if (normalized.includes("permissions")) {
+    return t(locale, "权限不足，无法删除模板。", "Insufficient permissions to delete template.");
+  }
+
+  return message;
+}
+
+function localizeTemplateDuplicateError(locale: Locale, message?: string) {
+  if (!message) {
+    return t(locale, "复制失败，请稍后重试。", "Duplicate failed. Please retry.");
+  }
+
+  const normalized = message.toLowerCase();
+  if (normalized.includes("related category") || normalized.includes("category")) {
+    return t(locale, "关联分类不存在，无法复制模板。", "Related category is missing and template duplication failed.");
+  }
+
+  if (normalized.includes("insufficient permissions") || normalized.includes("permissions")) {
+    return t(locale, "权限不足，无法复制模板。", "Insufficient permissions to duplicate template.");
+  }
+
+  return message;
+}
+
+function getTemplateLayoutLabel(locale: Locale, template: CertificateAdminTemplate) {
+  const pageSize = template.renderConfig?.pageSize ?? "A4_LANDSCAPE";
+  const width = template.renderConfig?.pageWidthMm;
+  const height = template.renderConfig?.pageHeightMm;
+
+  const preset = pageSize === "A4_PORTRAIT"
+    ? t(locale, "A4 纵向", "A4 Portrait")
+    : pageSize === "DIGITAL_CARD"
+      ? t(locale, "数字卡片", "Digital Card")
+      : t(locale, "A4 横向", "A4 Landscape");
+
+  if (typeof width === "number" && typeof height === "number") {
+    return `${preset} · ${Math.round(width)} x ${Math.round(height)} mm`;
+  }
+
+  return preset;
 }
 
 function statusClass(status: string) {
@@ -170,7 +488,7 @@ export function CertificateAdminDashboard({
   const popular = categories.slice(0, 6);
 
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead
         title={t(locale, "证书管理总览", "Certificate Dashboard")}
         description={t(locale, "总览证书系统运行、签发、模板和异常验证情况。", "Overview of credential system activity and metrics.")}
@@ -239,40 +557,115 @@ export function CertificateAdminCategories({
 }: {
   locale: Locale;
   categories: CertificateAdminCategory[];
-  form: ReactNode;
+  form: (selectedCategory: CertificateAdminCategory | null, clearSelection: () => void) => ReactNode;
 }) {
   const rows = categories.length ? categories : fallbackCategories(locale);
+  const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<CertificateAdminCategory | null>(null);
+  const normalizedKeyword = searchKeyword.trim().toLowerCase();
+  const filteredRows = rows.filter((category) => {
+    if (!normalizedKeyword) {
+      return true;
+    }
+
+    const localizedName = localName(locale, category).toLowerCase();
+    return (
+      category.key.toLowerCase().includes(normalizedKeyword)
+      || category.name.toLowerCase().includes(normalizedKeyword)
+      || (category.nameEn ?? "").toLowerCase().includes(normalizedKeyword)
+      || localizedName.includes(normalizedKeyword)
+    );
+  });
+  const sortedRows = [...filteredRows]
+    .sort((left, right) => {
+      if (sortMode === "most-issued") {
+        const issueDelta = (right.issuedCount ?? 0) - (left.issuedCount ?? 0);
+        if (issueDelta !== 0) {
+          return issueDelta;
+        }
+        return (left.order ?? 0) - (right.order ?? 0);
+      }
+
+      const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+      const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+      if (rightTime !== leftTime) {
+        return rightTime - leftTime;
+      }
+      return (left.order ?? 0) - (right.order ?? 0);
+    })
+    .slice(0, 5);
+
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead
         title={t(locale, "证书分类管理", "Certificate Categories")}
         description={t(locale, "管理证书类型，以及自动签发、用户申请、PDF 下载和公开验证能力。", "Manage credential types and their configurations.")}
-        action={<a className="cpca-btn cpca-btn-amber" href="#category-form">+ {t(locale, "新增分类", "New Category")}</a>}
+        action={
+          <a
+            className="cpca-btn cpca-btn-amber"
+            href="#category-form"
+            onClick={() => setSelectedCategory(null)}
+          >
+            + {t(locale, "新增分类", "New Category")}
+          </a>
+        }
       />
+      <div className="cpca-filter-row">
+        <label>
+          <input
+            aria-label={t(locale, "搜索分类", "Search categories")}
+            onChange={(event) => setSearchKeyword(event.target.value)}
+            placeholder={t(locale, "按分类 Key 或名称搜索", "Search by category key or name")}
+            type="search"
+            value={searchKeyword}
+          />
+        </label>
+        <label className="cpca-filter-right">
+          <select aria-label={t(locale, "分类列表排序方式", "Category list sort mode")} onChange={(event) => setSortMode(event.target.value as "latest" | "most-issued")} value={sortMode}>
+            <option value="latest">{t(locale, "最新（Top 5）", "Latest (Top 5)")}</option>
+            <option value="most-issued">{t(locale, "发证书最多（Top 5）", "Most issued (Top 5)")}</option>
+          </select>
+        </label>
+      </div>
       <Card>
         <div className="cpca-table-wrap">
           <table className="cpca-table">
-            <thead><tr><th>{t(locale, "分类", "Category")}</th><th>{t(locale, "英文名", "English Name")}</th><th>{t(locale, "自动签发", "Auto-Issue")}</th><th>{t(locale, "用户申请", "User Request")}</th><th>PDF</th><th>{t(locale, "公开验证", "Public Verify")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead>
+            <thead><tr><th>{t(locale, "分类", "Category")}</th><th>{t(locale, "名称", "Name")}</th><th>{t(locale, "已签发", "Issued")}</th><th>{t(locale, "自动签发", "Auto-Issue")}</th><th>{t(locale, "用户申请", "User Request")}</th><th>PDF</th><th>{t(locale, "公开验证", "Public Verify")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead>
             <tbody>
-              {rows.map((category, index) => (
+              {sortedRows.map((category) => (
                 <tr key={category.id}>
-                  <td className="cpca-strong">{category.name}</td>
-                  <td>{category.nameEn ?? category.name}</td>
-                  <td><input checked={index !== 2 && category.isActive} readOnly type="checkbox" /></td>
-                  <td><input checked={[2, 4].includes(index)} readOnly type="checkbox" /></td>
-                  <td><input checked={index !== 7} readOnly type="checkbox" /></td>
-                  <td><input checked={category.isActive} readOnly type="checkbox" /></td>
+                  <td className="cpca-strong">{category.key}</td>
+                  <td>{localName(locale, category)}</td>
+                  <td>{category.issuedCount ?? 0}</td>
+                  <td><input checked={Boolean(category.autoIssueEnabled)} readOnly type="checkbox" /></td>
+                  <td><input checked={Boolean(category.userRequestEnabled)} readOnly type="checkbox" /></td>
+                  <td><input checked={Boolean(category.pdfEnabled)} readOnly type="checkbox" /></td>
+                  <td><input checked={Boolean(category.publicVerifyEnabled)} readOnly type="checkbox" /></td>
                   <td><StatusBadge status={category.isActive ? "Active" : "Draft"}>{category.isActive ? "Active" : "Draft"}</StatusBadge></td>
-                  <td><button className="cpca-btn cpca-btn-ghost" type="button">{t(locale, "编辑", "Edit")}</button></td>
+                  <td>
+                    <button className="cpca-btn cpca-btn-ghost" onClick={() => setSelectedCategory(category)} type="button">
+                      {t(locale, "编辑", "Edit")}
+                    </button>
+                  </td>
                 </tr>
               ))}
+              {sortedRows.length === 0 ? (
+                <tr>
+                  <td className="cpca-muted" colSpan={9}>
+                    {t(locale, "未找到匹配分类。", "No matching categories found.")}
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
       </Card>
       <section className="cpca-card cpca-form-card" id="category-form">
-        <div className="cpca-card-head"><h2>{t(locale, "新增分类", "Create Category")}</h2></div>
-        <div className="cpca-card-body">{form}</div>
+        <div className="cpca-card-head">
+          <h2>{selectedCategory ? t(locale, "编辑分类", "Edit Category") : t(locale, "新增分类", "Create Category")}</h2>
+        </div>
+        <div className="cpca-card-body">{form(selectedCategory, () => setSelectedCategory(null))}</div>
       </section>
     </CertificateAdminFrame>
   );
@@ -285,33 +678,404 @@ export function CertificateAdminTemplates({
 }: {
   locale: Locale;
   templates: CertificateAdminTemplate[];
-  form: ReactNode;
+  form: (selectedTemplate: CertificateAdminTemplate | null, clearSelection: () => void) => ReactNode;
 }) {
+  const router = useRouter();
   const rows = templates.length ? templates : fallbackTemplates(locale);
+  const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<CertificateAdminTemplate | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
+  const [duplicatingTemplateId, setDuplicatingTemplateId] = useState<string | null>(null);
+  const [removedTemplateIds, setRemovedTemplateIds] = useState<Set<string>>(new Set());
+  const [listMessage, setListMessage] = useState("");
+  const [listError, setListError] = useState("");
+  const [previewingTemplate, setPreviewingTemplate] = useState<CertificateAdminTemplate | null>(null);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const originalPageTitleRef = useRef("");
+  const restoreTitleTimerRef = useRef<number | null>(null);
+  const printTitleActiveRef = useRef(false);
+  const normalizedKeyword = searchKeyword.trim().toLowerCase();
+
+  const filteredRows = rows.filter((template) => {
+    if (!normalizedKeyword) {
+      return true;
+    }
+
+    return (
+      template.name.toLowerCase().includes(normalizedKeyword)
+      || (template.nameEn ?? "").toLowerCase().includes(normalizedKeyword)
+      || (template.categoryName ?? "").toLowerCase().includes(normalizedKeyword)
+      || (template.categoryNameEn ?? "").toLowerCase().includes(normalizedKeyword)
+      || template.templateType.toLowerCase().includes(normalizedKeyword)
+    );
+  });
+
+  const sortedRows = [...filteredRows]
+    .sort((left, right) => {
+      if (sortMode === "most-issued") {
+        const issueDelta = (right.issuedCount ?? 0) - (left.issuedCount ?? 0);
+        if (issueDelta !== 0) {
+          return issueDelta;
+        }
+        return right.version - left.version;
+      }
+
+      const leftTime = left.updatedAt ? new Date(left.updatedAt).getTime() : 0;
+      const rightTime = right.updatedAt ? new Date(right.updatedAt).getTime() : 0;
+      if (rightTime !== leftTime) {
+        return rightTime - leftTime;
+      }
+      return right.version - left.version;
+    })
+    .slice(0, 6);
+
+  const visibleRows = sortedRows.filter((template) => !removedTemplateIds.has(template.id));
+
+  async function handleDeleteTemplate(template: CertificateAdminTemplate) {
+    const confirmed = window.confirm(
+      t(locale, "确认删除该模板？删除后不可恢复。", "Delete this template? This action cannot be undone."),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingTemplateId(template.id);
+    setListError("");
+
+    try {
+      const response = await fetch("/api/admin/certificates/templates", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: template.id }),
+      });
+
+      let result: { error?: string } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as { error?: string };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
+
+      if (!response.ok) {
+        setListError(localizeTemplateDeleteError(locale, result.error));
+        return;
+      }
+
+      setRemovedTemplateIds((previous) => new Set(previous).add(template.id));
+      router.refresh();
+    } catch {
+      setListError(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setDeletingTemplateId(null);
+    }
+  }
+
+  async function handleDuplicateTemplate(template: CertificateAdminTemplate) {
+    if (!template.categoryId) {
+      setListError(t(locale, "模板缺少分类信息，无法复制。", "Template category is missing and cannot be duplicated."));
+      return;
+    }
+
+    setDuplicatingTemplateId(template.id);
+    setListMessage("");
+    setListError("");
+
+    const zhSuffix = "（副本）";
+    const enSuffix = " (Copy)";
+
+    const payload = {
+      categoryId: template.categoryId,
+      name: `${template.name}${zhSuffix}`,
+      nameEn: template.nameEn ? `${template.nameEn}${enSuffix}` : null,
+      templateType: template.templateType,
+      issuerName: template.renderConfig?.issuerName ?? null,
+      pageSize: template.renderConfig?.pageSize ?? "A4_LANDSCAPE",
+      pageWidthMm: template.renderConfig?.pageWidthMm ?? null,
+      pageHeightMm: template.renderConfig?.pageHeightMm ?? null,
+      accentColor: template.renderConfig?.accentColor ?? null,
+      backgroundColor: template.renderConfig?.backgroundColor ?? null,
+      backgroundImageUrl: template.renderConfig?.backgroundImageUrl ?? null,
+      logoImageUrl: template.renderConfig?.logoImageUrl ?? null,
+      signatureImageUrl: template.renderConfig?.signatureImageUrl ?? null,
+      sealImageUrl: template.renderConfig?.sealImageUrl ?? null,
+      elements: Array.isArray(template.renderConfig?.elements) ? template.renderConfig?.elements : undefined,
+      isActive: template.isActive,
+      definitionName: template.definition?.name ? `${template.definition.name}${zhSuffix}` : `${template.name}${zhSuffix}`,
+      definitionNameEn: template.definition?.nameEn ? `${template.definition.nameEn}${enSuffix}` : null,
+      approvalMode: template.definition?.approvalMode ?? "auto",
+    };
+
+    try {
+      const response = await fetch("/api/admin/certificates/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      let result: {
+        error?: string;
+        template?: {
+          id: string;
+          name: string;
+          nameEn?: string | null;
+          templateType: string;
+          isActive: boolean;
+          version: number;
+        };
+        definition?: {
+          name: string;
+          nameEn?: string | null;
+          approvalMode?: string | null;
+        };
+      } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as {
+          error?: string;
+          template?: {
+            id: string;
+            name: string;
+            nameEn?: string | null;
+            templateType: string;
+            isActive: boolean;
+            version: number;
+          };
+          definition?: {
+            name: string;
+            nameEn?: string | null;
+            approvalMode?: string | null;
+          };
+        };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
+
+      if (!response.ok) {
+        setListError(localizeTemplateDuplicateError(locale, result.error));
+        return;
+      }
+
+      if (result.template) {
+        setSelectedTemplate({
+          id: result.template.id,
+          categoryId: template.categoryId,
+          name: result.template.name,
+          nameEn: result.template.nameEn,
+          templateType: result.template.templateType,
+          isActive: result.template.isActive,
+          version: result.template.version,
+          updatedAt: new Date().toISOString(),
+          categoryName: template.categoryName,
+          categoryNameEn: template.categoryNameEn,
+          issuedCount: 0,
+          renderConfig: template.renderConfig,
+          definition: result.definition
+            ? {
+                name: result.definition.name,
+                nameEn: result.definition.nameEn,
+                approvalMode: result.definition.approvalMode,
+              }
+            : template.definition,
+        });
+      }
+
+      setListMessage(t(locale, "模板已复制，请在下方编辑器继续调整。", "Template duplicated. Continue editing in the editor below."));
+      window.location.hash = "template-editor";
+      router.refresh();
+    } catch {
+      setListError(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setDuplicatingTemplateId(null);
+    }
+  }
+
+  async function openTemplatePreview(template: CertificateAdminTemplate) {
+    setPreviewingTemplate(template);
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewHtml("");
+
+    try {
+      const response = await fetch("/api/admin/certificates/templates/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale,
+          name: template.name,
+          nameEn: template.nameEn ?? null,
+          categoryName: template.categoryName ?? null,
+          categoryNameEn: template.categoryNameEn ?? null,
+          holderName: locale === "zh" ? "证书持有人" : "Credential Holder",
+          certificateNumber: "CV-PREVIEW",
+          renderConfig: template.renderConfig ?? null,
+        }),
+      });
+
+      let result: { error?: string; html?: string } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as { error?: string; html?: string };
+      }
+
+      if (!response.ok) {
+        setPreviewError(result.error ?? t(locale, "预览生成失败。", "Failed to generate preview."));
+        return;
+      }
+
+      setPreviewHtml(result.html ?? "");
+    } catch {
+      setPreviewError(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  function closeTemplatePreview() {
+    setPreviewingTemplate(null);
+    setPreviewHtml("");
+    setPreviewError("");
+    setPreviewLoading(false);
+  }
+
+  useEffect(() => {
+    if (!previewingTemplate) {
+      return;
+    }
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeTemplatePreview();
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [previewingTemplate]);
+
+  useEffect(() => {
+    originalPageTitleRef.current = document.title;
+
+    const restoreTitle = () => {
+      if (!printTitleActiveRef.current) {
+        return;
+      }
+      document.title = originalPageTitleRef.current;
+      printTitleActiveRef.current = false;
+      if (restoreTitleTimerRef.current !== null) {
+        window.clearTimeout(restoreTitleTimerRef.current);
+        restoreTitleTimerRef.current = null;
+      }
+    };
+
+    const handlePreviewPrintTitle = (event: MessageEvent) => {
+      const payload = event.data as { type?: string; title?: unknown };
+      if (!payload || payload.type !== "certificate-preview-title") {
+        return;
+      }
+
+      const nextTitle = typeof payload.title === "string" ? payload.title.trim() : "";
+      if (!nextTitle) {
+        return;
+      }
+
+      document.title = nextTitle;
+      printTitleActiveRef.current = true;
+      if (restoreTitleTimerRef.current !== null) {
+        window.clearTimeout(restoreTitleTimerRef.current);
+      }
+      restoreTitleTimerRef.current = window.setTimeout(() => {
+        restoreTitle();
+      }, 120000);
+    };
+
+    window.addEventListener("message", handlePreviewPrintTitle);
+    window.addEventListener("afterprint", restoreTitle);
+    return () => {
+      window.removeEventListener("message", handlePreviewPrintTitle);
+      window.removeEventListener("afterprint", restoreTitle);
+      if (restoreTitleTimerRef.current !== null) {
+        window.clearTimeout(restoreTitleTimerRef.current);
+      }
+      restoreTitle();
+    };
+  }, []);
+
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead
         title={t(locale, "证书模板管理", "Certificate Templates")}
         description={t(locale, "设计和管理证书背景、变量、签名、印章、二维码和打印版式。", "Design and manage credential templates.")}
-        action={<a className="cpca-btn cpca-btn-amber" href="#template-editor">+ {t(locale, "新增模板", "New Template")}</a>}
+        action={<a className="cpca-btn cpca-btn-amber" href="#template-editor" onClick={() => setSelectedTemplate(null)}>+ {t(locale, "新增模板", "New Template")}</a>}
       />
+      <div className="cpca-filter-row">
+        <label>
+          <input
+            aria-label={t(locale, "搜索模板", "Search templates")}
+            onChange={(event) => setSearchKeyword(event.target.value)}
+            placeholder={t(locale, "按模板名或分类搜索", "Search by template or category")}
+            type="search"
+            value={searchKeyword}
+          />
+        </label>
+        <label className="cpca-filter-right">
+          <select aria-label={t(locale, "模板列表排序方式", "Template list sort mode")} onChange={(event) => setSortMode(event.target.value as "latest" | "most-issued")} value={sortMode}>
+            <option value="latest">{t(locale, "最新（Top 6）", "Latest (Top 6)")}</option>
+            <option value="most-issued">{t(locale, "签发最多（Top 6）", "Most issued (Top 6)")}</option>
+          </select>
+        </label>
+      </div>
+      {listMessage ? <FormSuccessText>{listMessage}</FormSuccessText> : null}
+      {listError ? <FormErrorText>{listError}</FormErrorText> : null}
       <div className="cpca-template-grid">
-        {rows.slice(0, 6).map((template, index) => (
+        {visibleRows.map((template, index) => (
           <article className="cpca-template-card" key={template.id}>
             <div className={`cpca-template-thumb tone-${index % 6}`}><div>{template.templateType === "ACHIEVEMENT" ? "Badge" : template.templateType === "CUSTOM" ? "Digital Card" : "A4 Landscape"}</div></div>
             <div className="cpca-template-body">
               <h3>{localName(locale, template)}</h3>
-              <div className="cpca-template-meta"><StatusBadge status={template.isActive ? "Active" : "Draft"}>{template.isActive ? "Active" : "Draft"}</StatusBadge><span>v{template.version}</span><span>{template.nameEn ? "EN/ZH" : "ZH"}</span></div>
+              <div className="cpca-template-meta"><StatusBadge status={template.isActive ? "Active" : "Draft"}>{template.isActive ? "Active" : "Draft"}</StatusBadge><span>v{template.version}</span><span>{template.nameEn ? "EN/ZH" : "ZH"}</span><span>{getTemplateLayoutLabel(locale, template)}</span></div>
               <small>{template.issuedCount ?? 0} {t(locale, "已签发", "issued")}</small>
-              <div className="cpca-actions"><Link className="cpca-btn cpca-btn-outline" href={`/${locale}/admin/certificates/templates/${template.id}`}>{t(locale, "编辑", "Edit")}</Link><Link className="cpca-btn cpca-btn-ghost" href={`/${locale}/admin/certificates/templates/${template.id}`}>{t(locale, "预览", "Preview")}</Link><button className="cpca-btn cpca-btn-ghost" type="button">{t(locale, "复制", "Duplicate")}</button></div>
+              <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" onClick={() => setSelectedTemplate(template)} type="button">{t(locale, "编辑", "Edit")}</button><button className="cpca-btn cpca-btn-ghost" onClick={() => void openTemplatePreview(template)} type="button">{t(locale, "预览", "Preview")}</button><button className="cpca-btn cpca-btn-ghost" disabled={duplicatingTemplateId === template.id} onClick={() => void handleDuplicateTemplate(template)} type="button">{duplicatingTemplateId === template.id ? t(locale, "复制中...", "Duplicating...") : t(locale, "复制", "Duplicate")}</button><button className="cpca-btn cpca-btn-danger" disabled={deletingTemplateId === template.id} onClick={() => void handleDeleteTemplate(template)} type="button">{deletingTemplateId === template.id ? t(locale, "删除中...", "Deleting...") : t(locale, "删除", "Delete")}</button></div>
             </div>
           </article>
         ))}
       </div>
+      {visibleRows.length === 0 ? <FormHelpText>{t(locale, "未找到匹配模板。", "No matching templates found.")}</FormHelpText> : null}
       <section className="cpca-card cpca-form-card" id="template-editor">
-        <div className="cpca-card-head"><h2>{t(locale, "模板编辑器", "Template Editor")}</h2></div>
-        <div className="cpca-card-body">{form}</div>
+        <div className="cpca-card-head"><h2>{selectedTemplate ? t(locale, "编辑模板", "Edit Template") : t(locale, "模板编辑器", "Template Editor")}</h2></div>
+        <div className="cpca-card-body">{form(selectedTemplate, () => setSelectedTemplate(null))}</div>
       </section>
+      {previewingTemplate ? (
+        <div className="cpca-preview-modal" onClick={closeTemplatePreview} role="presentation">
+          <div className="cpca-preview-modal-dialog" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={t(locale, "模板预览", "Template preview")}>
+            <div className="cpca-preview-modal-head">
+              <div>
+                <strong>{localName(locale, previewingTemplate)}</strong>
+                <small>{getTemplateLayoutLabel(locale, previewingTemplate)}</small>
+              </div>
+              <button className="cpca-btn cpca-btn-ghost" onClick={closeTemplatePreview} type="button">
+                {t(locale, "关闭", "Close")}
+              </button>
+            </div>
+            <div className="cpca-preview-modal-body">
+              {previewLoading ? <FormHelpText>{t(locale, "预览生成中...", "Rendering preview...")}</FormHelpText> : null}
+              {previewError ? <FormErrorText>{previewError}</FormErrorText> : null}
+              {!previewLoading && !previewError && previewHtml ? (
+                <iframe className="cpca-preview-modal-frame" sandbox="allow-scripts allow-modals" srcDoc={previewHtml} title={t(locale, "模板预览", "Template preview")} />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </CertificateAdminFrame>
   );
 }
@@ -325,17 +1089,332 @@ export function CertificateAdminIssue({
   templates: CertificateAdminTemplate[];
   recentIssues: CertificateAdminIssue[];
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [email, setEmail] = useState("");
+  const [batchEmails, setBatchEmails] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [message, setMessage] = useState("");
+  const [batchMessage, setBatchMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [holderName, setHolderName] = useState("");
+  const [editingCertificateNumber, setEditingCertificateNumber] = useState("");
+  const [autoFilledHolderName, setAutoFilledHolderName] = useState("");
+  const [recipientLookupLoading, setRecipientLookupLoading] = useState(false);
+  const [issueDate, setIssueDate] = useState(formatTodayIsoDate());
+  const [batchIssueDate, setBatchIssueDate] = useState(formatTodayIsoDate());
   const activeTemplates = templates.filter((template) => template.isActive);
+  const selectedTemplate = activeTemplates.find((template) => template.id === templateId) ?? null;
+  const templateVariableFields = getVisibleTemplateVariableFields(selectedTemplate, locale);
+  const [singleVariableValues, setSingleVariableValues] = useState<Record<string, string>>({});
+  const [batchVariableValues, setBatchVariableValues] = useState<Record<string, string>>({});
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewError, setPreviewError] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewDialogTitle, setPreviewDialogTitle] = useState("");
+  const [previewDialogSubtitle, setPreviewDialogSubtitle] = useState("");
+  const [issueFeedbackOpen, setIssueFeedbackOpen] = useState(false);
+  const [issueFeedbackKind, setIssueFeedbackKind] = useState<"success" | "error">("success");
+  const [issueFeedbackMessage, setIssueFeedbackMessage] = useState("");
+  const [recordActionLoadingId, setRecordActionLoadingId] = useState<string | null>(null);
+  const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+  const holderNameRef = useRef(holderName);
+  const autoFilledHolderNameRef = useRef(autoFilledHolderName);
+  const recipientLookupRequestId = useRef(0);
+
+  function clearIssueDraftStorage() {
+    try {
+      window.sessionStorage.removeItem(CERTIFICATE_ISSUE_DRAFT_STORAGE_KEY);
+    } catch {
+      // Ignore storage write errors.
+    }
+  }
+
+  function resetSingleIssueForm(options?: { clearMessage?: boolean }) {
+    setEmail("");
+    setTemplateId("");
+    setHolderName("");
+    setAutoFilledHolderName("");
+    setRecipientLookupLoading(false);
+    setIssueDate(formatTodayIsoDate());
+    setSingleVariableValues(buildInitialManualVariableValues(null));
+    setEditingIssueId(null);
+    setEditingCertificateNumber("");
+    setPreviewOpen(false);
+    setPreviewHtml("");
+    setPreviewError("");
+    setPreviewDialogTitle("");
+    setPreviewDialogSubtitle("");
+
+    if (options?.clearMessage ?? true) {
+      setMessage("");
+    }
+
+    clearIssueDraftStorage();
+  }
+
+  function openIssueFeedback(kind: "success" | "error", messageText: string) {
+    setIssueFeedbackKind(kind);
+    setIssueFeedbackMessage(messageText);
+    setIssueFeedbackOpen(true);
+  }
+
+  function closeIssueFeedbackModal() {
+    setIssueFeedbackOpen(false);
+    setIssueFeedbackMessage("");
+  }
+
+  useEffect(() => {
+    holderNameRef.current = holderName;
+  }, [holderName]);
+
+  useEffect(() => {
+    autoFilledHolderNameRef.current = autoFilledHolderName;
+  }, [autoFilledHolderName]);
+
+  useEffect(() => {
+    const defaults = buildInitialManualVariableValues(selectedTemplate);
+    setSingleVariableValues((previous) => ({ ...defaults, ...previous }));
+    setBatchVariableValues((previous) => ({ ...defaults, ...previous }));
+  }, [selectedTemplate?.id]);
+
+  useEffect(() => {
+    if (hasRestoredDraft) {
+      return;
+    }
+
+    try {
+      const raw = window.sessionStorage.getItem(CERTIFICATE_ISSUE_DRAFT_STORAGE_KEY);
+      if (!raw) {
+        setHasRestoredDraft(true);
+        return;
+      }
+
+      const draft = JSON.parse(raw) as Partial<CertificateIssueDraft>;
+      if (draft.mode === "single" || draft.mode === "batch") {
+        setMode(draft.mode);
+      }
+      if (typeof draft.email === "string") {
+        setEmail(draft.email);
+      }
+      if (typeof draft.batchEmails === "string") {
+        setBatchEmails(draft.batchEmails);
+      }
+      if (typeof draft.templateId === "string") {
+        setTemplateId(draft.templateId);
+      }
+      if (typeof draft.issueDate === "string") {
+        setIssueDate(draft.issueDate);
+      }
+      if (typeof draft.batchIssueDate === "string") {
+        setBatchIssueDate(draft.batchIssueDate);
+      }
+      if (typeof draft.editingIssueId === "string") {
+        setEditingIssueId(draft.editingIssueId);
+      }
+      if (typeof draft.editingCertificateNumber === "string") {
+        setEditingCertificateNumber(draft.editingCertificateNumber);
+      }
+      if (draft.singleVariableValues && typeof draft.singleVariableValues.holderName === "string") {
+        setHolderName(draft.singleVariableValues.holderName);
+        setAutoFilledHolderName("");
+      }
+      if (draft.singleVariableValues && typeof draft.singleVariableValues === "object") {
+        setSingleVariableValues((previous) => ({ ...previous, ...draft.singleVariableValues }));
+      }
+      if (draft.batchVariableValues && typeof draft.batchVariableValues === "object") {
+        setBatchVariableValues((previous) => ({ ...previous, ...draft.batchVariableValues }));
+      }
+    } catch {
+      // Ignore invalid persisted drafts.
+    } finally {
+      setHasRestoredDraft(true);
+    }
+  }, [hasRestoredDraft]);
+
+  useEffect(() => {
+    return () => {
+      try {
+        const preservedPath = window.sessionStorage.getItem(LOCALE_SWITCH_PRESERVE_STORAGE_KEY);
+        if (preservedPath === getLocaleIndependentPath(pathname)) {
+          window.sessionStorage.removeItem(LOCALE_SWITCH_PRESERVE_STORAGE_KEY);
+          return;
+        }
+      } catch {
+        // Ignore storage read errors.
+      }
+
+      clearIssueDraftStorage();
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!hasRestoredDraft) {
+      return;
+    }
+
+    const draft: CertificateIssueDraft = {
+      mode,
+      email,
+      batchEmails,
+      templateId,
+      issueDate,
+      batchIssueDate,
+      editingIssueId,
+      editingCertificateNumber,
+      singleVariableValues,
+      batchVariableValues,
+    };
+
+    try {
+      window.sessionStorage.setItem(CERTIFICATE_ISSUE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch {
+      // Ignore storage write errors.
+    }
+  }, [
+    hasRestoredDraft,
+    mode,
+    email,
+    batchEmails,
+    templateId,
+    issueDate,
+    batchIssueDate,
+    editingIssueId,
+    editingCertificateNumber,
+    singleVariableValues,
+    batchVariableValues,
+  ]);
+
+  useEffect(() => {
+    if (mode !== "single") {
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isLikelyEmailAddress(normalizedEmail)) {
+      setRecipientLookupLoading(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      const requestId = recipientLookupRequestId.current + 1;
+      recipientLookupRequestId.current = requestId;
+      setRecipientLookupLoading(true);
+
+      try {
+        const response = await fetch(`/api/admin/certificates/recipient?email=${encodeURIComponent(normalizedEmail)}`, {
+          cache: "no-store",
+        });
+        const result = response.ok
+          ? await response.json() as { found?: boolean; user?: { name?: string | null } }
+          : null;
+
+        if (recipientLookupRequestId.current !== requestId) {
+          return;
+        }
+
+        const matchedHolderName = result?.found ? result.user?.name?.trim() ?? "" : "";
+        if (!matchedHolderName) {
+          setAutoFilledHolderName("");
+          return;
+        }
+
+        const currentHolderName = holderNameRef.current.trim();
+        const currentAutoFilledHolderName = autoFilledHolderNameRef.current.trim();
+        const shouldAutofill = !currentHolderName || currentHolderName === currentAutoFilledHolderName;
+
+        if (!shouldAutofill) {
+          return;
+        }
+
+        setHolderName(matchedHolderName);
+        setSingleVariableValues((previous) => ({ ...previous, holderName: matchedHolderName }));
+        setAutoFilledHolderName(matchedHolderName);
+      } catch {
+        if (recipientLookupRequestId.current === requestId) {
+          setAutoFilledHolderName("");
+        }
+      } finally {
+        if (recipientLookupRequestId.current === requestId) {
+          setRecipientLookupLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [mode, email]);
+
+  function renderVariableInputs(values: Record<string, string>, setValues: React.Dispatch<React.SetStateAction<Record<string, string>>>) {
+    if (!selectedTemplate) {
+      return <FormHelpText>{t(locale, "请选择模板后填写变量。", "Select a template to fill variable fields.")}</FormHelpText>;
+    }
+
+    if (templateVariableFields.length === 0) {
+      return <FormHelpText>{t(locale, "当前模板没有可手动填写的可见变量。", "This template has no visible variables for manual input.")}</FormHelpText>;
+    }
+
+    return (
+      <div className="cpca-variable-fields-section">
+        <div className="cpca-form-grid">
+          {templateVariableFields.map((field) => (
+            <label className={field.multiline ? "wide" : undefined} key={field.variable}>
+              <FieldLabelWithInfo label={field.label} tooltip={field.variable} />
+              {field.multiline ? (
+                <textarea
+                  onChange={(event) => setValues((previous) => ({ ...previous, [field.variable]: event.target.value }))}
+                  placeholder={field.variable === "capabilityTags" ? t(locale, "多个标签请用逗号分隔", "Separate multiple tags with commas") : ""}
+                  rows={3}
+                  value={values[field.variable] ?? ""}
+                />
+              ) : (
+                <input
+                  onChange={(event) => setValues((previous) => ({ ...previous, [field.variable]: event.target.value }))}
+                  type={field.variable.toLowerCase().includes("date") ? "date" : "text"}
+                  value={values[field.variable] ?? ""}
+                />
+              )}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function buildPreviewPayload(values: Record<string, string>, currentIssueDate: string) {
+    if (!selectedTemplate) {
+      return null;
+    }
+
+    const manualValues = normalizeManualVariablePayload(values);
+    const certificateName = manualValues.certificateName || manualValues.certificateNameEn || selectedTemplate.definition?.name || selectedTemplate.name;
+    const certificateNameEn = manualValues.certificateNameEn || selectedTemplate.definition?.nameEn || selectedTemplate.nameEn || certificateName;
+    const categoryName = manualValues.categoryName || selectedTemplate.categoryName || "";
+    const categoryNameEn = manualValues.categoryNameEn || selectedTemplate.categoryNameEn || categoryName;
+    const holderName = manualValues.holderName || (locale === "zh" ? "证书持有人" : "Credential Holder");
+
+    return {
+      locale,
+      name: certificateName,
+      nameEn: certificateNameEn,
+      categoryName,
+      categoryNameEn,
+      holderName,
+      holderNameEn: manualValues.holderNameEn || holderName,
+      issueDate: currentIssueDate,
+      completionDate: manualValues.completionDate || currentIssueDate,
+      certificateNumber: editingIssueId && editingCertificateNumber ? editingCertificateNumber : "CV-PREVIEW",
+      variableValues: manualValues,
+      renderConfig: selectedTemplate.renderConfig ?? null,
+    };
+  }
 
   async function issueCertificate() {
-    setMessage("");
-    if (!email || !templateId) {
-      setMessage(t(locale, "请填写收件人邮箱并选择模板。", "Enter a recipient email and select a template."));
+    if (!email || !templateId || !holderName.trim()) {
+      openIssueFeedback("error", t(locale, "请填写收件人邮箱、证书持有人并选择模板。", "Enter a recipient email, certificate holder, and select a template."));
       return;
     }
     setLoading(true);
@@ -343,51 +1422,466 @@ export function CertificateAdminIssue({
       const response = await fetch("/api/admin/certificates/issue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, templateId }),
+        body: JSON.stringify({
+          email,
+          templateId,
+          issueDate,
+          ...(editingIssueId ? { editIssueId: editingIssueId } : {}),
+          variableValues: normalizeManualVariablePayload(singleVariableValues),
+        }),
       });
-      const result = await response.json() as { error?: string; verificationCode?: string };
-      setMessage(response.ok ? `${t(locale, "已签发", "Issued")}: ${result.verificationCode ?? ""}` : result.error ?? t(locale, "签发失败", "Issue failed"));
-      if (response.ok) setEmail("");
+      let result: { error?: string; verificationCode?: string } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as { error?: string; verificationCode?: string };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
+
+      if (response.ok) {
+        const successMessage = `${editingIssueId ? t(locale, "已重新签发", "Re-issued") : t(locale, "已签发", "Issued")}: ${result.verificationCode ?? ""}`;
+        resetSingleIssueForm();
+        openIssueFeedback("success", successMessage);
+        router.refresh();
+      } else {
+        openIssueFeedback("error", result.error ?? t(locale, "签发失败", "Issue failed"));
+      }
     } catch {
-      setMessage(t(locale, "网络错误", "Network error"));
+      openIssueFeedback("error", t(locale, "网络错误", "Network error"));
     } finally {
       setLoading(false);
     }
   }
 
+  async function issueBatchCertificates() {
+    setBatchMessage("");
+    const parsedEmails = parseManualIssueEmails(batchEmails);
+
+    if (!templateId || parsedEmails.length === 0) {
+      setBatchMessage(t(locale, "请选择模板并填写至少一个邮箱。", "Select a template and enter at least one email."));
+      return;
+    }
+
+    setBatchLoading(true);
+
+    try {
+      const response = await fetch("/api/admin/certificates/issue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId,
+          emails: parsedEmails,
+          issueDate: batchIssueDate,
+          variableValues: normalizeManualVariablePayload(batchVariableValues),
+        }),
+      });
+
+      let result: {
+        error?: string;
+        summary?: { total: number; succeeded: number; failed: number };
+        results?: Array<{ email: string; error?: string }>;
+      } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as {
+          error?: string;
+          summary?: { total: number; succeeded: number; failed: number };
+          results?: Array<{ email: string; error?: string }>;
+        };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
+
+      if (!response.ok) {
+        setBatchMessage(result.error ?? t(locale, "批量签发失败", "Batch issue failed"));
+        return;
+      }
+
+      const summaryText = result.summary
+        ? `${t(locale, "批量签发完成", "Batch issue completed")}: ${result.summary.succeeded}/${result.summary.total}`
+        : t(locale, "批量签发完成", "Batch issue completed");
+      const failedRows = (result.results ?? []).filter((item) => item.error).slice(0, 3);
+      const failedText = failedRows.length
+        ? ` ${t(locale, "失败", "Failed")}: ${failedRows.map((item) => `${item.email} (${item.error})`).join("; ")}`
+        : "";
+      setBatchMessage(`${summaryText}${failedText}`);
+
+      if (result.summary?.failed === 0) {
+        setBatchEmails("");
+      }
+      router.refresh();
+    } catch {
+      setBatchMessage(t(locale, "网络错误", "Network error"));
+    } finally {
+      setBatchLoading(false);
+    }
+  }
+
+  async function previewCertificate() {
+    setMessage("");
+    if (!selectedTemplate) {
+      setMessage(t(locale, "请先选择证书模板。", "Please select a certificate template first."));
+      return;
+    }
+
+    const previewPayload = buildPreviewPayload(singleVariableValues, issueDate);
+    if (!previewPayload) {
+      setMessage(t(locale, "预览生成失败。", "Failed to generate preview."));
+      return;
+    }
+
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewHtml("");
+    setPreviewDialogTitle(selectedTemplate ? localName(locale, selectedTemplate) : t(locale, "证书预览", "Certificate preview"));
+    setPreviewDialogSubtitle(selectedTemplate ? getTemplateLayoutLabel(locale, selectedTemplate) : "");
+
+    try {
+      const response = await fetch("/api/admin/certificates/templates/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(previewPayload),
+      });
+
+      let result: { error?: string; html?: string } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as { error?: string; html?: string };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
+
+      if (!response.ok) {
+        setPreviewError(result.error ?? t(locale, "预览生成失败。", "Failed to generate preview."));
+        return;
+      }
+
+      setPreviewHtml(result.html ?? "");
+    } catch {
+      setPreviewError(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  function closePreviewModal() {
+    setPreviewOpen(false);
+    setPreviewLoading(false);
+    setPreviewError("");
+    setPreviewHtml("");
+    setPreviewDialogTitle("");
+    setPreviewDialogSubtitle("");
+  }
+
+  async function downloadIssuedCertificate(issue: CertificateAdminIssue) {
+    setMessage("");
+    setRecordActionLoadingId(issue.id);
+    try {
+      if (issue.generatedFileUrl) {
+        const html = decodeHtmlDataUrl(issue.generatedFileUrl);
+        if (html) {
+          setPreviewOpen(true);
+          setPreviewLoading(false);
+          setPreviewError("");
+          setPreviewHtml(html);
+          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
+          setPreviewDialogSubtitle(issue.certificateNumber || "");
+        } else {
+          window.open(issue.generatedFileUrl, "_blank", "noopener,noreferrer");
+        }
+        return;
+      }
+
+      const response = await fetch(`/api/certificates/${encodeURIComponent(issue.id)}/download`, {
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        download?: { url?: string | null; verificationCode?: string | null };
+      };
+
+      if (!response.ok) {
+        setMessage(result.error ?? t(locale, "下载失败。", "Download failed."));
+        return;
+      }
+
+      if (result.download?.url) {
+        const html = decodeHtmlDataUrl(result.download.url);
+        if (html) {
+          setPreviewOpen(true);
+          setPreviewLoading(false);
+          setPreviewError("");
+          setPreviewHtml(html);
+          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
+          setPreviewDialogSubtitle(issue.certificateNumber || result.download.verificationCode || "");
+        } else {
+          window.open(result.download.url, "_blank", "noopener,noreferrer");
+        }
+      }
+      router.refresh();
+    } catch {
+      setMessage(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setRecordActionLoadingId(null);
+    }
+  }
+
+  async function revokeIssuedCertificate(issue: CertificateAdminIssue) {
+    setMessage("");
+    setRecordActionLoadingId(issue.id);
+    try {
+      const response = await fetch(`/api/admin/certificates/${encodeURIComponent(issue.id)}/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        setMessage(result.error ?? t(locale, "撤回失败。", "Revoke failed."));
+        return;
+      }
+
+      setMessage(t(locale, "证书已撤回。", "Certificate revoked."));
+      router.refresh();
+    } catch {
+      setMessage(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setRecordActionLoadingId(null);
+    }
+  }
+
+  async function deleteIssuedCertificate(issue: CertificateAdminIssue) {
+    const confirmed = window.confirm(t(locale, "确认删除该证书记录？", "Delete this certificate record?"));
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+    setRecordActionLoadingId(issue.id);
+    try {
+      const response = await fetch(`/api/admin/certificates/${encodeURIComponent(issue.id)}`, {
+        method: "DELETE",
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        setMessage(result.error ?? t(locale, "删除失败。", "Delete failed."));
+        return;
+      }
+
+      setMessage(t(locale, "证书已删除。", "Certificate deleted."));
+      router.refresh();
+    } catch {
+      setMessage(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setRecordActionLoadingId(null);
+    }
+  }
+
+  function editIssuedCertificate(issue: CertificateAdminIssue) {
+    const template = activeTemplates.find((item) => item.id === issue.templateId) ?? null;
+    const defaults = buildInitialManualVariableValues(template);
+    const issueValues = normalizeIssuedVariableValues(issue.issueVariableValues);
+
+    setMode("single");
+    setEditingIssueId(issue.id);
+    setEditingCertificateNumber(issue.certificateNumber ?? "");
+    setTemplateId(issue.templateId ?? "");
+    setEmail(issue.holderEmail ?? "");
+    setHolderName(issue.holderName ?? issueValues.holderName ?? "");
+    setAutoFilledHolderName("");
+    setIssueDate(formatTodayIsoDate());
+    setSingleVariableValues({
+      ...defaults,
+      ...issueValues,
+      holderName: issue.holderName,
+      certificateName: issue.certificateName,
+      categoryName: issue.categoryName,
+    });
+    setMessage(t(locale, "已回填该证书到上方，可修改后再次签发。", "Loaded this certificate into the form above. You can edit and re-issue."));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  useEffect(() => {
+    if (!previewOpen) {
+      return;
+    }
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closePreviewModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [previewOpen]);
+
+  useEffect(() => {
+    if (!issueFeedbackOpen) {
+      return;
+    }
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeIssueFeedbackModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [issueFeedbackOpen]);
+
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书签发", "Issue Certificates")} description={t(locale, "向单个用户或批量名单签发可验证数字证书。", "Single or batch issue credentials to users.")} />
       <div className="cpca-tab-row"><button className={`cpca-btn ${mode === "single" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setMode("single")} type="button">{t(locale, "单个签发", "Single Issue")}</button><button className={`cpca-btn ${mode === "batch" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setMode("batch")} type="button">{t(locale, "批量签发", "Batch Issue")}</button></div>
       {mode === "single" ? (
         <Card>
           <div className="cpca-form-grid">
             <label><span>{t(locale, "证书模板", "Certificate Template")}</span><select value={templateId} onChange={(event) => setTemplateId(event.target.value)}><option value="">{t(locale, "选择模板", "Select template...")}</option>{activeTemplates.map((template) => <option key={template.id} value={template.id}>{localName(locale, template)}</option>)}</select></label>
-            <label><span>{t(locale, "分类", "Category")}</span><select><option>{t(locale, "从模板自动匹配", "Auto-filled from template")}</option></select></label>
-            <label className="wide"><span>{t(locale, "关联项目 / 活动 / 课程", "Related Program / Event / Course")}</span><select><option>Climate Passport record</option><option>Shanghai Climate Week 2026</option><option>FSA Credential Program</option></select></label>
+            <label><span>{t(locale, "分类", "Category")}</span><input readOnly value={selectedTemplate ? (localName(locale, { name: selectedTemplate.categoryName ?? "", nameEn: selectedTemplate.categoryNameEn ?? null })) : t(locale, "从模板自动匹配", "Auto-filled from template")} /></label>
             <label><span>{t(locale, "收件人邮箱", "Recipient email")}</span><input onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" type="email" value={email} /></label>
-            <label><span>{t(locale, "角色", "Role")}</span><input placeholder={t(locale, "例如 Speaker / Volunteer", "e.g. Speaker, Moderator, Volunteer")} /></label>
-            <label><span>{t(locale, "证书名称", "Certificate Name")}</span><input placeholder={t(locale, "从模板自动填充", "Auto-filled from template")} /></label>
-            <label><span>{t(locale, "证书编号", "Certificate Number")}</span><input readOnly value="CV-{AUTO-GENERATED}" /></label>
-            <label><span>{t(locale, "签发日期", "Issue Date")}</span><input type="date" /></label>
-            <label><span>{t(locale, "有效期", "Expiry Date")}</span><input type="date" /></label>
+            <label><span>{t(locale, "证书持有人", "Certificate holder")}</span><input onChange={(event) => { const nextHolderName = event.target.value; setHolderName(nextHolderName); setSingleVariableValues((previous) => ({ ...previous, holderName: nextHolderName })); if (nextHolderName !== autoFilledHolderName) { setAutoFilledHolderName(""); } }} placeholder={t(locale, "请输入证书持有人姓名", "Enter certificate holder name")} required type="text" value={holderName} /></label>
+            <label><span>{t(locale, "证书编号", "Certificate Number")}</span><input readOnly value={editingIssueId && editingCertificateNumber ? editingCertificateNumber : "CV-{AUTO-GENERATED}"} /></label>
+            <label><span>{t(locale, "签发日期", "Issue Date")}</span><input onChange={(event) => setIssueDate(event.target.value)} type="date" value={issueDate} /></label>
           </div>
-          {message ? <p className="cpca-message">{message}</p> : null}
-          <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" type="button">{t(locale, "预览证书", "Preview Certificate")}</button><button className="cpca-btn cpca-btn-amber" disabled={loading} onClick={issueCertificate} type="button">{loading ? t(locale, "签发中...", "Issuing...") : t(locale, "确认签发", "Confirm & Issue")}</button></div>
+          {recipientLookupLoading ? <FormHelpText>{t(locale, "正在匹配 Climate Passport 持有人信息...", "Looking up Climate Passport holder info...")}</FormHelpText> : null}
+          {renderVariableInputs(singleVariableValues, setSingleVariableValues)}
+          {message ? <FormMessageText>{message}</FormMessageText> : null}
+          <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" disabled={previewLoading} onClick={() => void previewCertificate()} type="button">{previewLoading ? t(locale, "预览生成中...", "Rendering preview...") : t(locale, "预览证书", "Preview Certificate")}</button><button className="cpca-btn cpca-btn-amber" disabled={loading} onClick={issueCertificate} type="button">{loading ? (editingIssueId ? t(locale, "重新签发中...", "Re-issuing...") : t(locale, "签发中...", "Issuing...")) : (editingIssueId ? t(locale, "确认修改并重新签发", "Confirm Edit & Re-issue") : t(locale, "确认签发", "Confirm & Issue"))}</button>{editingIssueId ? <button className="cpca-btn cpca-btn-ghost" onClick={() => resetSingleIssueForm()} type="button">{t(locale, "取消编辑", "Cancel Edit")}</button> : null}</div>
+          {previewOpen ? (
+            <div className="cpca-preview-modal" onClick={closePreviewModal} role="presentation">
+              <div className="cpca-preview-modal-dialog" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={t(locale, "证书预览", "Certificate preview")}>
+                <div className="cpca-preview-modal-head">
+                  <div>
+                    <strong>{previewDialogTitle || (selectedTemplate ? localName(locale, selectedTemplate) : t(locale, "证书预览", "Certificate preview"))}</strong>
+                    <small>{previewDialogSubtitle || (selectedTemplate ? getTemplateLayoutLabel(locale, selectedTemplate) : "")}</small>
+                  </div>
+                  <button className="cpca-btn cpca-btn-ghost" onClick={closePreviewModal} type="button">
+                    {t(locale, "关闭", "Close")}
+                  </button>
+                </div>
+                <div className="cpca-preview-modal-body">
+                  {previewLoading ? <FormHelpText>{t(locale, "预览生成中...", "Rendering preview...")}</FormHelpText> : null}
+                  {previewError ? <FormErrorText>{previewError}</FormErrorText> : null}
+                  {!previewLoading && !previewError && previewHtml ? (
+                    <iframe className="cpca-preview-modal-frame" sandbox="allow-scripts allow-modals" srcDoc={previewHtml} title={t(locale, "证书预览", "Certificate preview")} />
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {issueFeedbackOpen ? (
+            <div className="cpca-preview-modal" onClick={closeIssueFeedbackModal} role="presentation">
+              <div className="cpca-feedback-modal-dialog" onClick={(event) => event.stopPropagation()} role="alertdialog" aria-modal="true" aria-label={issueFeedbackKind === "success" ? t(locale, "签发成功", "Issue succeeded") : t(locale, "签发失败", "Issue failed")}>
+                <div className="cpca-preview-modal-head">
+                  <div>
+                    <strong>{issueFeedbackKind === "success" ? t(locale, "签发成功", "Issue succeeded") : t(locale, "签发失败", "Issue failed")}</strong>
+                  </div>
+                  <button className="cpca-btn cpca-btn-ghost" onClick={closeIssueFeedbackModal} type="button">
+                    {t(locale, "关闭", "Close")}
+                  </button>
+                </div>
+                <div className="cpca-feedback-modal-body">
+                  {issueFeedbackKind === "success" ? <FormSuccessText>{issueFeedbackMessage}</FormSuccessText> : <FormErrorText>{issueFeedbackMessage}</FormErrorText>}
+                  <div className="cpca-actions">
+                    <button className="cpca-btn cpca-btn-amber" onClick={closeIssueFeedbackModal} type="button">
+                      {t(locale, "我知道了", "OK")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </Card>
       ) : (
         <Card>
           <div className="cpca-form-grid">
-            <label><span>{t(locale, "证书模板", "Certificate Template")}</span><select>{activeTemplates.map((template) => <option key={template.id}>{localName(locale, template)}</option>)}</select></label>
-            <label><span>{t(locale, "来源", "Source")}</span><select><option>Upload CSV</option><option>From Event Registration List</option><option>From Course Completion List</option><option>From LE Program Completion List</option></select></label>
-            <label className="wide"><span>{t(locale, "选择活动 / 课程 / 项目", "Select Event / Course / Program")}</span><select><option>Shanghai Climate Week 2026</option><option>Youth Climate Action Forum</option></select></label>
+            <label><span>{t(locale, "证书模板", "Certificate Template")}</span><select onChange={(event) => setTemplateId(event.target.value)} value={templateId}><option value="">{t(locale, "选择模板", "Select template...")}</option>{activeTemplates.map((template) => <option key={template.id} value={template.id}>{localName(locale, template)}</option>)}</select></label>
+            <label><span>{t(locale, "分类", "Category")}</span><input readOnly value={selectedTemplate ? (localName(locale, { name: selectedTemplate.categoryName ?? "", nameEn: selectedTemplate.categoryNameEn ?? null })) : t(locale, "从模板自动匹配", "Auto-filled from template")} /></label>
+            <label><span>{t(locale, "签发日期", "Issue Date")}</span><input onChange={(event) => setBatchIssueDate(event.target.value)} type="date" value={batchIssueDate} /></label>
+            <label className="wide"><span>{t(locale, "收件人邮箱（每行一个，或用逗号分隔）", "Recipient emails (one per line or comma-separated)")}</span><textarea onChange={(event) => setBatchEmails(event.target.value)} rows={6} value={batchEmails} /></label>
           </div>
-          <div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th><input defaultChecked type="checkbox" /></th><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody>{["Lin Wei", "Sarah Henderson", "Chen Yu", "Aiko Tanaka", "James O'Connor"].map((name, index) => <tr key={name}><td><input defaultChecked type="checkbox" /></td><td className="cpca-strong">{name}</td><td>recipient{index + 1}@example.com</td><td>{["Attendee", "Speaker", "Moderator", "Attendee", "Volunteer"][index]}</td><td><span className="cpca-badge cpca-badge-green">Ready</span></td></tr>)}</tbody></table></div>
-          <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" type="button">{t(locale, "批量预览", "Preview Batch")}</button><button className="cpca-btn cpca-btn-amber" type="button">{t(locale, "签发选中 5 人", "Issue All Selected (5)")}</button></div>
+          {renderVariableInputs(batchVariableValues, setBatchVariableValues)}
+          {batchMessage ? <FormMessageText>{batchMessage}</FormMessageText> : null}
+          <div className="cpca-actions"><button className="cpca-btn cpca-btn-amber" disabled={batchLoading} onClick={issueBatchCertificates} type="button">{batchLoading ? t(locale, "批量签发中...", "Issuing batch...") : t(locale, "确认批量签发", "Confirm Batch Issue")}</button></div>
         </Card>
       )}
       <Card title={t(locale, "最近签发记录", "Recent Issuances")}>
-        <div className="cpca-table-wrap"><table className="cpca-table"><tbody>{(recentIssues.length ? recentIssues : fallbackIssues(locale)).slice(0, 5).map((issue) => <tr key={issue.id}><td className="cpca-strong">{issue.holderName}</td><td>{issue.certificateName}</td><td>{issue.issueDate}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td></tr>)}</tbody></table></div>
+        <div className="cpca-table-wrap">
+          <table className="cpca-table">
+            <thead>
+              <tr>
+                <th>{t(locale, "证书编号", "Certificate Number")}</th>
+                <th>{t(locale, "持有人", "Holder")}</th>
+                <th>{t(locale, "证书", "Certificate")}</th>
+                <th>{t(locale, "签发日期", "Issue Date")}</th>
+                <th>{t(locale, "状态", "Status")}</th>
+                <th>{t(locale, "操作", "Actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(recentIssues.length ? recentIssues : fallbackIssues(locale)).slice(0, 5).map((issue) => (
+                <tr key={issue.id}>
+                  <td className="cpca-mono">{issue.certificateNumber}</td>
+                  <td className="cpca-strong">{issue.holderName}</td>
+                  <td>{issue.certificateName}</td>
+                  <td>{issue.issueDate}</td>
+                  <td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td>
+                  <td>
+                    <div className="cpca-actions compact">
+                      <button
+                        className="cpca-btn cpca-btn-ghost"
+                        onClick={() => editIssuedCertificate(issue)}
+                        type="button"
+                      >
+                        {t(locale, "编辑", "Edit")}
+                      </button>
+                      <button
+                        className="cpca-btn cpca-btn-ghost"
+                        disabled={recordActionLoadingId === issue.id}
+                        onClick={() => void downloadIssuedCertificate(issue)}
+                        type="button"
+                      >
+                        {t(locale, "预览/打印", "Preview/Print")}
+                      </button>
+                      <button
+                        className="cpca-btn cpca-btn-danger"
+                        disabled={recordActionLoadingId === issue.id || issue.status === "REVOKED"}
+                        onClick={() => void revokeIssuedCertificate(issue)}
+                        type="button"
+                      >
+                        {t(locale, "撤回", "Revoke")}
+                      </button>
+                      <button
+                        className="cpca-btn cpca-btn-danger"
+                        disabled={recordActionLoadingId === issue.id}
+                        onClick={() => void deleteIssuedCertificate(issue)}
+                        type="button"
+                      >
+                        {t(locale, "删除", "Delete")}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </CertificateAdminFrame>
   );
@@ -396,7 +1890,7 @@ export function CertificateAdminIssue({
 export function CertificateAdminApplications({ locale, issues }: { locale: Locale; issues: CertificateAdminIssue[] }) {
   const rows = issues.length ? issues : fallbackIssues(locale);
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书申请审核", "Certificate Applications")} description={t(locale, "审核用户主动提交的证书、志愿服务、项目完成和活动参与证明申请。", "Review user-initiated certificate requests.")} />
       <div className="cpca-tab-row"><button className="cpca-btn cpca-btn-amber">All ({rows.length})</button><button className="cpca-btn cpca-btn-outline">Pending</button><button className="cpca-btn cpca-btn-outline">Approved</button><button className="cpca-btn cpca-btn-outline">Rejected</button><button className="cpca-btn cpca-btn-outline">Needs Info</button></div>
       <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "申请人", "Applicant")}</th><th>{t(locale, "证书类型", "Certificate Type")}</th><th>{t(locale, "项目 / 活动", "Program / Event")}</th><th>{t(locale, "提交时间", "Submitted")}</th><th>{t(locale, "附件", "Attachments")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.slice(0, 8).map((issue, index) => <tr key={issue.id}><td><span className="cpca-strong">{issue.holderName}</span><small>{issue.holderEmail ?? "applicant@example.com"}</small></td><td>{issue.categoryName}</td><td>{issue.source ?? "Climate Passport"}</td><td>{issue.issueDate}</td><td>{index % 2 ? "1 file" : "—"}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-success" type="button">{t(locale, "通过", "Approve")}</button><button className="cpca-btn cpca-btn-danger" type="button">{t(locale, "拒绝", "Reject")}</button></div></td></tr>)}</tbody></table></div></Card>
@@ -414,7 +1908,7 @@ export function CertificateAdminRules({ locale, templates }: { locale: Locale; t
     ["Volunteer 50hrs Badge", "Volunteer", "Hours >= 50", "Volunteer Service", "Yes", "No", "Draft"],
   ];
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "自动签发规则", "Automatic Issuing Rules")} description={t(locale, "配置课程、活动、Learning Experience、积分和人工审核触发条件。", "Configure trigger conditions for auto-issuing certificates.")} action={<button className="cpca-btn cpca-btn-amber" type="button">+ {t(locale, "创建规则", "Create Rule")}</button>} />
       <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "规则名称", "Rule Name")}</th><th>{t(locale, "触发", "Trigger")}</th><th>{t(locale, "条件", "Condition")}</th><th>{t(locale, "模板", "Template")}</th><th>{t(locale, "通知", "Notify")}</th><th>{t(locale, "确认", "Confirm")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rules.map((rule) => <tr key={rule[0]}><td className="cpca-strong">{rule[0]}</td><td>{rule[1]}</td><td>{rule[2]}</td><td>{templates[0] ? localName(locale, templates[0]) : rule[3]}</td><td><span className="cpca-badge cpca-badge-green">{rule[4]}</span></td><td><span className="cpca-badge cpca-badge-gray">{rule[5]}</span></td><td><StatusBadge status={rule[6]}>{rule[6]}</StatusBadge></td><td><button className="cpca-btn cpca-btn-ghost" type="button">{t(locale, "编辑", "Edit")}</button></td></tr>)}</tbody></table></div></Card>
       <Card title={t(locale, "创建签发规则", "Create Issuing Rule")}><div className="cpca-form-grid"><label><span>{t(locale, "规则名称", "Rule Name")}</span><input placeholder="Course Completion Auto-Issue" /></label><label><span>{t(locale, "触发来源", "Trigger Source")}</span><select><option>Course</option><option>Event</option><option>Learning Experience</option><option>Points</option><option>Manual Review</option></select></label><label className="wide"><span>{t(locale, "触发条件", "Trigger Condition")}</span><input placeholder="All modules complete, Points >= 1000" /></label><label><span>{t(locale, "证书模板", "Certificate Template")}</span><select>{templates.map((template) => <option key={template.id}>{localName(locale, template)}</option>)}</select></label><label><span>{t(locale, "签发时间", "Issue Timing")}</span><select><option>Immediate</option><option>Next Business Day</option><option>Manual Review</option></select></label></div><div className="cpca-toggle-row"><label><input defaultChecked type="checkbox" /> Admin Confirmation Required</label><label><input defaultChecked type="checkbox" /> Auto-notify User</label><label><input defaultChecked type="checkbox" /> Allow PDF Download</label><label><input type="checkbox" /> Public Display</label></div></Card>
@@ -427,7 +1921,7 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
   const active = rows.filter((issue) => !issue.status.toLowerCase().includes("revoked")).length;
   const revoked = rows.filter((issue) => issue.status.toLowerCase().includes("revoked")).length;
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书记录管理", "Certificate Records")} description={t(locale, "查看所有已生成证书、下载、重新生成、撤销、恢复和复制验证链接。", "Complete history of all issued credentials.")} />
       <div className="cpca-stats compact"><Metric label="Total" value={rows.length} /><Metric label="Active" value={active} /><Metric label="Expired" value="0" /><Metric label="Revoked" value={revoked} /></div>
       <div className="cpca-filter-row"><input placeholder={t(locale, "搜索证书编号...", "Search certificate number...")} /><select><option>All Status</option><option>Active</option><option>Revoked</option></select><select><option>All Categories</option></select><input type="date" /><button className="cpca-btn cpca-btn-outline" type="button">Export CSV</button></div>
@@ -441,7 +1935,7 @@ export function CertificateAdminAuditLogs({ locale, verifications, auditLogs }: 
   const [tab, setTab] = useState<"verify" | "admin">("verify");
   const rows = tab === "verify" ? (verifications.length ? verifications : fallbackLogs(locale)) : (auditLogs.length ? auditLogs : fallbackAdminLogs(locale));
   return (
-    <CertificateAdminFrame locale={locale}>
+    <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "验证与审计日志", "Verification & Audit Logs")} description={t(locale, "记录证书验证、下载、撤销、模板修改和批量签发等可信操作。", "Track credential verifications and administrative operations.")} />
       <div className="cpca-stats compact"><Metric label={t(locale, "今日验证", "Today's Verifications")} value={verifications.length} /><Metric label={t(locale, "成功率", "Success Rate")} value="94.2%" /><Metric label={t(locale, "异常", "Anomalies Detected")} value="2" /></div>
       <div className="cpca-tab-row"><button className={`cpca-btn ${tab === "verify" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setTab("verify")} type="button">{t(locale, "验证日志", "Verification Log")}</button><button className={`cpca-btn ${tab === "admin" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setTab("admin")} type="button">{t(locale, "后台操作", "Admin Operations")}</button></div>
@@ -463,11 +1957,11 @@ function fallbackCategories(locale: Locale): CertificateAdminCategory[] {
     ["里程碑证书", "Milestone Credential"],
     ["气候行动记录", "Climate Action Record"],
   ];
-  return names.map(([zh, en], index) => ({ id: `fallback-${index}`, key: en.toLowerCase().replaceAll(" ", "-"), name: zh, nameEn: en, isActive: index !== 9, templateCount: 10 - index, definitionCount: index + 1 }));
+  return names.map(([zh, en], index) => ({ id: `fallback-${index}`, key: en.toLowerCase().replaceAll(" ", "-"), name: zh, nameEn: en, isActive: index !== 9, order: index + 1, autoIssueEnabled: index !== 2, userRequestEnabled: index === 2 || index === 4, pdfEnabled: true, publicVerifyEnabled: true, createdAt: new Date(Date.now() - index * 86400000).toISOString(), templateCount: 10 - index, definitionCount: index + 1, issuedCount: Math.max(0, 18 - index * 2) }));
 }
 
 function fallbackTemplates(locale: Locale): CertificateAdminTemplate[] {
-  return ["SHCW Official Certificate", "Course Completion - Standard", "Speaker Certificate - Premium", "Achievement Badge - Round", "Volunteer Service - Basic", "Digital Micro-Credential"].map((name, index) => ({ id: `fallback-template-${index}`, name, nameEn: name, templateType: index === 3 ? "ACHIEVEMENT" : index === 5 ? "CUSTOM" : "ATTENDANCE", isActive: index !== 5, version: 1, issuedCount: [2847, 1203, 428, 892, 471, 0][index] }));
+  return ["SHCW Official Certificate", "Course Completion - Standard", "Speaker Certificate - Premium", "Achievement Badge - Round", "Volunteer Service - Basic", "Digital Micro-Credential"].map((name, index) => ({ id: `fallback-template-${index}`, name, nameEn: name, templateType: index === 3 ? "ACHIEVEMENT" : index === 5 ? "CUSTOM" : "ATTENDANCE", isActive: index !== 5, version: 1, updatedAt: new Date(Date.now() - index * 43200000).toISOString(), issuedCount: [2847, 1203, 428, 892, 471, 0][index] }));
 }
 
 function fallbackIssues(locale: Locale): CertificateAdminIssue[] {
