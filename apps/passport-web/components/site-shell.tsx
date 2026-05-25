@@ -26,13 +26,28 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
           </Link>
 
           {!isMinimal && (
-            <nav className="nav" aria-label="Primary">
+            <nav className="nav nav-desktop" aria-label="Primary">
               {dictionary.shell.nav.map((item) => (
                 <Link key={item.href} href={`/${locale}${item.href}`}>
                   {item.label}
                 </Link>
               ))}
             </nav>
+          )}
+
+          {!isMinimal && (
+            <details className="mobile-nav" role="navigation">
+              <summary aria-label={locale === "zh" ? "打开导航菜单" : "Open navigation menu"}>
+                <span className="mobile-nav-icon" aria-hidden="true" />
+              </summary>
+              <nav className="mobile-nav-panel" aria-label="Mobile primary">
+                {dictionary.shell.nav.map((item) => (
+                  <Link key={item.href} href={`/${locale}${item.href}`}>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </details>
           )}
 
           <div className="header-actions">

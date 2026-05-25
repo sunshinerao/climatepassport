@@ -876,8 +876,12 @@
   }
 
   .proto-home .proto-title-zh-single-line {
-    font-size: clamp(0.7rem, 3.36vw, 1.33rem);
+    font-size: clamp(1.35rem, 4.1vw, 2rem);
     margin-bottom: 24px;
+  }
+
+  .proto-home .proto-title-hero-unified {
+    font-size: clamp(1.35rem, 4.1vw, 2rem);
   }
 
   .proto-home .passport-card-visual {
@@ -923,20 +927,18 @@
   }
 
   .proto-home .proto-title-hero-unified {
-    font-size: clamp(0.7rem, 3.36vw, 1.33rem);
+    font-size: clamp(1.68rem, 7.2vw, 2.12rem);
+    line-height: 1.2;
   }
 
   .proto-home .hero-subtitle {
-    font-size: 0.77rem;
+    font-size: 0.96rem;
   }
 
   .proto-home .proto-title-zh-single-line {
-    font-size: clamp(0.63rem, 3.22vw, 0.84rem);
+    font-size: clamp(1.68rem, 7.2vw, 2.12rem);
+    line-height: 1.2;
     margin-bottom: 24px;
-  }
-
-  .proto-home .proto-title-hero-unified {
-    font-size: clamp(0.63rem, 3.22vw, 0.84rem);
   }
 
   .proto-home .hero-term-tooltip {
@@ -1004,6 +1006,13 @@
 
   .proto-home .section-title {
     font-size: 1.875rem;
+  }
+
+  .proto-home .how-it-works .section-title,
+  .proto-home .events .section-title,
+  .proto-home .features .section-title {
+    font-size: clamp(1.52rem, 6vw, 1.95rem);
+    line-height: 1.22;
   }
 
   .proto-home .section-header {
