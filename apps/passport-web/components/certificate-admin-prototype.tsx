@@ -1748,7 +1748,7 @@ export function CertificateAdminIssue({
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书签发", "Issue Certificates")} description={t(locale, "向单个用户或批量名单签发可验证数字证书。", "Single or batch issue credentials to users.")} />
-      <div className="cpca-tab-row"><button className={`cpca-btn ${mode === "single" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setMode("single")} type="button">{t(locale, "单个签发", "Single Issue")}</button><button className={`cpca-btn ${mode === "batch" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setMode("batch")} type="button">{t(locale, "批量签发", "Batch Issue")}</button></div>
+      <div className="cpca-tab-row"><button className="cpca-btn" onClick={() => setMode("single")} type="button">{t(locale, "单个签发", "Single Issue")}</button><button className="cpca-btn" onClick={() => setMode("batch")} type="button">{t(locale, "批量签发", "Batch Issue")}</button></div>
       {mode === "single" ? (
         <Card>
           <div className="cpca-form-grid">
@@ -1892,7 +1892,7 @@ export function CertificateAdminApplications({ locale, issues }: { locale: Local
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书申请审核", "Certificate Applications")} description={t(locale, "审核用户主动提交的证书、志愿服务、项目完成和活动参与证明申请。", "Review user-initiated certificate requests.")} />
-      <div className="cpca-tab-row"><button className="cpca-btn cpca-btn-amber">All ({rows.length})</button><button className="cpca-btn cpca-btn-outline">Pending</button><button className="cpca-btn cpca-btn-outline">Approved</button><button className="cpca-btn cpca-btn-outline">Rejected</button><button className="cpca-btn cpca-btn-outline">Needs Info</button></div>
+      <div className="cpca-tab-row"><button className="cpca-btn" type="button">All ({rows.length})</button><button className="cpca-btn" type="button">Pending</button><button className="cpca-btn" type="button">Approved</button><button className="cpca-btn" type="button">Rejected</button><button className="cpca-btn" type="button">Needs Info</button></div>
       <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "申请人", "Applicant")}</th><th>{t(locale, "证书类型", "Certificate Type")}</th><th>{t(locale, "项目 / 活动", "Program / Event")}</th><th>{t(locale, "提交时间", "Submitted")}</th><th>{t(locale, "附件", "Attachments")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.slice(0, 8).map((issue, index) => <tr key={issue.id}><td><span className="cpca-strong">{issue.holderName}</span><small>{issue.holderEmail ?? "applicant@example.com"}</small></td><td>{issue.categoryName}</td><td>{issue.source ?? "Climate Passport"}</td><td>{issue.issueDate}</td><td>{index % 2 ? "1 file" : "—"}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-success" type="button">{t(locale, "通过", "Approve")}</button><button className="cpca-btn cpca-btn-danger" type="button">{t(locale, "拒绝", "Reject")}</button></div></td></tr>)}</tbody></table></div></Card>
     </CertificateAdminFrame>
   );
@@ -1938,7 +1938,7 @@ export function CertificateAdminAuditLogs({ locale, verifications, auditLogs }: 
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "验证与审计日志", "Verification & Audit Logs")} description={t(locale, "记录证书验证、下载、撤销、模板修改和批量签发等可信操作。", "Track credential verifications and administrative operations.")} />
       <div className="cpca-stats compact"><Metric label={t(locale, "今日验证", "Today's Verifications")} value={verifications.length} /><Metric label={t(locale, "成功率", "Success Rate")} value="94.2%" /><Metric label={t(locale, "异常", "Anomalies Detected")} value="2" /></div>
-      <div className="cpca-tab-row"><button className={`cpca-btn ${tab === "verify" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setTab("verify")} type="button">{t(locale, "验证日志", "Verification Log")}</button><button className={`cpca-btn ${tab === "admin" ? "cpca-btn-amber" : "cpca-btn-outline"}`} onClick={() => setTab("admin")} type="button">{t(locale, "后台操作", "Admin Operations")}</button></div>
+      <div className="cpca-tab-row"><button className="cpca-btn" onClick={() => setTab("verify")} type="button">{t(locale, "验证日志", "Verification Log")}</button><button className="cpca-btn" onClick={() => setTab("admin")} type="button">{t(locale, "后台操作", "Admin Operations")}</button></div>
       <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "时间", "Timestamp")}</th><th>{tab === "verify" ? t(locale, "证书", "Certificate") : "Admin"}</th><th>{tab === "verify" ? t(locale, "持有人", "Holder") : "Action"}</th><th>{t(locale, "结果", "Result")}</th><th>{t(locale, "方式", "Method")}</th><th>{t(locale, "地区", "Source Region")}</th></tr></thead><tbody>{rows.map((log) => <tr key={log.id}><td className="cpca-muted">{log.time}</td><td className="cpca-strong">{log.primary}</td><td>{log.secondary}</td><td><StatusBadge status={log.result}>{log.result}</StatusBadge></td><td>{log.channel ?? "URL Link"}</td><td>{log.region ?? "Unknown"}</td></tr>)}</tbody></table></div></Card>
     </CertificateAdminFrame>
   );

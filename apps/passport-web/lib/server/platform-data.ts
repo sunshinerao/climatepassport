@@ -106,6 +106,7 @@ export async function getPassportPageData(locale: Locale) {
 
   return withPrismaFallback(
     async (prisma) => {
+      const now = new Date();
       const user = await prisma.user.findFirst({
         where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
         orderBy: currentUser ? undefined : { createdAt: "asc" },
@@ -118,14 +119,42 @@ export async function getPassportPageData(locale: Locale) {
             take: 4,
           },
           registrations: {
-            where: { status: "ATTENDED" },
-            select: { id: true },
+            include: {
+              event: {
+                select: {
+                  id: true,
+                  title: true,
+                  titleEn: true,
+                  venue: true,
+                  venueEn: true,
+                  startDate: true,
+                  endDate: true,
+                  isPublished: true,
+                  isClosed: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
           },
           certificateIssues: {
             where: { status: "ISSUED" },
-            select: { id: true, issuedAt: true },
+            include: {
+              definition: {
+                select: {
+                  name: true,
+                  nameEn: true,
+                  category: {
+                    select: {
+                      key: true,
+                      name: true,
+                      nameEn: true,
+                    },
+                  },
+                },
+              },
+            },
             orderBy: { issuedAt: "desc" },
-            take: 1,
+            take: 6,
           },
         },
       });
@@ -134,9 +163,101 @@ export async function getPassportPageData(locale: Locale) {
         return {
           locale,
           passport: dictionary.passport,
-          account: accountSnapshotByLocale[toCoreLocale(locale)],
+          account: {
+            ...accountSnapshotByLocale[toCoreLocale(locale)],
+            certificates: 0,
+          },
+          timeline: [] as Array<{ day: string; month: string; title: string; meta: string; href: string; cta: string; primary: boolean }>,
+          certificates: [] as Array<{ icon: string; title: string; issuer: string; date: string; href: string; code: string | null }>,
+          profileCompletion: 0,
         };
       }
+
+      const attendedRegistrations = user.registrations.filter((registration) => registration.status === "ATTENDED");
+      const learningHoursFromEvents = attendedRegistrations.reduce((sum, registration) => {
+        if (!registration.event?.startDate || !registration.event?.endDate) {
+          return sum;
+        }
+
+        const hours = (registration.event.endDate.getTime() - registration.event.startDate.getTime()) / (1000 * 60 * 60);
+        return sum + Math.max(0, hours);
+      }, 0);
+
+      const timeline = user.registrations
+        .filter((registration) => {
+          if (!registration.event) {
+            return false;
+          }
+
+          if (!["REGISTERED", "PENDING_APPROVAL", "WAITLIST"].includes(registration.status)) {
+            return false;
+          }
+
+          if (registration.event.startDate < now || !registration.event.isPublished || registration.event.isClosed) {
+            return false;
+          }
+
+          return true;
+        })
+        .sort((a, b) => a.event.startDate.getTime() - b.event.startDate.getTime())
+        .slice(0, 3)
+        .map((registration, index) => {
+          const eventDate = registration.event.startDate;
+          const month = locale === "zh"
+            ? `${eventDate.getMonth() + 1}月`
+            : eventDate.toLocaleDateString("en-US", { month: "short" });
+          const day = String(eventDate.getDate()).padStart(2, "0");
+          const title = getLocalizedText(locale, registration.event.title, registration.event.titleEn);
+          const venue = getLocalizedText(locale, registration.event.venue, registration.event.venueEn) || (locale === "zh" ? "线上活动" : "Virtual Event");
+          const time = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: locale !== "zh",
+            timeZone: "Asia/Shanghai",
+          }).format(eventDate);
+
+          const cta = registration.status === "REGISTERED"
+            ? (locale === "zh" ? "加入" : "Join")
+            : (locale === "zh" ? "详情" : "Details");
+
+          return {
+            day,
+            month,
+            title,
+            meta: `${venue}${locale === "zh" ? "，" : ", "}${time}`,
+            href: `/${locale}/events`,
+            cta,
+            primary: index === 0 && registration.status === "REGISTERED",
+          };
+        });
+
+      const recentCertificates = user.certificateIssues.slice(0, 2).map((issue) => {
+        const categoryKey = issue.definition.category.key.toLowerCase();
+        const icon = categoryKey.includes("learning") ? "📘" : categoryKey.includes("achievement") ? "🏆" : "🎓";
+        const title = getLocalizedText(locale, issue.definition.name, issue.definition.nameEn);
+        const issuer = locale === "zh" ? "签发机构：Climate Passport" : "Issued by Climate Passport";
+
+        return {
+          icon,
+          title,
+          issuer,
+          date: formatDateLabel(locale, issue.issuedAt ?? issue.createdAt),
+          href: issue.verificationCode ? `/${locale}/verify/certificate/${encodeURIComponent(issue.verificationCode)}` : `/${locale}/dashboard/certificates`,
+          code: issue.verificationCode,
+        };
+      });
+
+      const completionChecks = [
+        Boolean(user.name),
+        Boolean(user.email),
+        Boolean(user.phone),
+        Boolean(user.title),
+        Boolean(user.bio),
+        Boolean(user.country),
+        Boolean(user.avatar),
+        Boolean(user.climatePassportId),
+      ];
+      const profileCompletion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
 
       return {
         locale,
@@ -160,17 +281,27 @@ export async function getPassportPageData(locale: Locale) {
           role: user.title ?? accountSnapshotByLocale[toCoreLocale(locale)].role,
           climatePassportId: user.climatePassportId ?? user.passCode,
           points: user.points,
-          attended: user.registrations.length,
-          learningHours: accountSnapshotByLocale[toCoreLocale(locale)].learningHours,
+          attended: attendedRegistrations.length,
+          learningHours: Math.round(learningHoursFromEvents > 0 ? learningHoursFromEvents : accountSnapshotByLocale[toCoreLocale(locale)].learningHours),
+          certificates: user.certificateIssues.length,
           achievements: user.unlockedAchievements.length,
           issuedAt: formatDateLabel(locale, user.certificateIssues[0]?.issuedAt ?? user.createdAt),
         },
+        timeline,
+        certificates: recentCertificates,
+        profileCompletion,
       };
     },
     async () => ({
       locale,
       passport: dictionary.passport,
-      account: accountSnapshotByLocale[toCoreLocale(locale)],
+      account: {
+        ...accountSnapshotByLocale[toCoreLocale(locale)],
+        certificates: 0,
+      },
+      timeline: [] as Array<{ day: string; month: string; title: string; meta: string; href: string; cta: string; primary: boolean }>,
+      certificates: [] as Array<{ icon: string; title: string; issuer: string; date: string; href: string; code: string | null }>,
+      profileCompletion: 0,
     }),
   );
 }

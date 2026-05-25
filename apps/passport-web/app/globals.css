@@ -6,6 +6,7 @@
 @import "./styles/features/certificate-verify.css";
 @import "./styles/features/certificate-user.css";
 @import "./styles/features/certificate-profile.css";
+@import "./styles/features/identity-verify.css";
 @import "./styles/features/verifier-console.css";
 @import "./styles/features/summer-school-admin.css";
 @import "./styles/features/summer-school-application.css";

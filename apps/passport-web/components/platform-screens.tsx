@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import QRCode from "qrcode";
 import { AuthForm } from "@/components/auth-form";
 import { ContactMessageForm } from "@/components/contact-message-form";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
@@ -8,6 +10,7 @@ import { EventsFilterableGrid } from "@/components/events-filterable-grid";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import type { Locale } from "@/lib/site-content";
 import { getCurrentUser, getDashboardPathForRole, requireAuthenticatedUser } from "@/lib/server/auth";
+import { getIdentityQrExpiry, issueQrToken } from "@/lib/server/qr";
 import {
   getCertificatesPageData,
   getEventsPageData,
@@ -364,90 +367,192 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
 
 export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
   noStore();
-  await requireAuthenticatedUser(locale, `/${locale}/dashboard/climate-passport`);
-  const { passport, account } = await getPassportPageData(locale);
+  const user = await requireAuthenticatedUser(locale, `/${locale}/dashboard/climate-passport`);
+  const { passport, account, timeline, certificates, profileCompletion } = await getPassportPageData(locale);
+  const isZh = locale === "zh";
+  const currentDate = new Date().toLocaleDateString(isZh ? "zh-CN" : "en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const quickStats = [
+    { icon: "⭐", label: isZh ? "总积分" : "Total Points", value: String(account.points) },
+    { icon: "🎉", label: isZh ? "参与活动" : "Events Joined", value: String(account.attended) },
+    { icon: "🎓", label: isZh ? "证书数量" : "Certificates", value: String(account.certificates ?? 0) },
+    { icon: "⏰", label: isZh ? "学习时长" : "Learning Hours", value: String(account.learningHours) },
+  ];
+
+  const qrToken = await issueQrToken({
+    type: "IDENTITY",
+    userId: user.id,
+    subjectType: "user",
+    subjectId: user.id,
+    expiresAt: getIdentityQrExpiry(),
+    metadataJson: {
+      climatePassportId: account.climatePassportId,
+      name: account.name,
+      role: account.role,
+      points: account.points,
+      attended: account.attended,
+      learningHours: account.learningHours,
+    },
+  });
+
+  const requestHeaders = headers();
+  const forwardedProto = requestHeaders.get("x-forwarded-proto");
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  const host = forwardedHost ?? requestHeaders.get("host");
+  const origin = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? (host ? `${forwardedProto ?? "http"}://${host}` : "http://localhost:3000")).replace(/\/$/, "");
+  const identityVerificationUrl = `${origin}/${locale}/verify/identity?token=${encodeURIComponent(qrToken.token)}&public=1`;
+  const identityQrCodeDataUrl = await QRCode.toDataURL(identityVerificationUrl, {
+    margin: 1,
+    width: 220,
+    color: {
+      dark: "#0b4a3a",
+      light: "#f3f5f4",
+    },
+  });
 
   return (
-    <>
-      <div className="section-header">
-        <div>
-          <span className="label">{passport.label}</span>
-          <h1>{passport.title}</h1>
+    <div className="passport-dashboard">
+      <header className="passport-dashboard-welcome">
+        <div className="passport-dashboard-welcome-text">
+          <h1>{isZh ? `欢迎回来，${account.name}` : `Welcome back, ${account.name}`}</h1>
+          <p>{currentDate}</p>
         </div>
-        <p>{passport.intro}</p>
-      </div>
-
-      <section className="passport-card">
-        <div className="passport-top">
-          <div>
-            <span className="hero-kicker">{passport.authority}</span>
-            <h2>Climate Passport</h2>
-            <p className="passport-meta">{passport.authorityBody}</p>
-          </div>
-          <span className="chip">{passport.activeBadge}</span>
+        <div className="passport-dashboard-welcome-actions">
+          <button aria-label={isZh ? "通知" : "Notifications"} className="passport-dashboard-bell" type="button">
+            <span aria-hidden="true">🔔</span>
+          </button>
         </div>
+      </header>
 
-        <div className="passport-layout">
-          <div>
-            <div className="passport-profile">
-              <div className="avatar">{account.name.charAt(0)}</div>
+      <main className="passport-dashboard-layout">
+        <section className="passport-dashboard-left">
+          <section className="passport-dashboard-hero-card">
+            <div className="passport-dashboard-hero-inner">
               <div>
-                <div className="passport-number">{account.climatePassportId}</div>
-                <div className="passport-meta">{account.name}</div>
-                <div className="passport-meta">{account.role}</div>
+                <div className="passport-dashboard-hero-header">Climate Passport</div>
+                <div className="passport-dashboard-hero-name">{account.name}</div>
+                <div className="passport-dashboard-hero-role">{account.role}</div>
+                <div className="passport-dashboard-hero-stats">
+                  <div className="passport-dashboard-hero-metric">
+                    <div className="passport-dashboard-hero-stat-value">{account.points}</div>
+                    <div className="passport-dashboard-hero-stat-label">{passport.points}</div>
+                  </div>
+                  <div className="passport-dashboard-hero-metric">
+                    <div className="passport-dashboard-hero-stat-value">{account.attended}</div>
+                    <div className="passport-dashboard-hero-stat-label">{passport.attended}</div>
+                  </div>
+                  <div className="passport-dashboard-hero-metric">
+                    <div className="passport-dashboard-hero-stat-value">{account.learningHours}</div>
+                    <div className="passport-dashboard-hero-stat-label">{passport.hours}</div>
+                  </div>
+                </div>
+                <div className="passport-dashboard-hero-id">ID: {account.climatePassportId}</div>
+              </div>
+              <div className="passport-dashboard-hero-qr">
+                <div className="passport-dashboard-hero-qr-frame">
+                  <img alt={isZh ? "气候护照验证二维码" : "Climate passport verification QR"} className="passport-dashboard-hero-qr-image" src={identityQrCodeDataUrl} />
+                </div>
+                <div className="passport-dashboard-hero-qr-label">{isZh ? "扫码验证身份" : "Scan to Verify"}</div>
               </div>
             </div>
+          </section>
 
-            <div className="passport-stats">
-              <div className="passport-stat">
-                <span className="label">{passport.points}</span>
-                <strong>{account.points}</strong>
-              </div>
-              <div className="passport-stat">
-                <span className="label">{passport.attended}</span>
-                <strong>{account.attended}</strong>
-              </div>
-              <div className="passport-stat">
-                <span className="label">{passport.hours}</span>
-                <strong>{account.learningHours}</strong>
-              </div>
+          <section className="passport-dashboard-quick-stats">
+            {quickStats.map((item) => (
+              <article className="passport-dashboard-stat-mini" key={item.label}>
+                <div className="passport-dashboard-stat-mini-icon" aria-hidden="true">{item.icon}</div>
+                <div className="passport-dashboard-stat-mini-value">{item.value}</div>
+                <div className="passport-dashboard-stat-mini-label">{item.label}</div>
+              </article>
+            ))}
+          </section>
+
+          <section className="passport-dashboard-card">
+            <h2 className="passport-dashboard-card-title">{isZh ? "为你推荐的近期日程" : "Upcoming for You"}</h2>
+            <div className="passport-dashboard-timeline">
+              {timeline.length > 0 ? timeline.map((item) => (
+                <article className="passport-dashboard-timeline-item" key={`${item.month}-${item.day}-${item.title}`}>
+                  <div className="passport-dashboard-date">
+                    <div className="passport-dashboard-date-day">{item.day}</div>
+                    <div className="passport-dashboard-date-month">{item.month}</div>
+                  </div>
+                  <div className="passport-dashboard-timeline-content">
+                    <div className="passport-dashboard-timeline-title">{item.title}</div>
+                    <div className="passport-dashboard-timeline-meta">{item.meta}</div>
+                  </div>
+                  <Link className={item.primary ? "passport-dashboard-pill passport-dashboard-pill-primary" : "passport-dashboard-pill passport-dashboard-pill-ghost"} href={item.href}>{item.cta}</Link>
+                </article>
+              )) : (
+                <article className="passport-dashboard-timeline-empty">
+                  <div className="passport-dashboard-timeline-empty-title">{isZh ? "暂无待参与日程" : "No upcoming items yet"}</div>
+                  <div className="passport-dashboard-timeline-empty-meta">{isZh ? "报名活动后，这里会自动显示你的近期安排。" : "Your upcoming schedule will appear here after event registration."}</div>
+                </article>
+              )}
             </div>
+          </section>
 
-            <div className="button-row">
-              <span className="chip">{passport.issued} {account.issuedAt}</span>
-              <span className="chip">{account.achievements} {passport.achievements}</span>
+          <section className="passport-dashboard-card">
+            <h2 className="passport-dashboard-card-title">{isZh ? "最近证书" : "Recent Certificates"}</h2>
+            <div className="passport-dashboard-cert-grid">
+              {certificates.length > 0 ? certificates.map((item) => (
+                <article className="passport-dashboard-cert-card" key={item.title}>
+                  <div className="passport-dashboard-cert-head">
+                    <div className="passport-dashboard-cert-icon" aria-hidden="true">{item.icon}</div>
+                    <Link aria-label={isZh ? "下载证书" : "Download certificate"} className="passport-dashboard-cert-download" href={item.href}>↓</Link>
+                  </div>
+                  <div className="passport-dashboard-cert-title">{item.title}</div>
+                  <div className="passport-dashboard-cert-issuer">{item.issuer}</div>
+                  <div className="passport-dashboard-cert-date">{item.date}</div>
+                </article>
+              )) : (
+                <article className="passport-dashboard-cert-empty">
+                  <div className="passport-dashboard-cert-title">{isZh ? "暂无已签发证书" : "No issued certificates yet"}</div>
+                  <div className="passport-dashboard-cert-issuer">{isZh ? "完成课程或活动后将自动显示。" : "Issued certificates will appear here after completion."}</div>
+                </article>
+              )}
             </div>
-          </div>
+          </section>
+        </section>
 
-          <aside className="qr-card">
-            <span className="label">{passport.qrLabel}</span>
-            <h3>{passport.qrTitle}</h3>
-            <div className="qr-box">
-              <div className="qr-pattern" aria-label="Passport QR pattern" />
+        <aside className="passport-dashboard-right">
+          <section className="passport-dashboard-card passport-dashboard-profile-card">
+            <h2 className="passport-dashboard-card-title">{isZh ? "资料完整度" : "Profile Completion"}</h2>
+            <div className="passport-dashboard-progress-wrap">
+              <div className="passport-dashboard-progress-value">{profileCompletion}%</div>
+              <div className="passport-dashboard-progress-label">{isZh ? "已完成" : "Complete"}</div>
             </div>
-            <p className="footer-note">{passport.qrNote}</p>
-          </aside>
-        </div>
-      </section>
+            <Link className="passport-dashboard-pill passport-dashboard-pill-primary passport-dashboard-pill-full" href={`/${locale}/dashboard/messages`}>{isZh ? "完善我的资料" : "Finish Your Profile"}</Link>
+          </section>
 
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <span className="label">{passport.archiveLabel}</span>
-            <h2>{passport.archiveTitle}</h2>
-          </div>
-        </div>
-
-        <div className="badge-grid">
-          {passport.achievementsList.map((item) => (
-            <div className={`badge-tile ${item.unlocked ? "earned" : "locked"}`} key={item.title}>
-              <span className="badge-icon">{item.unlocked ? "✦" : "○"}</span>
-              <strong className="badge-name">{item.title}</strong>
+          <section className="passport-dashboard-card">
+            <h2 className="passport-dashboard-card-title">{isZh ? "成就徽章" : "Achievements"}</h2>
+            <div className="passport-dashboard-badge-grid">
+              {passport.achievementsList.map((item) => (
+                <article className={`passport-dashboard-badge ${item.unlocked ? "is-earned" : "is-locked"}`} key={item.title}>
+                  <div className="passport-dashboard-badge-icon" aria-hidden="true">{item.unlocked ? "🏅" : "🔒"}</div>
+                  <div className="passport-dashboard-badge-name">{item.title}</div>
+                </article>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-    </>
+          </section>
+
+          <section className="passport-dashboard-card">
+            <h2 className="passport-dashboard-card-title">{isZh ? "快捷操作" : "Quick Actions"}</h2>
+            <div className="passport-dashboard-action-grid">
+              <Link className="passport-dashboard-action" href={`/${locale}/dashboard/messages`}>{isZh ? "编辑资料" : "Edit Profile"}</Link>
+              <Link className="passport-dashboard-action" href={`/${locale}/events`}>{isZh ? "我的活动" : "My Events"}</Link>
+              <Link className="passport-dashboard-action" href={`/${locale}/dashboard/certificates`}>{isZh ? "证书中心" : "Certificates"}</Link>
+              <Link className="passport-dashboard-action" href={`/${locale}/dashboard/notifications`}>{isZh ? "通知设置" : "Settings"}</Link>
+            </div>
+          </section>
+        </aside>
+      </main>
+    </div>
   );
 }
 

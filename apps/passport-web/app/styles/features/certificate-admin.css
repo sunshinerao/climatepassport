@@ -1,3 +1,4 @@
+/*
    Certificate Admin Prototype Alignment  (cpca-*)
    Mirrors docs/ui-prototypes/certificates-admin.html body UI.
    Upgraded with richer animations, transitions, and polish.
@@ -374,7 +375,12 @@
 /* Buttons - Enhanced */
 .cpca-btn {
   align-items: center;
+  -webkit-appearance: none;
+  appearance: none;
   border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: #fff;
+  color: var(--cpca-ink-soft);
   display: inline-flex;
   font-size: 12px;
   font-weight: 600;
@@ -384,19 +390,28 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   cursor: pointer;
-  border: none;
+  text-decoration: none;
 }
 
-.cpca-btn-amber { background: var(--cpca-amber); color: #fff; box-shadow: 0 2px 8px rgba(196, 137, 63, 0.2); }
-.cpca-btn-amber:hover { background: #a87332; box-shadow: 0 4px 12px rgba(196, 137, 63, 0.3); transform: translateY(-1px); }
-.cpca-btn-outline { background: #fff; border: 1.5px solid rgba(11, 61, 46, 0.15); color: var(--cpca-ink-soft); }
-.cpca-btn-outline:hover { border-color: var(--cpca-forest); color: var(--cpca-forest); background: rgba(26, 93, 72, 0.03); }
-.cpca-btn-ghost { color: var(--cpca-ink-soft); background: transparent; }
-.cpca-btn-ghost:hover { background: var(--cpca-paper); color: var(--cpca-forest-deep); }
-.cpca-btn-success { background: #dcfce7; color: #166534; padding: 5px 10px; }
-.cpca-btn-success:hover { background: #bbf7d0; }
-.cpca-btn-danger { background: #fee2e2; color: #b33a3a; padding: 5px 10px; }
-.cpca-btn-danger:hover { background: #fecaca; }
+.cpca-btn-amber {
+  background: linear-gradient(135deg, var(--cpca-amber), #b17533) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(196, 137, 63, 0.2);
+}
+.cpca-btn-amber:hover { background: #a87332 !important; box-shadow: 0 4px 12px rgba(196, 137, 63, 0.3); transform: translateY(-1px); }
+.cpca-btn-outline {
+  background: #fff !important;
+  border-color: rgba(11, 61, 46, 0.15) !important;
+  color: var(--cpca-forest-deep) !important;
+}
+.cpca-btn-outline:hover { border-color: var(--cpca-forest) !important; color: var(--cpca-forest) !important; background: rgba(26, 93, 72, 0.03) !important; }
+.cpca-btn-ghost { color: var(--cpca-ink-soft) !important; background: transparent !important; border-color: transparent !important; }
+.cpca-btn-ghost:hover { background: var(--cpca-paper) !important; color: var(--cpca-forest-deep) !important; }
+.cpca-btn-success { background: #dcfce7 !important; border-color: transparent !important; color: #166534 !important; padding: 5px 10px; }
+.cpca-btn-success:hover { background: #bbf7d0 !important; }
+.cpca-btn-danger { background: #fee2e2 !important; border-color: transparent !important; color: #b33a3a !important; padding: 5px 10px; }
+.cpca-btn-danger:hover { background: #fecaca !important; }
 
 /* Layout helpers */
 .cpca-actions, .cpca-tab-row, .cpca-toggle-row, .cpca-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }

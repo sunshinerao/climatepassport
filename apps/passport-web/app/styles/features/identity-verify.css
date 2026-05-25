@@ -1,0 +1,193 @@
+.idv-page {
+  width: min(calc(100% - 40px), 920px);
+  margin: 0 auto;
+  padding: 42px 0 74px;
+}
+
+.idv-card {
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-xl);
+  background: var(--cp-white);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+
+.idv-status-valid {
+  border-color: rgba(31, 90, 78, 0.35);
+  background: linear-gradient(180deg, rgba(236, 248, 242, 0.9) 0%, var(--cp-white) 35%);
+}
+
+.idv-status-invalid {
+  border-color: rgba(179, 58, 58, 0.32);
+  background: linear-gradient(180deg, rgba(255, 241, 241, 0.92) 0%, var(--cp-white) 35%);
+}
+
+.idv-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.idv-status-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.28rem;
+  font-weight: 700;
+  color: var(--cp-white);
+  background: linear-gradient(135deg, #1f5a4e 0%, #2f7a67 100%);
+}
+
+.idv-status-invalid .idv-status-mark {
+  background: linear-gradient(135deg, #b33a3a 0%, #d66a5a 100%);
+}
+
+.idv-head h1 {
+  margin: 8px 0 10px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: clamp(1.72rem, 3.4vw, 2.3rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--cp-text);
+}
+
+.idv-head p {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.65;
+  color: var(--cp-text-secondary);
+}
+
+.idv-section {
+  margin-top: 18px;
+}
+
+.idv-section h2 {
+  margin: 0 0 10px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--cp-text);
+}
+
+.idv-audit-section {
+  margin-top: 16px;
+}
+
+.idv-privacy-note {
+  margin: 12px 2px 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--cp-text-secondary);
+}
+
+.idv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(31, 90, 78, 0.12);
+  color: var(--cp-ink);
+}
+
+.idv-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.idv-grid div {
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-md);
+  background: var(--cp-white);
+  padding: 13px 14px;
+}
+
+.idv-grid dt {
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+}
+
+.idv-grid dd {
+  margin: 6px 0 0;
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--cp-text);
+}
+
+.idv-mono {
+  font-family: "SF Mono", ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+
+.idv-error-box {
+  margin-top: 20px;
+  border: 1px dashed rgba(179, 58, 58, 0.38);
+  border-radius: var(--radius-md);
+  background: rgba(179, 58, 58, 0.06);
+  padding: 14px;
+}
+
+.idv-error-box strong {
+  display: block;
+  font-size: 0.8125rem;
+  color: #9f2c2c;
+}
+
+.idv-error-box p {
+  margin: 8px 0 0;
+  font-size: 0.9375rem;
+  color: #7d2d2d;
+}
+
+.idv-hints {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #7d2d2d;
+}
+
+.idv-error-meta {
+  margin-top: 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: #7d2d2d;
+}
+
+.idv-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .idv-page {
+    width: min(calc(100% - 24px), 920px);
+    padding: 24px 0 52px;
+  }
+
+  .idv-card {
+    padding: 20px;
+  }
+
+  .idv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .idv-head {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
