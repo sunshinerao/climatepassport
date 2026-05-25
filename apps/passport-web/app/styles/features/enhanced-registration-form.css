@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════════════════
+   Enhanced Registration Form (Task 2)
+   ════════════════════════════════════════════════════════════════ */
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field-row-3 {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr 1fr;
+  gap: 10px;
+}
+
+.form-section-head {
+  margin: 20px 0 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cp-line);
+}
+
+.form-section-head strong {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cp-text-secondary);
+}
+
+.form-section-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--cp-line);
+  background: var(--cp-bg-soft);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cp-text-secondary);
+  width: 100%;
+  text-align: left;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.form-section-toggle:hover {
+  border-color: var(--cp-line-strong);
+  background: var(--cp-white);
+}
+
+@media (max-width: 720px) {
+  .field-row,
+  .field-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+

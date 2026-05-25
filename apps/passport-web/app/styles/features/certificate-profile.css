@@ -1,0 +1,519 @@
+/* ============================================================
+   Public Profile Page (cpp-*)
+   Mirrors docs/ui-prototypes/certificates-profile.html body UI.
+   ============================================================ */
+.cpp {
+  width: min(calc(100% - 40px), 1100px);
+  margin: 0 auto;
+  padding: 0 0 96px;
+  display: grid;
+  gap: 32px;
+}
+
+/* Profile Header */
+.cpp-header {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  padding: 48px 36px;
+}
+
+.cpp-header-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0b3d2e 0%, #1a5d48 40%, #2a7a5e 80%, #4a8a6a 100%);
+  z-index: 0;
+}
+
+.cpp-header-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 75% 25%, rgba(196, 137, 63, 0.12), transparent 45%);
+}
+
+.cpp-header-content {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  display: grid;
+  gap: 20px;
+}
+
+.cpp-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+}
+
+.cpp-header-info {
+  display: grid;
+  gap: 8px;
+}
+
+.cpp-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cpp-name-row h1 {
+  margin: 0;
+  font-size: 32px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  line-height: 1.1;
+}
+
+.cpp-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cpp-title {
+  margin: 0;
+  opacity: 0.85;
+  font-size: var(--cp-text-body-lg);
+}
+
+.cpp-meta-items {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.cpp-meta-item {
+  font-size: var(--cp-text-small);
+  opacity: 0.7;
+}
+
+.cpp-stats-row {
+  display: flex;
+  gap: 36px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.cpp-stat {
+  display: grid;
+  gap: 2px;
+}
+
+.cpp-stat strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.cpp-stat span {
+  font-size: var(--cp-text-small);
+  opacity: 0.7;
+}
+
+/* Sections */
+.cpp-section {
+  display: grid;
+  gap: 16px;
+}
+
+.cpp-section h2 {
+  margin: 0;
+  font-size: 22px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+}
+
+/* Featured Grid */
+.cpp-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cpp-featured-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--cp-line);
+  border-radius: 18px;
+  background: var(--cp-white);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cpp-featured-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(18, 56, 47, 0.08);
+}
+
+.cpp-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.cpp-card-accent.accent-0 { background: linear-gradient(90deg, #1a5d48, #4a8a6a); }
+.cpp-card-accent.accent-1 { background: linear-gradient(90deg, #c4893f, #e8c88a); }
+.cpp-card-accent.accent-2 { background: linear-gradient(90deg, #2a7a5e, #8fb89a); }
+.cpp-card-accent.accent-3 { background: linear-gradient(90deg, #0b3d2e, #1a5d48); }
+
+.cpp-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cpp-card-type {
+  font-size: var(--cp-text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cp-text-muted);
+}
+
+.cpp-card-verified-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a5d48;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cpp-featured-card h3 {
+  margin: 0;
+  font-size: 17px;
+  font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  line-height: 1.2;
+}
+
+.cpp-featured-card p {
+  margin: 0;
+  font-size: var(--cp-text-small);
+  color: var(--cp-text-secondary);
+}
+
+.cpp-card-date {
+  font-size: var(--cp-text-caption);
+  color: var(--cp-text-muted);
+}
+
+.cpp-card-verify-link {
+  font-size: var(--cp-text-small);
+  font-weight: 600;
+  color: var(--cp-forest);
+}
+
+/* Competency Cloud */
+.cpp-competency-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cpp-skill-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: transform 0.15s;
+}
+
+.cpp-skill-pill:hover {
+  transform: scale(1.05);
+}
+
+.cpp-skill-advanced {
+  font-size: 14px;
+  background: #e8f5e9;
+  color: #0b3d2e;
+  border: 1.5px solid rgba(26, 93, 72, 0.3);
+}
+
+.cpp-skill-intermediate {
+  font-size: 13px;
+  background: #f0f7f2;
+  color: #1a5d48;
+  border: 1px solid rgba(26, 93, 72, 0.15);
+}
+
+.cpp-skill-beginner {
+  font-size: 12px;
+  background: var(--cp-bg-soft);
+  color: var(--cp-text-secondary);
+  border: 1px solid var(--cp-line);
+}
+
+/* Timeline */
+.cpp-timeline {
+  position: relative;
+  padding-left: 32px;
+}
+
+.cpp-timeline::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, #1a5d48, #c4dcc8);
+  border-radius: 999px;
+}
+
+.cpp-timeline-item {
+  position: relative;
+  padding: 0 0 24px;
+}
+
+.cpp-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.cpp-timeline-dot {
+  position: absolute;
+  left: -26px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1a5d48;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(26, 93, 72, 0.2);
+}
+
+.cpp-timeline-content {
+  display: grid;
+  gap: 4px;
+}
+
+.cpp-timeline-date {
+  font-size: var(--cp-text-caption);
+  font-weight: 600;
+  color: var(--cp-text-muted);
+}
+
+.cpp-timeline-content h4 {
+  margin: 0;
+  font-size: var(--cp-text-body);
+  font-weight: 600;
+}
+
+.cpp-timeline-type {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #1a5d48;
+  width: fit-content;
+}
+
+.cpp-timeline-verify {
+  font-size: var(--cp-text-small);
+  font-weight: 600;
+  color: var(--cp-forest);
+}
+
+/* Credential List */
+.cpp-tab-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cpp-tab {
+  padding: 7px 14px;
+  border: 1px solid var(--cp-line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  color: var(--cp-text-secondary);
+}
+
+.cpp-tab:hover {
+  border-color: var(--cp-forest);
+}
+
+.cpp-tab.is-active {
+  background: var(--cp-ink);
+  border-color: var(--cp-ink);
+  color: #fff;
+}
+
+.cpp-credential-list {
+  display: grid;
+  gap: 2px;
+}
+
+.cpp-credential-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.cpp-credential-row:hover {
+  background: var(--cp-bg-soft);
+}
+
+.cpp-credential-icon {
+  font-size: 20px;
+}
+
+.cpp-credential-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cpp-credential-info strong {
+  font-size: var(--cp-text-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cpp-credential-info span {
+  font-size: var(--cp-text-small);
+  color: var(--cp-text-muted);
+}
+
+.cpp-credential-date {
+  font-size: var(--cp-text-small);
+  color: var(--cp-text-muted);
+}
+
+.cpp-credential-type-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--cp-bg-soft);
+  color: var(--cp-text-secondary);
+}
+
+.cpp-credential-verify {
+  font-size: var(--cp-text-small);
+  font-weight: 600;
+  color: var(--cp-forest);
+}
+
+/* Program Grid */
+.cpp-program-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cpp-program-card {
+  padding: 20px;
+  border: 1px solid var(--cp-line);
+  border-radius: 16px;
+  background: var(--cp-white);
+  display: grid;
+  gap: 8px;
+}
+
+.cpp-program-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cpp-program-card p {
+  margin: 0;
+  font-size: var(--cp-text-small);
+  color: var(--cp-text-secondary);
+  line-height: var(--cp-leading-body);
+}
+
+.cpp-program-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.cpp-program-status.is-complete {
+  background: #e8f5e9;
+  color: #1a5d48;
+}
+
+.cpp-program-status.is-active {
+  background: #fff8ef;
+  color: #5d3a0a;
+}
+
+@media (max-width: 1024px) {
+  .cpp-featured-grid,
+  .cpp-program-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .cpp-header {
+    padding: 32px 20px;
+  }
+
+  .cpp-name-row h1 {
+    font-size: 24px;
+  }
+
+  .cpp-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .cpp-stats-row {
+    gap: 24px;
+  }
+
+  .cpp-featured-grid,
+  .cpp-program-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cpp-credential-row {
+    grid-template-columns: 36px 1fr;
+  }
+
+  .cpp-credential-date,
+  .cpp-credential-type-badge {
+    display: none;
+  }
+
+  .cpp-timeline {
+    padding-left: 26px;
+  }
+}
+

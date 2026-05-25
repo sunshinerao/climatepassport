@@ -1,0 +1,307 @@
+/* ═══════════════════════════════════════════════════════════════
+   Dashboard Redesign (Task 5)
+   ════════════════════════════════════════════════════════════════ */
+
+.dash-welcome {
+  padding: 32px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #12382f 0%, #1f5a4e 62%, #89a99a 160%);
+  color: var(--cp-white);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.dash-welcome::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.dash-welcome > * { position: relative; z-index: 1; }
+
+.dash-welcome-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.dash-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.22);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dash-id-tag {
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", monospace;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.65);
+  margin-top: 4px;
+}
+
+.dash-points-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dash-point-box {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.dash-point-box strong {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--cp-white);
+}
+
+.dash-point-box span {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.58);
+  margin-top: 4px;
+}
+
+.dash-level-bar {
+  margin-top: 14px;
+}
+
+.dash-level-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 6px;
+}
+
+.dash-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #89ddc6 0%, #4fc9a4 100%);
+}
+
+/* Dashboard section groupings */
+.dash-section {
+  margin-top: 32px;
+}
+
+.dash-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dash-section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.dash-section-header a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cp-forest);
+}
+
+/* Certificate card */
+.cert-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.cert-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--cp-line);
+  background: var(--cp-white);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cert-card:hover {
+  border-color: var(--cp-line-strong);
+  box-shadow: 0 16px 40px rgba(18,56,47,0.08);
+}
+
+.cert-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  border: 1px solid var(--cp-line);
+  background: linear-gradient(135deg, #eef6f1 0%, #f8fbf8 100%);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.cert-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cert-card-meta {
+  font-size: 12px;
+  color: var(--cp-text-secondary);
+  line-height: 1.5;
+}
+
+.cert-status-issued {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-top: auto;
+}
+
+.cert-status-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-top: auto;
+}
+
+/* Achievement grid for dashboard */
+.dash-achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.dash-achievement {
+  padding: 20px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--cp-line);
+  background: var(--cp-white);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-achievement.unlocked {
+  border-color: #89a99a;
+  background: linear-gradient(180deg, #f4f9f6 0%, var(--cp-white) 100%);
+}
+
+.dash-achievement.locked { opacity: 0.38; }
+
+.dash-achievement-icon { font-size: 30px; line-height: 1; }
+
+.dash-achievement-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cp-text);
+  line-height: 1.3;
+}
+
+.dash-achievement-pts {
+  font-size: 11px;
+  color: var(--cp-text-muted);
+}
+
+/* Activity feed */
+.dash-feed {
+  display: grid;
+  gap: 0;
+}
+
+.dash-feed-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--cp-line);
+}
+
+.dash-feed-item:last-child { border-bottom: none; }
+
+.dash-feed-dot {
+  flex-shrink: 0;
+  margin-top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cp-ink);
+  border: 2px solid var(--cp-white);
+  box-shadow: 0 0 0 1px var(--cp-line-strong);
+}
+
+.dash-feed-body { flex: 1; }
+
+.dash-feed-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cp-text);
+}
+
+.dash-feed-time {
+  font-size: 12px;
+  color: var(--cp-text-muted);
+  margin-top: 2px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .dash-points-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dash-points-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+

@@ -516,8 +516,8 @@ export async function CertificatesScreen({ locale }: { locale: Locale }) {
         </div>
 
         <div className="cert-list">
-          {certificates.checks.map((check) => (
-            <div className="cert-item" key={check.code}>
+          {certificates.checks.map((check, index) => (
+            <div className="cert-item" key={`${check.code}-${index}`}>
               <div className="cert-mark">✓</div>
               <div className="cert-info">
                 <strong>{check.result}</strong>

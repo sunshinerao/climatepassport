@@ -15,8 +15,6 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
   // Minimal shell: hide nav + footer main content on focused pages
   const pathname = headers().get("x-pathname") ?? "";
   const isMinimal = pathname.includes("/dashboard/summer-school");
-  const normalizedPathname = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-  const isLocaleHome = normalizedPathname === `/${locale}`;
 
   return (
     <div className="app-shell">
@@ -57,7 +55,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
         </div>
       </header>
 
-      <main className={isLocaleHome ? "page page-home" : "page"}>{children}</main>
+      <main className="page">{children}</main>
 
       <footer className="site-footer">
         {!isMinimal && (
