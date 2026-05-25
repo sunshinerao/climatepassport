@@ -45,8 +45,8 @@ export async function getHomePageData(locale: Locale) {
 
   return withPrismaFallback(
     async (prisma) => {
-      const [userCount, eventCount, certificateCount, checkinCount, upcomingEvents] = await Promise.all([
-        prisma.user.count(),
+      const [passportHolderCount, eventCount, certificateCount, checkinCount, upcomingEvents] = await Promise.all([
+        prisma.user.count({ where: { climatePassportId: { not: null } } }),
         prisma.event.count({ where: { isPublished: true } }),
         prisma.certificateIssue.count({ where: { status: "ISSUED" } }),
         prisma.checkIn.count(),
@@ -74,7 +74,7 @@ export async function getHomePageData(locale: Locale) {
         home: {
           ...dictionary.home,
           metrics: [
-            { ...dictionary.home.metrics[0], value: userCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },
+            { ...dictionary.home.metrics[0], value: passportHolderCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },
             { ...dictionary.home.metrics[1], value: eventCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },
             { ...dictionary.home.metrics[2], value: certificateCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },
             { ...dictionary.home.metrics[3], value: checkinCount.toLocaleString(locale === "zh" ? "zh-CN" : "en-US") },

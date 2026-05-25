@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Certificates slide">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f3328"/>
+      <stop offset="100%" stop-color="#1f5a4e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg3)"/>
+  <rect x="190" y="150" width="820" height="500" rx="32" fill="#fffdf9"/>
+  <rect x="240" y="210" width="720" height="90" rx="20" fill="#f0e8d8"/>
+  <rect x="280" y="238" width="360" height="34" rx="17" fill="#1f5a4e"/>
+  <rect x="700" y="228" width="220" height="52" rx="26" fill="#c4893f"/>
+  <rect x="240" y="340" width="450" height="18" rx="9" fill="#b9cec4"/>
+  <rect x="240" y="378" width="450" height="18" rx="9" fill="#b9cec4"/>
+  <rect x="240" y="416" width="450" height="18" rx="9" fill="#b9cec4"/>
+  <rect x="730" y="340" width="230" height="230" rx="24" fill="#e9f1ed"/>
+  <rect x="768" y="378" width="156" height="156" rx="12" fill="#2a6b5a"/>
+</svg>

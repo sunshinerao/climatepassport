@@ -347,6 +347,7 @@ export async function PATCH(
               verificationCode,
               generatedFileName: artifact.fileName,
               generatedFileUrl: artifact.dataUrl,
+              variableValuesJson: variableValues,
             },
             select: { id: true },
           });

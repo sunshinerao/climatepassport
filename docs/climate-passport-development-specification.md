@@ -1,6 +1,6 @@
 # Climate Passport Development Specification
 
-Last updated: 2026-05-23
+Last updated: 2026-05-25
 
 Status: Current supporting product specification. The source-of-truth entrypoint is `docs/README.md`.
 
@@ -293,7 +293,80 @@ Avoid:
 - Keep business rules portable so they can move into `packages/passport-core`.
 - Keep contracts explicit so channel shells can integrate safely.
 
-## 10. Current Source Of Truth
+## 10. Frontend Style Boundary Strategy
+
+### 10.1 Why This Strategy
+
+Current styling has grown through fast iteration, with a large shared stylesheet and weak module boundaries. This increases regression risk, slows delivery, and makes visual consistency difficult to sustain.
+
+The long-term strategy is to split styling by responsibility and enforce strict boundaries, while preserving existing user-facing behavior.
+
+### 10.2 Target Layer Model
+
+Adopt a four-layer style architecture:
+
+- Foundation layer: design tokens, reset, typography scale, spacing scale, color system, motion primitives.
+- Shared layer: stable reusable patterns (layout primitives, buttons, form controls, cards, badges).
+- Feature layer: module-owned styles for domain features (Passport, Certificates, Events, Learning Experiences, Admin modules).
+- Legacy layer: temporary compatibility zone for historical styles pending migration/removal.
+
+Direction of dependency:
+
+- Feature can consume Shared and Foundation.
+- Shared can consume Foundation.
+- Foundation cannot depend on upper layers.
+- Legacy cannot be used for new features.
+
+### 10.3 Boundary Rules
+
+Mandatory rules:
+
+- No new global style selectors for feature-specific UI.
+- No cross-module selector coupling.
+- No module overriding another module's internals.
+- New UI changes must be implemented inside module scope first; shared extraction only after repeated usage is confirmed.
+- Any style touching Foundation or Shared must include explicit regression checks for key pages.
+- Legacy styles are read-only except for risk fixes and migration bridges.
+
+### 10.4 Migration Roadmap
+
+Phase A: Stop-Bleed (short term)
+
+- Freeze new style accretion into global legacy zones.
+- Add ownership headers in style files to indicate layer and module scope.
+- Define baseline regression pages for homepage, verify flows, dashboard core pages, and admin core pages.
+
+Phase B: High-Risk Split (mid term)
+
+- Prioritize splitting high-change and high-regression areas first (homepage blocks, certificate verify views, admin navigation shell).
+- Move repeated utilities into Shared layer with clear naming contracts.
+- Keep behavior identical while relocating styles; avoid redesign during boundary split.
+
+Phase C: Governance Completion (long term)
+
+- Enforce lint/review checks for boundary violations.
+- Shrink Legacy layer continuously and track removable selectors.
+- Require new modules to start with Feature-scoped style entrypoints and zero direct legacy dependency.
+
+### 10.5 Definition Of Done
+
+The style boundary strategy is considered effective when:
+
+- New features are added without touching legacy global style blocks.
+- Cross-page style regressions are measurably reduced in recurring change cycles.
+- Module ownership of style files is clear and stable.
+- Shared layer usage increases while duplicate selectors decrease.
+- Legacy layer trend is down over time with tracked removals.
+
+### 10.6 Immediate Decisions
+
+Effective immediately:
+
+- New feature delivery must follow the four-layer boundary model.
+- Global stylesheet changes are allowed only for Foundation-level tokens or approved compatibility fixes.
+- Each style-boundary migration task must include a brief change note and tracker update.
+
+## 11. Current Source Of Truth
 
 For future development, read:
 

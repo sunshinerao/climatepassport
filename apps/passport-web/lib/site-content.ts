@@ -2,7 +2,7 @@ export const locales = ["en", "zh", "fr", "de"] as const;
 
 export type Locale = (typeof locales)[number];
 
-/** Locales that have actual translated dictionaries */
+/** Core locales used by account snapshots and legacy zh/en branches */
 type CoreLocale = "en" | "zh";
 const coreLocaleSet = new Set<string>(["en", "zh"]);
 
@@ -344,7 +344,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     },
     home: {
       kicker: "Climate Identity Infrastructure",
-      title: "Your verified record for the climate era.",
+      title: "Building trusted digital identity infrastructure for the climate era.",
       subtitle: "For the planet, for yourself, for the future",
       body:
         "Climate Passport records your credentials, events, learning, and climate action into a trusted digital profile you own and can share anywhere.",
@@ -993,6 +993,245 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
   },
 };
 
+function buildFrDictionary(base: SiteDictionary): SiteDictionary {
+  return {
+    ...base,
+    shell: {
+      ...base.shell,
+      nav: [
+        { href: "/", label: "Plateforme" },
+        { href: "/dashboard/climate-passport", label: "Passeport" },
+        { href: "/certificates", label: "Certificats" },
+        { href: "/events", label: "Evenements" },
+        { href: "/speakers", label: "Personnes" },
+      ],
+      switchLabel: "Langue",
+      actions: {
+        ...base.shell.actions,
+        summerSchool: "Ecole d'ete",
+        admin: "Admin",
+        dashboard: "Tableau de bord",
+        logout: "Se deconnecter",
+        login: "Connexion",
+        register: "Inscription",
+      },
+      footer: {
+        ...base.shell.footer,
+        sitemapTitle: "Plateforme",
+        infoTitle: "Informations",
+        infoLinks: [
+          { href: "/about", label: "A propos" },
+          { href: "/contact", label: "Contact" },
+          { href: "/terms", label: "Conditions" },
+          { href: "/privacy", label: "Confidentialite" },
+          { href: "/faq", label: "FAQ" },
+        ],
+        shellTitle: "Commencer",
+        certificateTitle: "Certificats",
+      },
+    },
+    home: {
+      ...base.home,
+      kicker: "Infrastructure d'identite climatique",
+      title: "Construire une infrastructure d'identite numerique de confiance pour l'ere climatique.",
+      subtitle: "Pour la planete, pour vous, pour l'avenir",
+      primaryCta: "Creer mon Passeport",
+      secondaryCta: "Explorer les certificats",
+      proofTitle: "Pourquoi Climate Passport",
+      sectionLabel: "Fonctionnalites de la plateforme",
+      sectionTitle: "Modules principaux",
+      sectionBody: "Identity, events, certifications and learning records in one trusted platform.",
+    },
+    passport: {
+      ...base.passport,
+      label: "Passeport",
+      title: "Votre identite climatique verifiable",
+      intro: "Un profil personnel numerique verifie qui suit vos apprentissages, participations et certifications.",
+    },
+    certificates: {
+      ...base.certificates,
+      label: "Certificats",
+      title: "Centre de certificats verifiables",
+      intro: "Issuance, verification and download managed under one trusted lifecycle.",
+    },
+    events: {
+      ...base.events,
+      label: "Evenements",
+      title: "Participation et verification d'evenements",
+    },
+    speakers: {
+      ...base.speakers,
+      label: "Personnes",
+      title: "Personnes et partenaires",
+    },
+    notifications: {
+      ...base.notifications,
+      label: "Notifications",
+      title: "Centre de notifications",
+    },
+    messages: {
+      ...base.messages,
+      label: "Messages",
+      title: "Messages de support et de workflow",
+    },
+    info: {
+      ...base.info,
+      about: { ...base.info.about, label: "A propos de Climate Passport", title: "A propos de la plateforme Climate Passport" },
+      contact: { ...base.info.contact, label: "Contact", title: "Contacter l'equipe Climate Passport" },
+      terms: { ...base.info.terms, label: "Conditions", title: "Conditions d'utilisation de Climate Passport" },
+      privacy: { ...base.info.privacy, label: "Confidentialite", title: "Politique de confidentialite de Climate Passport" },
+      faq: { ...base.info.faq, label: "FAQ", title: "Centre d'aide Climate Passport" },
+    },
+    auth: {
+      login: {
+        ...base.auth.login,
+        kicker: "Bienvenue",
+        title: "Connexion a Climate Passport",
+        formLabel: "Connexion",
+        formTitle: "Saisissez vos identifiants",
+        email: "Adresse e-mail",
+        password: "Mot de passe",
+        submit: "Se connecter",
+        switchCta: "Creer un compte",
+      },
+      register: {
+        ...base.auth.register,
+        formLabel: "Creer un compte",
+        formTitle: "Vos informations",
+        name: "Nom",
+        email: "Adresse e-mail",
+        password: "Mot de passe",
+        submit: "Creer mon Passeport",
+        switchCta: "Retour a la connexion",
+        kicker: "Rejoindre Climate Passport",
+      },
+    },
+  };
+}
+
+function buildDeDictionary(base: SiteDictionary): SiteDictionary {
+  return {
+    ...base,
+    shell: {
+      ...base.shell,
+      nav: [
+        { href: "/", label: "Plattform" },
+        { href: "/dashboard/climate-passport", label: "Pass" },
+        { href: "/certificates", label: "Zertifikate" },
+        { href: "/events", label: "Events" },
+        { href: "/speakers", label: "Personen" },
+      ],
+      switchLabel: "Sprache",
+      actions: {
+        ...base.shell.actions,
+        summerSchool: "Summer School",
+        admin: "Admin",
+        dashboard: "Dashboard",
+        logout: "Abmelden",
+        login: "Anmelden",
+        register: "Registrieren",
+      },
+      footer: {
+        ...base.shell.footer,
+        sitemapTitle: "Plattform",
+        infoTitle: "Informationen",
+        infoLinks: [
+          { href: "/about", label: "Uber uns" },
+          { href: "/contact", label: "Kontakt" },
+          { href: "/terms", label: "Nutzungsbedingungen" },
+          { href: "/privacy", label: "Datenschutz" },
+          { href: "/faq", label: "FAQ" },
+        ],
+        shellTitle: "Erste Schritte",
+        certificateTitle: "Zertifikate",
+      },
+    },
+    home: {
+      ...base.home,
+      kicker: "Klima-Identitatsinfrastruktur",
+      title: "Aufbau einer vertrauenswurdigen digitalen Identitatsinfrastruktur fur das Klima-Zeitalter.",
+      subtitle: "Fur den Planeten, fur Sie, fur die Zukunft",
+      primaryCta: "Mein Passport erstellen",
+      secondaryCta: "Zertifikate entdecken",
+      proofTitle: "Warum Climate Passport",
+      sectionLabel: "Plattform-Funktionen",
+      sectionTitle: "Kernmodule",
+      sectionBody: "Identity, events, certifications and learning records in one trusted platform.",
+    },
+    passport: {
+      ...base.passport,
+      label: "Pass",
+      title: "Ihre verifizierbare Klima-Identitat",
+      intro: "Ein verifiziertes digitales Profil, das Lernen, Teilnahmen und Zertifikate dokumentiert.",
+    },
+    certificates: {
+      ...base.certificates,
+      label: "Zertifikate",
+      title: "Hub fur verifizierbare Zertifikate",
+      intro: "Issuance, verification and download managed under one trusted lifecycle.",
+    },
+    events: {
+      ...base.events,
+      label: "Events",
+      title: "Teilnahme und Verifizierung von Events",
+    },
+    speakers: {
+      ...base.speakers,
+      label: "Personen",
+      title: "Personen und Partner",
+    },
+    notifications: {
+      ...base.notifications,
+      label: "Benachrichtigungen",
+      title: "Benachrichtigungszentrum",
+    },
+    messages: {
+      ...base.messages,
+      label: "Nachrichten",
+      title: "Support- und Workflow-Nachrichten",
+    },
+    info: {
+      ...base.info,
+      about: { ...base.info.about, label: "Uber Climate Passport", title: "Uber die Climate Passport Plattform" },
+      contact: { ...base.info.contact, label: "Kontakt", title: "Kontakt zum Climate Passport Team" },
+      terms: { ...base.info.terms, label: "Nutzungsbedingungen", title: "Nutzungsbedingungen von Climate Passport" },
+      privacy: { ...base.info.privacy, label: "Datenschutz", title: "Datenschutz bei Climate Passport" },
+      faq: { ...base.info.faq, label: "FAQ", title: "Climate Passport Hilfezentrum" },
+    },
+    auth: {
+      login: {
+        ...base.auth.login,
+        kicker: "Willkommen zuruck",
+        title: "Bei Climate Passport anmelden",
+        formLabel: "Anmeldung",
+        formTitle: "Geben Sie Ihre Zugangsdaten ein",
+        email: "E-Mail-Adresse",
+        password: "Passwort",
+        submit: "Anmelden",
+        switchCta: "Konto erstellen",
+      },
+      register: {
+        ...base.auth.register,
+        formLabel: "Konto erstellen",
+        formTitle: "Ihre Angaben",
+        name: "Name",
+        email: "E-Mail-Adresse",
+        password: "Passwort",
+        submit: "Meinen Passport erstellen",
+        switchCta: "Zuruck zur Anmeldung",
+        kicker: "Climate Passport beitreten",
+      },
+    },
+  };
+}
+
+const localizedDictionaries: Record<Locale, SiteDictionary> = {
+  en: siteContent.en,
+  zh: siteContent.zh,
+  fr: buildFrDictionary(siteContent.en),
+  de: buildDeDictionary(siteContent.en),
+};
+
 /** Maps any locale to the nearest available translated locale */
 export function toCoreLocale(locale: Locale | string): CoreLocale {
   return coreLocaleSet.has(locale) ? (locale as CoreLocale) : "en";
@@ -1000,9 +1239,7 @@ export function toCoreLocale(locale: Locale | string): CoreLocale {
 
 export function getDictionary(locale: Locale | string) {
   if (isSupportedLocale(locale)) {
-    // fr and de fall back to English content until translations are added
-    const key: CoreLocale = coreLocaleSet.has(locale) ? (locale as CoreLocale) : "en";
-    return siteContent[key];
+    return localizedDictionaries[locale];
   }
-  return siteContent.en;
+  return localizedDictionaries.en;
 }

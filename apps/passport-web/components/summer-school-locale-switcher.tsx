@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/site-content";
 
 const OPTIONS = [
-  { code: "en" as const, flag: "🇬🇧", label: "English" },
   { code: "zh" as const, flag: "🇨🇳", label: "中文" },
+  { code: "en" as const, flag: "🇬🇧", label: "English" },
 ];
 
 export function SummerSchoolLocaleSwitcher({ locale, label }: { locale: Locale; label: string }) {

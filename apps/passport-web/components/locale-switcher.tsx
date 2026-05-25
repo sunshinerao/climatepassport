@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import type { Locale } from "@/lib/site-content";
 
 const LOCALE_OPTIONS = [
-  { code: "en" as const, flag: "🇬🇧", label: "English" },
   { code: "zh" as const, flag: "🇨🇳", label: "中文" },
+  { code: "en" as const, flag: "🇬🇧", label: "English" },
   { code: "fr" as const, flag: "🇫🇷", label: "Français" },
   { code: "de" as const, flag: "🇩🇪", label: "Deutsch" },
 ];

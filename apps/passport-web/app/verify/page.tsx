@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
 
-export default async function PublicCertificateVerificationPage({
-  params,
+export default function VerifyEntryPage({
   searchParams,
 }: {
-  params: { code: string };
-  searchParams?: { preview?: string; source?: string };
+  searchParams?: { code?: string; preview?: string; source?: string };
 }) {
-  const code = encodeURIComponent(params.code.trim());
+  const code = searchParams?.code?.trim();
+
+  if (!code) {
+    redirect("/en");
+  }
+
   const query = new URLSearchParams();
 
   if (searchParams?.preview === "1") {
@@ -19,5 +22,5 @@ export default async function PublicCertificateVerificationPage({
   }
 
   const suffix = query.toString();
-  redirect(`/en/verify/certificate/${code}${suffix ? `?${suffix}` : ""}`);
+  redirect(`/en/verify/certificate/${encodeURIComponent(code)}${suffix ? `?${suffix}` : ""}`);
 }

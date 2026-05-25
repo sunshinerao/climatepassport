@@ -1,6 +1,6 @@
 # Climate Passport Platform Pending Features Tracker
 
-Last updated: 2026-05-23
+Last updated: 2026-05-25
 
 ## Status Legend
 
@@ -157,3 +157,48 @@ Last updated: 2026-05-23
 - [x] CP-TODO-111 `done` phase P2 test scaffolding: extracted summer-school lookup filter helper and added regression tests in `tests/summer-school-lookup.test.mjs`.
 - [ ] CP-TODO-112 `doing` phase P2 expansion: extend automated coverage from helper-level tests to API permission boundaries and certificate lifecycle end-to-end cases.
 - [x] CP-TODO-113 `done` certificate profile visibility persistence: added `CertificateIssue.publicVisible`, owner/admin visibility API, public profile filtering, and migration `20260523001000_certificate_public_visibility`.
+- [x] CP-TODO-115 `done` topbar action visual consistency: unified right-side header control height baseline for login/register, account trigger, and locale switcher in `apps/passport-web/app/globals.css`.
+- [x] CP-TODO-116 `done` fr/de locale enablement: wired locale-specific dictionaries for `fr` and `de` in `apps/passport-web/lib/site-content.ts` and switched `getDictionary` from fallback-only behavior to locale return.
+- [x] CP-TODO-117 `done` home hero text refinement: increased left text column width, enlarged hero subtitle by 20%, and added hover tooltip annotation for the term "气候时代" in `apps/passport-web/components/platform-screens.tsx` and `apps/passport-web/app/globals.css`.
+- [x] CP-TODO-118 `done` homepage first-screen spacing polish: removed extra top whitespace on locale home route by adding `page-home` class override in `apps/passport-web/components/site-shell.tsx` and `apps/passport-web/app/globals.css`.
+- [x] CP-TODO-119 `done` hero text sizing correction: clarified requirement to increase only hero text-container width by 25% and reduce the line "属于你的气候时代的可信档案" font size by 20% in `apps/passport-web/app/globals.css`.
+- [x] CP-TODO-120 `done` hero structure refresh: updated homepage hero to 6:4 layout, locked zh title to single-line adaptive sizing, removed italic styling from "气候时代" with left-aligned tooltip, and replaced right-side static card with auto-looping media showcase.
+- [x] CP-TODO-121 `done` hero tooltip spacing refinement: kept "气候时代" inherited color, doubled zh hero title-to-subtitle spacing, and ensured tooltip keeps fixed width with wrapped text while remaining left-aligned.
+- [x] CP-TODO-122 `done` hero term color update: changed "气候时代" term color to gold accent (`var(--amber-warm, #c4893f)`) in homepage zh hero title.
+- [x] CP-TODO-123 `done` hero zh subtitle copy refresh: replaced zh subtitle with two-line copy and preserved consistent size/color/style between both lines with normal line spacing.
+- [x] CP-TODO-124 `done` hero zh description upgrade: replaced zh hero description copy, set "Climate Passport" to gold accent, and added hover tooltip with bilingual explanatory content.
+- [x] CP-TODO-125 `done` hero zh main title update: changed zh hero headline to "为气候时代构建可信数字身份基础设施。" while keeping existing tooltip, color accents, and layout unchanged.
+- [x] CP-TODO-126 `done` hero zh title size adjustment: reduced the updated zh hero headline adaptive font size by 30% across desktop and mobile breakpoints.
+- [x] CP-TODO-127 `done` hero lower-copy sizing pass: reduced the two text blocks below the zh hero headline (`hero-subtitle` and `hero-desc`) by about 10% with matching mobile adjustments.
+- [x] CP-TODO-128 `done` hero multilingual headline alignment: set EN homepage headline to the approved definition and aligned FR/DE headline translations to equivalent meaning in `apps/passport-web/lib/site-content.ts`.
+- [x] CP-TODO-129 `done` hero cross-locale visual parity: unified EN/FR/DE hero headline keyword color, hover tooltip behavior, and adaptive title size strategy with zh implementation.
+- [x] CP-TODO-130 `done` hero multilingual copy parity: aligned EN/FR/DE subtitle and description content with zh semantics using explicit locale copy blocks in `apps/passport-web/components/platform-screens.tsx`.
+- [x] CP-TODO-131 `done` hero tooltip locale parity: localized `Climate Passport` hover tooltip content for `en/fr/de` instead of reusing mixed zh/en text.
+- [x] CP-TODO-132 `done` hero brand spacing parity: added one explicit space between `Climate Passport` and the following description text across all locales.
+- [x] CP-TODO-133 `done` locale switch order update: swapped zh/en positions in the main locale switcher and Summer School locale switcher while keeping other language ordering unchanged.
+- [x] CP-TODO-134 `done` hero stats strip scale-down: reduced the stats background block height by ~15% and stat number font-size by ~15% on desktop and mobile.
+- [x] CP-TODO-135 `done` metric definition correction: changed homepage "Passport holders" metric from total user count to Climate Passport holder count (`climatePassportId` non-null), without active-status filtering.
+- [x] CP-TODO-136 `done` home third-section alignment: updated How It Works content and card-based layout styling to match provided screenshot direction.
+- [x] CP-TODO-137 `done` how-it-works title block alignment: set label/title/description to centered vertical stack, matched title size to Hero title scale, and unified `Climate Passport` typography with page English font style.
+- [x] CP-TODO-138 `done` how-it-works text spacing sync: aligned third-section three-line header spacing with Hero text block spacing scale.
+- [x] CP-TODO-139 `done` how-it-works spacing precision fix: removed inherited/default heading/paragraph margin interference and pinned three-line spacing to Hero-equivalent 16px/20px values.
+- [x] CP-TODO-140 `done` how-it-works spacing final adjustment: changed second-to-third line gap from 20px to 16px, making both gaps 16px.
+- [x] CP-TODO-141 `done` section-4/5 header format sync: aligned Events and Features three-line header format with section-three style (vertical centered stack and 16px line gaps).
+- [x] CP-TODO-142 `done` section-5 tail whitespace fix: removed homepage-only extra gap between Features section and footer by overriding adjacent footer top margin.
+- [x] CP-TODO-143 `done` section-3 card style sync: refined hover lift motion, resized step-number circles, aligned step titles with section-4 card titles, and aligned step body text size with Hero description text.
+- [x] CP-TODO-144 `done` section-5 card expansion: added three new feature cards and updated all six card contents to match screenshot-provided structure and copy direction.
+- [x] CP-TODO-145 `done` section-5 tail gap selector correction: switched homepage footer gap override from `.proto-home + .site-footer` to `.page-home + .site-footer` to match actual shell DOM and fully align whitespace under section five.
+- [x] CP-TODO-146 `done` section-5 tail gap root-cause fix: removed inherited `.page` bottom padding (`96px`) on homepage via `.page-home { padding-bottom: 0; }`.
+- [x] CP-TODO-147 `done` footer section update: refreshed footer navigation/info/contact content and simplified footer bottom copy to the requested copyright line.
+- [x] CP-TODO-148 `done` footer copyright alignment: right-aligned the copyright block and removed the Climate Passport item from footer navigation.
+- [x] CP-TODO-149 `done` homepage section padding reduction: halved the outer top/bottom padding for sections 3/4/5 and updated responsive paddings proportionally.
+- [x] CP-TODO-150 `done` homepage card-description gap reduction: reduced the spacing between section descriptions and card grids in sections 3/4/5 to about 60% of the current mobile values.
+- [x] CP-TODO-151 `done` homepage card-description gap fixed: set the spacing between section descriptions and card grids in sections 3/4/5 to a fixed 30px.
+- [x] CP-TODO-152 `done` homepage section 4/5 gap fine-tune: tightened only the section-description-to-cards spacing in sections 4 and 5 while leaving section 3 at 30px.
+- [x] CP-TODO-153 `done` homepage hero top whitespace fix: restored `.page-home` top padding to 0 inside the mobile breakpoint so the Hero does not regain top space.
+- [x] CP-TODO-154 `done` homepage section 4/5 description no-wrap fit: shortened Events and Features description copy so the centered text blocks stay on one line on the current mobile width.
+- [x] CP-TODO-155 `done` home and app amber text unification: switched homepage stats and footer headings to the same primary amber text color as Hero accents.
+- [x] CP-TODO-156 `done` home section 4 title apostrophe fix: corrected the Events heading from a literal `&apos;` string to a normal apostrophe in `Discover What's Next`.
+- [x] CP-TODO-157 `done` certificate verification metadata and policy alignment: added expired-result support, derived issuer/related-source metadata from stored certificate variables, persisted Learning Experience variable values, and hid certificate details for blocked anonymous verification requests.
+- [x] CP-TODO-158 `done` certificate verification multilingual route wiring: added locale-aware public verification routes, added `/{locale}/verify` query entry redirects, and kept legacy `/verify/**` links backward-compatible via redirect.
+- [x] CP-TODO-159 `done` frontend style boundary strategy formalization: documented long-term style boundary split model (Foundation/Shared/Feature/Legacy), boundary rules, phased migration roadmap, and acceptance criteria in `docs/climate-passport-development-specification.md`.

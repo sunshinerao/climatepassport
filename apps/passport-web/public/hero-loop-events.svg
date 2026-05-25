@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Events slide">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f5a4e"/>
+      <stop offset="100%" stop-color="#89a99a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg2)"/>
+  <rect x="140" y="130" width="920" height="540" rx="38" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="200" y="190" width="300" height="190" rx="24" fill="#113f32" fill-opacity="0.85"/>
+  <rect x="520" y="190" width="470" height="40" rx="20" fill="#205f51"/>
+  <rect x="520" y="258" width="380" height="28" rx="14" fill="#6b9386"/>
+  <rect x="520" y="300" width="300" height="28" rx="14" fill="#6b9386"/>
+  <rect x="200" y="430" width="790" height="20" rx="10" fill="#c9ddd4"/>
+  <rect x="200" y="472" width="750" height="20" rx="10" fill="#c9ddd4"/>
+  <rect x="200" y="514" width="710" height="20" rx="10" fill="#c9ddd4"/>
+  <circle cx="965" cy="572" r="32" fill="#e8c88a"/>
+</svg>

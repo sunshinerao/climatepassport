@@ -34,6 +34,69 @@ function formatEventDateBadge(date: Date | null, locale: Locale) {
 export async function HomeScreen({ locale }: { locale: Locale }) {
   const { home, upcomingEvents } = await getHomePageData(locale);
   const isZh = locale === "zh";
+  const climateEraTip = "“气候时代”并非一个单一机构正式定义的法律或科学术语，而是基于联合国、IPCC、UNFCCC等国际权威语境形成的传播表达。它指的是气候变化、能源转型、可持续发展和绿色经济正在深刻影响个人能力、产业结构、城市治理与全球合作的新阶段。";
+  const climateEraTipGlobal = "\"Climate era\" is not a formal legal or scientific term defined by one institution. It is a communication expression formed in the context of UN, IPCC, UNFCCC, and other international authorities, describing a new stage where climate change, energy transition, sustainable development, and green economy are reshaping individual capabilities, industry structures, urban governance, and global collaboration.";
+  const climatePassportTipByLocale: Record<Locale, string> = {
+    zh: "在气候变化重塑世界的今天，每一次学习、参与和行动，都可能成为面向未来的重要能力与可信记录。Climate Passport 帮助你建立一份属于自己的可信数字档案。Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
+    en: "As climate change reshapes the world, every learning step, participation, and action can become future-facing capability and a trusted record. Climate Passport helps you build a trusted digital profile that belongs to you. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
+    fr: "Alors que le changement climatique transforme le monde, chaque apprentissage, participation et action peut devenir une capacite pour l'avenir et un enregistrement fiable. Climate Passport vous aide a construire un profil numerique de confiance qui vous appartient. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
+    de: "Da der Klimawandel die Welt neu formt, kann jeder Lernschritt, jede Teilnahme und jede Handlung zu einer zukunftsorientierten Fahigkeit und zu einem vertrauenswurdigen Nachweis werden. Climate Passport hilft Ihnen, ein vertrauenswurdiges digitales Profil aufzubauen, das Ihnen gehort. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
+  };
+  const heroSubtitleByLocale: Record<Locale, { line1: string; line2: string }> = {
+    zh: {
+      line1: "为地球留下行动，为自己积累价值，为未来建立信任",
+      line2: "你为未来做过的事，都值得被看见",
+    },
+    en: {
+      line1: "Leave action for the planet, build value for yourself, and create trust for the future",
+      line2: "Everything you have done for the future deserves to be seen",
+    },
+    fr: {
+      line1: "Laisser des actions pour la planete, accumuler de la valeur pour soi, et construire la confiance pour l'avenir",
+      line2: "Tout ce que vous avez fait pour l'avenir merite d'etre vu",
+    },
+    de: {
+      line1: "Handlungen fur den Planeten hinterlassen, fur sich selbst Wert aufbauen und Vertrauen fur die Zukunft schaffen",
+      line2: "Alles, was Sie fur die Zukunft getan haben, verdient es, gesehen zu werden",
+    },
+  };
+  const heroDescByLocale: Record<Locale, string> = {
+    zh: "Climate Passport 将你的学习、参与、证书与气候行动，转化为一份由你拥有、可验证、可分享的可信数字档案。让每一次努力被看见，让每一次行动成为未来的价值。",
+    en: "Climate Passport transforms your learning, participation, certificates, and climate action into a trusted digital profile that you own, can verify, and can share. Let every effort be seen, and let every action become value for the future.",
+    fr: "Climate Passport transforme vos apprentissages, votre participation, vos certificats et vos actions climatiques en un dossier numerique fiable que vous possedez, pouvez verifier et partager. Que chaque effort soit vu, et que chaque action devienne une valeur pour l'avenir.",
+    de: "Climate Passport verwandelt Ihr Lernen, Ihre Teilnahme, Ihre Zertifikate und Ihre Klimaaktionen in ein vertrauenswurdiges digitales Profil, das Ihnen gehort, verifizierbar und teilbar ist. Jede Anstrengung soll sichtbar werden, und jede Aktion soll zu einem Wert fur die Zukunft werden.",
+  };
+  const heroMediaFrames = [
+    {
+      src: "/hero-loop-identity.svg",
+      alt: isZh ? "气候身份档案展示" : "Climate identity profile showcase",
+      label: isZh ? "身份档案" : "Identity",
+    },
+    {
+      src: "/hero-loop-events.svg",
+      alt: isZh ? "活动与参与记录展示" : "Events and participation records showcase",
+      label: isZh ? "活动记录" : "Events",
+    },
+    {
+      src: "/hero-loop-certificates.svg",
+      alt: isZh ? "证书与里程碑展示" : "Certificates and milestones showcase",
+      label: isZh ? "证书里程碑" : "Certificates",
+    },
+  ];
+
+  const heroTermByLocale: Record<Locale, string> = {
+    zh: "气候时代",
+    en: "climate era",
+    fr: "ere climatique",
+    de: "Klima-Zeitalter",
+  };
+  const heroTerm = heroTermByLocale[locale];
+  const normalizedTitle = home.title.toLowerCase();
+  const normalizedHeroTerm = heroTerm.toLowerCase();
+  const heroTermIndex = normalizedTitle.indexOf(normalizedHeroTerm);
+  const hasHeroTerm = heroTermIndex >= 0;
+  const heroTermTip = isZh ? climateEraTip : climateEraTipGlobal;
+  const climatePassportTip = climatePassportTipByLocale[locale];
 
   return (
     <div className="proto-home">
@@ -54,16 +117,42 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
               </svg>
               <span>{isZh ? "超过10,000名气候先锋信赖" : "Trusted by 10,000+ climate champions"}</span>
             </div>
-            <h1
-              className="proto-title"
-              dangerouslySetInnerHTML={{
-                __html: isZh
-                  ? home.title.replace("气候", '<em>气候</em>')
-                  : home.title.replace("Climate", "<em>Climate</em>"),
-              }}
-            />
-            <p className="hero-subtitle">{home.subtitle}</p>
-            <p className="hero-desc">{home.body}</p>
+            <h1 className={isZh ? "proto-title proto-title-hero-unified proto-title-zh-single-line" : "proto-title proto-title-hero-unified"}>
+              {isZh ? (
+                <>
+                  为
+                  <span className="hero-term-with-tip">
+                    <span className="hero-term-text">气候时代</span>
+                    <span className="hero-term-tooltip" role="tooltip">{climateEraTip}</span>
+                  </span>
+                  构建可信数字身份基础设施。
+                </>
+              ) : hasHeroTerm ? (
+                <>
+                  {home.title.slice(0, heroTermIndex)}
+                  <span className="hero-term-with-tip">
+                    <span className="hero-term-text">{home.title.slice(heroTermIndex, heroTermIndex + heroTerm.length)}</span>
+                    <span className="hero-term-tooltip" role="tooltip">{heroTermTip}</span>
+                  </span>
+                  {home.title.slice(heroTermIndex + heroTerm.length)}
+                </>
+              ) : (
+                home.title
+              )}
+            </h1>
+            <p className="hero-subtitle">
+              {heroSubtitleByLocale[locale].line1}
+              <br />
+              {heroSubtitleByLocale[locale].line2}
+            </p>
+            <p className="hero-desc">
+              <span className="hero-brand-with-tip">
+                <span className="hero-brand-text">Climate Passport</span>
+                <span className="hero-brand-tooltip" role="tooltip">{climatePassportTip}</span>
+              </span>
+              {" "}
+              {heroDescByLocale[locale].replace(/^Climate Passport\s*/, "")}
+            </p>
             <div className="hero-ctas">
               <Link className="button button-amber" href={`/${locale}/auth/register`}>
                 {isZh ? "获取护照" : "Get Your Passport"}
@@ -75,30 +164,19 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
           </div>
 
           <div className="hero-visual">
-            <div className="passport-card-visual">
-              <div className="passport-card-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 20A7 7 0 0 1 9.8 6.6C11.5 4.7 14.3 3.8 17 4c.5 0 1 .1 1.4.2.4.1.7.3 1 .5l-1.8 8.2a7 7 0 0 1-6.6 7.1z"/>
-                  <path d="M12 20a7 7 0 0 0 6.3-9.8c-2.3 1.1-4.3 3-5.6 5.3A10.5 10.5 0 0 0 11 20z"/>
-                </svg>
-                <span>Climate Passport</span>
-              </div>
-              <div className="passport-avatar">L</div>
-              <div className="passport-name">Lin Wei</div>
-              <div className="passport-id">ID: K7M9QF2-T8N4PZ</div>
-              <div className="passport-qr">
-                <div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
-                <div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div>
-                <div className="qr-cell filled"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
-                <div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell filled"></div>
-                <div className="qr-cell filled"></div><div className="qr-cell"></div><div className="qr-cell"></div><div className="qr-cell filled"></div><div className="qr-cell"></div>
-              </div>
-              <div className="passport-card-footer">
-                <span className="passport-status">
-                  <span className="passport-status-dot"></span>
-                  <span>{isZh ? "有效" : "Active"}</span>
-                </span>
-                <span className="passport-level">{isZh ? "等级 3" : "Level 3"}</span>
+            <div className="hero-media-loop" aria-label={isZh ? "Climate Passport 自动轮播展示" : "Climate Passport auto-loop showcase"}>
+              {heroMediaFrames.map((frame, index) => (
+                <figure
+                  key={frame.src}
+                  className={`hero-media-slide hero-media-slide-${index + 1}`}
+                  aria-hidden={index > 0}
+                >
+                  <img src={frame.src} alt={frame.alt} loading="eager" />
+                  <figcaption>{frame.label}</figcaption>
+                </figure>
+              ))}
+              <div className="hero-media-progress" aria-hidden="true">
+                <span />
               </div>
             </div>
           </div>
@@ -122,24 +200,36 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
         <div className="proto-home-inner">
           <header className="section-header">
             <span className="section-label">{isZh ? "使用方式" : "How It Works"}</span>
-            <h2 className="section-title">{isZh ? "三个简单步骤" : "Three Simple Steps"}</h2>
-            <p className="section-desc">{isZh ? "几分钟内开始，成为有意义运动的一部分。" : "Get started in minutes and become part of a movement that matters."}</p>
+            <h2 className="section-title">
+              {isZh ? (
+                <>
+                  三步开启你的
+                  <span className="section-title-en">Climate Passport</span>
+                </>
+              ) : (
+                <>
+                  Three Steps to Launch Your
+                  <span className="section-title-en">Climate Passport</span>
+                </>
+              )}
+            </h2>
+            <p className="section-desc">{isZh ? "几分钟内开始，成为有意义的行动的一部分" : "Get started in minutes and become part of a movement that matters."}</p>
           </header>
           <div className="steps">
             <div className="step">
               <div className="step-number">1</div>
               <h3>{isZh ? "创建档案" : "Create Your Profile"}</h3>
-              <p>{isZh ? "注册并建立您的个人气候身份，包含您的目标、兴趣和背景。" : "Sign up and build your personal climate identity with your goals, interests, and background."}</p>
+              <p>{isZh ? "免费注册并获取全球唯一的 Climate Passport ID。建立包含你目标与背景的个人气候身份。" : "Register for free and claim your globally unique Climate Passport ID. Build your personal climate identity with your goals and background."}</p>
             </div>
             <div className="step">
               <div className="step-number">2</div>
-              <h3>{isZh ? "参加活动" : "Join Events"}</h3>
-              <p>{isZh ? "发现并注册全球各地的研讨会、峰会和实地体验活动。" : "Discover and register for workshops, summits, and field experiences around the world."}</p>
+              <h3>{isZh ? "参与并持续学习" : "Join, Participate & Learn"}</h3>
+              <p>{isZh ? "参与全球峰会、工作坊与学习项目。你的记录会在每一次参与中自动累积。" : "Attend summits, workshops and learning programs around the world. Records accumulate automatically as you participate."}</p>
             </div>
             <div className="step">
               <div className="step-number">3</div>
               <h3>{isZh ? "获取与分享" : "Earn & Share"}</h3>
-              <p>{isZh ? "收集认证证书，追踪您的影响力，并与社区分享您的旅程。" : "Collect verified certificates, track your impact, and share your journey with the community."}</p>
+              <p>{isZh ? "获取可验证证书、成就与积分。与你的社区随时随地分享气候旅程。" : "Receive verifiable certificates, achievements and points. Share your climate journey with the community, anywhere and anytime."}</p>
             </div>
           </div>
         </div>
@@ -151,8 +241,8 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
           <div className="proto-home-inner">
             <header className="section-header">
               <span className="section-label">{isZh ? "近期活动" : "Upcoming Events"}</span>
-              <h2 className="section-title">{isZh ? "探索未来" : "Discover What&apos;s Next"}</h2>
-              <p className="section-desc">{isZh ? "在我们的精选气候活动中与专家、创新者和变革者建立联系。" : "Connect with experts, innovators, and changemakers at our curated climate events."}</p>
+              <h2 className="section-title">{isZh ? "探索未来" : "Discover What's Next"}</h2>
+              <p className="section-desc">{isZh ? "与专家、创新者和变革者建立联系。" : "Connect with experts, innovators, and changemakers."}</p>
             </header>
             <div className="event-cards">
               {upcomingEvents.map((event) => {
@@ -198,7 +288,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
           <header className="section-header">
             <span className="section-label">{isZh ? "功能" : "Features"}</span>
             <h2 className="section-title">{isZh ? "您所需的一切" : "Everything You Need"}</h2>
-            <p className="section-desc">{isZh ? "一个完整的生态系统，旨在赋能您的气候行动和职业成长。" : "A complete ecosystem designed to empower your climate action and professional growth."}</p>
+              <p className="section-desc">{isZh ? "赋能你的气候行动与成长。" : "A climate action and growth ecosystem."}</p>
           </header>
           <div className="feature-cards">
             <div className="feature-card">
@@ -210,25 +300,19 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
                 </svg>
               </div>
               <h3>{isZh ? "数字身份" : "Digital Identity"}</h3>
-              <p>{isZh ? "一个统一的、可随身携带的档案，伴随您的气候旅程成长。展示成就、技能和承诺。" : "A unified, portable profile that grows with your climate journey. Showcase achievements, skills, and commitments."}</p>
+              <p>{isZh ? "一个您拥有的统一可携带气候档案。将活动、学习和证书链接为可信赖的行动档案，随处分享。" : "A unified and portable climate profile you own. Connect events, learning, and certificates into a trusted action record you can share anywhere."}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                  <path d="M8 14h.01"/>
-                  <path d="M12 14h.01"/>
-                  <path d="M16 14h.01"/>
-                  <path d="M8 18h.01"/>
-                  <path d="M12 18h.01"/>
-                  <path d="M16 18h.01"/>
+                  <path d="M16 11c1.66 0 3-1.57 3-3.5S17.66 4 16 4s-3 1.57-3 3.5 1.34 3.5 3 3.5z"/>
+                  <path d="M8 11c1.66 0 3-1.57 3-3.5S9.66 4 8 4 5 5.57 5 7.5 6.34 11 8 11z"/>
+                  <path d="M2 20c0-2.8 2.24-5 5-5h2"/>
+                  <path d="M13 20c0-2.8 2.24-5 5-5h2"/>
                 </svg>
               </div>
-              <h3>{isZh ? "活动访问" : "Event Access"}</h3>
-              <p>{isZh ? "无缝注册、数字签到，以及符合您目标的活动的个性化推荐。" : "Seamless registration, digital check-in, and personalized recommendations for events that match your goals."}</p>
+              <h3>{isZh ? "活动网络" : "Activity Network"}</h3>
+              <p>{isZh ? "涵盖峰会、工作坊、展览和线上项目。无缝注册、数字签到及个性化推荐。" : "Access summits, workshops, exhibitions, and online programs with seamless registration, digital check-ins, and personalized recommendations."}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">
@@ -237,8 +321,39 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
                   <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
                 </svg>
               </div>
-              <h3>{isZh ? "认证证书" : "Verified Certificates"}</h3>
-              <p>{isZh ? "区块链支持的证书，证明您的专业知识。可分享、可验证，并获得全球雇主信赖。" : "Blockchain-backed credentials that prove your expertise. Shareable, verifiable, and trusted by employers worldwide."}</p>
+              <h3>{isZh ? "可信证书" : "Trusted Certificates"}</h3>
+              <p>{isZh ? "与个人成长路径关联的可验证证书。可分享、区块链支持，受全球雇主信赖。" : "Verifiable certificates connected to your growth path. Shareable, blockchain-backed, and trusted by employers worldwide."}</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "学习体验" : "Learning Experience"}</h3>
+              <p>{isZh ? "面向实践气候行动能力的项目式学习。学习记录随成长自动积累。" : "Project-based learning focused on practical climate action capability. Learning records accumulate automatically as you grow."}</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "智能签到" : "Smart Check-in"}</h3>
+              <p>{isZh ? "基于二维码的出席验证和实时参与追踪。出席记录构建您的气候行动历史。" : "QR-based attendance verification and real-time participation tracking. Attendance records build your climate action history."}</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <h3>{isZh ? "影响力追踪" : "Impact Tracking"}</h3>
+              <p>{isZh ? "获取积分、追踪成就并衡量您的气候贡献。一份不断增长的经过验证的行动组合。" : "Earn points, track achievements, and measure your climate contribution in a continuously growing, verifiable action portfolio."}</p>
             </div>
           </div>
         </div>

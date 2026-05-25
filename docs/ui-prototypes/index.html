@@ -788,6 +788,105 @@
       line-height: 1.7;
     }
 
+    /* Newsletter */
+    .newsletter {
+      background: linear-gradient(135deg, var(--forest-deep) 0%, var(--forest) 100%);
+      padding: 80px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .newsletter::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(143, 184, 154, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .newsletter-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .newsletter .section-label {
+      color: var(--amber-soft);
+    }
+
+    .newsletter-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.25rem;
+      font-weight: 400;
+      color: var(--cream);
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+
+    .newsletter-desc {
+      font-size: 1rem;
+      color: var(--sage);
+      margin-bottom: 36px;
+      line-height: 1.7;
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 12px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(143, 184, 154, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--cream);
+      font-size: 0.9375rem;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .newsletter-form input::placeholder {
+      color: var(--sage);
+      opacity: 0.7;
+    }
+
+    .newsletter-form input:focus {
+      border-color: var(--amber-soft);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .newsletter-form .btn-primary {
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 640px) {
+      .newsletter {
+        padding: 56px 16px;
+      }
+
+      .newsletter-title {
+        font-size: 1.75rem;
+      }
+
+      .newsletter-form {
+        flex-direction: column;
+      }
+
+      .newsletter-form .btn-primary {
+        width: 100%;
+      }
+    }
+
     /* Footer */
     .footer {
       background: var(--forest-deep);
@@ -1163,10 +1262,11 @@
       </a>
 
       <ul class="nav-links" id="navLinks">
-        <li><a href="#events" data-en="Events" data-zh="活动">Events</a></li>
-        <li><a href="#" data-en="Speakers" data-zh="演讲者">Speakers</a></li>
-        <li><a href="#" data-en="About" data-zh="关于">About</a></li>
+        <li><a href="#" data-en="Platform" data-zh="平台">Platform</a></li>
+        <li><a href="#" data-en="Passport" data-zh="护照">Passport</a></li>
         <li><a href="#" data-en="Certificates" data-zh="证书">Certificates</a></li>
+        <li><a href="#events" data-en="Events" data-zh="活动">Events</a></li>
+        <li><a href="#" data-en="People" data-zh="人物">People</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -1247,20 +1347,20 @@
   <section class="stats">
     <div class="stats-inner">
       <div class="stat-item">
-        <div class="stat-value">12,847</div>
-        <div class="stat-label" data-en="Registered Users" data-zh="注册用户">Registered Users</div>
+        <div class="stat-value">1,110</div>
+        <div class="stat-label" data-en="Passport Holders" data-zh="护照持有者">Passport Holders</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">186</div>
-        <div class="stat-label" data-en="Events Hosted" data-zh="举办活动">Events Hosted</div>
+        <div class="stat-value">49</div>
+        <div class="stat-label" data-en="Active Events" data-zh="活跃活动">Active Events</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">9,432</div>
+        <div class="stat-value">128</div>
         <div class="stat-label" data-en="Certificates Issued" data-zh="颁发证书">Certificates Issued</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">45,200+</div>
-        <div class="stat-label" data-en="Learning Hours" data-zh="学习时长">Learning Hours</div>
+        <div class="stat-value">23</div>
+        <div class="stat-label" data-en="Attendance Records" data-zh="出席记录">Attendance Records</div>
       </div>
     </div>
   </section>
@@ -1270,24 +1370,24 @@
     <div class="section-inner">
       <div class="section-header">
         <span class="section-label" data-en="How It Works" data-zh="使用方式">How It Works</span>
-        <h2 class="section-title" data-en="Three Simple Steps" data-zh="三个简单步骤">Three Simple Steps</h2>
+        <h2 class="section-title" data-en="Three Steps to Launch Your Climate Passport" data-zh="三步开启您的气候护照">Three Steps to Launch Your Climate Passport</h2>
         <p class="section-desc" data-en="Get started in minutes and become part of a movement that matters." data-zh="几分钟内开始，成为有意义运动的一部分。">Get started in minutes and become part of a movement that matters.</p>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step-number">1</div>
           <h3 data-en="Create Your Profile" data-zh="创建档案">Create Your Profile</h3>
-          <p data-en="Sign up and build your personal climate identity with your goals, interests, and background." data-zh="注册并建立您的个人气候身份，包含您的目标、兴趣和背景。">Sign up and build your personal climate identity with your goals, interests, and background.</p>
+          <p data-en="Register for free and claim your globally unique Climate Passport ID. Build your personal climate identity with your goals and background." data-zh="免费注册并获取全球唯一的 Climate Passport ID。建立包含您目标和背景的个人气候身份。">Register for free and claim your globally unique Climate Passport ID. Build your personal climate identity with your goals and background.</p>
         </div>
         <div class="step">
           <div class="step-number">2</div>
-          <h3 data-en="Join Events" data-zh="参加活动">Join Events</h3>
-          <p data-en="Discover and register for workshops, summits, and field experiences around the world." data-zh="发现并注册全球各地的研讨会、峰会和实地体验活动。">Discover and register for workshops, summits, and field experiences around the world.</p>
+          <h3 data-en="Join, Participate & Learn" data-zh="参与和学习">Join, Participate & Learn</h3>
+          <p data-en="Attend summits, workshops and learning programs around the world. Records accumulate automatically as you participate." data-zh="参加全球各地的峰会、工作坊和学习项目。参与记录自动积累。">Attend summits, workshops and learning programs around the world. Records accumulate automatically as you participate.</p>
         </div>
         <div class="step">
           <div class="step-number">3</div>
           <h3 data-en="Earn & Share" data-zh="获取与分享">Earn & Share</h3>
-          <p data-en="Collect verified certificates, track your impact, and share your journey with the community." data-zh="收集认证证书，追踪您的影响力，并与社区分享您的旅程。">Collect verified certificates, track your impact, and share your journey with the community.</p>
+          <p data-en="Receive verifiable certificates, achievements and points. Share your climate journey with the community — anywhere, anytime." data-zh="获得可验证的证书、成就和积分。随时随地与社区分享您的气候旅程。">Receive verifiable certificates, achievements and points. Share your climate journey with the community — anywhere, anytime.</p>
         </div>
       </div>
     </div>
@@ -1394,7 +1494,39 @@
             </svg>
           </div>
           <h3 data-en="Digital Identity" data-zh="数字身份">Digital Identity</h3>
-          <p data-en="A unified, portable profile that grows with your climate journey. Showcase achievements, skills, and commitments." data-zh="一个统一的、可随身携带的档案，伴随您的气候旅程成长。展示成就、技能和承诺。">A unified, portable profile that grows with your climate journey. Showcase achievements, skills, and commitments.</p>
+          <p data-en="A unified, portable climate profile you own. Link events, learning and credentials into a trusted action profile you can share anywhere." data-zh="一个您拥有的统一可携带气候档案。将活动、学习和证书链接为可信赖的行动档案，随处分享。">A unified, portable climate profile you own. Link events, learning and credentials into a trusted action profile you can share anywhere.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 data-en="Events Network" data-zh="活动网络">Events Network</h3>
+          <p data-en="Across summits, workshops, exhibitions and online programs. Seamless registration, digital check-in, and personalized recommendations." data-zh="涵盖峰会、工作坊、展览和线上项目。无缝注册、数字签到及个性化推荐。">Across summits, workshops, exhibitions and online programs. Seamless registration, digital check-in, and personalized recommendations.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"/>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+          </div>
+          <h3 data-en="Trusted Credentials" data-zh="可信证书">Trusted Credentials</h3>
+          <p data-en="Verifiable certificates linked to personal growth pathways. Shareable, blockchain-backed, and trusted by employers worldwide." data-zh="与个人成长路径关联的可验证证书。可分享、区块链支持，受全球雇主信赖。">Verifiable certificates linked to personal growth pathways. Shareable, blockchain-backed, and trusted by employers worldwide.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <h3 data-en="Learning Experiences" data-zh="学习体验">Learning Experiences</h3>
+          <p data-en="Project-based learning for practical climate action capabilities. Records accumulate automatically as you grow." data-zh="面向实践气候行动能力的项目式学习。学习记录随成长自动积累。">Project-based learning for practical climate action capabilities. Records accumulate automatically as you grow.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">
@@ -1406,24 +1538,33 @@
               <path d="M8 14h.01"/>
               <path d="M12 14h.01"/>
               <path d="M16 14h.01"/>
-              <path d="M8 18h.01"/>
-              <path d="M12 18h.01"/>
-              <path d="M16 18h.01"/>
             </svg>
           </div>
-          <h3 data-en="Event Access" data-zh="活动访问">Event Access</h3>
-          <p data-en="Seamless registration, digital check-in, and personalized recommendations for events that match your goals." data-zh="无缝注册、数字签到，以及符合您目标的活动的个性化推荐。">Seamless registration, digital check-in, and personalized recommendations for events that match your goals.</p>
+          <h3 data-en="Smart Check-in" data-zh="智能签到">Smart Check-in</h3>
+          <p data-en="QR-based attendance verification with real-time participation tracking. Your attendance records build your climate action history." data-zh="基于二维码的出席验证和实时参与追踪。出席记录构建您的气候行动历史。">QR-based attendance verification with real-time participation tracking. Your attendance records build your climate action history.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="7"/>
-              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
           </div>
-          <h3 data-en="Verified Certificates" data-zh="认证证书">Verified Certificates</h3>
-          <p data-en="Blockchain-backed credentials that prove your expertise. Shareable, verifiable, and trusted by employers worldwide." data-zh="区块链支持的证书，证明您的专业知识。可分享、可验证，并获得全球雇主信赖。">Blockchain-backed credentials that prove your expertise. Shareable, verifiable, and trusted by employers worldwide.</p>
+          <h3 data-en="Impact Tracking" data-zh="影响力追踪">Impact Tracking</h3>
+          <p data-en="Earn points, track achievements and measure your climate contribution. A growing portfolio of verified action you can showcase." data-zh="获取积分、追踪成就并衡量您的气候贡献。一份不断增长的经过验证的行动组合。">Earn points, track achievements and measure your climate contribution. A growing portfolio of verified action you can showcase.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <div class="newsletter-inner">
+      <span class="section-label" data-en="Stay Updated" data-zh="保持关注">Stay Updated</span>
+      <h2 class="newsletter-title" data-en="Join the Global Climate Action Network" data-zh="加入全球气候行动网络">Join the Global Climate Action Network</h2>
+      <p class="newsletter-desc" data-en="Be the first to know about upcoming events, learning opportunities, and community milestones." data-zh="第一时间了解即将到来的活动、学习机会和社区里程碑。">Be the first to know about upcoming events, learning opportunities, and community milestones.</p>
+      <div class="newsletter-form">
+        <input type="email" placeholder="Enter your email" data-en-placeholder="Enter your email" data-zh-placeholder="输入您的邮箱" aria-label="Email">
+        <a href="#" class="btn btn-primary" data-en="Get Started" data-zh="开始">Get Started</a>
       </div>
     </div>
   </section>

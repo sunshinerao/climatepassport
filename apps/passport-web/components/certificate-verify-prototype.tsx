@@ -19,6 +19,7 @@ export type VerificationData = {
   expiryDate?: string;
   certificateNumber?: string;
   credentialType?: string;
+  credentialTypeEn?: string;
   relatedSource?: string;
   verifiedAt?: string;
   competencies?: string[];
@@ -114,6 +115,17 @@ export function CertificateVerifyPage({
   };
 
   const config = statusConfig[data.status];
+  const hasCertificateSummary = Boolean(
+    data.certificateName
+      || data.holderName
+      || data.maskedPassportId
+      || data.issueDate
+      || data.expiryDate
+      || data.certificateNumber
+      || data.credentialType
+      || data.relatedSource
+      || data.issuer,
+  );
 
   return (
     <div className="cpv">
@@ -167,7 +179,7 @@ export function CertificateVerifyPage({
       )}
 
       {/* Certificate Summary Card */}
-      {data.status !== "not-found" && (
+      {hasCertificateSummary && (
         <div className={`cpv-summary-card ${data.status === "revoked" ? "is-muted" : ""}`}>
           <div className="cpv-summary-header">
             <div>
@@ -243,7 +255,7 @@ export function CertificateVerifyPage({
         </div>
       )}
 
-      {(data.isAuthenticatedViewer || data.accessLevel === "STAFF") && data.status !== "not-found" && (
+      {(data.isAuthenticatedViewer || data.accessLevel === "STAFF") && hasCertificateSummary && (
         <div className="cpv-verification-details">
           <h3>{t(locale, "登录视图信息", "Signed-in Verification Context")}</h3>
           <div className="cpv-verify-items">
@@ -317,7 +329,7 @@ export function CertificateVerifyPage({
       )}
 
       {/* Verification Details */}
-      {data.status !== "not-found" && data.certificateNumber && (
+      {hasCertificateSummary && data.certificateNumber && (
         <div className="cpv-verification-details">
           <h3>{t(locale, "验证详情", "Verification Details")}</h3>
           <div className="cpv-verify-items">

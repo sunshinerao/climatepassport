@@ -15,6 +15,8 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
   // Minimal shell: hide nav + footer main content on focused pages
   const pathname = headers().get("x-pathname") ?? "";
   const isMinimal = pathname.includes("/dashboard/summer-school");
+  const normalizedPathname = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  const isLocaleHome = normalizedPathname === `/${locale}`;
 
   return (
     <div className="app-shell">
@@ -55,7 +57,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
         </div>
       </header>
 
-      <main className="page">{children}</main>
+      <main className={isLocaleHome ? "page page-home" : "page"}>{children}</main>
 
       <footer className="site-footer">
         {!isMinimal && (
@@ -71,22 +73,22 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
             <div className="footer-col">
               <h4>{locale === "zh" ? "导航" : "Navigate"}</h4>
               <Link href={`/${locale}`}>{locale === "zh" ? "首页" : "Home"}</Link>
-              <Link href={`/${locale}/events`}>{locale === "zh" ? "活动" : "Events"}</Link>
-              <Link href={`/${locale}/speakers`}>{locale === "zh" ? "演讲者" : "Speakers"}</Link>
-              <Link href={`/${locale}/about`}>{locale === "zh" ? "关于" : "About"}</Link>
+              <Link href={`/${locale}/certificates`}>{locale === "zh" ? "证书" : "Certificates"}</Link>
+              <Link href={`/${locale}/contact`}>{locale === "zh" ? "合作" : "Partners"}</Link>
+              <Link href={`/${locale}/about`}>{locale === "zh" ? "关于我们" : "About Us"}</Link>
             </div>
 
             <div className="footer-col">
-              <h4>{locale === "zh" ? "信息" : "Info"}</h4>
+              <h4>{locale === "zh" ? "法律与支持" : "Legal & Support"}</h4>
               <Link href={`/${locale}/privacy`}>{locale === "zh" ? "隐私政策" : "Privacy Policy"}</Link>
               <Link href={`/${locale}/terms`}>{locale === "zh" ? "服务条款" : "Terms of Service"}</Link>
               <Link href={`/${locale}/faq`}>{locale === "zh" ? "常见问题" : "FAQ"}</Link>
-              <Link href={`/${locale}/contact`}>{locale === "zh" ? "联系我们" : "Contact"}</Link>
+              <Link href={`/${locale}/contact`}>{locale === "zh" ? "联系我们" : "Contact Us"}</Link>
             </div>
 
             <div className="footer-col">
-              <h4>{locale === "zh" ? "联系" : "Contact"}</h4>
-              <p>hello@climatepass.org</p>
+              <h4>{locale === "zh" ? "保持联系" : "Stay Connected"}</h4>
+              <p>contact@climatepass.org</p>
               <p>{locale === "zh" ? "中国上海" : "Shanghai, China"}</p>
             </div>
           </div>
@@ -95,15 +97,8 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
         <div className="footer-bottom-bar">
           <div className="footer-bottom-bar-inner">
             <p className="footer-disclaimer" style={{ maxWidth: "unset" }}>
-              {locale === "zh"
-                ? "Climate Passport 致力于为气候时代的学习、凭证和行动记录构建可信任的身份基础设施。本页面展示的所有用户数据、项目指标均为说明性内容。"
-                : "Climate Passport is designed as a trust layer for climate-era learning, credentials and action records. All names, programme data and metrics shown are illustrative for demonstration purposes."}
+              © 2026 Climate Passport. 保留所有权利。面向气候时代的可信数字身份基础设施。
             </p>
-            <div className="footer-legal">
-              <Link href={`/${locale}/terms`}>{locale === "zh" ? "服务条款" : "Terms"}</Link>
-              <Link href={`/${locale}/privacy`}>{locale === "zh" ? "隐私政策" : "Privacy"}</Link>
-              <span>{dictionary.shell.footer.rights}</span>
-            </div>
           </div>
         </div>
       </footer>
