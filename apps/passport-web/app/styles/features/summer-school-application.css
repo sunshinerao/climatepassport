@@ -188,10 +188,22 @@
 
 .ss-public-header {
   margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .ss-public-header-title {
-  width: 100%;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ss-public-header-switcher {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  margin-bottom: 2px;
 }
 
 .ss-public-header h1 {
@@ -380,7 +392,7 @@
   border-radius: var(--ss-radius-pill);
   padding: 12px 28px;
   font-weight: 600;
-  background: var(--ss-amber);
+  background: var(--ss-amber, #c4893f);
   color: #fff;
   border: none;
   box-shadow: 0 2px 8px rgba(196, 137, 63, 0.2);
@@ -389,7 +401,7 @@
 
 .ss-layout .button:hover,
 .ss-form-card .button:hover {
-  background: var(--ss-amber-dark);
+  background: var(--ss-amber-dark, #a87332);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(196, 137, 63, 0.3);
 }
@@ -407,15 +419,15 @@
   padding: 12px 22px;
   font-weight: 600;
   background: transparent;
-  color: var(--ss-ink-soft);
-  border: 1.5px solid var(--ss-border);
+  color: var(--ss-ink-soft, #2d5245);
+  border: 1.5px solid var(--ss-border, rgba(11, 61, 46, 0.1));
   transition: border-color 0.2s, color 0.2s, transform 0.2s;
 }
 
 .ss-layout .button-outline:hover,
 .ss-form-card .button-outline:hover {
-  border-color: var(--ss-forest);
-  color: var(--ss-forest);
+  border-color: var(--ss-forest, #1a5d48);
+  color: var(--ss-forest, #1a5d48);
   transform: translateY(-1px);
 }
 
@@ -430,7 +442,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--ss-verify-green), #34d399);
+  background: linear-gradient(135deg, var(--ss-verify-green, #16a34a), #34d399);
   display: grid;
   place-items: center;
   font-size: 36px;
@@ -570,6 +582,11 @@
 }
 
 @media (max-width: 720px) {
+  .ss-public-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .check-card-grid {
     grid-template-columns: 1fr;
   }

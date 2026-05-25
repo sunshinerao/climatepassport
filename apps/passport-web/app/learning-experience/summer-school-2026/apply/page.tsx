@@ -19,6 +19,9 @@ export default function SummerSchoolApplyPublicPage({ searchParams }: PageProps)
           <span className="label">{isZh ? "公开申请" : "Open Application"}</span>
           <h1>{isZh ? "可持续夏校2026" : "Sustainability Summer School 2026"}</h1>
         </div>
+        <div className="ss-public-header-switcher">
+          <SummerSchoolLocaleSwitcher locale={locale} label={isZh ? "语言切换" : "Language switch"} />
+        </div>
       </div>
 
       <SummerSchoolForm
@@ -30,9 +33,6 @@ export default function SummerSchoolApplyPublicPage({ searchParams }: PageProps)
                 ? "请提交您的申请，提交后系统将自动创建Climate Passport ID。"
                 : "Please submit your application. A Climate Passport ID will be created automatically after submission."}
             </p>
-            <div className="ss-main-header-switcher">
-              <SummerSchoolLocaleSwitcher locale={locale} label={isZh ? "语言切换" : "Language switch"} />
-            </div>
           </>
         }
       />
