@@ -1,0 +1,544 @@
+/* ============================================================
+   Certificate Public Verification Page (cpv-*)
+   Mirrors docs/ui-prototypes/certificates-verify.html body UI.
+   ============================================================ */
+.cpv {
+  width: min(calc(100% - 40px), 720px);
+  margin: 0 auto;
+  padding: 48px 0 96px;
+  display: grid;
+  gap: 24px;
+}
+
+.cpv-banner {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+  padding: 48px 32px;
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.cpv-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background: repeating-linear-gradient(45deg, currentColor 0px, currentColor 1px, transparent 1px, transparent 8px);
+}
+
+.cpv-state-valid { --cpv-accent: #1a5d48; }
+.cpv-state-expired { --cpv-accent: #b37a1a; }
+.cpv-state-revoked { --cpv-accent: #b33a3a; }
+.cpv-state-preview { --cpv-accent: #0f5f8f; }
+.cpv-state-notfound { --cpv-accent: #6b7280; }
+
+.cpv-banner.cpv-state-valid {
+  background: linear-gradient(135deg, #e8f5e9, #f1f8f3);
+  border: 1px solid rgba(26, 93, 72, 0.2);
+  color: #0b3d2e;
+}
+
+.cpv-banner.cpv-state-expired {
+  background: linear-gradient(135deg, #fef3e0, #fff8ef);
+  border: 1px solid rgba(179, 122, 26, 0.2);
+  color: #5d3a0a;
+}
+
+.cpv-banner.cpv-state-revoked {
+  background: linear-gradient(135deg, #fce8e8, #fdf2f2);
+  border: 1px solid rgba(179, 58, 58, 0.2);
+  color: #5c1a1a;
+}
+
+.cpv-banner.cpv-state-preview {
+  background: linear-gradient(135deg, #e8f4fb, #f0f8fd);
+  border: 1px solid rgba(15, 95, 143, 0.22);
+  color: #113b57;
+}
+
+.cpv-banner.cpv-state-notfound {
+  background: linear-gradient(135deg, #f3f4f6, #f9fafb);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  color: #374151;
+}
+
+.cpv-icon-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--cpv-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.cpv-banner h1 {
+  margin: 0;
+  font-size: 32px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  line-height: 1.1;
+}
+
+.cpv-banner p {
+  margin: 0;
+  max-width: 520px;
+  line-height: var(--cp-leading-body);
+  opacity: 0.85;
+}
+
+.cpv-verified-time {
+  font-size: var(--cp-text-small);
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+/* Notices */
+.cpv-notice {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+}
+
+.cpv-notice-expired {
+  background: #fff8ef;
+  border: 1px solid rgba(179, 122, 26, 0.2);
+}
+
+.cpv-notice-revoked {
+  background: #fdf2f2;
+  border: 1px solid rgba(179, 58, 58, 0.2);
+}
+
+.cpv-notice-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--cpv-accent);
+  color: #fff;
+  font-size: 16px;
+}
+
+.cpv-notice strong {
+  display: block;
+  font-size: var(--cp-text-body);
+  margin-bottom: 4px;
+}
+
+.cpv-notice p {
+  margin: 0;
+  font-size: var(--cp-text-small);
+  line-height: var(--cp-leading-body);
+}
+
+.cpv-notice-detail {
+  opacity: 0.7;
+  margin-top: 8px !important;
+}
+
+/* Summary Card */
+.cpv-summary-card {
+  padding: 28px;
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-xl);
+  background: var(--cp-white);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 22px;
+}
+
+.cpv-summary-card.is-muted {
+  opacity: 0.65;
+}
+
+.cpv-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cpv-type-label {
+  font-size: var(--cp-text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cp-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.cpv-summary-header h2 {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  line-height: 1.15;
+}
+
+.cpv-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cpv-status-pill.cpv-state-valid {
+  background: #e8f5e9;
+  color: #0b3d2e;
+}
+
+.cpv-status-pill.cpv-state-expired {
+  background: #fff8ef;
+  color: #5d3a0a;
+}
+
+.cpv-status-pill.cpv-state-revoked {
+  background: #fdf2f2;
+  color: #5c1a1a;
+}
+
+.cpv-status-pill.cpv-state-preview {
+  background: #edf7fd;
+  color: #113b57;
+}
+
+.cpv-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cpv-accent);
+}
+
+/* Detail Grid */
+.cpv-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 0;
+}
+
+.cpv-detail-grid div {
+  padding-top: 12px;
+  border-top: 1px solid var(--cp-line);
+}
+
+.cpv-detail-grid dt {
+  font-size: var(--cp-text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cp-text-muted);
+}
+
+.cpv-detail-grid dd {
+  margin: 4px 0 0;
+  color: var(--cp-text);
+  font-size: var(--cp-text-body);
+}
+
+.cpv-mono {
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+
+/* Competency Tags */
+.cpv-competencies {
+  display: grid;
+  gap: 10px;
+}
+
+.cpv-section-label {
+  font-size: var(--cp-text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cp-text-muted);
+}
+
+.cpv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cpv-tag {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cpv-tag.cpv-state-valid {
+  background: #e8f5e9;
+  color: #1a5d48;
+}
+
+.cpv-tag.cpv-state-expired {
+  background: #fff8ef;
+  color: #5d3a0a;
+}
+
+.cpv-tag.cpv-state-revoked {
+  background: #fdf2f2;
+  color: #5c1a1a;
+}
+
+/* Not Found Suggestions */
+.cpv-suggestions {
+  padding: 28px;
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-xl);
+  background: var(--cp-white);
+}
+
+.cpv-suggestions h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.cpv-suggestions ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.cpv-suggestions li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--cp-bg-soft);
+  font-size: var(--cp-text-body);
+}
+
+/* Verification Details */
+.cpv-verification-details {
+  padding: 24px;
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-lg);
+  background: var(--cp-white);
+}
+
+.cpv-verification-details h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
+.cpv-verify-items {
+  display: grid;
+  gap: 14px;
+}
+
+.cpv-verify-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cp-line);
+}
+
+.cpv-verify-item:last-child {
+  border-bottom: 0;
+}
+
+.cpv-verify-item dt {
+  font-size: var(--cp-text-small);
+  font-weight: 600;
+  color: var(--cp-text-secondary);
+}
+
+.cpv-verify-item dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cpv-verify-item code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 13px;
+  padding: 4px 10px;
+  background: var(--cp-bg-soft);
+  border-radius: 6px;
+}
+
+.cpv-copy-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--cp-line);
+  border-radius: 6px;
+  background: var(--cp-white);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.cpv-copy-btn:hover {
+  background: var(--cp-bg-soft);
+}
+
+.cpv-integrity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cpv-integrity-badge.cpv-state-valid {
+  background: #e8f5e9;
+  color: #1a5d48;
+}
+
+.cpv-integrity-badge.cpv-state-expired {
+  background: #fff8ef;
+  color: #5d3a0a;
+}
+
+.cpv-integrity-badge.cpv-state-revoked {
+  background: #fdf2f2;
+  color: #5c1a1a;
+}
+
+/* Trust Badge */
+.cpv-trust {
+  text-align: center;
+  padding: 32px;
+}
+
+.cpv-trust-badge {
+  display: inline-grid;
+  gap: 10px;
+  max-width: 480px;
+}
+
+.cpv-trust-badge strong {
+  font-size: 18px;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+}
+
+.cpv-trust-badge p {
+  margin: 0;
+  font-size: var(--cp-text-small);
+  line-height: var(--cp-leading-body);
+  color: var(--cp-text-secondary);
+}
+
+.cpv-trust-link {
+  font-size: var(--cp-text-small);
+  font-weight: 600;
+  color: var(--cp-forest);
+}
+
+/* Verify Another */
+.cpv-verify-another {
+  padding: 28px;
+  border: 1px solid var(--cp-line);
+  border-radius: var(--radius-lg);
+  background: var(--cp-white);
+  text-align: center;
+}
+
+.cpv-verify-another h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
+.cpv-verify-form {
+  display: flex;
+  gap: 10px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.cpv-verify-form input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--cp-line);
+  border-radius: 999px;
+  font-size: var(--cp-text-body);
+  outline: none;
+  transition: 0.2s;
+}
+
+.cpv-verify-form input:focus {
+  border-color: var(--cp-forest);
+  box-shadow: 0 0 0 3px rgba(31, 90, 78, 0.08);
+}
+
+.cpv-verify-form button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--cp-ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: var(--cp-text-body);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cpv-verify-form button:hover {
+  background: var(--cp-ink-hover);
+}
+
+@media (max-width: 640px) {
+  .cpv {
+    padding: 24px 0 64px;
+  }
+
+  .cpv-banner {
+    padding: 32px 20px;
+  }
+
+  .cpv-banner h1 {
+    font-size: 24px;
+  }
+
+  .cpv-icon-badge {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+
+  .cpv-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cpv-verify-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .cpv-verify-form {
+    flex-direction: column;
+  }
+
+  .cpv-summary-header {
+    flex-direction: column;
+  }
+}
+
+/* ============================================================
