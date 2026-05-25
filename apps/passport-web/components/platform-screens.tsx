@@ -2,6 +2,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import QRCode from "qrcode";
 import { AuthForm } from "@/components/auth-form";
 import { ContactMessageForm } from "@/components/contact-message-form";
@@ -174,7 +175,14 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
                   className={`hero-media-slide hero-media-slide-${index + 1}`}
                   aria-hidden={index > 0}
                 >
-                  <img src={frame.src} alt={frame.alt} loading="eager" />
+                  <Image
+                    alt={frame.alt}
+                    className="hero-media-image"
+                    fill
+                    priority={index === 0}
+                    sizes="(max-width: 720px) 100vw, 520px"
+                    src={frame.src}
+                  />
                   <figcaption>{frame.label}</figcaption>
                 </figure>
               ))}
@@ -455,7 +463,14 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
               </div>
               <div className="passport-dashboard-hero-qr">
                 <div className="passport-dashboard-hero-qr-frame">
-                  <img alt={isZh ? "气候护照验证二维码" : "Climate passport verification QR"} className="passport-dashboard-hero-qr-image" src={identityQrCodeDataUrl} />
+                    <Image
+                      alt={isZh ? "气候护照验证二维码" : "Climate passport verification QR"}
+                      className="passport-dashboard-hero-qr-image"
+                      height={220}
+                      priority
+                      src={identityQrCodeDataUrl}
+                      width={220}
+                    />
                 </div>
                 <div className="passport-dashboard-hero-qr-label">{isZh ? "扫码验证身份" : "Scan to Verify"}</div>
               </div>

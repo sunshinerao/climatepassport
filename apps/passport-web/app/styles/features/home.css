@@ -281,7 +281,7 @@
   animation: heroMediaLoop 15s infinite;
 }
 
-.proto-home .hero-media-slide img {
+.proto-home .hero-media-image {
   width: 100%;
   height: 100%;
   object-fit: cover;

@@ -14,7 +14,7 @@ const issueSchema = z.object({
   templateId: z.string().uuid(),
   editIssueId: z.string().uuid().nullish(),
   issueDate: z.string().trim().max(40).optional(),
-  variableValues: z.record(z.unknown()).optional(),
+  variableValues: z.record(z.string(), z.unknown()).optional(),
 }).superRefine((value, context) => {
   if (!value.email && (!value.emails || value.emails.length === 0)) {
     context.addIssue({
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
   if (!admin || admin.role !== "ADMIN") {
     return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
   }
+  const adminUser = admin;
 
   const body = await request.json().catch(() => null) as unknown;
   if (!body) {
@@ -102,14 +103,17 @@ export async function POST(request: Request) {
   if (!prisma) {
     return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
   }
+  const prismaClient = prisma;
 
   const issuedAt = parseIssuedAt(payload.data.issueDate);
   if (!issuedAt) {
     return NextResponse.json({ error: "Invalid issue date." }, { status: 400 });
   }
+  const issuedAtValue = issuedAt;
 
   const { templateId } = payload.data;
   const { editIssueId } = payload.data;
+  const editIssueIdValue = editIssueId ?? undefined;
   const recipientEmails = payload.data.email
     ? [normalizeUserEmail(payload.data.email)]
     : Array.from(new Set((payload.data.emails ?? []).map((email) => normalizeUserEmail(email))));
@@ -126,11 +130,12 @@ export async function POST(request: Request) {
   if (!definition) {
     return NextResponse.json({ error: "No active certificate definition found for this template." }, { status: 404 });
   }
+  const certificateDefinition = definition;
 
   const renderConfig = parseCertificateRenderConfig(definition.template.renderConfigJson);
 
   async function issueToRecipient(email: string, issueIdForEdit?: string) {
-    return prisma.$transaction(async (tx) => {
+    return prismaClient.$transaction(async (tx) => {
       const recipient = await ensurePassportUserByEmail(tx, {
         email,
         fallbackName: resolveTextValue(
@@ -155,7 +160,7 @@ export async function POST(request: Request) {
 
       const duplicateIssue = await tx.certificateIssue.findFirst({
         where: {
-          definitionId: definition.id,
+          definitionId: certificateDefinition.id,
           userId: recipient.id,
           id: issueToEdit ? { not: issueToEdit.id } : undefined,
         },
@@ -185,17 +190,17 @@ export async function POST(request: Request) {
       const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(verificationCode)}`, request.url).toString();
       const baseVariableValues = buildIssuedCertificateVariableValues({
         holderName: recipient.name,
-        certificateName: definition.nameEn ?? definition.name,
-        certificateNameZh: definition.name,
-        certificateNameEn: definition.nameEn,
-        categoryName: definition.category.nameEn ?? definition.category.name,
-        categoryNameZh: definition.category.name,
-        categoryNameEn: definition.category.nameEn,
-        issueDate: issuedAt,
+        certificateName: certificateDefinition.nameEn ?? certificateDefinition.name,
+        certificateNameZh: certificateDefinition.name,
+        certificateNameEn: certificateDefinition.nameEn,
+        categoryName: certificateDefinition.category.nameEn ?? certificateDefinition.category.name,
+        categoryNameZh: certificateDefinition.category.name,
+        categoryNameEn: certificateDefinition.category.nameEn,
+        issueDate: issuedAtValue,
         certificateNumber: verificationCode,
         verificationUrl,
         issuerName: renderConfig.issuerName,
-        signer: renderConfig.signerName ?? renderConfig.issuerName ?? admin.name,
+        signer: renderConfig.signerName ?? renderConfig.issuerName ?? adminUser.name,
       });
       const variableValues = {
         ...baseVariableValues,
@@ -205,34 +210,34 @@ export async function POST(request: Request) {
       const certificateName = resolveTextValue(
         variableValues.certificateName,
         variableValues.certificateNameEn,
-        definition.nameEn,
-        definition.name,
+        certificateDefinition.nameEn,
+        certificateDefinition.name,
       );
       const categoryName = resolveTextValue(
         variableValues.categoryName,
         variableValues.categoryNameEn,
-        definition.category.nameEn,
-        definition.category.name,
+        certificateDefinition.category.nameEn,
+        certificateDefinition.category.name,
       );
 
       const artifact = await buildCertificateArtifactWithQr({
         holderName,
         certificateName,
         categoryName,
-        issueDate: issuedAt,
+        issueDate: issuedAtValue,
         certificateNumber: verificationCode,
         verificationUrl,
-        renderConfigJson: definition.template.renderConfigJson,
+        renderConfigJson: certificateDefinition.template.renderConfigJson,
         variableValues,
       });
 
       const issueWriteData = {
-        definitionId: definition.id,
+        definitionId: certificateDefinition.id,
         userId: recipient.id,
         status: "ISSUED" as const,
-        approvedBy: admin.id,
-        approvedAt: issuedAt,
-        issuedAt,
+        approvedBy: adminUser.id,
+        approvedAt: issuedAtValue,
+        issuedAt: issuedAtValue,
         verificationCode,
         generatedFileName: artifact.fileName,
         generatedFileUrl: artifact.dataUrl,
@@ -251,13 +256,13 @@ export async function POST(request: Request) {
           });
 
       await writeCoreAuditLog({
-        actorUserId: admin.id,
+        actorUserId: adminUser.id,
         action: issueToEdit ? "certificate.reissue" : "certificate.issue",
         subjectType: "certificate_issue",
         subjectId: issue.id,
         result: issueToEdit ? "reissued" : "issued",
         metadataJson: {
-          definitionId: definition.id,
+          definitionId: certificateDefinition.id,
           templateId,
           editIssueId: issueToEdit?.id,
           recipientUserId: recipient.id,
@@ -283,7 +288,7 @@ export async function POST(request: Request) {
   }
 
   if (recipientEmails.length === 1) {
-    const result = await issueToRecipient(recipientEmails[0], editIssueId);
+    const result = await issueToRecipient(recipientEmails[0]!, editIssueIdValue);
 
     if (!result.ok) {
       return NextResponse.json(

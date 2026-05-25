@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UserRole } from "@prisma/client";
@@ -36,7 +37,7 @@ function Avatar({ className = "", user }: { className?: string; user: MenuUser }
       className={`account-avatar ${className}`}
       style={user.avatar ? { backgroundImage: `url(${user.avatar})` } : undefined}
     >
-      {user.avatar ? <img alt="" className="account-avatar-image" src={user.avatar} /> : initial}
+      {user.avatar ? <Image alt="" className="account-avatar-image" height={42} src={user.avatar} width={42} /> : initial}
     </span>
   );
 }

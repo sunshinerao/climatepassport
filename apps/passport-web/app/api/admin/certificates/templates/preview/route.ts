@@ -25,7 +25,7 @@ const previewPayloadSchema = z.object({
   issueDate: z.string().trim().max(40).nullish(),
   completionDate: z.string().trim().max(40).nullish(),
   certificateNumber: z.string().trim().max(80).nullish(),
-  variableValues: z.record(z.unknown()).optional(),
+  variableValues: z.record(z.string(), z.unknown()).optional(),
   renderConfig: z.unknown().optional(),
 });
 
