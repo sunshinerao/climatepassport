@@ -5,6 +5,13 @@ import { getPrismaClient } from "@/lib/server/prisma";
 import { CertificateAdminTemplatesClient } from "@/components/certificate-admin-templates-client";
 import type { Locale } from "@/lib/site-content";
 
+type LegacyTemplateCategoryRow = {
+  id: string;
+  key: string;
+  name: string;
+  nameEn: string | null;
+};
+
 export default async function AdminCertificateTemplatesPage({ params }: { params: { locale: Locale } }) {
   noStore();
   await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/certificates/templates`);
@@ -30,13 +37,14 @@ export default async function AdminCertificateTemplatesPage({ params }: { params
             },
           },
         }),
-        prisma.certificateCategory.findMany({
-          where: { isActive: true },
-          orderBy: { order: "asc" },
-          select: { id: true, key: true, name: true, nameEn: true },
-        }),
+        prisma.$queryRaw<LegacyTemplateCategoryRow[]>`
+          SELECT id, key, name, "nameEn"
+          FROM "certificate_categories"
+          WHERE "isActive" = true
+          ORDER BY "order" ASC
+        `,
       ])
-    : [[], []];
+    : [[], [] as LegacyTemplateCategoryRow[]];
 
   return (
     <CertificateAdminTemplatesClient

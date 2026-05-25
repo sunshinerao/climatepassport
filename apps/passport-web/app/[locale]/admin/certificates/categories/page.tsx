@@ -1,8 +1,21 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { randomUUID } from "node:crypto";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { CertificateAdminCategoriesClient } from "@/components/certificate-admin-categories-client";
 import type { Locale } from "@/lib/site-content";
+
+type LegacyCertificateCategoryRow = {
+  id: string;
+  key: string;
+  name: string;
+  nameEn: string | null;
+  description: string | null;
+  descriptionEn: string | null;
+  order: number;
+  createdAt: Date;
+  isActive: boolean;
+};
 
 const builtInCategoryPresets = [
   { key: "course-certificate", name: "课程证书", nameEn: "Course Certificate" },
@@ -20,28 +33,52 @@ export default async function AdminCertificateCategoriesPage({ params }: { param
   const prisma = getPrismaClient();
 
   if (prisma) {
-    const maxOrder = await prisma.certificateCategory.aggregate({ _max: { order: true } });
-    const baseOrder = (maxOrder._max.order ?? -1) + 1;
+    const maxOrderRows = await prisma.$queryRaw<Array<{ maxOrder: number | null }>>`
+      SELECT MAX("order")::int AS "maxOrder"
+      FROM "certificate_categories"
+    `;
+    const baseOrder = (maxOrderRows[0]?.maxOrder ?? -1) + 1;
+    const now = new Date();
 
     await prisma.$transaction(
-      builtInCategoryPresets.map((preset, index) => prisma.certificateCategory.upsert({
-        where: { key: preset.key },
-        update: {},
-        create: {
-          key: preset.key,
-          name: preset.name,
-          nameEn: preset.nameEn,
-          isActive: true,
-          order: baseOrder + index,
-        },
-      })),
+      builtInCategoryPresets.map((preset, index) => prisma.$executeRaw`
+        INSERT INTO "certificate_categories" (
+          "id", "key", "name", "nameEn", "isActive", "order", "updatedAt"
+        )
+        SELECT ${randomUUID()}, ${preset.key}, ${preset.name}, ${preset.nameEn}, true, ${baseOrder + index}, ${now}
+        WHERE NOT EXISTS (
+          SELECT 1 FROM "certificate_categories" WHERE "key" = ${preset.key}
+        )
+      `),
     );
   }
 
   const categories = prisma
-    ? await prisma.certificateCategory.findMany({
-        orderBy: { order: "asc" },
-        include: { _count: { select: { templates: true, definitions: true } } },
+    ? await prisma.$queryRaw<LegacyCertificateCategoryRow[]>`
+        SELECT
+          id,
+          key,
+          name,
+          "nameEn",
+          description,
+          "descriptionEn",
+          "order",
+          "createdAt",
+          "isActive"
+        FROM "certificate_categories"
+        ORDER BY "order" ASC
+      `
+    : [];
+  const templateCounts = prisma
+    ? await prisma.certificateTemplate.groupBy({
+        by: ["categoryId"],
+        _count: { _all: true },
+      })
+    : [];
+  const definitionCounts = prisma
+    ? await prisma.certificateDefinition.groupBy({
+        by: ["categoryId"],
+        _count: { _all: true },
       })
     : [];
   const issuedByDefinition = prisma
@@ -56,6 +93,8 @@ export default async function AdminCertificateCategoriesPage({ params }: { param
     accumulator[row.categoryId] = (accumulator[row.categoryId] ?? 0) + row._count.issues;
     return accumulator;
   }, {});
+  const templateCountMap = new Map(templateCounts.map((row) => [row.categoryId, row._count._all]));
+  const definitionCountMap = new Map(definitionCounts.map((row) => [row.categoryId, row._count._all]));
 
   return (
     <CertificateAdminCategoriesClient
@@ -68,14 +107,14 @@ export default async function AdminCertificateCategoriesPage({ params }: { param
         description: category.description,
         descriptionEn: category.descriptionEn,
         order: category.order,
-        autoIssueEnabled: category.autoIssueEnabled,
-        userRequestEnabled: category.userRequestEnabled,
-        pdfEnabled: category.pdfEnabled,
-        publicVerifyEnabled: category.publicVerifyEnabled,
+        autoIssueEnabled: true,
+        userRequestEnabled: false,
+        pdfEnabled: true,
+        publicVerifyEnabled: true,
         createdAt: category.createdAt.toISOString(),
         isActive: category.isActive,
-        templateCount: category._count.templates,
-        definitionCount: category._count.definitions,
+        templateCount: templateCountMap.get(category.id) ?? 0,
+        definitionCount: definitionCountMap.get(category.id) ?? 0,
         issuedCount: issuedByCategory[category.id] ?? 0,
       }))}
     />

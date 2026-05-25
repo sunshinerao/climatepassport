@@ -10,6 +10,13 @@ import {
 import { getPrismaClient } from "@/lib/server/prisma";
 import type { Locale } from "@/lib/site-content";
 
+type LegacyTemplateCategoryRow = {
+  id: string;
+  key: string;
+  name: string;
+  nameEn: string | null;
+};
+
 export default async function AdminCertificateTemplateDetailPage({
   params,
 }: {
@@ -26,11 +33,12 @@ export default async function AdminCertificateTemplateDetailPage({
       })
     : null;
   const categories = prisma
-    ? await prisma.certificateCategory.findMany({
-        where: { isActive: true },
-        orderBy: { order: "asc" },
-        select: { id: true, key: true, name: true, nameEn: true },
-      })
+    ? await prisma.$queryRaw<LegacyTemplateCategoryRow[]>`
+        SELECT id, key, name, "nameEn"
+        FROM "certificate_categories"
+        WHERE "isActive" = true
+        ORDER BY "order" ASC
+      `
     : [];
 
   if (!template) {
