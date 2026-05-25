@@ -18,7 +18,15 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
     ? await Promise.all([
         prisma.certificateCategory.findMany({
           orderBy: { order: "asc" },
-          include: { _count: { select: { templates: true, definitions: true } } },
+          select: {
+            id: true,
+            key: true,
+            name: true,
+            nameEn: true,
+            description: true,
+            isActive: true,
+            _count: { select: { templates: true, definitions: true } },
+          },
         }),
         prisma.certificateTemplate.findMany({
           orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
@@ -29,7 +37,20 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
           take: 100,
           include: {
             user: { select: { name: true, email: true } },
-            definition: { include: { category: true } },
+            definition: {
+              select: {
+                id: true,
+                name: true,
+                nameEn: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    nameEn: true,
+                  },
+                },
+              },
+            },
             verifications: { select: { id: true } },
           },
         }),
