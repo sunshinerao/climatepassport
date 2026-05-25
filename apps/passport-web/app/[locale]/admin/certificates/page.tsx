@@ -5,6 +5,15 @@ import { getPrismaClient } from "@/lib/server/prisma";
 import { CertificateAdminDashboard } from "@/components/certificate-admin-prototype";
 import type { Locale } from "@/lib/site-content";
 
+type LegacyCertificateCategoryRow = {
+  id: string;
+  key: string;
+  name: string;
+  nameEn: string | null;
+  description: string | null;
+  isActive: boolean;
+};
+
 export default async function AdminCertificatesPage({ params }: { params: { locale: Locale } }) {
   noStore();
   await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/certificates`);
@@ -14,19 +23,20 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
   const unnamedCategoryLabel = params.locale === "zh" ? "未分类" : "Uncategorized";
   const unknownHolderLabel = params.locale === "zh" ? "未知持有人" : "Unknown holder";
 
-  const [categories, templates, issues] = prisma
+  const [categories, templateCounts, definitionCounts, templates, issues] = prisma
     ? await Promise.all([
-        prisma.certificateCategory.findMany({
-          orderBy: { order: "asc" },
-          select: {
-            id: true,
-            key: true,
-            name: true,
-            nameEn: true,
-            description: true,
-            isActive: true,
-            _count: { select: { templates: true, definitions: true } },
-          },
+        prisma.$queryRaw<LegacyCertificateCategoryRow[]>`
+          SELECT id, key, name, "nameEn", description, "isActive"
+          FROM "certificate_categories"
+          ORDER BY "order" ASC
+        `,
+        prisma.certificateTemplate.groupBy({
+          by: ["categoryId"],
+          _count: { _all: true },
+        }),
+        prisma.certificateDefinition.groupBy({
+          by: ["categoryId"],
+          _count: { _all: true },
         }),
         prisma.certificateTemplate.findMany({
           orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
@@ -55,7 +65,10 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
           },
         }),
       ])
-    : [[], [], []];
+    : [[], [], [], [], []];
+
+  const templateCountMap = new Map(templateCounts.map((entry) => [entry.categoryId, entry._count._all]));
+  const definitionCountMap = new Map(definitionCounts.map((entry) => [entry.categoryId, entry._count._all]));
 
   return (
     <CertificateAdminDashboard
@@ -67,8 +80,8 @@ export default async function AdminCertificatesPage({ params }: { params: { loca
         nameEn: category.nameEn,
         description: category.description,
         isActive: category.isActive,
-        templateCount: category._count.templates,
-        definitionCount: category._count.definitions,
+        templateCount: templateCountMap.get(category.id) ?? 0,
+        definitionCount: definitionCountMap.get(category.id) ?? 0,
       }))}
       templates={templates.map((template) => ({
         id: template.id,
