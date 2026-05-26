@@ -305,11 +305,8 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
   en: {
     shell: {
       nav: [
-        { href: "/", label: "Platform" },
+        { href: "/", label: "Home" },
         { href: "/dashboard/climate-passport", label: "Passport" },
-        { href: "/certificates", label: "Certificates" },
-        { href: "/events", label: "Events" },
-        { href: "/speakers", label: "People" },
       ],
       switchLabel: "Language",
       actions: {
@@ -652,11 +649,8 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
   zh: {
     shell: {
       nav: [
-        { href: "/", label: "平台" },
+        { href: "/", label: "首页" },
         { href: "/dashboard/climate-passport", label: "护照" },
-        { href: "/certificates", label: "证书" },
-        { href: "/events", label: "活动" },
-        { href: "/speakers", label: "人物" },
       ],
       switchLabel: "语言切换",
       actions: {
@@ -999,11 +993,8 @@ function buildFrDictionary(base: SiteDictionary): SiteDictionary {
     shell: {
       ...base.shell,
       nav: [
-        { href: "/", label: "Plateforme" },
+        { href: "/", label: "Accueil" },
         { href: "/dashboard/climate-passport", label: "Passeport" },
-        { href: "/certificates", label: "Certificats" },
-        { href: "/events", label: "Evenements" },
-        { href: "/speakers", label: "Personnes" },
       ],
       switchLabel: "Langue",
       actions: {
@@ -1115,11 +1106,8 @@ function buildDeDictionary(base: SiteDictionary): SiteDictionary {
     shell: {
       ...base.shell,
       nav: [
-        { href: "/", label: "Plattform" },
+        { href: "/", label: "Startseite" },
         { href: "/dashboard/climate-passport", label: "Pass" },
-        { href: "/certificates", label: "Zertifikate" },
-        { href: "/events", label: "Events" },
-        { href: "/speakers", label: "Personen" },
       ],
       switchLabel: "Sprache",
       actions: {
