@@ -135,156 +135,177 @@ export async function POST(request: Request) {
   const renderConfig = parseCertificateRenderConfig(definition.template.renderConfigJson);
 
   async function issueToRecipient(email: string, issueIdForEdit?: string) {
-    return prismaClient.$transaction(async (tx) => {
-      const recipient = await ensurePassportUserByEmail(tx, {
-        email,
-        fallbackName: resolveTextValue(
-          manualVariableValues.holderName,
-          manualVariableValues.holderNameEn,
-          email.split("@")[0] ?? email,
-        ),
-        role: "ATTENDEE",
-        status: "PENDING",
-      });
+    // Phase 1: DB work inside transaction (user provisioning, duplicate check, code allocation, issue write)
+    // writeCoreAuditLog is intentionally called OUTSIDE the transaction to avoid
+    // a failed audit write rolling back an otherwise successful certificate issuance.
+    type TxResult =
+      | { ok: true; issueId: string; verificationCode: string; verificationUrl: string; fileName: string | null; auditMeta: Record<string, unknown>; isReissue: boolean }
+      | { ok: false; status: number; error: string; issueId?: string; verificationCode?: string };
 
-      const issueToEdit = issueIdForEdit
-        ? await tx.certificateIssue.findUnique({
-            where: { id: issueIdForEdit },
-            select: { id: true, verificationCode: true },
-          })
-        : null;
-
-      if (issueIdForEdit && !issueToEdit) {
-        return { ok: false as const, email, status: 404, error: "Certificate to edit was not found." };
-      }
-
-      const duplicateIssue = await tx.certificateIssue.findFirst({
-        where: {
-          definitionId: certificateDefinition.id,
-          userId: recipient.id,
-          id: issueToEdit ? { not: issueToEdit.id } : undefined,
-        },
-        select: { id: true, verificationCode: true },
-      });
-
-      if (duplicateIssue) {
-        return {
-          ok: false as const,
+    let txResult: TxResult;
+    try {
+      txResult = await prismaClient.$transaction(async (tx) => {
+        const recipient = await ensurePassportUserByEmail(tx, {
           email,
-          status: 409,
-          error: "Duplicate issuance is not allowed for this user and certificate definition.",
-          issueId: duplicateIssue.id,
-          verificationCode: duplicateIssue.verificationCode,
-        };
-      }
-
-      const verificationCode = issueToEdit?.verificationCode ?? await allocateCertificateVerificationCode(async (candidate) => {
-        const existing = await tx.certificateIssue.findUnique({
-          where: { verificationCode: candidate },
-          select: { id: true },
+          fallbackName: resolveTextValue(
+            manualVariableValues.holderName,
+            manualVariableValues.holderNameEn,
+            email.split("@")[0] ?? email,
+          ),
+          role: "ATTENDEE",
+          status: "PENDING",
         });
 
-        return Boolean(existing);
-      });
+        const issueToEdit = issueIdForEdit
+          ? await tx.certificateIssue.findUnique({
+              where: { id: issueIdForEdit },
+              select: { id: true, verificationCode: true },
+            })
+          : null;
 
-      const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(verificationCode)}`, request.url).toString();
-      const baseVariableValues = buildIssuedCertificateVariableValues({
-        holderName: recipient.name,
-        certificateName: certificateDefinition.nameEn ?? certificateDefinition.name,
-        certificateNameZh: certificateDefinition.name,
-        certificateNameEn: certificateDefinition.nameEn,
-        categoryName: certificateDefinition.category.nameEn ?? certificateDefinition.category.name,
-        categoryNameZh: certificateDefinition.category.name,
-        categoryNameEn: certificateDefinition.category.nameEn,
-        issueDate: issuedAtValue,
-        certificateNumber: verificationCode,
-        verificationUrl,
-        issuerName: renderConfig.issuerName,
-        signer: renderConfig.signerName ?? renderConfig.issuerName ?? adminUser.name,
-      });
-      const variableValues = {
-        ...baseVariableValues,
-        ...manualVariableValues,
-      };
-      const holderName = resolveTextValue(variableValues.holderName, recipient.name);
-      const certificateName = resolveTextValue(
-        variableValues.certificateName,
-        variableValues.certificateNameEn,
-        certificateDefinition.nameEn,
-        certificateDefinition.name,
-      );
-      const categoryName = resolveTextValue(
-        variableValues.categoryName,
-        variableValues.categoryNameEn,
-        certificateDefinition.category.nameEn,
-        certificateDefinition.category.name,
-      );
+        if (issueIdForEdit && !issueToEdit) {
+          return { ok: false as const, status: 404, error: "Certificate to edit was not found." };
+        }
 
-      const artifact = await buildCertificateArtifactWithQr({
-        holderName,
-        certificateName,
-        categoryName,
-        issueDate: issuedAtValue,
-        certificateNumber: verificationCode,
-        verificationUrl,
-        renderConfigJson: certificateDefinition.template.renderConfigJson,
-        variableValues,
-      });
+        const duplicateIssue = await tx.certificateIssue.findFirst({
+          where: {
+            definitionId: certificateDefinition.id,
+            userId: recipient.id,
+            id: issueToEdit ? { not: issueToEdit.id } : undefined,
+          },
+          select: { id: true, verificationCode: true },
+        });
 
-      const issueWriteData = {
-        definitionId: certificateDefinition.id,
-        userId: recipient.id,
-        status: "ISSUED" as const,
-        approvedBy: adminUser.id,
-        approvedAt: issuedAtValue,
-        issuedAt: issuedAtValue,
-        verificationCode,
-        generatedFileName: artifact.fileName,
-        generatedFileUrl: artifact.dataUrl,
-        variableValuesJson: variableValues,
-      };
+        if (duplicateIssue) {
+          return {
+            ok: false as const,
+            status: 409,
+            error: "Duplicate issuance is not allowed for this user and certificate definition.",
+            issueId: duplicateIssue.id,
+            verificationCode: duplicateIssue.verificationCode ?? undefined,
+          };
+        }
 
-      const issue = issueToEdit
-        ? await tx.certificateIssue.update({
-            where: { id: issueToEdit.id },
-            data: issueWriteData,
-            select: { id: true, verificationCode: true, generatedFileName: true },
-          })
-        : await tx.certificateIssue.create({
-            data: issueWriteData,
-            select: { id: true, verificationCode: true, generatedFileName: true },
+        const verificationCode = issueToEdit?.verificationCode ?? await allocateCertificateVerificationCode(async (candidate) => {
+          const existing = await tx.certificateIssue.findUnique({
+            where: { verificationCode: candidate },
+            select: { id: true },
           });
 
-      await writeCoreAuditLog({
-        actorUserId: adminUser.id,
-        action: issueToEdit ? "certificate.reissue" : "certificate.issue",
-        subjectType: "certificate_issue",
-        subjectId: issue.id,
-        result: issueToEdit ? "reissued" : "issued",
-        metadataJson: {
-          definitionId: certificateDefinition.id,
-          templateId,
-          editIssueId: issueToEdit?.id,
-          recipientUserId: recipient.id,
-          recipientEmail: recipient.normalizedEmail,
-          recipientCreated: recipient.created,
-          recipientClimatePassportId: recipient.climatePassportId,
-          fileName: artifact.fileName,
-          pdfFileName: artifact.pdfFileName,
-          mimeType: artifact.mimeType,
-        },
-        ...getRequestAuditContext(request),
-      });
+          return Boolean(existing);
+        });
 
-      return {
-        ok: true as const,
-        email,
-        issueId: issue.id,
-        verificationCode: issue.verificationCode,
-        verificationUrl,
-        fileName: issue.generatedFileName,
-      };
-    });
+        const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(verificationCode)}`, request.url).toString();
+        const baseVariableValues = buildIssuedCertificateVariableValues({
+          holderName: recipient.name,
+          certificateName: certificateDefinition.nameEn ?? certificateDefinition.name,
+          certificateNameZh: certificateDefinition.name,
+          certificateNameEn: certificateDefinition.nameEn,
+          categoryName: certificateDefinition.category.nameEn ?? certificateDefinition.category.name,
+          categoryNameZh: certificateDefinition.category.name,
+          categoryNameEn: certificateDefinition.category.nameEn,
+          issueDate: issuedAtValue,
+          certificateNumber: verificationCode,
+          verificationUrl,
+          issuerName: renderConfig.issuerName,
+          signer: renderConfig.signerName ?? renderConfig.issuerName ?? adminUser.name,
+        });
+        const variableValues = {
+          ...baseVariableValues,
+          ...manualVariableValues,
+        };
+        const holderName = resolveTextValue(variableValues.holderName, recipient.name);
+        const certificateName = resolveTextValue(
+          variableValues.certificateName,
+          variableValues.certificateNameEn,
+          certificateDefinition.nameEn,
+          certificateDefinition.name,
+        );
+        const categoryName = resolveTextValue(
+          variableValues.categoryName,
+          variableValues.categoryNameEn,
+          certificateDefinition.category.nameEn,
+          certificateDefinition.category.name,
+        );
+
+        const artifact = await buildCertificateArtifactWithQr({
+          holderName,
+          certificateName,
+          categoryName,
+          issueDate: issuedAtValue,
+          certificateNumber: verificationCode,
+          verificationUrl,
+          renderConfigJson: certificateDefinition.template.renderConfigJson,
+          variableValues,
+        });
+
+        const issueWriteData = {
+          definitionId: certificateDefinition.id,
+          userId: recipient.id,
+          status: "ISSUED" as const,
+          approvedBy: adminUser.id,
+          approvedAt: issuedAtValue,
+          issuedAt: issuedAtValue,
+          verificationCode,
+          generatedFileName: artifact.fileName,
+          generatedFileUrl: artifact.dataUrl,
+          variableValuesJson: variableValues,
+        };
+
+        const issue = issueToEdit
+          ? await tx.certificateIssue.update({
+              where: { id: issueToEdit.id },
+              data: issueWriteData,
+              select: { id: true, verificationCode: true, generatedFileName: true },
+            })
+          : await tx.certificateIssue.create({
+              data: issueWriteData,
+              select: { id: true, verificationCode: true, generatedFileName: true },
+            });
+
+        return {
+          ok: true as const,
+          issueId: issue.id,
+          verificationCode: issue.verificationCode ?? verificationCode,
+          verificationUrl,
+          fileName: issue.generatedFileName,
+          isReissue: Boolean(issueToEdit),
+          auditMeta: {
+            definitionId: certificateDefinition.id,
+            templateId,
+            editIssueId: issueToEdit?.id,
+            recipientUserId: recipient.id,
+            recipientEmail: recipient.normalizedEmail,
+            recipientCreated: recipient.created,
+            recipientClimatePassportId: recipient.climatePassportId,
+            fileName: artifact.fileName,
+            pdfFileName: artifact.pdfFileName,
+            mimeType: artifact.mimeType,
+          },
+        };
+      });
+    } catch (txError) {
+      const msg = txError instanceof Error ? txError.message : String(txError);
+      console.error("[certificate.issue] transaction failed:", msg);
+      return { ok: false as const, email, status: 500, error: `Certificate issuance failed: ${msg}` };
+    }
+
+    // Phase 2: Write audit log outside transaction (best-effort; failure does not affect issuance result)
+    if (txResult.ok) {
+      void writeCoreAuditLog({
+        actorUserId: adminUser.id,
+        action: txResult.isReissue ? "certificate.reissue" : "certificate.issue",
+        subjectType: "certificate_issue",
+        subjectId: txResult.issueId,
+        result: txResult.isReissue ? "reissued" : "issued",
+        metadataJson: txResult.auditMeta,
+        ...getRequestAuditContext(request),
+      }).catch((auditError: unknown) => {
+        console.error("[certificate.issue] audit log write failed:", auditError instanceof Error ? auditError.message : String(auditError));
+      });
+    }
+
+    return { ...txResult, email };
   }
 
   if (recipientEmails.length === 1) {
