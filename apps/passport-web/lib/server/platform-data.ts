@@ -25,6 +25,28 @@ function formatDateLabel(locale: Locale, value: Date | string | null | undefined
   }).format(date);
 }
 
+function isMissingTableError(error: unknown) {
+  return Boolean(
+    error
+      && typeof error === "object"
+      && "code" in error
+      && (error as { code?: string }).code === "P2021",
+  );
+}
+
+function parseLearningHours(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, value);
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.trim());
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }
+
+  return 0;
+}
+
 async function withPrismaFallback<T>(resolver: (client: NonNullable<ReturnType<typeof getPrismaClient>>) => Promise<T>, fallback: () => T | Promise<T>) {
   const client = getPrismaClient();
 
@@ -37,6 +59,122 @@ async function withPrismaFallback<T>(resolver: (client: NonNullable<ReturnType<t
   } catch (error) {
     console.error("[platform-data] Prisma query failed; rendering fallback content.", error);
     return fallback();
+  }
+}
+
+const DEFAULT_POINT_ACHIEVEMENTS = [
+  {
+    key: "climate-first-step",
+    name: "气候行动起步者",
+    nameEn: "Climate First Step",
+    description: "累计获得 100 积分，完成你的第一阶段气候行动记录。",
+    descriptionEn: "Accumulate 100 points to complete your first stage of climate action records.",
+    pointThreshold: 100,
+    order: 10,
+  },
+  {
+    key: "community-participant",
+    name: "社区参与者",
+    nameEn: "Community Participant",
+    description: "累计获得 250 积分，持续参与活动与学习。",
+    descriptionEn: "Accumulate 250 points through sustained event and learning participation.",
+    pointThreshold: 250,
+    order: 20,
+  },
+  {
+    key: "learning-practitioner",
+    name: "学习践行者",
+    nameEn: "Learning Practitioner",
+    description: "累计获得 500 积分，形成稳定的学习与实践闭环。",
+    descriptionEn: "Accumulate 500 points to form a stable learning-to-practice loop.",
+    pointThreshold: 500,
+    order: 30,
+  },
+  {
+    key: "impact-builder",
+    name: "影响力建设者",
+    nameEn: "Impact Builder",
+    description: "累计获得 800 积分，具备可验证的影响力轨迹。",
+    descriptionEn: "Accumulate 800 points and build a verifiable impact trajectory.",
+    pointThreshold: 800,
+    order: 40,
+  },
+  {
+    key: "certificate-achiever",
+    name: "证书达成者",
+    nameEn: "Certificate Achiever",
+    description: "累计获得 1200 积分，解锁更高阶的成果证明。",
+    descriptionEn: "Accumulate 1200 points to unlock higher-level credential outcomes.",
+    pointThreshold: 1200,
+    order: 50,
+  },
+  {
+    key: "global-collaborator",
+    name: "全球协作贡献者",
+    nameEn: "Global Collaboration Contributor",
+    description: "累计获得 1600 积分，形成跨区域协作贡献。",
+    descriptionEn: "Accumulate 1600 points and demonstrate cross-region collaboration.",
+    pointThreshold: 1600,
+    order: 60,
+  },
+  {
+    key: "climate-champion",
+    name: "气候先锋",
+    nameEn: "Climate Champion",
+    description: "累计获得 2100 积分，成为平台内高可信行动者。",
+    descriptionEn: "Accumulate 2100 points and become a trusted high-impact actor on the platform.",
+    pointThreshold: 2100,
+    order: 70,
+  },
+  {
+    key: "milestone-guardian",
+    name: "里程守护者",
+    nameEn: "Milestone Guardian",
+    description: "累计获得 2600 积分，持续守护长期气候目标。",
+    descriptionEn: "Accumulate 2600 points while consistently safeguarding long-term climate goals.",
+    pointThreshold: 2600,
+    order: 80,
+  },
+  {
+    key: "legacy-architect",
+    name: "行动传承构建者",
+    nameEn: "Legacy Architect",
+    description: "累计获得 3200 积分，建立高价值气候行动传承。",
+    descriptionEn: "Accumulate 3200 points to establish a high-value climate action legacy.",
+    pointThreshold: 3200,
+    order: 90,
+  },
+] as const;
+
+async function ensureDefaultPointAchievementDefinitions(
+  prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
+) {
+  const existing = await prisma.achievementDefinition.findMany({
+    where: {
+      key: {
+        in: DEFAULT_POINT_ACHIEVEMENTS.map((item) => item.key),
+      },
+    },
+    select: { key: true },
+  });
+
+  const existingKeys = new Set(existing.map((item) => item.key));
+  const missing = DEFAULT_POINT_ACHIEVEMENTS.filter((item) => !existingKeys.has(item.key));
+
+  if (missing.length > 0) {
+    await prisma.achievementDefinition.createMany({
+      data: missing.map((item) => ({
+        key: item.key,
+        name: item.name,
+        nameEn: item.nameEn,
+        description: item.description,
+        descriptionEn: item.descriptionEn,
+        pointThreshold: item.pointThreshold,
+        order: item.order,
+        isActive: true,
+      })),
+      skipDuplicates: true,
+    });
   }
 }
 
@@ -107,57 +245,140 @@ export async function getPassportPageData(locale: Locale) {
   return withPrismaFallback(
     async (prisma) => {
       const now = new Date();
-      const user = await prisma.user.findFirst({
-        where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
-        orderBy: currentUser ? undefined : { createdAt: "asc" },
-        include: {
-          unlockedAchievements: {
-            include: {
-              achievementDefinition: true,
+      await ensureDefaultPointAchievementDefinitions(prisma);
+
+      const [user, achievementDefinitions] = await Promise.all([
+        prisma.user.findFirst({
+          where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
+          orderBy: currentUser ? undefined : { createdAt: "asc" },
+          include: {
+            unlockedAchievements: {
+              include: {
+                achievementDefinition: true,
+              },
+              orderBy: { unlockedAt: "desc" },
             },
-            orderBy: { unlockedAt: "desc" },
-            take: 4,
-          },
-          registrations: {
-            include: {
-              event: {
-                select: {
-                  id: true,
-                  title: true,
-                  titleEn: true,
-                  venue: true,
-                  venueEn: true,
-                  startDate: true,
-                  endDate: true,
-                  isPublished: true,
-                  isClosed: true,
+            registrations: {
+              include: {
+                event: {
+                  select: {
+                    id: true,
+                    title: true,
+                    titleEn: true,
+                    venue: true,
+                    venueEn: true,
+                    startDate: true,
+                    endDate: true,
+                    isPublished: true,
+                    isClosed: true,
+                  },
                 },
               },
+              orderBy: { createdAt: "desc" },
             },
-            orderBy: { createdAt: "desc" },
-          },
-          certificateIssues: {
-            where: { status: "ISSUED" },
-            include: {
-              definition: {
-                select: {
-                  name: true,
-                  nameEn: true,
-                  category: {
-                    select: {
-                      key: true,
-                      name: true,
-                      nameEn: true,
+            certificateIssues: {
+              where: { status: "ISSUED" },
+              include: {
+                definition: {
+                  select: {
+                    name: true,
+                    nameEn: true,
+                    category: {
+                      select: {
+                        key: true,
+                        name: true,
+                        nameEn: true,
+                      },
                     },
                   },
                 },
               },
+              orderBy: { issuedAt: "desc" },
+              take: 6,
             },
-            orderBy: { issuedAt: "desc" },
-            take: 6,
+            learningExperienceParticipations: {
+              where: {
+                status: "COMPLETED",
+              },
+              select: {
+                startedAt: true,
+                completedAt: true,
+                program: {
+                  select: {
+                    cohortStartAt: true,
+                    cohortEndAt: true,
+                    programConfigJson: true,
+                  },
+                },
+              },
+            },
           },
-        },
-      });
+        }),
+        prisma.achievementDefinition.findMany({
+          where: { isActive: true },
+          orderBy: [{ order: "asc" }, { pointThreshold: "asc" }, { createdAt: "asc" }],
+          take: 9,
+        }),
+      ]);
+
+      let achievementTimelineRows: Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        verificationLevel: string;
+        completedAt: Date | null;
+        createdAt: Date;
+      }> = [];
+      let badgeDefinitionRows: Array<{
+        id: string;
+        name: string;
+        nameZh: string | null;
+        description: string | null;
+        descriptionZh: string | null;
+        verificationGrade: string;
+      }> = [];
+      let activeBadgeAwardRows: Array<{ badgeDefinitionId: string }> = [];
+
+      if (user) {
+        try {
+          [achievementTimelineRows, badgeDefinitionRows, activeBadgeAwardRows] = await Promise.all([
+            prisma.achievement.findMany({
+              where: { userId: user.id },
+              orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+              take: 8,
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                verificationLevel: true,
+                completedAt: true,
+                createdAt: true,
+              },
+            }),
+            prisma.badgeDefinition.findMany({
+              where: { isActive: true },
+              orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
+              take: 12,
+              select: {
+                id: true,
+                name: true,
+                nameZh: true,
+                description: true,
+                descriptionZh: true,
+                verificationGrade: true,
+              },
+            }),
+            prisma.badgeAward.findMany({
+              where: { userId: user.id, status: "ACTIVE" },
+              select: { badgeDefinitionId: true },
+            }),
+          ]);
+        } catch (error) {
+          if (!isMissingTableError(error)) {
+            throw error;
+          }
+        }
+      }
 
       if (!user) {
         return {
@@ -170,6 +391,8 @@ export async function getPassportPageData(locale: Locale) {
           timeline: [] as Array<{ day: string; month: string; title: string; meta: string; href: string; cta: string; primary: boolean }>,
           certificates: [] as Array<{ icon: string; title: string; issuer: string; date: string; href: string; code: string | null }>,
           profileCompletion: 0,
+          achievementTimeline: [] as Array<{ id: string; name: string; description: string | null; verificationLevel: string; dateLabel: string; monthLabel: string; dayLabel: string }>,
+          badgeWall: [] as Array<{ id: string; name: string; description: string | null; verificationGrade: string; unlocked: boolean }>,
         };
       }
 
@@ -180,6 +403,35 @@ export async function getPassportPageData(locale: Locale) {
         }
 
         const hours = (registration.event.endDate.getTime() - registration.event.startDate.getTime()) / (1000 * 60 * 60);
+        return sum + Math.max(0, hours);
+      }, 0);
+
+      const learningHoursFromPrograms = user.learningExperienceParticipations.reduce((sum, participation) => {
+        const config = participation.program?.programConfigJson;
+        const configHours = config && typeof config === "object" && !Array.isArray(config)
+          ? parseLearningHours((config as Record<string, unknown>).learningHours)
+            || parseLearningHours((config as Record<string, unknown>).hours)
+            || parseLearningHours((config as Record<string, unknown>).durationHours)
+            || parseLearningHours((config as Record<string, unknown>).totalHours)
+            || parseLearningHours((config as Record<string, unknown>).creditHours)
+          : 0;
+
+        if (configHours > 0) {
+          return sum + configHours;
+        }
+
+        const start = participation.startedAt
+          ?? participation.program?.cohortStartAt
+          ?? null;
+        const end = participation.completedAt
+          ?? participation.program?.cohortEndAt
+          ?? null;
+
+        if (!start || !end) {
+          return sum;
+        }
+
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
         return sum + Math.max(0, hours);
       }, 0);
 
@@ -259,22 +511,86 @@ export async function getPassportPageData(locale: Locale) {
       ];
       const profileCompletion = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
 
+      const unlockedDefinitionIds = new Set(
+        user.unlockedAchievements.map((item) => item.achievementDefinitionId),
+      );
+
+      const pointUnlockedDefinitions = achievementDefinitions.filter((definition) => {
+        if (typeof definition.pointThreshold !== "number") {
+          return false;
+        }
+
+        return user.points >= definition.pointThreshold;
+      });
+
+      const newlyUnlocked = pointUnlockedDefinitions.filter(
+        (definition) => !unlockedDefinitionIds.has(definition.id),
+      );
+
+      if (newlyUnlocked.length > 0) {
+        await prisma.userAchievement.createMany({
+          data: newlyUnlocked.map((definition) => ({
+            userId: user.id,
+            achievementDefinitionId: definition.id,
+            sourceType: "POINT_THRESHOLD",
+            sourceId: `point-threshold:${definition.id}`,
+          })),
+          skipDuplicates: true,
+        });
+
+        for (const definition of newlyUnlocked) {
+          unlockedDefinitionIds.add(definition.id);
+        }
+      }
+
+      const achievementsList = achievementDefinitions.length > 0
+        ? achievementDefinitions.map((definition) => {
+            const isUnlocked = unlockedDefinitionIds.has(definition.id);
+            const threshold = typeof definition.pointThreshold === "number" ? definition.pointThreshold : 0;
+
+            return {
+              title: getLocalizedText(locale, definition.name, definition.nameEn),
+              detail: isUnlocked
+                ? locale === "zh"
+                  ? `已达成 · ${threshold} 积分阈值`
+                  : `Unlocked · ${threshold} point threshold`
+                : locale === "zh"
+                  ? `解锁条件：累计 ${threshold} 积分`
+                  : `Unlock requirement: ${threshold} total points`,
+              unlocked: isUnlocked,
+            };
+          })
+        : dictionary.passport.achievementsList;
+
+      const unlockedCount = achievementsList.filter((item) => item.unlocked).length;
+      const achievementTimeline = achievementTimelineRows.map((item) => {
+        const date = item.completedAt ?? item.createdAt;
+
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          verificationLevel: item.verificationLevel,
+          dateLabel: formatDateLabel(locale, date),
+          monthLabel: date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { month: "short" }),
+          dayLabel: String(date.getDate()),
+        };
+      });
+
+      const unlockedBadgeSet = new Set(activeBadgeAwardRows.map((item) => item.badgeDefinitionId));
+      const badgeWall = badgeDefinitionRows.map((item) => ({
+        id: item.id,
+        name: locale === "zh" ? item.nameZh ?? item.name : item.name,
+        description: locale === "zh" ? item.descriptionZh ?? item.description : item.description ?? item.descriptionZh,
+        verificationGrade: item.verificationGrade,
+        unlocked: unlockedBadgeSet.has(item.id),
+      }));
+
       return {
         locale,
         passport: {
           ...dictionary.passport,
-          achievementsList:
-            user.unlockedAchievements.length > 0
-              ? user.unlockedAchievements.map((item) => ({
-                  title: getLocalizedText(locale, item.achievementDefinition.name, item.achievementDefinition.nameEn),
-                  detail: getLocalizedText(
-                    locale,
-                    item.achievementDefinition.description,
-                    item.achievementDefinition.descriptionEn,
-                  ),
-                  unlocked: true,
-                }))
-              : dictionary.passport.achievementsList,
+          achievementsList,
         },
         account: {
           name: user.name,
@@ -282,14 +598,16 @@ export async function getPassportPageData(locale: Locale) {
           climatePassportId: user.climatePassportId ?? user.passCode,
           points: user.points,
           attended: attendedRegistrations.length,
-          learningHours: Math.round(learningHoursFromEvents > 0 ? learningHoursFromEvents : accountSnapshotByLocale[toCoreLocale(locale)].learningHours),
+          learningHours: Math.round(Math.max(0, learningHoursFromEvents + learningHoursFromPrograms)),
           certificates: user.certificateIssues.length,
-          achievements: user.unlockedAchievements.length,
+          achievements: unlockedCount,
           issuedAt: formatDateLabel(locale, user.certificateIssues[0]?.issuedAt ?? user.createdAt),
         },
         timeline,
         certificates: recentCertificates,
         profileCompletion,
+        achievementTimeline,
+        badgeWall,
       };
     },
     async () => ({
@@ -302,6 +620,95 @@ export async function getPassportPageData(locale: Locale) {
       timeline: [] as Array<{ day: string; month: string; title: string; meta: string; href: string; cta: string; primary: boolean }>,
       certificates: [] as Array<{ icon: string; title: string; issuer: string; date: string; href: string; code: string | null }>,
       profileCompletion: 0,
+      achievementTimeline: [] as Array<{ id: string; name: string; description: string | null; verificationLevel: string; dateLabel: string; monthLabel: string; dayLabel: string }>,
+      badgeWall: [] as Array<{ id: string; name: string; description: string | null; verificationGrade: string; unlocked: boolean }>,
+    }),
+  );
+}
+
+export async function getProfileMaintenancePageData(locale: Locale) {
+  const dictionary = getDictionary(locale);
+  const currentUser = await getCurrentUser();
+
+  return withPrismaFallback(
+    async (prisma) => {
+      const user = await prisma.user.findFirst({
+        where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
+        orderBy: currentUser ? undefined : { createdAt: "asc" },
+        include: {
+          organization: {
+            select: {
+              name: true,
+              website: true,
+              description: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        return {
+          locale,
+          profile: {
+            name: "",
+            email: "",
+            climatePassportId: "",
+            salutation: "",
+            phone: "",
+            country: "",
+            title: "",
+            avatar: "",
+            bio: "",
+            organization: {
+              name: "",
+              website: "",
+              description: "",
+            },
+          },
+          dictionary,
+        };
+      }
+
+      return {
+        locale,
+        profile: {
+          name: user.name,
+          email: user.email,
+          climatePassportId: user.climatePassportId ?? user.passCode,
+          salutation: user.salutation ?? "",
+          phone: user.phone ?? "",
+          country: user.country ?? "",
+          title: user.title ?? "",
+          avatar: user.avatar ?? "",
+          bio: user.bio ?? "",
+          organization: {
+            name: user.organization?.name ?? "",
+            website: user.organization?.website ?? "",
+            description: user.organization?.description ?? "",
+          },
+        },
+        dictionary,
+      };
+    },
+    async () => ({
+      locale,
+      profile: {
+        name: "",
+        email: "",
+        climatePassportId: "",
+        salutation: "",
+        phone: "",
+        country: "",
+        title: "",
+        avatar: "",
+        bio: "",
+        organization: {
+          name: "",
+          website: "",
+          description: "",
+        },
+      },
+      dictionary,
     }),
   );
 }

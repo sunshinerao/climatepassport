@@ -10,6 +10,7 @@ import {
   extractCapabilityTags,
   extractLearningHoursFromProgramConfig,
 } from "@/lib/server/certificate-variables";
+import { grantUserPoints } from "@/lib/server/point-ledger";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const statusTransitionMap: Record<LearningExperienceApplicationStatus, LearningExperienceApplicationStatus[]> = {
@@ -363,18 +364,14 @@ export async function PATCH(
       const pointReward = current.program.pointReward ?? 0;
 
       if (pointReward > 0 && !participation.pointsAwarded) {
-        await tx.user.update({
-          where: { id: current.userId },
-          data: { points: { increment: pointReward } },
-        });
-        await tx.pointTransaction.create({
-          data: {
-            userId: current.userId,
-            points: pointReward,
-            type: "LEARNING_EXPERIENCE_COMPLETION",
-            description: `Completed ${current.program.title}`,
-            createdBy: user.id,
-          },
+        await grantUserPoints({
+          client: tx,
+          userId: current.userId,
+          points: pointReward,
+          type: "LEARNING_EXPERIENCE_COMPLETION",
+          description: `Completed ${current.program.title}`,
+          createdBy: user.id,
+          idempotencyKey: `learning-experience:${participation.id}`,
         });
         await tx.learningExperienceParticipation.update({
           where: { id: participation.id },

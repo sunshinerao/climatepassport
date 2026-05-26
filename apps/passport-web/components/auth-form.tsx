@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { CountryCombobox } from "@/components/country-combobox";
 import type { Locale } from "@/lib/site-content";
+import { getCountryOptions, getPreferredCountryOptions } from "@/lib/country-options";
 
 type SharedLabels = {
   email: string;
@@ -33,10 +34,12 @@ type AuthFormProps =
 const SALUTATIONS = ["Dr.", "Prof.", "Mr.", "Ms.", "Mx.", "Rev."];
 
 export function AuthForm(props: AuthFormProps) {
-  const router = useRouter();
   const isZh = props.locale === "zh";
+  const countryOptions = getCountryOptions(props.locale);
+  const preferredCountryOptions = getPreferredCountryOptions(props.locale);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registerCountry, setRegisterCountry] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   function getFieldError(name: string): string | undefined {
@@ -112,14 +115,15 @@ export function AuthForm(props: AuthFormProps) {
 
       if (!response.ok) {
         setError(result.error ?? "Unable to complete this request.");
+        setIsSubmitting(false);
         return;
       }
 
-      router.replace(result.redirectTo ?? `/${props.locale}/dashboard/climate-passport`);
-      router.refresh();
+      const nextPath = result.redirectTo ?? `/${props.locale}/dashboard/climate-passport`;
+      window.location.assign(nextPath);
+      return;
     } catch {
       setError("Network error. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -161,7 +165,21 @@ export function AuthForm(props: AuthFormProps) {
           <div className="field-row">
             <label className="field">
               <span>{isZh ? "国家 / 地区" : "Country / Region"}<span className="req-star">*</span></span>
-              <input name="country" onChange={() => clearError("country")} placeholder={isZh ? "如：中国" : "e.g. China"} type="text" />
+              <CountryCombobox
+                ariaLabel={isZh ? "国家或地区" : "Country or Region"}
+                id="register-country"
+                name="country"
+                noOptionsText={isZh ? "没有匹配选项" : "No matching options"}
+                onBlur={() => clearError("country")}
+                onChange={(value) => {
+                  setRegisterCountry(value);
+                  clearError("country");
+                }}
+                options={countryOptions}
+                preferredOptions={preferredCountryOptions}
+                placeholder={isZh ? "输入即可搜索国家/地区" : "Type to search country/region"}
+                value={registerCountry}
+              />
               {getFieldError("country") && <span className="field-error">{getFieldError("country")}</span>}
             </label>
             <label className="field">

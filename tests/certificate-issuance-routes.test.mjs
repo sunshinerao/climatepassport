@@ -114,6 +114,9 @@ test("issue route returns 409 when duplicate issuance exists", async () => {
     "@/lib/server/certificate-variables": {
       buildIssuedCertificateVariableValues: () => ({}),
     },
+    "@/lib/server/achievement-badge": {
+      createAchievementRecord: async () => ({ id: "achievement-1" }),
+    },
     "@/lib/server/audit": {
       getRequestAuditContext: () => ({}),
       writeCoreAuditLog: async () => {
@@ -216,6 +219,9 @@ test("issue route merges manual variable values into artifact rendering", async 
         categoryName: "Course",
         categoryNameEn: "Course",
       }),
+    },
+    "@/lib/server/achievement-badge": {
+      createAchievementRecord: async () => ({ id: "achievement-1" }),
     },
     "@/lib/server/audit": {
       getRequestAuditContext: () => ({}),
@@ -340,6 +346,9 @@ test("issue route supports batch issuance and returns summary", async () => {
         certificateName: "Climate Course",
         categoryName: "Course",
       }),
+    },
+    "@/lib/server/achievement-badge": {
+      createAchievementRecord: async () => ({ id: "achievement-1" }),
     },
     "@/lib/server/audit": {
       getRequestAuditContext: () => ({}),
@@ -495,6 +504,9 @@ test("learning application completion creates issued certificate with rendered f
       buildIssuedCertificateVariableValues: () => ({}),
       extractCapabilityTags: () => [],
       extractLearningHoursFromProgramConfig: () => null,
+    },
+    "@/lib/server/point-ledger": {
+      grantUserPoints: async () => ({ ok: true, awarded: false, reason: "non_positive_points" }),
     },
   });
 

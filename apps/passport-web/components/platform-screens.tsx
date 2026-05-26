@@ -4,10 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
+import type { CSSProperties } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { ContactMessageForm } from "@/components/contact-message-form";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import { EventsFilterableGrid } from "@/components/events-filterable-grid";
+import { ProfileMaintenanceForm } from "@/components/profile-maintenance-form";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import type { Locale } from "@/lib/site-content";
 import { getCurrentUser, getDashboardPathForRole, requireAuthenticatedUser } from "@/lib/server/auth";
@@ -21,6 +23,7 @@ import {
   getMessagesPageData,
   getNotificationsPageData,
   getPassportPageData,
+  getProfileMaintenancePageData,
   getRegisterPageData,
   getSpeakersPageData,
 } from "@/lib/server/platform-data";
@@ -33,6 +36,16 @@ function formatEventDateBadge(date: Date | null, locale: Locale) {
     ? `${d.getMonth() + 1}月`
     : d.toLocaleDateString("en-US", { month: "short" });
   return { day: String(day), month };
+}
+
+function getProgressGoldRatio(profileCompletion: number) {
+  const normalized = Math.max(0, Math.min(100, profileCompletion));
+
+  if (normalized <= 50) {
+    return 0;
+  }
+
+  return (normalized - 50) / 50;
 }
 
 export async function HomeScreen({ locale }: { locale: Locale }) {
@@ -376,8 +389,9 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
 export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
   noStore();
   const user = await requireAuthenticatedUser(locale, `/${locale}/dashboard/climate-passport`);
-  const { passport, account, timeline, certificates, profileCompletion } = await getPassportPageData(locale);
+  const { passport, account, timeline, certificates, profileCompletion, achievementTimeline, badgeWall } = await getPassportPageData(locale);
   const isZh = locale === "zh";
+  const unlockedBadgesCount = badgeWall.filter((item) => item.unlocked).length;
   const currentDate = new Date().toLocaleDateString(isZh ? "zh-CN" : "en-US", {
     weekday: "long",
     year: "numeric",
@@ -391,6 +405,13 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
     { icon: "🎓", label: isZh ? "证书数量" : "Certificates", value: String(account.certificates ?? 0) },
     { icon: "⏰", label: isZh ? "学习时长" : "Learning Hours", value: String(account.learningHours) },
   ];
+
+  const clampedProfileCompletion = Math.max(0, Math.min(100, profileCompletion));
+  const progressGoldRatio = getProgressGoldRatio(clampedProfileCompletion);
+  const progressRingStyle = {
+    "--cp-progress-percent": `${clampedProfileCompletion}%`,
+    "--cp-progress-gold-ratio": progressGoldRatio,
+  } as CSSProperties;
 
   const qrToken = await issueQrToken({
     type: "IDENTITY",
@@ -443,8 +464,10 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
             <div className="passport-dashboard-hero-inner">
               <div>
                 <div className="passport-dashboard-hero-header">Climate Passport</div>
-                <div className="passport-dashboard-hero-name">{account.name}</div>
-                <div className="passport-dashboard-hero-role">{account.role}</div>
+                <div className="passport-dashboard-hero-identity">
+                  <div className="passport-dashboard-hero-name">{account.name}</div>
+                  <div className="passport-dashboard-hero-role">{account.role}</div>
+                </div>
                 <div className="passport-dashboard-hero-stats">
                   <div className="passport-dashboard-hero-metric">
                     <div className="passport-dashboard-hero-stat-value">{account.points}</div>
@@ -460,9 +483,27 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
                   </div>
                 </div>
                 <div className="passport-dashboard-hero-id">ID: {account.climatePassportId}</div>
+                <div className="passport-dashboard-hero-tags" aria-label={isZh ? "护照摘要信息" : "Passport summary metrics"}>
+                  <span className="passport-dashboard-hero-tag">
+                    {isZh ? `签发日期 ${account.issuedAt}` : `Issued ${account.issuedAt}`}
+                  </span>
+                  <span className="passport-dashboard-hero-tag">
+                    {isZh ? `已解锁 ${account.achievements} 项成就` : `${account.achievements} achievements unlocked`}
+                  </span>
+                  <span className="passport-dashboard-hero-tag">
+                    {isZh ? `获得 ${unlockedBadgesCount} 枚徽章` : `${unlockedBadgesCount} badges earned`}
+                  </span>
+                </div>
               </div>
               <div className="passport-dashboard-hero-qr">
-                <div className="passport-dashboard-hero-qr-frame">
+                <div className="passport-dashboard-hero-qr-frame" role="group" aria-label={isZh ? "身份二维码核验区" : "Identity QR verification panel"}>
+                  <div className="passport-dashboard-hero-qr-meta">
+                    <div className="passport-dashboard-hero-qr-code-line">
+                      <span>{isZh ? "护照核验码" : "Passport Verification Code"}</span>
+                      <strong>{account.climatePassportId}</strong>
+                    </div>
+                  </div>
+                  <div className="passport-dashboard-hero-qr-canvas">
                     <Image
                       alt={isZh ? "气候护照验证二维码" : "Climate passport verification QR"}
                       className="passport-dashboard-hero-qr-image"
@@ -471,8 +512,13 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
                       src={identityQrCodeDataUrl}
                       width={220}
                     />
+                  </div>
+                  <div className="passport-dashboard-hero-qr-help">
+                    {isZh
+                      ? "二维码用于验证Climate Passport的信息和状态。同时也是参与行动的通行证。"
+                      : "This QR is for on-site identity verification. Specific activities may still require event-level passes."}
+                  </div>
                 </div>
-                <div className="passport-dashboard-hero-qr-label">{isZh ? "扫码验证身份" : "Scan to Verify"}</div>
               </div>
             </div>
           </section>
@@ -537,29 +583,62 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
         <aside className="passport-dashboard-right">
           <section className="passport-dashboard-card passport-dashboard-profile-card">
             <h2 className="passport-dashboard-card-title">{isZh ? "资料完整度" : "Profile Completion"}</h2>
-            <div className="passport-dashboard-progress-wrap">
-              <div className="passport-dashboard-progress-value">{profileCompletion}%</div>
+            <div className="passport-dashboard-progress-wrap" style={progressRingStyle}>
+              <div className="passport-dashboard-progress-value">{clampedProfileCompletion}%</div>
               <div className="passport-dashboard-progress-label">{isZh ? "已完成" : "Complete"}</div>
             </div>
-            <Link className="passport-dashboard-pill passport-dashboard-pill-primary passport-dashboard-pill-full" href={`/${locale}/dashboard/messages`}>{isZh ? "完善我的资料" : "Finish Your Profile"}</Link>
+            <Link className="passport-dashboard-pill passport-dashboard-pill-primary passport-dashboard-pill-full" href={`/${locale}/dashboard/profile`}>{isZh ? "完善我的资料" : "Finish Your Profile"}</Link>
           </section>
 
           <section className="passport-dashboard-card">
-            <h2 className="passport-dashboard-card-title">{isZh ? "成就徽章" : "Achievements"}</h2>
-            <div className="passport-dashboard-badge-grid">
-              {passport.achievementsList.map((item) => (
-                <article className={`passport-dashboard-badge ${item.unlocked ? "is-earned" : "is-locked"}`} key={item.title}>
-                  <div className="passport-dashboard-badge-icon" aria-hidden="true">{item.unlocked ? "🏅" : "🔒"}</div>
-                  <div className="passport-dashboard-badge-name">{item.title}</div>
+            <h2 className="passport-dashboard-card-title">
+              <Link href={`/${locale}/dashboard/achievements`}>{isZh ? "成就时间线" : "Achievement Timeline"}</Link>
+            </h2>
+            <div className="passport-dashboard-timeline">
+              {achievementTimeline.length > 0 ? achievementTimeline.map((item) => (
+                <article className="passport-dashboard-timeline-item" key={item.id}>
+                  <div className="passport-dashboard-date">
+                    <div className="passport-dashboard-date-day">{item.dayLabel}</div>
+                    <div className="passport-dashboard-date-month">{item.monthLabel}</div>
+                  </div>
+                  <div className="passport-dashboard-timeline-content">
+                    <div className="passport-dashboard-timeline-title">{item.name}</div>
+                    <div className="passport-dashboard-timeline-meta">{item.description || item.verificationLevel}</div>
+                  </div>
+                  <span className="passport-dashboard-pill passport-dashboard-pill-ghost">{item.dateLabel}</span>
                 </article>
-              ))}
+              )) : (
+                <article className="passport-dashboard-timeline-empty">
+                  <div className="passport-dashboard-timeline-empty-title">{isZh ? "暂无成就记录" : "No achievements yet"}</div>
+                  <div className="passport-dashboard-timeline-empty-meta">{isZh ? "完成活动、签到、学习或证书签发后将在此显示。" : "Records will appear here after event, check-in, learning, or certificate milestones."}</div>
+                </article>
+              )}
+            </div>
+          </section>
+
+          <section className="passport-dashboard-card">
+            <h2 className="passport-dashboard-card-title">
+              <Link href={`/${locale}/dashboard/badges`}>{isZh ? "徽章墙" : "Badge Wall"}</Link>
+            </h2>
+            <div className="passport-dashboard-badge-grid">
+              {badgeWall.length > 0 ? badgeWall.map((item) => (
+                <article className={`passport-dashboard-badge ${item.unlocked ? "is-earned" : "is-locked"}`} key={item.id}>
+                  <div className="passport-dashboard-badge-icon" aria-hidden="true">{item.unlocked ? "🏅" : "🔒"}</div>
+                  <div className="passport-dashboard-badge-name">{item.name}</div>
+                </article>
+              )) : (
+                <article className="passport-dashboard-timeline-empty">
+                  <div className="passport-dashboard-timeline-empty-title">{isZh ? "暂无徽章定义" : "No badge definitions yet"}</div>
+                  <div className="passport-dashboard-timeline-empty-meta">{isZh ? "管理员配置后会在此展示可解锁徽章。" : "Badge definitions will appear here once configured by admin."}</div>
+                </article>
+              )}
             </div>
           </section>
 
           <section className="passport-dashboard-card">
             <h2 className="passport-dashboard-card-title">{isZh ? "快捷操作" : "Quick Actions"}</h2>
             <div className="passport-dashboard-action-grid">
-              <Link className="passport-dashboard-action" href={`/${locale}/dashboard/messages`}>{isZh ? "编辑资料" : "Edit Profile"}</Link>
+              <Link className="passport-dashboard-action" href={`/${locale}/dashboard/profile`}>{isZh ? "编辑资料" : "Edit Profile"}</Link>
               <Link className="passport-dashboard-action" href={`/${locale}/events`}>{isZh ? "我的活动" : "My Events"}</Link>
               <Link className="passport-dashboard-action" href={`/${locale}/dashboard/certificates`}>{isZh ? "证书中心" : "Certificates"}</Link>
               <Link className="passport-dashboard-action" href={`/${locale}/dashboard/notifications`}>{isZh ? "通知设置" : "Settings"}</Link>
@@ -862,6 +941,34 @@ export async function MessagesScreen({ locale }: { locale: Locale }) {
               ? "Passport 消息中心优先承载事务性、流程型沟通，例如邀请函、准入审批、证书和支持回复。新闻通讯或品牌传播内容仍应停留在各渠道壳站。"
               : "The Passport message center should prioritize transactional workflow communication such as invitations, access approvals, certificates, and support replies. Newsletters or brand campaigns should remain in the channel shells."}
           </p>
+        </div>
+      </section>
+    </>
+  );
+}
+
+export async function ProfileMaintenanceScreen({ locale }: { locale: Locale }) {
+  noStore();
+  await requireAuthenticatedUser(locale, `/${locale}/dashboard/profile`);
+  const { profile } = await getProfileMaintenancePageData(locale);
+
+  return (
+    <>
+      <div className="section-header">
+        <div>
+          <span className="label">{locale === "zh" ? "资料维护" : "Profile Maintenance"}</span>
+          <h1>{locale === "zh" ? "完善我的资料" : "Maintain My Profile"}</h1>
+        </div>
+        <p>
+          {locale === "zh"
+            ? "你可以在此维护基础资料、职业与机构信息，并安全修改账户密码。姓名与邮箱作为身份主键不可编辑。"
+            : "Manage your profile basics, professional and organization details, and update your password securely. Name and email are immutable identity keys."}
+        </p>
+      </div>
+
+      <section className="section">
+        <div className="panel profile-maintenance-panel">
+          <ProfileMaintenanceForm initialProfile={profile} locale={locale} />
         </div>
       </section>
     </>

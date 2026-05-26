@@ -56,6 +56,25 @@ Planned top-level areas:
 
 This repository is intentionally bootstrapped with context documents first so product, schema, and migration decisions are not separated from implementation.
 
+## Database Sync Rule (Before Push / Remote Deploy)
+
+When code includes Prisma schema or migration changes, database sync is mandatory.
+
+Local verification before push:
+
+1. `npm run db:sync`
+2. `npm run build`
+3. `npm test`
+
+Remote environment rollout (server/CI) must include:
+
+1. `npm ci`
+2. `npm run db:migrate:deploy`
+3. `npm run build`
+4. Start/restart app process
+
+If migration is not applied remotely, runtime can fail with Prisma `P2021` (table does not exist).
+
 ## Bootstrapped Workspace Files
 
 - `package.json` defines the npm workspaces root for upcoming apps and packages

@@ -184,6 +184,74 @@ enum QrTokenStatus {
   EXPIRED
 }
 
+enum AchievementType {
+  LEARNING
+  EVENT
+  PROJECT
+  CONTRIBUTION
+  COMMUNICATION
+  VERIFIED
+}
+
+enum AchievementStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum AchievementVerificationLevel {
+  SELF_RECORDED
+  SYSTEM_RECORDED
+  PLATFORM_VERIFIED
+  INSTITUTION_VERIFIED
+  EXPERT_REVIEWED
+}
+
+enum AchievementSourceType {
+  USER_SUBMISSION
+  SYSTEM_EVENT
+  COURSE_COMPLETION
+  EVENT_REGISTRATION
+  EVENT_CHECKIN
+  PROJECT_SUBMISSION
+  ADMIN_CREATED
+  INSTITUTION_IMPORT
+  CERTIFICATE_ISSUED
+}
+
+enum BadgeCategory {
+  PARTICIPATION
+  LEARNING
+  CAPABILITY
+  ROLE
+  CONTRIBUTION
+  IMPACT
+}
+
+enum BadgeLevel {
+  EXPLORER
+  LEARNER
+  PRACTITIONER
+  LEADER
+  AMBASSADOR
+}
+
+enum BadgeVerificationGrade {
+  BASIC
+  VERIFIED
+  INSTITUTIONAL
+  EXPERT_REVIEWED
+  CREDENTIAL_GRADE
+}
+
+enum BadgeAwardStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
 model User {
   id                   String               @id @default(uuid())
   email                String               @unique
@@ -227,6 +295,8 @@ model User {
   qrTokens             QrToken[]
   auditLogs            CoreAuditLog[]       @relation("CoreAuditActor")
   unlockedAchievements UserAchievement[]
+  achievements         Achievement[]
+  badgeAwards          BadgeAward[]
   milestones           PassportMilestone[]
   channelSessionBridges ChannelSessionBridge[]
   managedLearningExperiencePrograms LearningExperienceProgram[] @relation("LearningExperienceManager")
@@ -781,6 +851,112 @@ model AchievementDefinition {
   certificateDefinitions CertificateDefinition[]
 
   @@map("achievement_definitions")
+}
+
+model Achievement {
+  id                    String                       @id @default(uuid())
+  userId                String
+  name                  String
+  description           String?                      @db.Text
+  type                  AchievementType
+  status                AchievementStatus            @default(APPROVED)
+  verificationLevel     AchievementVerificationLevel @default(SYSTEM_RECORDED)
+  sourceType            AchievementSourceType?
+  sourceId              String?
+  relatedCourseId       String?
+  relatedEventId        String?
+  relatedProjectId      String?
+  relatedCertificateId  String?
+  issuerName            String?
+  issuerOrganization    String?
+  validatorUserId       String?
+  validatedAt           DateTime?
+  evidenceUrl           String?
+  evidenceText          String?
+  evidenceJson          Json?
+  points                Int                          @default(0)
+  skillTags             String[]
+  topicTags             String[]
+  sdgTags               String[]
+  isPublic              Boolean                      @default(true)
+  isBadgeEligible       Boolean                      @default(true)
+  completedAt           DateTime?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type, status])
+  @@index([verificationLevel])
+  @@index([sourceType, sourceId])
+  @@map("achievements")
+}
+
+model BadgeDefinition {
+  id                       String                       @id @default(uuid())
+  code                     String                       @unique
+  name                     String
+  nameZh                   String?
+  description              String?                      @db.Text
+  descriptionZh            String?                      @db.Text
+  category                 BadgeCategory
+  level                    BadgeLevel?
+  verificationGrade        BadgeVerificationGrade       @default(BASIC)
+  issuerName               String?
+  issuerOrganization       String?
+  issuerLogoUrl            String?
+  iconUrl                  String?
+  sealImageUrl             String?
+  colorTheme               String?
+  criteriaText             String?
+  criteriaJson             Json?
+  requiredPoints           Int?
+  requiredAchievementTypes AchievementType[]
+  requiredAchievementIds   String[]
+  requiredSkillTags        String[]
+  requiredTopicTags        String[]
+  minVerificationLevel     AchievementVerificationLevel?
+  validityDays             Int?
+  isRenewable              Boolean                      @default(false)
+  renewalCriteriaJson      Json?
+  isActive                 Boolean                      @default(true)
+  isPublic                 Boolean                      @default(true)
+  displayOrder             Int                          @default(0)
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime                     @updatedAt
+
+  awards                   BadgeAward[]
+
+  @@index([isActive, displayOrder])
+  @@index([category, level])
+  @@map("badge_definitions")
+}
+
+model BadgeAward {
+  id                    String          @id @default(uuid())
+  userId                String
+  badgeDefinitionId     String
+  status                BadgeAwardStatus @default(ACTIVE)
+  awardedAt             DateTime        @default(now())
+  expiresAt             DateTime?
+  revokedAt             DateTime?
+  revokeReason          String?
+  awardedByUserId       String?
+  awardedByOrgName      String?
+  verificationUrl       String?
+  verificationToken     String?         @unique
+  evidenceSnapshotJson  Json?
+  relatedAchievementIds String[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeDefinition       BadgeDefinition @relation(fields: [badgeDefinitionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, awardedAt])
+  @@index([badgeDefinitionId, status])
+  @@map("badge_awards")
 }
 
 model UserAchievement {

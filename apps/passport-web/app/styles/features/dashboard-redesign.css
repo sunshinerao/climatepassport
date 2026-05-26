@@ -407,8 +407,15 @@
   line-height: 1.15;
 }
 
+.passport-dashboard-hero-identity {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
 .passport-dashboard-hero-role {
-  margin-top: 12px;
   display: inline-flex;
   padding: 8px 18px;
   border-radius: 999px;
@@ -452,35 +459,103 @@
   letter-spacing: 0.04em;
 }
 
-.passport-dashboard-hero-qr {
-  display: grid;
-  justify-items: center;
-  align-content: start;
+.passport-dashboard-hero-tags {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
+.passport-dashboard-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(218, 236, 228, 0.24);
+  background: rgba(225, 240, 233, 0.14);
+  color: rgba(242, 250, 246, 0.95);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  font-weight: 500;
+  backdrop-filter: blur(2px);
+}
+
+.passport-dashboard-hero-qr {
+  display: flex;
+  align-self: stretch;
+}
+
 .passport-dashboard-hero-qr-frame {
-  width: 236px;
-  min-height: 236px;
-  border-radius: 30px;
-  background: rgba(245, 247, 246, 0.96);
-  padding: 16px;
-  box-shadow: inset 0 0 0 1px rgba(11, 61, 46, 0.1);
+  width: 218px;
+  border-radius: 20px;
+  background: #f5f7f6;
+  padding: 14px 12px 8px;
+  box-shadow: inset 0 0 0 1px rgba(11, 61, 46, 0.08), 0 8px 20px rgba(7, 28, 21, 0.2);
+  color: #0f2f26;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: 8px;
+}
+
+.passport-dashboard-hero-qr-meta {
+  display: grid;
+  gap: 4px;
+  align-self: start;
+}
+
+.passport-dashboard-hero-qr-code-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.passport-dashboard-hero-qr-code-line span {
+  font-size: var(--cp-title-md);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+}
+
+.passport-dashboard-hero-qr-code-line strong {
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: #36564c;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.passport-dashboard-hero-qr-canvas {
+  margin-top: 0;
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
   display: grid;
   place-items: center;
+  align-self: center;
 }
 
 .passport-dashboard-hero-qr-image {
-  width: 100%;
+  width: 133px;
   height: auto;
   display: block;
 }
 
-.passport-dashboard-hero-qr-label {
-  font-size: 0.9375rem;
+.passport-dashboard-hero-qr-help {
+  margin-top: 0;
+  font-size: 11px;
   line-height: 1.45;
-  color: rgba(220, 232, 227, 0.8);
-  letter-spacing: 0.04em;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: #5f736c;
+  align-self: end;
 }
 
 .passport-dashboard-quick-stats {
@@ -637,6 +712,13 @@
   letter-spacing: 0.1em;
 }
 
+.passport-dashboard-climate-passport .passport-dashboard-hero-tag,
+.passport-dashboard-climate-passport .passport-dashboard-hero-qr-help,
+.passport-dashboard-climate-passport .passport-dashboard-hero-qr-code-line strong,
+.passport-dashboard-climate-passport .passport-dashboard-hero-qr-code-line span {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+}
+
 .passport-dashboard-pill {
   display: inline-flex;
   align-items: center;
@@ -731,13 +813,29 @@
 }
 
 .passport-dashboard-progress-wrap {
+  --cp-progress-percent: 0%;
+  --cp-progress-gold-ratio: 0;
+  --cp-progress-active-start: color-mix(
+    in srgb,
+    var(--cp-accent-green) calc((1 - var(--cp-progress-gold-ratio)) * 100%),
+    var(--cp-accent-gold) calc(var(--cp-progress-gold-ratio) * 100%)
+  );
+  --cp-progress-active-end: color-mix(
+    in srgb,
+    var(--cp-accent-green-soft) calc((1 - var(--cp-progress-gold-ratio)) * 100%),
+    var(--cp-accent-gold-soft) calc(var(--cp-progress-gold-ratio) * 100%)
+  );
   width: 160px;
   height: 160px;
   margin: 8px auto 16px;
   border-radius: 50%;
-  background: conic-gradient(var(--cp-forest) 0% 85%, rgba(143, 184, 154, 0.18) 85% 100%);
-  display: grid;
-  place-items: center;
+  background: conic-gradient(
+    var(--cp-progress-active-start) 0%,
+    var(--cp-progress-active-end) var(--cp-progress-percent),
+    rgba(143, 184, 154, 0.18) var(--cp-progress-percent),
+    rgba(143, 184, 154, 0.18) 100%
+  );
+  position: relative;
 }
 
 .passport-dashboard-progress-wrap::after {
@@ -747,24 +845,33 @@
   border-radius: 50%;
   background: var(--cp-white);
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .passport-dashboard-progress-value,
 .passport-dashboard-progress-label {
-  position: relative;
+  position: absolute;
   z-index: 1;
 }
 
 .passport-dashboard-progress-value {
-  font-size: 2.125rem;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-weight: 600;
-  color: var(--cp-forest);
-  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: var(--cp-progress-active-start);
+  line-height: normal;
+  letter-spacing: -0.04em;
 }
 
 .passport-dashboard-progress-label {
-  margin-top: 4px;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--cp-text-secondary);
@@ -803,6 +910,12 @@
   line-height: 1.4;
 }
 
+.passport-dashboard-badge .passport-dashboard-timeline-meta {
+  margin-top: 4px;
+  font-size: 0.71875rem;
+  line-height: 1.4;
+}
+
 .passport-dashboard-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -819,6 +932,167 @@
   font-weight: 600;
   line-height: 1.45;
   color: var(--cp-ink);
+}
+
+.profile-maintenance-panel {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.profile-maintenance-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-maintenance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-maintenance-tabs button {
+  border: 1px solid var(--cp-line);
+  border-radius: 999px;
+  background: var(--cp-white);
+  color: var(--cp-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.profile-maintenance-tabs button.active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--cp-forest) 0%, var(--cp-ink) 100%);
+  color: #fff;
+}
+
+.profile-maintenance-readonly-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-maintenance-field-row-two {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--cp-text-secondary);
+}
+
+.profile-avatar-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-avatar-upload-row {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-upload-button {
+  border: 1px solid var(--cp-line-strong);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(31, 90, 78, 0.08) 0%, rgba(232, 200, 138, 0.14) 100%);
+  color: var(--cp-ink);
+  padding: 9px 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.profile-avatar-upload-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--cp-forest);
+  box-shadow: 0 8px 18px rgba(31, 90, 78, 0.12);
+}
+
+.profile-avatar-upload-filename {
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+}
+
+.country-combobox {
+  position: relative;
+}
+
+.country-combobox-input-wrap {
+  position: relative;
+}
+
+.country-combobox-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--cp-line-strong);
+  border-radius: 12px;
+  background: var(--cp-white);
+  box-shadow: 0 14px 26px rgba(18, 56, 47, 0.14);
+  padding: 6px;
+}
+
+.country-combobox-option {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cp-text);
+  text-align: left;
+  font-size: 0.875rem;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.country-combobox-option:hover,
+.country-combobox-option.active {
+  background: rgba(31, 90, 78, 0.1);
+  color: var(--cp-ink);
+}
+
+.country-combobox-empty {
+  padding: 10px;
+  color: var(--cp-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.profile-avatar-preview {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.profile-avatar-preview img {
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  border: 1px solid var(--cp-line);
+  object-fit: cover;
+  background: var(--cp-bg-soft);
+}
+
+.profile-avatar-meta {
+  font-size: 0.75rem;
+  color: var(--cp-text-secondary);
+  line-height: 1.4;
 }
 
 @media (max-width: 1024px) {
@@ -844,14 +1118,35 @@
   }
 
   .passport-dashboard-hero-id,
-  .passport-dashboard-hero-qr-label {
+  .passport-dashboard-hero-qr-help,
+  .passport-dashboard-hero-tag {
     font-size: 0.8125rem;
   }
 
   .passport-dashboard-hero-qr-frame {
-    width: 160px;
-    min-height: 160px;
-    padding: 10px;
+    width: 100%;
+    max-width: 218px;
+    margin: 0 auto;
+    padding: 14px 12px 8px;
+  }
+
+  .passport-dashboard-hero-qr-canvas {
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .passport-dashboard-hero-qr-code-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .passport-dashboard-hero-qr-code-line span {
+    font-size: var(--cp-title-md);
+  }
+
+  .passport-dashboard-hero-tags {
+    justify-content: center;
   }
 
   .passport-dashboard-quick-stats {
@@ -864,6 +1159,24 @@
 
   .passport-dashboard-badge-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .passport-dashboard-hero-identity {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .passport-dashboard-hero-role {
+    font-size: 0.8125rem;
+    padding: 6px 14px;
+  }
+
+  .profile-maintenance-readonly-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-maintenance-field-row-two {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -9,6 +9,7 @@ import {
   normalizeUserEmail,
 } from "@/lib/server/auth";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
+import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
@@ -197,6 +198,21 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "An account already exists for this email." }, { status: 409 });
   }
+
+  await createAchievementRecord({
+    userId: user.id,
+    name: "Climate Passport account activated",
+    description: "Account registration completed and profile activated.",
+    type: "EVENT",
+    sourceType: "USER_SUBMISSION",
+    sourceId: `auth-register:${user.id}`,
+    verificationLevel: "SYSTEM_RECORDED",
+    points: 20,
+    completedAt: new Date(),
+    skillTags: ["onboarding"],
+    topicTags: ["identity"],
+    sdgTags: ["SDG13"],
+  });
 
   await createUserSession(user.id);
 

@@ -1,6 +1,6 @@
 # Climate Passport Platform Pending Features Tracker
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## Status Legend
 
@@ -94,7 +94,7 @@ Last updated: 2026-05-25
 - [x] CP-TODO-027 `done` define how mature existing logic and accepted UI stay preserved during migration without preserving superseded architecture decisions.
 - [ ] CP-TODO-075 `doing` implement Core service layer for event registration and check-in rules (event check-in verifier API exists; registration rules remain pending).
 - [ ] CP-TODO-076 `doing` implement Core service layer for certificate issue, revoke, verify, and download rules (first APIs exist; rendering/storage remain pending).
-- [ ] CP-TODO-077 `doing` implement Core service layer for points, achievements, and milestones writeback (Learning Experience completion points and milestones shipped; broader achievement rules remain pending).
+- [ ] CP-TODO-077 `doing` implement Core service layer for points, achievements, and milestones writeback (unified point-ledger service and approved-achievement point writeback shipped across register/profile/check-in/certificate pathways; milestone rule orchestration remains pending).
 
 ## 8. Certificate Hub
 
@@ -226,3 +226,12 @@ Last updated: 2026-05-25
 	- [x] CP-TODO-181 `done` homepage interaction/detail refinement: left-aligned hero hover tips (`气候时代` / `Climate Passport`), enforced readable hover state for the Hero `探索活动` button, and aligned section-5 tail spacing with section-4.
 	- [x] CP-TODO-182 `done` homepage events-card hover/readability + section tail parity: applied home-scoped readable hover/focus styles for `近期活动` card `了解更多` buttons and explicitly aligned section-5/section-6 bottom spacing across responsive breakpoints.
 	- [x] CP-TODO-183 `done` mobile navigation + home heading scale parity: switched topbar primary navigation to hamburger collapse on mobile and corrected home Hero + section 3/4/5/6 title scaling so headings remain proportionally larger than subtitle/body on small screens.
+	- [x] CP-TODO-184 `done` climate-passport profile refinement: moved role badge inline with name, added green-to-gold profile completion ring progression, introduced tabbed `/dashboard/profile` maintenance (excluding email/name edits) with secure password change API, and expanded point-threshold achievement synchronization/rendering.
+	- [x] CP-TODO-185 `done` profile form UX hardening: changed salutation to select options, aligned phone and country in one row with keyboard-searchable country dropdown, added avatar upload+preview+reupload with file constraints, and added strict organization website URL validation in client+API.
+	- [x] CP-TODO-186 `done` profile required-field alignment and avatar constraint tightening: aligned profile maintenance required fields with registration (`phone`/`country`/`organization`), added required UI markers, and reduced avatar max file size to 500KB with synchronized client/API validation.
+	- [x] CP-TODO-187 `done` ISO country/region source unification: introduced shared locale-aware country options helper (full ISO region coverage with fallback), and aligned both registration + profile maintenance forms to the same keyboard-searchable datalist source.
+	- [x] CP-TODO-188 `done` profile upload and country selector UX polish: replaced native file-input visual with themed avatar upload trigger + filename display, and replaced browser-dependent datalist with explicit searchable country combobox panel in registration/profile forms.
+	- [x] CP-TODO-189 `done` country selector efficiency optimization: implemented ordering strategy (`current selection first + preferred countries + remaining list`) and prioritized prefix matches during search in both registration and profile forms.
+	- [x] CP-TODO-190 `done` profile website validation + climate-passport visual alignment: hardened organization website validation rules in client/API, centered profile completion percentage with global numeric typography, and aligned role badge baseline with hero name.
+	- [x] CP-TODO-191 `done` achievement-badge implementation blueprint baseline: published detailed development blueprint covering schema migrations, API/page rollout, style-boundary constraints, regression acceptance, and push-ready no-omission checklist.
+	- [x] CP-TODO-192 `done` achievement-badge blueprint delivery phase-1: delivered achievement/badge schema + migration, user/admin/verify APIs, dashboard/admin pages, navigation wiring, and trigger integration for register/profile/certificate/check-in flows.

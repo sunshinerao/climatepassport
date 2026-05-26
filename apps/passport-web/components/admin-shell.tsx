@@ -141,6 +141,29 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
       ],
     },
     {
+      href: `${prefix}/admin/achievements`,
+      icon: "◇",
+      label: t(locale, "成就与徽章", "Achievements & Badges"),
+      roles: ["ADMIN"],
+      children: [
+        {
+          href: `${prefix}/admin/achievements`,
+          icon: "·",
+          label: t(locale, "成就审核", "Achievement review"),
+        },
+        {
+          href: `${prefix}/admin/badges/definitions`,
+          icon: "·",
+          label: t(locale, "徽章定义", "Badge definitions"),
+        },
+        {
+          href: `${prefix}/admin/badges/awards`,
+          icon: "·",
+          label: t(locale, "徽章授予", "Badge awards"),
+        },
+      ],
+    },
+    {
       href: "",
       icon: "◇",
       label: t(locale, "系统与运营", "System and operations"),

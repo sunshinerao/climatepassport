@@ -62,20 +62,15 @@ function getAdminMenuItems(locale: Locale, role: UserRole): MenuItem[] {
   const items: MenuItem[] = [
     { href: `${prefix}/admin`, icon: "AD", label: locale === "zh" ? "管理总览" : "Admin Overview" },
     { href: `${prefix}/admin/events`, icon: "EV", label: locale === "zh" ? "活动管理" : "Event Management" },
-    { href: `${prefix}/admin/learning-experiences`, icon: "PG", label: locale === "zh" ? "项目管理" : "Program Management" },
-    { href: `${prefix}/admin/learning-experiences/applications`, icon: "AP", label: locale === "zh" ? "学习申请" : "Learning Applications" },
+    { href: `${prefix}/admin/learning-experiences`, icon: "LE", label: "Learning Experience" },
+    { href: `${prefix}/admin/achievements`, icon: "AB", label: locale === "zh" ? "成就与徽章" : "Achievements & Badges" },
   ];
 
   if (role === "ADMIN") {
-    items.splice(2, 0, {
+    items.splice(3, 0, {
       href: `${prefix}/admin/certificates`,
       icon: "CR",
-      label: locale === "zh" ? "证书签发" : "Certificate Issuing",
-    });
-    items.push({
-      href: `${prefix}/admin/summer-school/applications`,
-      icon: "SA",
-      label: locale === "zh" ? "夏校申请" : "Summer School Applications",
+      label: locale === "zh" ? "证书中心" : "Certificate Center",
     });
   }
 

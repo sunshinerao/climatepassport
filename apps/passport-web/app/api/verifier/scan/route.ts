@@ -2,6 +2,7 @@ import { hashOpaqueToken } from "@climate-passport/passport-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 
@@ -162,6 +163,22 @@ export async function POST(request: Request) {
   ]);
 
   await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.event_checkin", subjectType: "registration", subjectId: registration.id, result: "checked_in", ...auditContext });
+
+  await createAchievementRecord({
+    userId: qr.userId,
+    name: qr.event?.titleEn ?? qr.event?.title ?? "Event check-in",
+    description: "Event attendance verified by QR check-in.",
+    type: "EVENT",
+    sourceType: "EVENT_CHECKIN",
+    sourceId: `checkin:${registration.id}`,
+    verificationLevel: "PLATFORM_VERIFIED",
+    points: 30,
+    relatedEventId: qr.eventId,
+    completedAt: now,
+    skillTags: ["participation"],
+    topicTags: ["event"],
+    sdgTags: ["SDG13"],
+  });
 
   return NextResponse.json({
     result: "checked_in",

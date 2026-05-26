@@ -5,6 +5,7 @@ import { getCurrentUser, normalizeUserEmail } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
 import { buildCertificateArtifactWithQr, parseCertificateRenderConfig } from "@/lib/server/certificate-module";
 import { buildIssuedCertificateVariableValues } from "@/lib/server/certificate-variables";
+import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { ensurePassportUserByEmail } from "@/lib/server/passport-user-provisioning";
 import { getPrismaClient } from "@/lib/server/prisma";
 
@@ -333,6 +334,22 @@ export async function POST(request: Request) {
       ...getRequestAuditContext(request),
     }).catch((auditError: unknown) => {
       console.error("[certificate.issue] audit log write failed:", auditError instanceof Error ? auditError.message : String(auditError));
+    });
+
+    await createAchievementRecord({
+      userId: setup.recipient.id,
+      name: setup.certificateName,
+      description: `Certificate ${isReissue ? "reissued" : "issued"}: ${setup.categoryName}`,
+      type: "VERIFIED",
+      sourceType: "CERTIFICATE_ISSUED",
+      sourceId: `certificate:${issue.id}`,
+      verificationLevel: "INSTITUTION_VERIFIED",
+      points: 80,
+      relatedCertificateId: issue.id,
+      completedAt: issuedAtValue,
+      skillTags: ["certificate"],
+      topicTags: [setup.categoryName],
+      sdgTags: ["SDG13"],
     });
 
     return {
