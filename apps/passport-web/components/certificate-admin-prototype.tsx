@@ -503,7 +503,7 @@ export function CertificateAdminDashboard({
         <div>
           <Card title={t(locale, "热门证书类型", "Popular Certificate Types")}>
             <div className="cpca-bars">
-              {(popular.length ? popular : fallbackCategories(locale)).map((category, index) => {
+              {popular.map((category, index) => {
                 const count = category.templateCount ?? Math.max(1, 12 - index * 2);
                 const width = Math.max(12, Math.min(92, count * 18));
                 return (
@@ -521,7 +521,7 @@ export function CertificateAdminDashboard({
               <table className="cpca-table">
                 <thead><tr><th>{t(locale, "持有人", "Recipient")}</th><th>{t(locale, "证书", "Certificate")}</th><th>{t(locale, "日期", "Date")}</th><th>{t(locale, "状态", "Status")}</th></tr></thead>
                 <tbody>
-                  {(recent.length ? recent : fallbackIssues(locale)).map((issue) => (
+                  {recent.map((issue) => (
                     <tr key={issue.id}><td className="cpca-strong">{issue.holderName}</td><td>{issue.certificateName}</td><td>{issue.issueDate}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td></tr>
                   ))}
                 </tbody>
@@ -559,7 +559,7 @@ export function CertificateAdminCategories({
   categories: CertificateAdminCategory[];
   form: (selectedCategory: CertificateAdminCategory | null, clearSelection: () => void) => ReactNode;
 }) {
-  const rows = categories.length ? categories : fallbackCategories(locale);
+  const rows = categories;
   const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CertificateAdminCategory | null>(null);
@@ -681,7 +681,7 @@ export function CertificateAdminTemplates({
   form: (selectedTemplate: CertificateAdminTemplate | null, clearSelection: () => void) => ReactNode;
 }) {
   const router = useRouter();
-  const rows = templates.length ? templates : fallbackTemplates(locale);
+  const rows = templates;
   const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateAdminTemplate | null>(null);
@@ -1835,7 +1835,7 @@ export function CertificateAdminIssue({
               </tr>
             </thead>
             <tbody>
-              {(recentIssues.length ? recentIssues : fallbackIssues(locale)).slice(0, 5).map((issue) => (
+              {recentIssues.slice(0, 5).map((issue) => (
                 <tr key={issue.id}>
                   <td className="cpca-mono">{issue.certificateNumber}</td>
                   <td className="cpca-strong">{issue.holderName}</td>
@@ -1888,7 +1888,7 @@ export function CertificateAdminIssue({
 }
 
 export function CertificateAdminApplications({ locale, issues }: { locale: Locale; issues: CertificateAdminIssue[] }) {
-  const rows = issues.length ? issues : fallbackIssues(locale);
+  const rows = issues;
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书申请审核", "Certificate Applications")} description={t(locale, "审核用户主动提交的证书、志愿服务、项目完成和活动参与证明申请。", "Review user-initiated certificate requests.")} />
@@ -1917,7 +1917,7 @@ export function CertificateAdminRules({ locale, templates }: { locale: Locale; t
 }
 
 export function CertificateAdminRecords({ locale, issues }: { locale: Locale; issues: CertificateAdminIssue[] }) {
-  const rows = issues.length ? issues : fallbackIssues(locale);
+  const rows = issues;
   const active = rows.filter((issue) => !issue.status.toLowerCase().includes("revoked")).length;
   const revoked = rows.filter((issue) => issue.status.toLowerCase().includes("revoked")).length;
   return (
@@ -1933,7 +1933,7 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
 
 export function CertificateAdminAuditLogs({ locale, verifications, auditLogs }: { locale: Locale; verifications: CertificateAdminAuditLog[]; auditLogs: CertificateAdminAuditLog[] }) {
   const [tab, setTab] = useState<"verify" | "admin">("verify");
-  const rows = tab === "verify" ? (verifications.length ? verifications : fallbackLogs(locale)) : (auditLogs.length ? auditLogs : fallbackAdminLogs(locale));
+  const rows = tab === "verify" ? verifications : auditLogs;
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "验证与审计日志", "Verification & Audit Logs")} description={t(locale, "记录证书验证、下载、撤销、模板修改和批量签发等可信操作。", "Track credential verifications and administrative operations.")} />
