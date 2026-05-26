@@ -37,13 +37,49 @@ export function AuthForm(props: AuthFormProps) {
   const isZh = props.locale === "zh";
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  function getFieldError(name: string): string | undefined {
+    return fieldErrors[name];
+  }
+
+  function clearError(name: string) {
+    setFieldErrors((prev) => {
+      if (!(name in prev)) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
+    const errs: Record<string, string> = {};
+
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    if (!email) errs.email = isZh ? "请填写邮筱地址。" : "Email address is required.";
+    if (!password) errs.password = isZh ? "请填写密码。" : "Password is required.";
+
+    if (props.mode === "register") {
+      if (!String(formData.get("name") ?? "").trim()) errs.name = isZh ? "请填写真实姓名。" : "Full name is required.";
+      if (!String(formData.get("phone") ?? "").trim()) errs.phone = isZh ? "请填写手机号码。" : "Phone number is required.";
+      if (!String(formData.get("country") ?? "").trim()) errs.country = isZh ? "请填写国家 / 地区。" : "Country / Region is required.";
+      if (!String(formData.get("organizationName") ?? "").trim()) errs.organizationName = isZh ? "请填写机构 / 单位名称。" : "Organization name is required.";
+      if (password.length > 0 && password.length < 8) errs.password = isZh ? "密码至少需要 8 位字符。" : "Password must be at least 8 characters.";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    setIsSubmitting(true);
+
     const payload: Record<string, string> = {
       locale: props.locale,
       next: props.nextPath ?? "",
@@ -89,7 +125,7 @@ export function AuthForm(props: AuthFormProps) {
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
+    <form className="form-grid" noValidate onSubmit={handleSubmit}>
       {props.mode === "register" ? (
         <>
           {/* ── Basic info ── */}
@@ -104,8 +140,9 @@ export function AuthForm(props: AuthFormProps) {
               </select>
             </label>
             <label className="field">
-              <span>{props.labels.name}</span>
-              <input name="name" placeholder={isZh ? "真实姓名" : "Full name"} required type="text" />
+              <span>{props.labels.name}<span className="req-star">*</span></span>
+              <input name="name" onChange={() => clearError("name")} placeholder={isZh ? "真实姓名" : "Full name"} type="text" />
+              {getFieldError("name") && <span className="field-error">{getFieldError("name")}</span>}
             </label>
           </div>
 
@@ -115,31 +152,36 @@ export function AuthForm(props: AuthFormProps) {
               <input name="title" placeholder={isZh ? "如：气候政策研究员" : "e.g. Climate Policy Analyst"} type="text" />
             </label>
             <label className="field">
-              <span>{isZh ? "手机号码" : "Phone"}<span className="field-required">*</span></span>
-              <input name="phone" placeholder={isZh ? "+86 138 0000 0000" : "+1 555 000 0000"} required type="tel" />
+              <span>{isZh ? "手机号码" : "Phone"}<span className="req-star">*</span></span>
+              <input name="phone" onChange={() => clearError("phone")} placeholder={isZh ? "+86 138 0000 0000" : "+1 555 000 0000"} type="tel" />
+              {getFieldError("phone") && <span className="field-error">{getFieldError("phone")}</span>}
             </label>
           </div>
 
           <div className="field-row">
             <label className="field">
-              <span>{isZh ? "国家 / 地区" : "Country / Region"}<span className="field-required">*</span></span>
-              <input name="country" placeholder={isZh ? "如：中国" : "e.g. China"} required type="text" />
+              <span>{isZh ? "国家 / 地区" : "Country / Region"}<span className="req-star">*</span></span>
+              <input name="country" onChange={() => clearError("country")} placeholder={isZh ? "如：中国" : "e.g. China"} type="text" />
+              {getFieldError("country") && <span className="field-error">{getFieldError("country")}</span>}
             </label>
             <label className="field">
-              <span>{isZh ? "机构 / 单位名称" : "Organization / Institution"}<span className="field-required">*</span></span>
-              <input name="organizationName" placeholder={isZh ? "如：清华大学" : "e.g. Tsinghua University"} required type="text" />
+              <span>{isZh ? "机构 / 单位名称" : "Organization / Institution"}<span className="req-star">*</span></span>
+              <input name="organizationName" onChange={() => clearError("organizationName")} placeholder={isZh ? "如：清华大学" : "e.g. Tsinghua University"} type="text" />
+              {getFieldError("organizationName") && <span className="field-error">{getFieldError("organizationName")}</span>}
             </label>
           </div>
         </>
       ) : null}
 
       <label className="field">
-        <span>{props.labels.email}</span>
-        <input name="email" placeholder="name@example.com" required type="email" />
+        <span>{props.labels.email}<span className="req-star">*</span></span>
+        <input name="email" onChange={() => clearError("email")} placeholder="name@example.com" type="email" />
+        {getFieldError("email") && <span className="field-error">{getFieldError("email")}</span>}
       </label>
       <label className="field">
-        <span>{props.labels.password}</span>
-        <input name="password" placeholder={isZh ? "至少 8 位字符" : "At least 8 characters"} required type="password" minLength={8} />
+        <span>{props.labels.password}<span className="req-star">*</span></span>
+        <input name="password" onChange={() => clearError("password")} placeholder={isZh ? "至少 8 位字符" : "At least 8 characters"} type="password" />
+        {getFieldError("password") && <span className="field-error">{getFieldError("password")}</span>}
       </label>
 
       {error ? <p className="form-error">{error}</p> : null}
