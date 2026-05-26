@@ -306,7 +306,6 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     shell: {
       nav: [
         { href: "/", label: "Home" },
-        { href: "/dashboard/climate-passport", label: "Passport" },
       ],
       switchLabel: "Language",
       actions: {
@@ -650,7 +649,6 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     shell: {
       nav: [
         { href: "/", label: "首页" },
-        { href: "/dashboard/climate-passport", label: "护照" },
       ],
       switchLabel: "语言切换",
       actions: {
@@ -994,7 +992,6 @@ function buildFrDictionary(base: SiteDictionary): SiteDictionary {
       ...base.shell,
       nav: [
         { href: "/", label: "Accueil" },
-        { href: "/dashboard/climate-passport", label: "Passeport" },
       ],
       switchLabel: "Langue",
       actions: {
@@ -1107,7 +1104,6 @@ function buildDeDictionary(base: SiteDictionary): SiteDictionary {
       ...base.shell,
       nav: [
         { href: "/", label: "Startseite" },
-        { href: "/dashboard/climate-passport", label: "Pass" },
       ],
       switchLabel: "Sprache",
       actions: {
