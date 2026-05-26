@@ -424,7 +424,7 @@ export async function ClimatePassportScreen({ locale }: { locale: Locale }) {
   });
 
   return (
-    <div className="passport-dashboard">
+    <div className="passport-dashboard passport-dashboard-climate-passport">
       <header className="passport-dashboard-welcome">
         <div className="passport-dashboard-welcome-text">
           <h1>{isZh ? `欢迎回来，${account.name}` : `Welcome back, ${account.name}`}</h1>

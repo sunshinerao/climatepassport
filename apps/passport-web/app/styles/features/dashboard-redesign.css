@@ -321,7 +321,7 @@
 .passport-dashboard-welcome-text h1 {
   margin: 0;
   font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-size: clamp(1.68rem, 3.2vw, 2.35rem);
+  font-size: clamp(var(--cp-title-page-min), calc(3.2vw * var(--cp-title-scale)), var(--cp-title-page-max));
   font-weight: 400;
   line-height: 1.15;
   color: var(--cp-forest);
@@ -367,7 +367,7 @@
 
 .passport-dashboard-card-title {
   margin: 0 0 16px;
-  font-size: 1.25rem;
+  font-size: var(--cp-title-md);
   font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
   font-weight: 400;
   line-height: 1.2;
@@ -402,7 +402,7 @@
 .passport-dashboard-hero-name {
   margin-top: 10px;
   font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-size: clamp(1.95rem, 4vw, 2.75rem);
+  font-size: clamp(calc(1.95rem * var(--cp-title-scale)), calc(4vw * var(--cp-title-scale)), calc(2.75rem * var(--cp-title-scale)));
   font-weight: 400;
   line-height: 1.15;
 }
@@ -557,7 +557,7 @@
 }
 
 .passport-dashboard-timeline-title {
-  font-size: 0.96rem;
+  font-size: calc(0.96rem * var(--cp-title-scale));
   font-weight: 600;
   line-height: 1.45;
 }
@@ -577,7 +577,7 @@
 }
 
 .passport-dashboard-timeline-empty-title {
-  font-size: 0.96rem;
+  font-size: calc(0.96rem * var(--cp-title-scale));
   font-weight: 600;
   color: var(--cp-text);
 }
@@ -587,6 +587,54 @@
   font-size: 0.8125rem;
   color: var(--cp-text-secondary);
   line-height: 1.5;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-welcome-text h1,
+.passport-dashboard-climate-passport .passport-dashboard-hero-name {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: clamp(var(--cp-title-page-min), calc(2.9vw * var(--cp-title-scale)), var(--cp-title-page-max));
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -0.03em;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-hero-header {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 1.54px;
+  text-transform: none;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-hero-stat-value {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: normal;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-stat-mini-value {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -0.04em;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-card-title {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: var(--cp-title-md);
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -0.4px;
+}
+
+.passport-dashboard-climate-passport .passport-dashboard-hero-stat-label,
+.passport-dashboard-climate-passport .passport-dashboard-stat-mini-label {
+  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 .passport-dashboard-pill {
@@ -657,7 +705,7 @@
 }
 
 .passport-dashboard-cert-title {
-  font-size: 0.96rem;
+  font-size: calc(0.96rem * var(--cp-title-scale));
   font-weight: 600;
   line-height: 1.45;
 }
@@ -750,7 +798,7 @@
 
 .passport-dashboard-badge-name {
   margin-top: 6px;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--cp-title-scale));
   font-weight: 600;
   line-height: 1.4;
 }

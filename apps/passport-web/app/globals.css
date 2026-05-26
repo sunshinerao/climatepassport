@@ -57,6 +57,16 @@
   --cp-heading-section-lg: 42px;
   --cp-heading-page: 42px;
   --cp-heading-hero: 60px;
+  --cp-title-scale: 0.85;
+  --cp-title-xs: calc(11px * var(--cp-title-scale));
+  --cp-title-sm: calc(15px * var(--cp-title-scale));
+  --cp-title-md: calc(20px * var(--cp-title-scale));
+  --cp-title-page-min: calc(24px * var(--cp-title-scale));
+  --cp-title-page-max: calc(34px * var(--cp-title-scale));
+  --cp-title-section-min: calc(26px * var(--cp-title-scale));
+  --cp-title-section-max: calc(32px * var(--cp-title-scale));
+  --cp-title-display-min: calc(32px * var(--cp-title-scale));
+  --cp-title-display-max: calc(38px * var(--cp-title-scale));
   --cp-header-action-height: 42px;
 
   --cp-leading-tight: 1.04;

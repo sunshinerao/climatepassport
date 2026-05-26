@@ -337,7 +337,7 @@
 }
 
 .auth-value h1 {
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(var(--cp-title-page-min), calc(3vw * var(--cp-title-scale)), var(--cp-title-page-max));
   line-height: 1.12;
   font-weight: 600;
   letter-spacing: -0.025em;
@@ -432,7 +432,7 @@
 
 .proto-dashboard-passport h1 {
   margin: 14px 0 8px;
-  font-size: clamp(24px, 2.9vw, 34px);
+  font-size: clamp(var(--cp-title-page-min), calc(2.9vw * var(--cp-title-scale)), var(--cp-title-page-max));
   letter-spacing: -0.03em;
   color: #fff;
 }
@@ -557,7 +557,7 @@
 .proto-dashboard-panel-head h2,
 .proto-admin-panel-head h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--cp-title-md);
   letter-spacing: -0.02em;
 }
 
@@ -626,7 +626,7 @@
 .proto-dashboard-certs h3,
 .proto-admin-modules h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--cp-title-sm);
 }
 
 .proto-dashboard-certs p,
@@ -711,7 +711,7 @@
 
 .proto-admin-sidebar h1 {
   margin: 8px 0;
-  font-size: 30px;
+  font-size: calc(30px * var(--cp-title-scale));
   letter-spacing: -0.03em;
   color: #fff;
 }
@@ -779,7 +779,7 @@
 
 .proto-admin-main .section-header h1,
 .proto-admin-main .section-header h2 {
-  font-size: clamp(26px, 3.2vw, 32px);
+  font-size: clamp(var(--cp-title-section-min), calc(3.2vw * var(--cp-title-scale)), var(--cp-title-section-max));
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
@@ -798,7 +798,7 @@
 
 .proto-admin-main-head h2 {
   margin: 0;
-  font-size: clamp(32px, 4vw, 38px);
+  font-size: clamp(var(--cp-title-display-min), calc(4vw * var(--cp-title-scale)), var(--cp-title-display-max));
   line-height: 1.1;
   letter-spacing: -0.024em;
   color: var(--cp-ink);
@@ -831,7 +831,7 @@
 }
 
 .proto-admin-panel-head h2 {
-  font-size: 20px;
+  font-size: var(--cp-title-md);
   line-height: 1.2;
 }
 
@@ -841,7 +841,7 @@
 
 .proto-admin-queue strong,
 .proto-admin-modules h3 {
-  font-size: 15px;
+  font-size: var(--cp-title-sm);
 }
 
 .proto-admin-queue p,
