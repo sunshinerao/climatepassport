@@ -201,7 +201,7 @@ export function CertificateVerifyPage({
             )}
             {data.maskedPassportId && (
               <div>
-                <dt>{t(locale, "Passport ID", "Passport ID")}</dt>
+                <dt>{t(locale, "Climate Passport ID", "Climate Passport ID")}</dt>
                 <dd className="cpv-mono">{data.maskedPassportId}</dd>
               </div>
             )}
