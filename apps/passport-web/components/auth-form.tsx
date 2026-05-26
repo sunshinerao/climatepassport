@@ -37,7 +37,6 @@ export function AuthForm(props: AuthFormProps) {
   const isZh = props.locale === "zh";
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOrgSection, setShowOrgSection] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,15 +55,12 @@ export function AuthForm(props: AuthFormProps) {
       payload.name = String(formData.get("name") ?? "");
       const salutation = String(formData.get("salutation") ?? "").trim();
       const title = String(formData.get("title") ?? "").trim();
-      const phone = String(formData.get("phone") ?? "").trim();
-      const country = String(formData.get("country") ?? "").trim();
-      const organizationName = String(formData.get("organizationName") ?? "").trim();
 
       if (salutation) payload.salutation = salutation;
       if (title) payload.title = title;
-      if (phone) payload.phone = phone;
-      if (country) payload.country = country;
-      if (organizationName) payload.organizationName = organizationName;
+      payload.phone = String(formData.get("phone") ?? "").trim();
+      payload.country = String(formData.get("country") ?? "").trim();
+      payload.organizationName = String(formData.get("organizationName") ?? "").trim();
     }
 
     try {
@@ -119,33 +115,21 @@ export function AuthForm(props: AuthFormProps) {
               <input name="title" placeholder={isZh ? "如：气候政策研究员" : "e.g. Climate Policy Analyst"} type="text" />
             </label>
             <label className="field">
-              <span>{isZh ? "手机号码" : "Phone"}</span>
-              <input name="phone" placeholder={isZh ? "+86 138 0000 0000" : "+1 555 000 0000"} type="tel" />
+              <span>{isZh ? "手机号码" : "Phone"}<span className="field-required">*</span></span>
+              <input name="phone" placeholder={isZh ? "+86 138 0000 0000" : "+1 555 000 0000"} required type="tel" />
             </label>
           </div>
 
-          <label className="field">
-            <span>{isZh ? "国家 / 地区" : "Country / Region"}</span>
-            <input name="country" placeholder={isZh ? "如：中国" : "e.g. China"} type="text" />
-          </label>
-
-          {/* ── Toggle org section ── */}
-          <button
-            className="form-section-toggle"
-            onClick={() => setShowOrgSection((v) => !v)}
-            type="button"
-          >
-            {showOrgSection
-              ? (isZh ? "▲ 隐藏机构信息（可选）" : "▲ Hide organization info (optional)")
-              : (isZh ? "▼ 添加机构 / 单位信息（可选）" : "▼ Add organization info (optional)")}
-          </button>
-
-          {showOrgSection && (
+          <div className="field-row">
             <label className="field">
-              <span>{isZh ? "机构 / 单位名称" : "Organization / Institution"}</span>
-              <input name="organizationName" placeholder={isZh ? "如：清华大学" : "e.g. Tsinghua University"} type="text" />
+              <span>{isZh ? "国家 / 地区" : "Country / Region"}<span className="field-required">*</span></span>
+              <input name="country" placeholder={isZh ? "如：中国" : "e.g. China"} required type="text" />
             </label>
-          )}
+            <label className="field">
+              <span>{isZh ? "机构 / 单位名称" : "Organization / Institution"}<span className="field-required">*</span></span>
+              <input name="organizationName" placeholder={isZh ? "如：清华大学" : "e.g. Tsinghua University"} required type="text" />
+            </label>
+          </div>
         </>
       ) : null}
 

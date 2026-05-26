@@ -20,9 +20,9 @@ const registerSchema = z.object({
   password: z.string().min(8).max(72),
   salutation: z.string().trim().max(20).optional(),
   title: z.string().trim().max(120).optional(),
-  phone: z.string().trim().max(40).optional(),
-  country: z.string().trim().max(80).optional(),
-  organizationName: z.string().trim().max(160).optional(),
+  phone: z.string().trim().min(1, "Phone number is required.").max(40),
+  country: z.string().trim().min(1, "Country / Region is required.").max(80),
+  organizationName: z.string().trim().min(1, "Organization name is required.").max(160),
 });
 
 export async function POST(request: Request) {
@@ -94,16 +94,12 @@ export async function POST(request: Request) {
           title: title || null,
           phone: phone || null,
           country: country || null,
-          ...(organizationName
-            ? {
-                organization: {
-                  upsert: {
-                    update: { name: organizationName.trim() },
-                    create: { name: organizationName.trim() },
-                  },
-                },
-              }
-            : {}),
+          organization: {
+            upsert: {
+              update: { name: organizationName.trim() },
+              create: { name: organizationName.trim() },
+            },
+          },
           ...(existingUser.notificationPreference
             ? {}
             : {
@@ -160,15 +156,11 @@ export async function POST(request: Request) {
         title: title || null,
         phone: phone || null,
         country: country || null,
-        ...(organizationName
-          ? {
-              organization: {
-                create: {
-                  name: organizationName.trim(),
-                },
-              },
-            }
-          : {}),
+        organization: {
+          create: {
+            name: organizationName.trim(),
+          },
+        },
         notificationPreference: {
           create: {
             emailEnabled: true,
