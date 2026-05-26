@@ -45,6 +45,20 @@ type CategoryFormProps = {
     isActive: boolean;
   };
   onCancelEdit?: () => void;
+  onSaved?: (saved: {
+    id: string;
+    key: string;
+    name: string;
+    nameEn?: string | null;
+    description?: string | null;
+    descriptionEn?: string | null;
+    order?: number;
+    autoIssueEnabled?: boolean;
+    userRequestEnabled?: boolean;
+    pdfEnabled?: boolean;
+    publicVerifyEnabled?: boolean;
+    isActive: boolean;
+  }) => void;
 };
 
 type TemplateFormProps = {
@@ -209,7 +223,7 @@ function localizeTemplateSaveError(message: string | undefined, isZh: boolean) {
   return message;
 }
 
-export function CertificateCategoryForm({ locale, categories = [], initialCategory, onCancelEdit }: CategoryFormProps) {
+export function CertificateCategoryForm({ locale, categories = [], initialCategory, onCancelEdit, onSaved }: CategoryFormProps) {
   const isZh = locale === "zh";
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -313,10 +327,10 @@ export function CertificateCategoryForm({ locale, categories = [], initialCatego
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      let result: { error?: string } = {};
+      let result: { error?: string; category?: Record<string, unknown> } = {};
       const responseType = response.headers.get("content-type") ?? "";
       if (responseType.includes("application/json")) {
-        result = (await response.json()) as { error?: string };
+        result = (await response.json()) as { error?: string; category?: Record<string, unknown> };
       } else if (!response.ok) {
         const rawError = await response.text();
         if (rawError.trim()) {
@@ -342,6 +356,23 @@ export function CertificateCategoryForm({ locale, categories = [], initialCatego
 
       setEnglishNameEdited(false);
       setMessage(isZh ? (isEditing ? "分类已更新。" : "分类已保存。") : (isEditing ? "Category updated." : "Category saved."));
+      if (onSaved && result.category) {
+        const cat = result.category;
+        onSaved({
+          id: cat.id as string,
+          key: cat.key as string,
+          name: cat.name as string,
+          nameEn: (cat.nameEn ?? null) as string | null,
+          description: (cat.description ?? null) as string | null,
+          descriptionEn: (cat.descriptionEn ?? null) as string | null,
+          order: cat.order as number | undefined,
+          autoIssueEnabled: cat.autoIssueEnabled as boolean | undefined,
+          userRequestEnabled: cat.userRequestEnabled as boolean | undefined,
+          pdfEnabled: cat.pdfEnabled as boolean | undefined,
+          publicVerifyEnabled: cat.publicVerifyEnabled as boolean | undefined,
+          isActive: cat.isActive as boolean,
+        });
+      }
       router.refresh();
     } catch {
       setError(isZh ? "网络错误。" : "Network error.");

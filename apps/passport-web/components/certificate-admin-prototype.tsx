@@ -563,6 +563,16 @@ export function CertificateAdminCategories({
   const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CertificateAdminCategory | null>(null);
+
+  // When the categories list is updated (e.g. after a save), sync selectedCategory
+  // so the edit form reflects the latest saved data.
+  useEffect(() => {
+    setSelectedCategory((prev) => {
+      if (!prev) return prev;
+      const updated = categories.find((c) => c.id === prev.id);
+      return updated ?? prev;
+    });
+  }, [categories]);
   const normalizedKeyword = searchKeyword.trim().toLowerCase();
   const filteredRows = rows.filter((category) => {
     if (!normalizedKeyword) {
