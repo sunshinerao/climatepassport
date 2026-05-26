@@ -58,48 +58,44 @@ export default async function AdminCertificateCategoriesPage({ params }: { param
   }
 
   const categories = prisma
-    ? (() => {
-        const getCategories = async () => {
-          const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = 'certificate_categories'
-          `;
-          const columnSet = new Set(columns.map((column) => column.column_name));
-          const autoIssueSelect = columnSet.has("autoIssueEnabled")
-            ? `"autoIssueEnabled"`
-            : `true AS "autoIssueEnabled"`;
-          const userRequestSelect = columnSet.has("userRequestEnabled")
-            ? `"userRequestEnabled"`
-            : `false AS "userRequestEnabled"`;
-          const pdfSelect = columnSet.has("pdfEnabled")
-            ? `"pdfEnabled"`
-            : `true AS "pdfEnabled"`;
-          const publicVerifySelect = columnSet.has("publicVerifyEnabled")
-            ? `"publicVerifyEnabled"`
-            : `true AS "publicVerifyEnabled"`;
+    ? await (async () => {
+        const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
+          SELECT column_name
+          FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'certificate_categories'
+        `;
+        const columnSet = new Set(columns.map((column) => column.column_name));
+        const autoIssueSelect = columnSet.has("autoIssueEnabled")
+          ? `"autoIssueEnabled"`
+          : `true AS "autoIssueEnabled"`;
+        const userRequestSelect = columnSet.has("userRequestEnabled")
+          ? `"userRequestEnabled"`
+          : `false AS "userRequestEnabled"`;
+        const pdfSelect = columnSet.has("pdfEnabled")
+          ? `"pdfEnabled"`
+          : `true AS "pdfEnabled"`;
+        const publicVerifySelect = columnSet.has("publicVerifyEnabled")
+          ? `"publicVerifyEnabled"`
+          : `true AS "publicVerifyEnabled"`;
 
-          return prisma.$queryRawUnsafe<LegacyCertificateCategoryRow[]>(`
-            SELECT
-              id,
-              key,
-              name,
-              "nameEn",
-              description,
-              "descriptionEn",
-              "order",
-              "createdAt",
-              ${autoIssueSelect},
-              ${userRequestSelect},
-              ${pdfSelect},
-              ${publicVerifySelect},
-              "isActive"
-            FROM "certificate_categories"
-            ORDER BY "order" ASC
-          `);
-        };
-
-        return getCategories();
+        return prisma.$queryRawUnsafe<LegacyCertificateCategoryRow[]>(`
+          SELECT
+            id,
+            key,
+            name,
+            "nameEn",
+            description,
+            "descriptionEn",
+            "order",
+            "createdAt",
+            ${autoIssueSelect},
+            ${userRequestSelect},
+            ${pdfSelect},
+            ${publicVerifySelect},
+            "isActive"
+          FROM "certificate_categories"
+          ORDER BY "order" ASC
+        `);
       })()
     : [];
   const templateCounts = prisma
