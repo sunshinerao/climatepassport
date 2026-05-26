@@ -304,9 +304,7 @@ export const accountSnapshotByLocale: Record<CoreLocale, {
 export const siteContent: Record<CoreLocale, SiteDictionary> = {
   en: {
     shell: {
-      nav: [
-        { href: "/", label: "Home" },
-      ],
+      nav: [],
       switchLabel: "Language",
       actions: {
         summerSchool: "Summer School",
@@ -647,9 +645,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
   },
   zh: {
     shell: {
-      nav: [
-        { href: "/", label: "首页" },
-      ],
+      nav: [],
       switchLabel: "语言切换",
       actions: {
         summerSchool: "夏校申请",
@@ -990,9 +986,7 @@ function buildFrDictionary(base: SiteDictionary): SiteDictionary {
     ...base,
     shell: {
       ...base.shell,
-      nav: [
-        { href: "/", label: "Accueil" },
-      ],
+      nav: [],
       switchLabel: "Langue",
       actions: {
         ...base.shell.actions,
@@ -1102,9 +1096,7 @@ function buildDeDictionary(base: SiteDictionary): SiteDictionary {
     ...base,
     shell: {
       ...base.shell,
-      nav: [
-        { href: "/", label: "Startseite" },
-      ],
+      nav: [],
       switchLabel: "Sprache",
       actions: {
         ...base.shell.actions,
