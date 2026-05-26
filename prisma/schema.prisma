@@ -330,6 +330,32 @@ model Organization {
   @@map("organizations")
 }
 
+model SiteSetting {
+  id               String   @id @default(uuid())
+  key              String   @unique
+  siteName         String
+  siteNameEn       String?
+  shortName        String?
+  tagline          String?
+  taglineEn        String?
+  logoColor        String?  @db.Text
+  logoMono         String?  @db.Text
+  favicon          String?  @db.Text
+  supportEmail     String?
+  supportPhone     String?
+  supportWebsite   String?
+  copyrightText    String?  @db.Text
+  copyrightTextEn  String?  @db.Text
+  icpNumber        String?
+  themeColor       String?
+  themeColorDark   String?
+  updatedByUserId  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String

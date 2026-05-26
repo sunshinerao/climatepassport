@@ -161,6 +161,16 @@ textarea:focus-visible {
   background: linear-gradient(135deg, #12382f 0%, #1f5a4e 62%, #89a99a 160%);
 }
 
+.brand-logo-image {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(33, 92, 78, 0.18);
+  padding: 4px;
+}
+
 .brand-copy {
   display: grid;
   gap: 2px;

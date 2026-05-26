@@ -91,6 +91,12 @@ export default async function LocalizedAdminPage({ params }: { params: { locale:
             <p>{params.locale === "zh" ? "配置证书模板、签发流程与验真策略。" : "Configure templates, issuance workflows and verification policy."}</p>
           </Link>
         ) : null}
+        {isPlatformAdmin ? (
+          <Link href={`/${params.locale}/admin/system`}>
+            <h3>{params.locale === "zh" ? "系统管理" : "System settings"}</h3>
+            <p>{params.locale === "zh" ? "维护站点名称、Logo（彩色/反白）和全局对外信息。" : "Manage site name, dual logos (color/mono), and global public-facing profile."}</p>
+          </Link>
+        ) : null}
       </section>
     </>
   );

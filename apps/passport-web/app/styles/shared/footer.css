@@ -61,6 +61,12 @@
   gap: 12px;
 }
 
+.footer-brand-logo-image {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 .footer-brand-icon {
   width: 44px;
   height: 44px;

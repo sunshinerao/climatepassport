@@ -64,6 +64,7 @@ function getAdminMenuItems(locale: Locale, role: UserRole): MenuItem[] {
     { href: `${prefix}/admin/events`, icon: "EV", label: locale === "zh" ? "活动管理" : "Event Management" },
     { href: `${prefix}/admin/learning-experiences`, icon: "LE", label: "Learning Experience" },
     { href: `${prefix}/admin/achievements`, icon: "AB", label: locale === "zh" ? "成就与徽章" : "Achievements & Badges" },
+    { href: `${prefix}/admin/system`, icon: "SY", label: locale === "zh" ? "系统管理" : "System Settings" },
   ];
 
   if (role === "ADMIN") {

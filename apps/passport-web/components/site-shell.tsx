@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
@@ -6,11 +7,20 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getDictionary, type Locale } from "@/lib/site-content";
 import { UserAccountMenu } from "@/components/user-account-menu";
 import { getCurrentUser } from "@/lib/server/auth";
+import { getSiteBranding } from "@/lib/server/site-settings";
 
 export async function SiteShell({ children, locale }: { children: ReactNode; locale: Locale }) {
   noStore();
   const dictionary = getDictionary(locale);
   const user = await getCurrentUser();
+  const branding = await getSiteBranding(locale);
+
+  const brandTitle = branding?.siteName ?? dictionary.shell.footer.platformTitle;
+  const brandTagline = branding?.tagline ?? dictionary.shell.footer.platformText;
+  const supportEmail = branding?.supportEmail ?? "contact@climatepass.org";
+  const supportLocation = locale === "zh" ? "中国上海" : "Shanghai, China";
+  const footerDisclaimer = branding?.copyrightText
+    ?? "© 2026 Climate Passport. 保留所有权利。面向气候时代的可信数字身份基础设施。";
 
   // Minimal shell: hide nav + footer main content on focused pages
   const pathname = headers().get("x-pathname") ?? "";
@@ -21,8 +31,12 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
       <header className="topbar">
         <div className="topbar-inner">
           <Link className="brand-block" href={`/${locale}`}>
-            <span className="brand-mark" aria-hidden="true" />
-            <span className="brand-title">{dictionary.shell.footer.platformTitle}</span>
+            {branding?.logoColor ? (
+              <Image alt={brandTitle} className="brand-logo-image" height={42} src={branding.logoColor} unoptimized width={42} />
+            ) : (
+              <span className="brand-mark" aria-hidden="true" />
+            )}
+            <span className="brand-title">{brandTitle}</span>
           </Link>
 
           {!isMinimal && (
@@ -77,10 +91,21 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
           <div className="footer-inner">
             <div className="footer-brand">
               <div className="footer-brand-logo">
-                <span className="brand-mark footer-brand-mark" aria-hidden="true" />
-                <div className="footer-brand-name">{dictionary.shell.footer.platformTitle}</div>
+                {branding?.logoMono || branding?.logoColor ? (
+                  <Image
+                    alt={brandTitle}
+                    className="footer-brand-logo-image"
+                    height={28}
+                    src={branding?.logoMono ?? branding?.logoColor ?? ""}
+                    unoptimized
+                    width={28}
+                  />
+                ) : (
+                  <span className="brand-mark footer-brand-mark" aria-hidden="true" />
+                )}
+                <div className="footer-brand-name">{brandTitle}</div>
               </div>
-              <p className="footer-brand-desc">{dictionary.shell.footer.platformText}</p>
+              <p className="footer-brand-desc">{brandTagline}</p>
             </div>
 
             <div className="footer-col">
@@ -101,8 +126,9 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
 
             <div className="footer-col">
               <h4>{locale === "zh" ? "保持联系" : "Stay Connected"}</h4>
-              <p>contact@climatepass.org</p>
-              <p>{locale === "zh" ? "中国上海" : "Shanghai, China"}</p>
+              <p>{supportEmail}</p>
+              <p>{supportLocation}</p>
+              {branding?.supportWebsite ? <p>{branding.supportWebsite}</p> : null}
             </div>
           </div>
         )}
@@ -110,7 +136,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
         <div className="footer-bottom-bar">
           <div className="footer-bottom-bar-inner">
             <p className="footer-disclaimer" style={{ maxWidth: "unset" }}>
-              © 2026 Climate Passport. 保留所有权利。面向气候时代的可信数字身份基础设施。
+              {footerDisclaimer}
             </p>
           </div>
         </div>

@@ -164,10 +164,17 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
       ],
     },
     {
-      href: "",
+      href: `${prefix}/admin/system`,
       icon: "◇",
-      label: t(locale, "系统与运营", "System and operations"),
+      label: t(locale, "系统管理", "System settings"),
       roles: ["ADMIN"],
+      children: [
+        {
+          href: `${prefix}/admin/system`,
+          icon: "·",
+          label: t(locale, "站点品牌与信息", "Branding and site profile"),
+        },
+      ],
     },
     {
       href: `${prefix}/verifier`,
