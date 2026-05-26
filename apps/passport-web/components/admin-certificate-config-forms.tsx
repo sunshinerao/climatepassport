@@ -695,6 +695,19 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     { name: "verificationUrl", zh: "公开验证链接", en: "Public verification URL" },
   ];
 
+  async function handleImageFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+    setter: (url: string) => void,
+  ) {
+    const file = event.target.files?.[0] ?? null;
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      setter(dataUrl ?? "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : (isZh ? "图片读取失败。" : "Image read failed."));
+    }
+  }
+
   async function refreshTemplatePreview(options?: { showError?: boolean }) {
     const requestId = previewRequestIdRef.current + 1;
     previewRequestIdRef.current = requestId;
@@ -720,10 +733,10 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           locale,
-          name: templateName || null,
-          nameEn: templateNameEn || null,
-          categoryName: selectedCategory?.name ?? null,
-          categoryNameEn: selectedCategory?.nameEn ?? null,
+          name: templateName || undefined,
+          nameEn: templateNameEn || undefined,
+          categoryName: selectedCategory?.name ?? undefined,
+          categoryNameEn: selectedCategory?.nameEn ?? undefined,
           holderName: isZh ? "证书持有人" : "Credential Holder",
           certificateNumber: "CV-PREVIEW",
           renderConfig: {
@@ -902,8 +915,10 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
       setSealImageUrl(nextSealImageUrl ?? "");
       setMessage(isZh ? "模板、资产和签发定义已保存。" : "Template, assets, and issue definition saved.");
       router.refresh();
-    } catch {
-      setError(isZh ? "网络错误。" : "Network error.");
+    } catch (fetchError) {
+      const msg = fetchError instanceof Error ? fetchError.message : String(fetchError);
+      console.error("[template save] fetch error:", msg);
+      setError(isZh ? `网络错误。${msg}` : `Network error. ${msg}`);
     } finally {
       setSaving(false);
     }
@@ -1008,24 +1023,24 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
       <div className="field-row">
         <label className="field">
           <span>{isZh ? "证书背景图" : "Certificate background"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="backgroundImage" type="file" />
+          <input accept="image/png,image/jpeg,image/webp" name="backgroundImage" type="file" onChange={(event) => void handleImageFileChange(event, setBackgroundImageUrl)} />
           {backgroundImageUrl ? <small>{isZh ? "已保存背景图；上传新文件会替换。" : "Background saved; upload to replace."}</small> : null}
         </label>
         <label className="field">
           <span>{isZh ? "机构 Logo" : "Logo image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="logoImage" type="file" />
+          <input accept="image/png,image/jpeg,image/webp" name="logoImage" type="file" onChange={(event) => void handleImageFileChange(event, setLogoImageUrl)} />
           {logoImageUrl ? <small>{isZh ? "已保存 Logo。" : "Logo saved."}</small> : null}
         </label>
       </div>
       <div className="field-row">
         <label className="field">
           <span>{isZh ? "签名图片" : "Signature image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="signatureImage" type="file" />
+          <input accept="image/png,image/jpeg,image/webp" name="signatureImage" type="file" onChange={(event) => void handleImageFileChange(event, setSignatureImageUrl)} />
           {signatureImageUrl ? <small>{isZh ? "已保存签名图。" : "Signature saved."}</small> : null}
         </label>
         <label className="field">
           <span>{isZh ? "印章图片" : "Seal image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="sealImage" type="file" />
+          <input accept="image/png,image/jpeg,image/webp" name="sealImage" type="file" onChange={(event) => void handleImageFileChange(event, setSealImageUrl)} />
           {sealImageUrl ? <small>{isZh ? "已保存印章图。" : "Seal saved."}</small> : null}
         </label>
       </div>
