@@ -1930,13 +1930,204 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
   const rows = issues;
   const active = rows.filter((issue) => !issue.status.toLowerCase().includes("revoked")).length;
   const revoked = rows.filter((issue) => issue.status.toLowerCase().includes("revoked")).length;
+
+  // Pagination
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pagedRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Preview modal
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewError, setPreviewError] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewDialogTitle, setPreviewDialogTitle] = useState("");
+  const [previewDialogSubtitle, setPreviewDialogSubtitle] = useState("");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  function closePreviewModal() {
+    setPreviewOpen(false);
+    setPreviewHtml("");
+    setPreviewError("");
+    setPreviewDialogTitle("");
+    setPreviewDialogSubtitle("");
+  }
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handleEsc = (event: KeyboardEvent) => { if (event.key === "Escape") closePreviewModal(); };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [previewOpen]);
+
+  async function handleDownloadPrint(issue: CertificateAdminIssue) {
+    setActionLoadingId(issue.id);
+    try {
+      if (issue.generatedFileUrl) {
+        const html = decodeHtmlDataUrl(issue.generatedFileUrl);
+        if (html) {
+          setPreviewHtml(html);
+          setPreviewError("");
+          setPreviewLoading(false);
+          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
+          setPreviewDialogSubtitle(issue.certificateNumber || "");
+          setPreviewOpen(true);
+        } else {
+          window.open(issue.generatedFileUrl, "_blank", "noopener,noreferrer");
+        }
+        return;
+      }
+      // Fetch from API if no local URL
+      setPreviewLoading(true);
+      setPreviewHtml("");
+      setPreviewError("");
+      setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
+      setPreviewDialogSubtitle(issue.certificateNumber || "");
+      setPreviewOpen(true);
+      const response = await fetch(`/api/certificates/${encodeURIComponent(issue.id)}/download`, { method: "POST" });
+      const result = (await response.json().catch(() => ({}))) as { error?: string; download?: { url?: string | null; verificationCode?: string | null } };
+      if (!response.ok) {
+        setPreviewError(result.error ?? t(locale, "下载失败。", "Download failed."));
+        setPreviewLoading(false);
+        return;
+      }
+      if (result.download?.url) {
+        const html = decodeHtmlDataUrl(result.download.url);
+        if (html) {
+          setPreviewHtml(html);
+          setPreviewDialogSubtitle(issue.certificateNumber || result.download.verificationCode || "");
+        } else {
+          setPreviewOpen(false);
+          window.open(result.download.url, "_blank", "noopener,noreferrer");
+        }
+      } else {
+        setPreviewError(t(locale, "暂无可预览的证书文件。", "No certificate file available for preview."));
+      }
+      setPreviewLoading(false);
+    } catch {
+      setPreviewError(t(locale, "网络错误。", "Network error."));
+      setPreviewLoading(false);
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  const startIndex = (page - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(page * PAGE_SIZE, rows.length);
+
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书记录管理", "Certificate Records")} description={t(locale, "查看所有已生成证书、下载、重新生成、撤销、恢复和复制验证链接。", "Complete history of all issued credentials.")} />
       <div className="cpca-stats compact"><Metric label="Total" value={rows.length} /><Metric label="Active" value={active} /><Metric label="Expired" value="0" /><Metric label="Revoked" value={revoked} /></div>
       <div className="cpca-filter-row"><input placeholder={t(locale, "搜索证书编号...", "Search certificate number...")} /><select><option>All Status</option><option>Active</option><option>Revoked</option></select><select><option>All Categories</option></select><input type="date" /><button className="cpca-btn cpca-btn-outline" type="button">Export CSV</button></div>
-      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "证书编号", "Cert Number")}</th><th>{t(locale, "证书名称", "Certificate Name")}</th><th>{t(locale, "持有人", "Holder")}</th><th>{t(locale, "签发日期", "Issue Date")}</th><th>{t(locale, "来源", "Source")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "验证次数", "Verifications")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.map((issue) => <tr key={issue.id}><td className="cpca-mono">{issue.certificateNumber}</td><td>{issue.certificateName}</td><td>{issue.holderName}</td><td>{issue.issueDate}</td><td>{issue.source ?? "Manual"}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td><td>{issue.verificationCount ?? 0}</td><td><Link className="cpca-btn cpca-btn-ghost" href={`/${locale}/dashboard/certificates/${issue.id}`}>{t(locale, "操作", "Actions")} ▾</Link></td></tr>)}</tbody></table></div></Card>
-      <div className="cpca-pager"><span>{t(locale, "显示", "Showing")} 1-{rows.length} of {rows.length}</span><div><button className="active">1</button><button>2</button><button>3</button></div></div>
+      <Card>
+        <div className="cpca-table-wrap">
+          <table className="cpca-table">
+            <thead><tr><th>{t(locale, "证书编号", "Cert Number")}</th><th>{t(locale, "证书名称", "Certificate Name")}</th><th>{t(locale, "持有人", "Holder")}</th><th>{t(locale, "签发日期", "Issue Date")}</th><th>{t(locale, "来源", "Source")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "验证次数", "Verifications")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead>
+            <tbody>
+              {pagedRows.map((issue) => (
+                <tr key={issue.id}>
+                  <td className="cpca-mono">{issue.certificateNumber}</td>
+                  <td>{issue.certificateName}</td>
+                  <td>{issue.holderName}</td>
+                  <td>{issue.issueDate}</td>
+                  <td>{issue.source ?? "Manual"}</td>
+                  <td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td>
+                  <td>{issue.verificationCount ?? 0}</td>
+                  <td>
+                    <button
+                      className="cpca-btn cpca-btn-ghost"
+                      disabled={actionLoadingId === issue.id}
+                      onClick={() => void handleDownloadPrint(issue)}
+                      type="button"
+                    >
+                      {actionLoadingId === issue.id
+                        ? t(locale, "加载中...", "Loading...")
+                        : t(locale, "下载/打印", "Download/Print")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      {/* Pagination */}
+      <div className="cpca-pager">
+        <span>
+          {rows.length === 0
+            ? t(locale, "暂无记录", "No records")
+            : t(locale, `显示 ${startIndex}–${endIndex}，共 ${rows.length} 条`, `Showing ${startIndex}–${endIndex} of ${rows.length}`)}
+        </span>
+        <div>
+          <button
+            className={page === 1 ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            type="button"
+          >
+            {t(locale, "上一页", "Prev")}
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+            .reduce<Array<number | "…">>((acc, p, idx, arr) => {
+              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((item, idx) =>
+              item === "…"
+                ? <span key={`ellipsis-${idx}`} style={{ padding: "0 4px", color: "var(--cp-text-muted)" }}>…</span>
+                : <button key={item} className={`cpca-btn ${page === item ? "cpca-btn-amber" : "cpca-btn-ghost"}`} onClick={() => setPage(item as number)} type="button">{item}</button>
+            )}
+          <button
+            className={page === totalPages ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            type="button"
+          >
+            {t(locale, "下一页", "Next")}
+          </button>
+        </div>
+      </div>
+      {/* Preview/Print modal */}
+      {previewOpen ? (
+        <div className="cpca-preview-modal" onClick={closePreviewModal} role="presentation">
+          <div className="cpca-preview-modal-dialog" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={t(locale, "证书预览", "Certificate preview")}>
+            <div className="cpca-preview-modal-head">
+              <div>
+                <strong>{previewDialogTitle || t(locale, "证书预览", "Certificate preview")}</strong>
+                <small>{previewDialogSubtitle}</small>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {!previewLoading && previewHtml ? (
+                  <button
+                    className="cpca-btn cpca-btn-outline"
+                    onClick={() => {
+                      const iframe = document.querySelector<HTMLIFrameElement>(".cpca-preview-modal-frame");
+                      iframe?.contentWindow?.print();
+                    }}
+                    type="button"
+                  >
+                    {t(locale, "打印", "Print")}
+                  </button>
+                ) : null}
+                <button className="cpca-btn cpca-btn-ghost" onClick={closePreviewModal} type="button">
+                  {t(locale, "关闭", "Close")}
+                </button>
+              </div>
+            </div>
+            <div className="cpca-preview-modal-body">
+              {previewLoading ? <FormHelpText>{t(locale, "证书加载中...", "Loading certificate...")}</FormHelpText> : null}
+              {previewError ? <FormErrorText>{previewError}</FormErrorText> : null}
+              {!previewLoading && !previewError && previewHtml ? (
+                <iframe className="cpca-preview-modal-frame" sandbox="allow-scripts allow-modals" srcDoc={previewHtml} title={t(locale, "证书预览", "Certificate preview")} />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </CertificateAdminFrame>
   );
 }

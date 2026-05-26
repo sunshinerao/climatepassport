@@ -35,6 +35,8 @@ export default async function AdminCertificateRecordsPage({ params }: { params: 
         status: issue.status,
         source: issue.sourceType ?? "Manual",
         verificationCount: issue.verifications.length,
+        generatedFileUrl: issue.generatedFileUrl,
+        generatedFileName: issue.generatedFileName,
       }))}
     />
   );
