@@ -135,16 +135,28 @@ export async function POST(request: Request) {
   const renderConfig = parseCertificateRenderConfig(definition.template.renderConfigJson);
 
   async function issueToRecipient(email: string, issueIdForEdit?: string) {
-    // Phase 1: DB work inside transaction (user provisioning, duplicate check, code allocation, issue write)
-    // writeCoreAuditLog is intentionally called OUTSIDE the transaction to avoid
-    // a failed audit write rolling back an otherwise successful certificate issuance.
-    type TxResult =
-      | { ok: true; issueId: string; verificationCode: string; verificationUrl: string; fileName: string | null; auditMeta: Record<string, unknown>; isReissue: boolean }
+    // Phase 1 (short TX): provision user, check duplicate, allocate verification code.
+    // Artifact building is intentionally OUTSIDE the transaction — it is CPU/IO heavy and
+    // would exceed Prisma's default 5 s interactive-transaction timeout.
+    // writeCoreAuditLog is also OUTSIDE the transaction to avoid a failed audit write
+    // rolling back an otherwise successful certificate issuance.
+    type SetupResult =
+      | {
+          ok: true;
+          recipient: { id: string; name: string; normalizedEmail: string; created: boolean; climatePassportId: string | null };
+          verificationCode: string;
+          verificationUrl: string;
+          variableValues: Record<string, unknown>;
+          holderName: string;
+          certificateName: string;
+          categoryName: string;
+          issueToEditId: string | undefined;
+        }
       | { ok: false; status: number; error: string; issueId?: string; verificationCode?: string };
 
-    let txResult: TxResult;
+    let setup: SetupResult;
     try {
-      txResult = await prismaClient.$transaction(async (tx) => {
+      setup = await prismaClient.$transaction(async (tx) => {
         const recipient = await ensurePassportUserByEmail(tx, {
           email,
           fallbackName: resolveTextValue(
@@ -191,7 +203,6 @@ export async function POST(request: Request) {
             where: { verificationCode: candidate },
             select: { id: true },
           });
-
           return Boolean(existing);
         });
 
@@ -210,102 +221,128 @@ export async function POST(request: Request) {
           issuerName: renderConfig.issuerName,
           signer: renderConfig.signerName ?? renderConfig.issuerName ?? adminUser.name,
         });
-        const variableValues = {
-          ...baseVariableValues,
-          ...manualVariableValues,
-        };
-        const holderName = resolveTextValue(variableValues.holderName, recipient.name);
+        const variableValues = { ...baseVariableValues, ...manualVariableValues } as Record<string, unknown>;
+        const holderName = resolveTextValue((variableValues.holderName as string | undefined), recipient.name);
         const certificateName = resolveTextValue(
-          variableValues.certificateName,
-          variableValues.certificateNameEn,
+          variableValues.certificateName as string | undefined,
+          variableValues.certificateNameEn as string | undefined,
           certificateDefinition.nameEn,
           certificateDefinition.name,
         );
         const categoryName = resolveTextValue(
-          variableValues.categoryName,
-          variableValues.categoryNameEn,
+          variableValues.categoryName as string | undefined,
+          variableValues.categoryNameEn as string | undefined,
           certificateDefinition.category.nameEn,
           certificateDefinition.category.name,
         );
 
-        const artifact = await buildCertificateArtifactWithQr({
+        return {
+          ok: true as const,
+          recipient,
+          verificationCode,
+          verificationUrl,
+          variableValues,
           holderName,
           certificateName,
           categoryName,
-          issueDate: issuedAtValue,
-          certificateNumber: verificationCode,
-          verificationUrl,
-          renderConfigJson: certificateDefinition.template.renderConfigJson,
-          variableValues,
-        });
-
-        const issueWriteData = {
-          definitionId: certificateDefinition.id,
-          userId: recipient.id,
-          status: "ISSUED" as const,
-          approvedBy: adminUser.id,
-          approvedAt: issuedAtValue,
-          issuedAt: issuedAtValue,
-          verificationCode,
-          generatedFileName: artifact.fileName,
-          generatedFileUrl: artifact.dataUrl,
-          variableValuesJson: variableValues,
-        };
-
-        const issue = issueToEdit
-          ? await tx.certificateIssue.update({
-              where: { id: issueToEdit.id },
-              data: issueWriteData,
-              select: { id: true, verificationCode: true, generatedFileName: true },
-            })
-          : await tx.certificateIssue.create({
-              data: issueWriteData,
-              select: { id: true, verificationCode: true, generatedFileName: true },
-            });
-
-        return {
-          ok: true as const,
-          issueId: issue.id,
-          verificationCode: issue.verificationCode ?? verificationCode,
-          verificationUrl,
-          fileName: issue.generatedFileName,
-          isReissue: Boolean(issueToEdit),
-          auditMeta: {
-            definitionId: certificateDefinition.id,
-            templateId,
-            editIssueId: issueToEdit?.id,
-            recipientUserId: recipient.id,
-            recipientEmail: recipient.normalizedEmail,
-            recipientCreated: recipient.created,
-            recipientClimatePassportId: recipient.climatePassportId,
-            fileName: artifact.fileName,
-            pdfFileName: artifact.pdfFileName,
-            mimeType: artifact.mimeType,
-          },
+          issueToEditId: issueToEdit?.id,
         };
       });
-    } catch (txError) {
-      const msg = txError instanceof Error ? txError.message : String(txError);
-      console.error("[certificate.issue] transaction failed:", msg);
+    } catch (setupError) {
+      const msg = setupError instanceof Error ? setupError.message : String(setupError);
+      console.error("[certificate.issue] setup transaction failed:", msg);
       return { ok: false as const, email, status: 500, error: `Certificate issuance failed: ${msg}` };
     }
 
-    // Phase 2: Write audit log outside transaction (best-effort; failure does not affect issuance result)
-    if (txResult.ok) {
-      void writeCoreAuditLog({
-        actorUserId: adminUser.id,
-        action: txResult.isReissue ? "certificate.reissue" : "certificate.issue",
-        subjectType: "certificate_issue",
-        subjectId: txResult.issueId,
-        result: txResult.isReissue ? "reissued" : "issued",
-        metadataJson: txResult.auditMeta,
-        ...getRequestAuditContext(request),
-      }).catch((auditError: unknown) => {
-        console.error("[certificate.issue] audit log write failed:", auditError instanceof Error ? auditError.message : String(auditError));
-      });
+    if (!setup.ok) {
+      return { ...setup, email };
     }
 
-    return { ...txResult, email };
+    // Phase 2 (outside TX): build the certificate artifact — this is CPU/IO heavy and must not run inside a transaction.
+    let artifact: Awaited<ReturnType<typeof buildCertificateArtifactWithQr>>;
+    try {
+      artifact = await buildCertificateArtifactWithQr({
+        holderName: setup.holderName,
+        certificateName: setup.certificateName,
+        categoryName: setup.categoryName,
+        issueDate: issuedAtValue,
+        certificateNumber: setup.verificationCode,
+        verificationUrl: setup.verificationUrl,
+        renderConfigJson: certificateDefinition.template.renderConfigJson,
+        variableValues: setup.variableValues,
+      });
+    } catch (artifactError) {
+      const msg = artifactError instanceof Error ? artifactError.message : String(artifactError);
+      console.error("[certificate.issue] artifact build failed:", msg);
+      return { ok: false as const, email, status: 500, error: `Certificate artifact generation failed: ${msg}` };
+    }
+
+    // Phase 3 (single DB write, no TX needed): persist the certificate issue record.
+    const issueWriteData = {
+      definitionId: certificateDefinition.id,
+      userId: setup.recipient.id,
+      status: "ISSUED" as const,
+      approvedBy: adminUser.id,
+      approvedAt: issuedAtValue,
+      issuedAt: issuedAtValue,
+      verificationCode: setup.verificationCode,
+      generatedFileName: artifact.fileName,
+      generatedFileUrl: artifact.dataUrl,
+      variableValuesJson: setup.variableValues as object,
+    };
+
+    let issue: { id: string; verificationCode: string | null; generatedFileName: string | null };
+    try {
+      issue = setup.issueToEditId
+        ? await prismaClient.certificateIssue.update({
+            where: { id: setup.issueToEditId },
+            data: issueWriteData,
+            select: { id: true, verificationCode: true, generatedFileName: true },
+          })
+        : await prismaClient.certificateIssue.create({
+            data: issueWriteData,
+            select: { id: true, verificationCode: true, generatedFileName: true },
+          });
+    } catch (writeError) {
+      const msg = writeError instanceof Error ? writeError.message : String(writeError);
+      console.error("[certificate.issue] issue write failed:", msg);
+      return { ok: false as const, email, status: 500, error: `Certificate issuance failed: ${msg}` };
+    }
+
+    const isReissue = Boolean(setup.issueToEditId);
+
+    // Phase 4: Write audit log (best-effort; failure does not affect issuance result).
+    void writeCoreAuditLog({
+      actorUserId: adminUser.id,
+      action: isReissue ? "certificate.reissue" : "certificate.issue",
+      subjectType: "certificate_issue",
+      subjectId: issue.id,
+      result: isReissue ? "reissued" : "issued",
+      metadataJson: {
+        definitionId: certificateDefinition.id,
+        templateId,
+        editIssueId: setup.issueToEditId,
+        recipientUserId: setup.recipient.id,
+        recipientEmail: setup.recipient.normalizedEmail,
+        recipientCreated: setup.recipient.created,
+        recipientClimatePassportId: setup.recipient.climatePassportId,
+        fileName: artifact.fileName,
+        pdfFileName: artifact.pdfFileName,
+        mimeType: artifact.mimeType,
+      },
+      ...getRequestAuditContext(request),
+    }).catch((auditError: unknown) => {
+      console.error("[certificate.issue] audit log write failed:", auditError instanceof Error ? auditError.message : String(auditError));
+    });
+
+    return {
+      ok: true as const,
+      email,
+      issueId: issue.id,
+      verificationCode: issue.verificationCode ?? setup.verificationCode,
+      verificationUrl: setup.verificationUrl,
+      fileName: issue.generatedFileName,
+    };
   }
 
   if (recipientEmails.length === 1) {
