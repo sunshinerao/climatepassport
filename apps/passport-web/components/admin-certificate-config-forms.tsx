@@ -296,7 +296,8 @@ export function CertificateCategoryForm({ locale, categories = [], initialCatego
     setMessage("");
     setError("");
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const rawOrder = getFormValue(formData, "order");
     const key = resolvedCategoryKey();
 
@@ -814,7 +815,8 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     setMessage("");
     setError("");
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const name = getFormValue(formData, "name");
     const nameEn = getFormValue(formData, "nameEn");
     let elements: unknown[] | undefined;
@@ -896,7 +898,7 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
       }
 
       if (!initialTemplate) {
-        event.currentTarget.reset();
+        form.reset();
         setTemplateName("");
         setTemplateNameEn("");
         setSelectedCategoryId("");
