@@ -1,6 +1,6 @@
 # Certificate Module Pending Features Tracker
 
-Last updated: 2026-05-25
+Last updated: 2026-05-27
 
 ## Completed
 - Build blocker fixed for rules page Prisma select fields (`title/titleEn`).
@@ -22,6 +22,7 @@ Last updated: 2026-05-25
 - Certificate public verification now uses a unified Core-oriented resolver shared by page and API, with access-level disclosure (`PUBLIC`/`HOLDER`/`STAFF`), policy checks (`verificationMode`, `publicVerifyEnabled`), and full query audit logging for both QR scan and web query flows.
 - Public verification UI now supports signed-in identity-aware display and operational counters (verification count, query count, internal verification metadata for privileged viewers).
 - Formal end-to-end validation record completed for certificate verification runtime behavior, identity-tiered access, query logging counters, and regression checks (`docs/BUGFIX_CERTIFICATE_VERIFICATION_E2E_VALIDATION_20260525.md`).
+- Certificate template image upload controls (background/logo/signature/seal) are now aligned to avatar-style file selection UX with custom button, filename feedback, and existing image preview.
 
 ## In Progress
 - Admin operation depth for records/issue/templates/categories/applications/rules/audit-logs.

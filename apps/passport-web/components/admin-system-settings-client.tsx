@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { Locale } from "@/lib/site-content";
 
 type SiteSettingsPayload = {
@@ -51,6 +53,7 @@ export function AdminSystemSettingsClient({
   initialSettings: SiteSettingsPayload | null;
 }) {
   const isZh = locale === "zh";
+  const router = useRouter();
 
   const [siteName, setSiteName] = useState(initialSettings?.siteName ?? "Climate Passport");
   const [siteNameEn, setSiteNameEn] = useState(initialSettings?.siteNameEn ?? "Climate Passport");
@@ -74,10 +77,18 @@ export function AdminSystemSettingsClient({
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingImageReads, setPendingImageReads] = useState(0);
+  const [logoColorFileName, setLogoColorFileName] = useState("");
+  const [logoMonoFileName, setLogoMonoFileName] = useState("");
+  const [faviconFileName, setFaviconFileName] = useState("");
+  const logoColorInputRef = useRef<HTMLInputElement | null>(null);
+  const logoMonoInputRef = useRef<HTMLInputElement | null>(null);
+  const faviconInputRef = useRef<HTMLInputElement | null>(null);
 
   async function handleImagePick(
     event: ChangeEvent<HTMLInputElement>,
     setter: (value: string) => void,
+    setFileName: (value: string) => void,
     label: string,
   ) {
     setError("");
@@ -86,6 +97,8 @@ export function AdminSystemSettingsClient({
     if (!file) {
       return;
     }
+
+    setFileName(file.name);
 
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
       setError(isZh ? `${label} 仅支持 PNG/JPG/WEBP/SVG。` : `${label} only supports PNG/JPG/WEBP/SVG.`);
@@ -97,6 +110,7 @@ export function AdminSystemSettingsClient({
       return;
     }
 
+    setPendingImageReads((count) => count + 1);
     try {
       const dataUrl = await readFileAsDataUrl(file);
       if (dataUrl) {
@@ -104,6 +118,8 @@ export function AdminSystemSettingsClient({
       }
     } catch {
       setError(isZh ? "图片读取失败，请重试。" : "Failed to read image file. Please retry.");
+    } finally {
+      setPendingImageReads((count) => Math.max(0, count - 1));
     }
   }
 
@@ -114,6 +130,11 @@ export function AdminSystemSettingsClient({
 
     if (!siteName.trim()) {
       setError(isZh ? "网站名称不能为空。" : "Site name is required.");
+      return;
+    }
+
+    if (pendingImageReads > 0) {
+      setError(isZh ? "图片仍在处理中，请稍候再保存。" : "Images are still processing. Please save again in a moment.");
       return;
     }
 
@@ -145,7 +166,16 @@ export function AdminSystemSettingsClient({
         }),
       });
 
-      const result = (await response.json()) as { error?: string };
+      let result: { error?: string } = {};
+      const responseType = response.headers.get("content-type") ?? "";
+      if (responseType.includes("application/json")) {
+        result = (await response.json()) as { error?: string };
+      } else if (!response.ok) {
+        const rawError = await response.text();
+        if (rawError.trim()) {
+          result.error = rawError;
+        }
+      }
 
       if (!response.ok) {
         setError(result.error ?? (isZh ? "保存失败。" : "Failed to save settings."));
@@ -153,6 +183,7 @@ export function AdminSystemSettingsClient({
       }
 
       setStatus(isZh ? "系统管理设置已保存。" : "System settings saved.");
+      router.refresh();
     } catch {
       setError(isZh ? "网络异常，请稍后重试。" : "Network error. Please retry.");
     } finally {
@@ -199,20 +230,74 @@ export function AdminSystemSettingsClient({
           <div className="field-row">
             <label className="field">
               <span>{isZh ? "彩色 Logo" : "Color logo"}</span>
-              <input accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => void handleImagePick(event, setLogoColor, isZh ? "彩色 Logo" : "Color logo")} type="file" />
-              {logoColor ? <small>{isZh ? "已保存彩色 Logo" : "Color logo loaded"}</small> : null}
+              <input
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="file-upload-input"
+                onChange={(event) => void handleImagePick(event, setLogoColor, setLogoColorFileName, isZh ? "彩色 Logo" : "Color logo")}
+                ref={logoColorInputRef}
+                type="file"
+              />
+              <div className="file-upload-row">
+                <button className="file-upload-button" onClick={() => logoColorInputRef.current?.click()} type="button">
+                  {isZh ? "选择文件" : "Choose file"}
+                </button>
+                <span className="file-upload-filename">{logoColorFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+              </div>
+              <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP/SVG，最大 700KB。" : "Supports PNG/JPG/WEBP/SVG, max 700KB."}</small>
+              {logoColor ? (
+                <div className="file-upload-preview">
+                  <Image alt={isZh ? "彩色 Logo 预览" : "Color logo preview"} className="file-upload-preview-image" height={84} src={logoColor} unoptimized width={84} />
+                  <div className="file-upload-meta">{isZh ? "已加载当前彩色 Logo，可重新选择替换。" : "Current color logo loaded. Re-upload to replace."}</div>
+                </div>
+              ) : null}
             </label>
             <label className="field">
               <span>{isZh ? "反白 Logo" : "Mono logo"}</span>
-              <input accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => void handleImagePick(event, setLogoMono, isZh ? "反白 Logo" : "Mono logo")} type="file" />
-              {logoMono ? <small>{isZh ? "已保存反白 Logo" : "Mono logo loaded"}</small> : null}
+              <input
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="file-upload-input"
+                onChange={(event) => void handleImagePick(event, setLogoMono, setLogoMonoFileName, isZh ? "反白 Logo" : "Mono logo")}
+                ref={logoMonoInputRef}
+                type="file"
+              />
+              <div className="file-upload-row">
+                <button className="file-upload-button" onClick={() => logoMonoInputRef.current?.click()} type="button">
+                  {isZh ? "选择文件" : "Choose file"}
+                </button>
+                <span className="file-upload-filename">{logoMonoFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+              </div>
+              <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP/SVG，最大 700KB。" : "Supports PNG/JPG/WEBP/SVG, max 700KB."}</small>
+              {logoMono ? (
+                <div className="file-upload-preview">
+                  <Image alt={isZh ? "反白 Logo 预览" : "Mono logo preview"} className="file-upload-preview-image" height={84} src={logoMono} unoptimized width={84} />
+                  <div className="file-upload-meta">{isZh ? "已加载当前反白 Logo，可重新选择替换。" : "Current mono logo loaded. Re-upload to replace."}</div>
+                </div>
+              ) : null}
             </label>
           </div>
 
           <label className="field">
             <span>{isZh ? "Favicon" : "Favicon"}</span>
-            <input accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => void handleImagePick(event, setFavicon, "Favicon")} type="file" />
-            {favicon ? <small>{isZh ? "已保存 Favicon" : "Favicon loaded"}</small> : null}
+            <input
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="file-upload-input"
+              onChange={(event) => void handleImagePick(event, setFavicon, setFaviconFileName, "Favicon")}
+              ref={faviconInputRef}
+              type="file"
+            />
+            <div className="file-upload-row">
+              <button className="file-upload-button" onClick={() => faviconInputRef.current?.click()} type="button">
+                {isZh ? "选择文件" : "Choose file"}
+              </button>
+              <span className="file-upload-filename">{faviconFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+            </div>
+            <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP/SVG，最大 700KB。" : "Supports PNG/JPG/WEBP/SVG, max 700KB."}</small>
+            {favicon ? (
+              <div className="file-upload-preview">
+                <Image alt="Favicon preview" className="file-upload-preview-image" height={64} src={favicon} unoptimized width={64} />
+                <div className="file-upload-meta">{isZh ? "已加载当前 Favicon，可重新选择替换。" : "Current favicon loaded. Re-upload to replace."}</div>
+              </div>
+            ) : null}
           </label>
 
           <div className="field-row">
@@ -256,7 +341,7 @@ export function AdminSystemSettingsClient({
           {status ? <p className="form-success">{status}</p> : null}
 
           <div className="button-row">
-            <button className="button" disabled={isSaving} type="submit">
+            <button className="button" disabled={isSaving || pendingImageReads > 0} type="submit">
               {isSaving ? (isZh ? "保存中..." : "Saving...") : (isZh ? "保存系统设置" : "Save settings")}
             </button>
           </div>

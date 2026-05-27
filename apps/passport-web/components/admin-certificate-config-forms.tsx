@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -535,6 +536,10 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
   const [logoImageUrl, setLogoImageUrl] = useState(initialTemplate?.renderConfig?.logoImageUrl ?? "");
   const [signatureImageUrl, setSignatureImageUrl] = useState(initialTemplate?.renderConfig?.signatureImageUrl ?? "");
   const [sealImageUrl, setSealImageUrl] = useState(initialTemplate?.renderConfig?.sealImageUrl ?? "");
+  const [backgroundImageFileName, setBackgroundImageFileName] = useState("");
+  const [logoImageFileName, setLogoImageFileName] = useState("");
+  const [signatureImageFileName, setSignatureImageFileName] = useState("");
+  const [sealImageFileName, setSealImageFileName] = useState("");
   const [elementsJson, setElementsJson] = useState(
     initialTemplate?.renderConfig?.elements
       ? JSON.stringify(initialTemplate.renderConfig.elements, null, 2)
@@ -544,6 +549,10 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
   const copyFeedbackTimerRef = useRef<number | null>(null);
   const restoreTitleTimerRef = useRef<number | null>(null);
   const printTitleActiveRef = useRef(false);
+  const backgroundImageInputRef = useRef<HTMLInputElement | null>(null);
+  const logoImageInputRef = useRef<HTMLInputElement | null>(null);
+  const signatureImageInputRef = useRef<HTMLInputElement | null>(null);
+  const sealImageInputRef = useRef<HTMLInputElement | null>(null);
   const isEditing = Boolean(initialTemplate?.id);
 
   useEffect(() => {
@@ -561,6 +570,10 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     setLogoImageUrl(initialTemplate?.renderConfig?.logoImageUrl ?? "");
     setSignatureImageUrl(initialTemplate?.renderConfig?.signatureImageUrl ?? "");
     setSealImageUrl(initialTemplate?.renderConfig?.sealImageUrl ?? "");
+    setBackgroundImageFileName("");
+    setLogoImageFileName("");
+    setSignatureImageFileName("");
+    setSealImageFileName("");
     setElementsJson(
       initialTemplate?.renderConfig?.elements
         ? JSON.stringify(initialTemplate.renderConfig.elements, null, 2)
@@ -699,8 +712,12 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
   async function handleImageFileChange(
     event: React.ChangeEvent<HTMLInputElement>,
     setter: (url: string) => void,
+    setFileName: (value: string) => void,
   ) {
     const file = event.target.files?.[0] ?? null;
+    if (file) {
+      setFileName(file.name);
+    }
     try {
       const dataUrl = await readImageAsDataUrl(file);
       setter(dataUrl ?? "");
@@ -1025,25 +1042,101 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
       <div className="field-row">
         <label className="field">
           <span>{isZh ? "证书背景图" : "Certificate background"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="backgroundImage" type="file" onChange={(event) => void handleImageFileChange(event, setBackgroundImageUrl)} />
-          {backgroundImageUrl ? <small>{isZh ? "已保存背景图；上传新文件会替换。" : "Background saved; upload to replace."}</small> : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            className="file-upload-input"
+            name="backgroundImage"
+            onChange={(event) => void handleImageFileChange(event, setBackgroundImageUrl, setBackgroundImageFileName)}
+            ref={backgroundImageInputRef}
+            type="file"
+          />
+          <div className="file-upload-row">
+            <button className="file-upload-button" onClick={() => backgroundImageInputRef.current?.click()} type="button">
+              {isZh ? "选择文件" : "Choose file"}
+            </button>
+            <span className="file-upload-filename">{backgroundImageFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+          </div>
+          <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP，最大 1.5MB。" : "Supports PNG/JPG/WEBP, max 1.5MB."}</small>
+          {backgroundImageUrl ? (
+            <div className="file-upload-preview">
+              <Image alt={isZh ? "背景图预览" : "Background preview"} className="file-upload-preview-image" height={120} src={backgroundImageUrl} unoptimized width={120} />
+              <div className="file-upload-meta">{isZh ? "已加载当前背景图，重新上传可替换。" : "Current background loaded. Re-upload to replace."}</div>
+            </div>
+          ) : null}
         </label>
         <label className="field">
           <span>{isZh ? "机构 Logo" : "Logo image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="logoImage" type="file" onChange={(event) => void handleImageFileChange(event, setLogoImageUrl)} />
-          {logoImageUrl ? <small>{isZh ? "已保存 Logo。" : "Logo saved."}</small> : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            className="file-upload-input"
+            name="logoImage"
+            onChange={(event) => void handleImageFileChange(event, setLogoImageUrl, setLogoImageFileName)}
+            ref={logoImageInputRef}
+            type="file"
+          />
+          <div className="file-upload-row">
+            <button className="file-upload-button" onClick={() => logoImageInputRef.current?.click()} type="button">
+              {isZh ? "选择文件" : "Choose file"}
+            </button>
+            <span className="file-upload-filename">{logoImageFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+          </div>
+          <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP，最大 1.5MB。" : "Supports PNG/JPG/WEBP, max 1.5MB."}</small>
+          {logoImageUrl ? (
+            <div className="file-upload-preview">
+              <Image alt={isZh ? "Logo 预览" : "Logo preview"} className="file-upload-preview-image" height={120} src={logoImageUrl} unoptimized width={120} />
+              <div className="file-upload-meta">{isZh ? "已加载当前 Logo，重新上传可替换。" : "Current logo loaded. Re-upload to replace."}</div>
+            </div>
+          ) : null}
         </label>
       </div>
       <div className="field-row">
         <label className="field">
           <span>{isZh ? "签名图片" : "Signature image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="signatureImage" type="file" onChange={(event) => void handleImageFileChange(event, setSignatureImageUrl)} />
-          {signatureImageUrl ? <small>{isZh ? "已保存签名图。" : "Signature saved."}</small> : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            className="file-upload-input"
+            name="signatureImage"
+            onChange={(event) => void handleImageFileChange(event, setSignatureImageUrl, setSignatureImageFileName)}
+            ref={signatureImageInputRef}
+            type="file"
+          />
+          <div className="file-upload-row">
+            <button className="file-upload-button" onClick={() => signatureImageInputRef.current?.click()} type="button">
+              {isZh ? "选择文件" : "Choose file"}
+            </button>
+            <span className="file-upload-filename">{signatureImageFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+          </div>
+          <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP，最大 1.5MB。" : "Supports PNG/JPG/WEBP, max 1.5MB."}</small>
+          {signatureImageUrl ? (
+            <div className="file-upload-preview">
+              <Image alt={isZh ? "签名预览" : "Signature preview"} className="file-upload-preview-image" height={120} src={signatureImageUrl} unoptimized width={120} />
+              <div className="file-upload-meta">{isZh ? "已加载当前签名图，重新上传可替换。" : "Current signature loaded. Re-upload to replace."}</div>
+            </div>
+          ) : null}
         </label>
         <label className="field">
           <span>{isZh ? "印章图片" : "Seal image"}</span>
-          <input accept="image/png,image/jpeg,image/webp" name="sealImage" type="file" onChange={(event) => void handleImageFileChange(event, setSealImageUrl)} />
-          {sealImageUrl ? <small>{isZh ? "已保存印章图。" : "Seal saved."}</small> : null}
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            className="file-upload-input"
+            name="sealImage"
+            onChange={(event) => void handleImageFileChange(event, setSealImageUrl, setSealImageFileName)}
+            ref={sealImageInputRef}
+            type="file"
+          />
+          <div className="file-upload-row">
+            <button className="file-upload-button" onClick={() => sealImageInputRef.current?.click()} type="button">
+              {isZh ? "选择文件" : "Choose file"}
+            </button>
+            <span className="file-upload-filename">{sealImageFileName || (isZh ? "未选择文件" : "No file selected")}</span>
+          </div>
+          <small className="field-hint">{isZh ? "支持 PNG/JPG/WEBP，最大 1.5MB。" : "Supports PNG/JPG/WEBP, max 1.5MB."}</small>
+          {sealImageUrl ? (
+            <div className="file-upload-preview">
+              <Image alt={isZh ? "印章预览" : "Seal preview"} className="file-upload-preview-image" height={120} src={sealImageUrl} unoptimized width={120} />
+              <div className="file-upload-meta">{isZh ? "已加载当前印章图，重新上传可替换。" : "Current seal loaded. Re-upload to replace."}</div>
+            </div>
+          ) : null}
         </label>
       </div>
       <label className="field">
