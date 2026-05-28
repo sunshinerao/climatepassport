@@ -1,6 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { AdminSystemSettingsClient } from "@/components/admin-system-settings-client";
-import { AdminSystemDiagnosticsClient } from "@/components/admin-system-diagnostics-client";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { PLATFORM_SITE_SETTING_KEY } from "@/lib/server/site-settings";
 import { getPrismaClient } from "@/lib/server/prisma";
@@ -32,7 +31,6 @@ export default async function AdminSystemSettingsPage({ params }: { params: { lo
       </div>
 
       <AdminSystemSettingsClient initialSettings={settings} locale={params.locale} />
-      <AdminSystemDiagnosticsClient locale={params.locale} />
     </>
   );
 }

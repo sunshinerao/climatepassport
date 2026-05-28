@@ -174,6 +174,11 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           icon: "·",
           label: t(locale, "站点品牌与信息", "Branding and site profile"),
         },
+        {
+          href: `${prefix}/admin/system/diagnostics`,
+          icon: "·",
+          label: t(locale, "性能诊断", "Performance diagnostics"),
+        },
       ],
     },
     {
