@@ -239,6 +239,89 @@ textarea:focus-visible {
   line-height: 1.4;
 }
 
+/* ── Performance Diagnostics ───────────────────────────────────────────────── */
+
+.diag-run-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.diag-timestamp {
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+}
+
+.diag-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.diag-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+  padding: 0.75rem 1rem;
+  background: var(--cp-bg-soft);
+  border-radius: 8px;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.diag-card {
+  border: 1px solid var(--cp-line);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--cp-bg);
+}
+
+.diag-card-label {
+  font-size: 0.8rem;
+  color: var(--cp-text-secondary);
+  font-weight: 500;
+}
+
+.diag-card-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--cp-forest);
+  line-height: 1.1;
+}
+
+.diag-card-hint {
+  font-size: 0.75rem;
+  color: var(--cp-text-muted);
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+
+.diag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.diag-badge--fast   { background: #d1fae5; color: #065f46; }
+.diag-badge--normal { background: #fef3c7; color: #92400e; }
+.diag-badge--slow   { background: #fee2e2; color: #991b1b; }
+.diag-badge--na     { background: var(--cp-bg-soft); color: var(--cp-text-muted); }
+
 .brand-overline {
   font-size: var(--cp-text-caption);
   letter-spacing: 0.16em;
