@@ -274,6 +274,9 @@ export default async function LocalizedDashboardPage({ params }: { params: { loc
               <h2>{isZh ? "快捷操作" : "Quick actions"}</h2>
             </div>
             <div className="proto-dashboard-actions">
+              <Link href={`/${params.locale}/dashboard/my-activities`}>{isZh ? "我的活动" : "My activities"}</Link>
+              <Link href={`/${params.locale}/activities`}>{isZh ? "浏览活动" : "Browse activities"}</Link>
+              <Link href={`/${params.locale}/dashboard/points`}>{isZh ? "积分历史" : "Points history"}</Link>
               <Link href={`/${params.locale}/dashboard/climate-passport`}>{isZh ? "成就与徽章" : "Achievements and badges"}</Link>
               <Link href={`/${params.locale}/dashboard/learning-experiences`}>{isZh ? "学习经历申请" : "Learning applications"}</Link>
               <Link href={`/${params.locale}/dashboard/summer-school`}>{isZh ? "可持续夏校申请" : "Summer school apply"}</Link>

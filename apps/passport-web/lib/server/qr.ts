@@ -7,6 +7,7 @@ export async function issueQrToken(input: {
   type: QrTokenType;
   userId?: string | null;
   eventId?: string | null;
+  activityId?: string | null;
   certificateIssueId?: string | null;
   subjectType: string;
   subjectId: string;
@@ -29,6 +30,7 @@ export async function issueQrToken(input: {
       type: input.type,
       userId: input.userId ?? null,
       eventId: input.eventId ?? null,
+      activityId: input.activityId ?? null,
       certificateIssueId: input.certificateIssueId ?? null,
       subjectType: input.subjectType,
       subjectId: input.subjectId,

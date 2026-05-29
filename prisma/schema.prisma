@@ -173,6 +173,7 @@ enum LearningExperienceParticipationStatus {
 enum QrTokenType {
   IDENTITY
   EVENT_CHECKIN
+  ACTIVITY_CHECKIN
   CERTIFICATE_VERIFICATION
   INVITATION_SPECIAL_PASS
 }
@@ -303,6 +304,9 @@ model User {
   learningExperienceApplications LearningExperienceApplication[]
   learningExperienceParticipations LearningExperienceParticipation[]
   summerSchoolApplications SummerSchoolApplication[]
+  activityWishlists    ActivityWishlist[]
+  activityVerifiers    ActivityVerifier[]
+  activityApplications ActivityApplication[]
 
   @@index([email])
   @@index([passCode])
@@ -413,6 +417,7 @@ model Track {
   updatedAt     DateTime @updatedAt
 
   events        Event[]
+  activities    Activity[]
 
   @@map("tracks")
 }
@@ -436,8 +441,9 @@ model Institution {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  speakers          Speaker[]
-  events            EventInstitution[]
+  speakers             Speaker[]
+  events               EventInstitution[]
+  activityInstitutions ActivityInstitution[]
 
   @@map("institutions")
 }
@@ -603,6 +609,7 @@ model PointTransaction {
   type           String
   eventId        String?
   registrationId String?
+  activityId     String?
   description    String
   createdBy      String?
   createdAt      DateTime     @default(now())
@@ -613,6 +620,7 @@ model PointTransaction {
 
   @@index([userId])
   @@index([type])
+  @@index([activityId])
   @@index([createdAt])
   @@map("point_transactions")
 }
@@ -654,6 +662,9 @@ model Speaker {
   agendaItems         AgendaItem[]
   moderatedItems      AgendaItem[] @relation("AgendaModerator")
   roles               SpeakerRole[]
+  activityAgendaItems ActivityAgendaItemSpeaker[]
+  moderatedActivityItems ActivityAgendaItem[] @relation("ActivityAgendaModerator")
+  activityLinks       ActivitySpeaker[]
 
   @@map("speakers")
 }
@@ -1015,6 +1026,7 @@ model PassportMilestone {
   sourceType         String?
   sourceId           String?
   eventId            String?
+  activityId         String?
   certificateIssueId String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -1025,6 +1037,7 @@ model PassportMilestone {
 
   @@index([userId])
   @@index([eventId])
+  @@index([activityId])
   @@map("passport_milestones")
 }
 
@@ -1185,14 +1198,18 @@ model QrToken {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
+  activityId         String?
+
   user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   event              Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   certificateIssue   CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
+  activity           Activity?         @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([type, status])
   @@index([userId, type])
   @@index([eventId, type])
   @@index([certificateIssueId])
+  @@index([activityId, type])
   @@index([expiresAt])
   @@map("qr_tokens")
 }
@@ -1404,4 +1421,618 @@ model SummerSchoolApplication {
   @@index([climatePassportId])
   @@index([userId])
   @@map("summer_school_applications")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTIVITIES MODULE
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ActivityType {
+  EVENT
+  LEARNING
+  CHALLENGE
+  PROJECT
+  TASK
+  COURSE
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ActivityVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+  INVITE_ONLY
+}
+
+enum ActivityLocationType {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum ActivityApplicationStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_REVIEW
+  INTERVIEW      // Learning Experience type: shortlisted for interview
+  OFFERED        // Learning Experience type: offer extended
+  APPROVED
+  REJECTED
+  WAITLISTED
+  CANCELLED
+  WITHDRAWN
+}
+
+enum ActivityParticipationStatus {
+  REGISTERED
+  ACCEPTED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ABSENT
+  CERTIFIED
+  ARCHIVED
+}
+
+enum ActivityRoleType {
+  APPLICANT
+  PARTICIPANT
+  ATTENDEE
+  SPEAKER
+  MODERATOR
+  PANELIST
+  MENTOR
+  REVIEWER
+  VOLUNTEER
+  ORGANIZER
+  TEAM_LEADER
+  TEAM_MEMBER
+  LEARNER
+  INSTRUCTOR
+  PARTNER_REPRESENTATIVE
+  MEDIA
+}
+
+enum ActivityTaskType {
+  CHECK_IN
+  UPLOAD
+  QUIZ
+  REFLECTION
+  ATTENDANCE
+  SHARE
+  SURVEY
+  LEARNING_UNIT
+  PROJECT_MILESTONE
+  TEAM_ACTION
+}
+
+enum ActivitySubmissionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REVISION_REQUIRED
+}
+
+enum ActivityCheckinMethod {
+  QR_CODE
+  MANUAL
+  GEO
+  NFC
+  FACIAL
+}
+
+enum ActivityCheckinStatus {
+  VALID
+  DUPLICATE
+  INVALID
+  OUTSIDE_WINDOW
+  FAILED
+  EXPIRED
+}
+
+enum ActivityRewardTrigger {
+  REGISTRATION_APPROVED
+  CHECKIN_COMPLETED
+  TASK_COMPLETED
+  CONSECUTIVE_CHECKIN
+  SUBMISSION_APPROVED
+  COURSE_COMPLETED
+  PROJECT_COMPLETED
+  EXCELLENT_REVIEW
+  ROLE_ASSIGNED
+  REFERRAL_SUCCESS
+  PARTICIPATION_COMPLETED
+}
+
+enum ActivityRewardType {
+  POINTS
+  BADGE
+  CERTIFICATE
+  PASSPORT_ENTRY
+  LEADERBOARD
+  SKILL_TAG
+  NOTIFICATION
+}
+
+enum ActivityReviewObjectType {
+  APPLICATION
+  SUBMISSION
+  CHECKIN
+  CERTIFICATE_REQUEST
+  PROJECT_OUTPUT
+  VOLUNTEER_HOURS
+}
+
+enum ActivityReviewType {
+  AUTO
+  ADMIN
+  MENTOR
+  ORGANIZATION
+  EXPERT
+  MULTI_SCORE
+  PUBLIC_VOTE
+}
+
+enum ActivityReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVISION_REQUIRED
+}
+
+model Activity {
+  id                  String              @id @default(uuid())
+  type                ActivityType
+  title               String
+  titleEn             String?
+  subtitle            String?
+  subtitleEn          String?
+  slug                String              @unique
+  category            String?
+  coverImage          String?
+  posterImage         String?
+  summary             String?             @db.Text
+  summaryEn           String?             @db.Text
+  description         String?             @db.Text
+  descriptionEn       String?             @db.Text
+  highlights          Json?
+  highlightsEn        Json?
+  organizerUserId     String?
+  organizerName       String?
+  partnerIds          String[]
+  trackId             String?
+  eventLayer          EventLayer?
+  hostType            EventHostType?
+  startTime           DateTime?
+  endTime             DateTime?
+  timezone            String              @default("UTC")
+  locationType        ActivityLocationType?
+  locationJson        Json?
+  onlineUrl           String?
+  mapUrl              String?
+  status              ActivityStatus      @default(DRAFT)
+  visibility          ActivityVisibility  @default(PUBLIC)
+  capacity            Int?
+  registrationOpenAt  DateTime?
+  registrationCloseAt DateTime?
+  requiresApproval    Boolean             @default(false)
+  isPrivate           Boolean             @default(false)
+  isFeatured          Boolean             @default(false)
+  isPinned            Boolean             @default(false)
+  language            String              @default("zh")
+  tags                String[]
+  createdByUserId     String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  track               Track?              @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  detail              ActivityDetail?
+  roles               ActivityRole[]
+  tasks               ActivityTask[]
+  rewardRules         ActivityRewardRule[]
+  certificateRules    ActivityCertificateRule[]
+  applications        ActivityApplication[]
+  participations      ActivityParticipation[]
+  reviewWorkflows     ActivityReviewWorkflow[]
+  checkinRecords      ActivityCheckinRecord[]
+  submissions         ActivitySubmission[]
+  qrTokens            QrToken[]
+  agendaItems         ActivityAgendaItem[]
+  speakerLinks        ActivitySpeaker[]
+  wishlists           ActivityWishlist[]
+  dateSlots           ActivityDateSlot[]
+  institutions        ActivityInstitution[]
+  verifiers           ActivityVerifier[]
+
+  @@index([type, status])
+  @@index([status, startTime])
+  @@index([organizerUserId])
+  @@index([isFeatured, startTime])
+  @@index([trackId])
+  @@index([isPinned, startTime])
+  @@map("activities")
+}
+
+model ActivityDetail {
+  id         String       @id @default(uuid())
+  activityId String       @unique
+  type       ActivityType
+  configJson Json
+
+  activity   Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@map("activity_details")
+}
+
+model ActivityRole {
+  id                      String           @id @default(uuid())
+  activityId              String
+  roleType                ActivityRoleType
+  formTemplateId          String?
+  requiresApproval        Boolean          @default(false)
+  maxCount                Int?
+  permissionsJson         Json?
+  certificateDefinitionId String?
+  pointsRuleJson          Json?
+  badgeRuleJson           Json?
+  createdAt               DateTime         @default(now())
+
+  activity                Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, roleType])
+  @@index([activityId])
+  @@map("activity_roles")
+}
+
+model ActivityApplication {
+  id               String                    @id @default(uuid())
+  activityId       String
+  userId           String
+  roleType         ActivityRoleType?
+  formResponseJson Json?
+  status           ActivityApplicationStatus @default(DRAFT)
+  submittedAt      DateTime?
+  reviewedByUserId String?
+  reviewComment    String?                   @db.Text
+  reviewedAt       DateTime?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  activity         Activity                  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId, status])
+  @@index([activityId, status])
+  @@map("activity_applications")
+}
+
+model ActivityParticipation {
+  id                 String                      @id @default(uuid())
+  activityId         String
+  userId             String
+  roleType           ActivityRoleType?
+  status             ActivityParticipationStatus @default(REGISTERED)
+  pointsEarned       Int                         @default(0)
+  certificateIssueId String?
+  badgeAwardIds      String[]
+  passportSynced     Boolean                     @default(false)
+  completedAt        DateTime?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  activity           Activity                    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId, status])
+  @@index([activityId])
+  @@map("activity_participations")
+}
+
+model ActivityFormTemplate {
+  id              String   @id @default(uuid())
+  name            String
+  type            String
+  fieldsJson      Json
+  createdByUserId String
+  createdAt       DateTime @default(now())
+
+  @@map("activity_form_templates")
+}
+
+model ActivityTask {
+  id                       String           @id @default(uuid())
+  activityId               String
+  parentTaskId             String?
+  title                    String
+  description              String?          @db.Text
+  taskType                 ActivityTaskType
+  isRequired               Boolean          @default(true)
+  startTime                DateTime?
+  dueTime                  DateTime?
+  points                   Int              @default(0)
+  badgeTriggerDefinitionId String?
+  requiresSubmission       Boolean          @default(false)
+  requiresCheckin          Boolean          @default(false)
+  requiresReview           Boolean          @default(false)
+  orderIndex               Int              @default(0)
+  ruleJson                 Json?
+  createdAt                DateTime         @default(now())
+
+  activity                 Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  parentTask               ActivityTask?    @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks                 ActivityTask[]   @relation("TaskSubtasks")
+  submissions              ActivitySubmission[]
+  checkinRecords           ActivityCheckinRecord[]
+
+  @@index([activityId, taskType])
+  @@index([parentTaskId])
+  @@map("activity_tasks")
+}
+
+model ActivitySubmission {
+  id               String                   @id @default(uuid())
+  userId           String
+  activityId       String
+  taskId           String?
+  fileUrls         String[]
+  textContent      String?                  @db.Text
+  linkUrl          String?
+  mediaType        String?
+  status           ActivitySubmissionStatus @default(DRAFT)
+  reviewedByUserId String?
+  reviewComment    String?                  @db.Text
+  score            Decimal?                 @db.Decimal(5, 2)
+  submittedAt      DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  activity         Activity                 @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  task             ActivityTask?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, userId])
+  @@index([activityId, status])
+  @@map("activity_submissions")
+}
+
+model ActivityCheckinRecord {
+  id               String                @id @default(uuid())
+  activityId       String
+  taskId           String?
+  userId           String
+  method           ActivityCheckinMethod
+  status           ActivityCheckinStatus
+  locationLat      Float?
+  locationLng      Float?
+  locationJson     Json?
+  verifiedByUserId String?
+  checkinAt        DateTime
+  createdAt        DateTime              @default(now())
+
+  activity         Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  task             ActivityTask?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([activityId, userId])
+  @@index([taskId])
+  @@index([checkinAt])
+  @@map("activity_checkin_records")
+}
+
+model ActivityRewardRule {
+  id              String                @id @default(uuid())
+  activityId      String
+  trigger         ActivityRewardTrigger
+  rewardType      ActivityRewardType
+  rewardValueJson Json
+  conditionJson   Json?
+  createdAt       DateTime              @default(now())
+
+  activity        Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId, trigger])
+  @@map("activity_reward_rules")
+}
+
+model ActivityCertificateRule {
+  id                      String   @id @default(uuid())
+  activityId              String
+  certificateDefinitionId String
+  conditionJson           Json?
+  autoIssue               Boolean  @default(false)
+  createdAt               DateTime @default(now())
+
+  activity                Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@map("activity_certificate_rules")
+}
+
+model ActivityReviewWorkflow {
+  id             String                   @id @default(uuid())
+  activityId     String
+  objectType     ActivityReviewObjectType
+  objectId       String
+  reviewerUserId String?
+  reviewType     ActivityReviewType
+  status         ActivityReviewStatus     @default(PENDING)
+  comment        String?                  @db.Text
+  score          Int?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  activity       Activity                 @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId, objectType])
+  @@index([objectType, objectId])
+  @@index([reviewerUserId])
+  @@map("activity_review_workflows")
+}
+
+model ProjectMilestone {
+  id          String   @id @default(uuid())
+  activityId  String
+  title       String
+  description String?  @db.Text
+  dueDate     DateTime?
+  status      String   @default("upcoming")
+  orderIndex  Int      @default(0)
+
+  deliverables ProjectDeliverable[]
+
+  @@index([activityId])
+  @@map("project_milestones")
+}
+
+model ProjectDeliverable {
+  id           String  @id @default(uuid())
+  milestoneId  String
+  submissionId String?
+  status       String  @default("pending")
+
+  milestone    ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@index([milestoneId])
+  @@map("project_deliverables")
+}
+
+// ─── Activity Agenda & Speakers ──────────────────────────────────────────────
+
+model ActivityAgendaItem {
+  id            String    @id @default(uuid())
+  activityId    String
+  agendaDate    DateTime
+  startTime     String
+  endTime       String
+  title         String
+  titleEn       String?
+  description   String?   @db.Text
+  descriptionEn String?   @db.Text
+  type          String    @default("session")
+  venue         String?
+  venueEn       String?
+  moderatorId   String?
+  speakerMeta   Json?
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  activity      Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  moderator     Speaker?  @relation("ActivityAgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  speakers      ActivityAgendaItemSpeaker[]
+
+  @@index([activityId])
+  @@index([activityId, agendaDate])
+  @@index([moderatorId])
+  @@map("activity_agenda_items")
+}
+
+model ActivityAgendaItemSpeaker {
+  id           String             @id @default(uuid())
+  agendaItemId String
+  speakerId    String
+  order        Int                @default(0)
+  createdAt    DateTime           @default(now())
+
+  agendaItem   ActivityAgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  speaker      Speaker            @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+
+  @@unique([agendaItemId, speakerId])
+  @@index([agendaItemId])
+  @@index([speakerId])
+  @@map("activity_agenda_item_speakers")
+}
+
+model ActivitySpeaker {
+  id         String    @id @default(uuid())
+  activityId String
+  speakerId  String
+  role       String?
+  roleEn     String?
+  order      Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  speaker    Speaker   @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, speakerId])
+  @@index([activityId])
+  @@index([speakerId])
+  @@map("activity_speakers")
+}
+
+model ActivityWishlist {
+  id         String    @id @default(uuid())
+  userId     String
+  activityId String
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityId])
+  @@index([userId])
+  @@index([activityId])
+  @@map("activity_wishlists")
+}
+
+model ActivityDateSlot {
+  id           String   @id @default(uuid())
+  activityId   String
+  scheduleDate DateTime
+  startTime    String
+  endTime      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  activity     Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, scheduleDate])
+  @@index([activityId])
+  @@map("activity_date_slots")
+}
+
+model ActivityInstitution {
+  id            String      @id @default(uuid())
+  activityId    String
+  institutionId String
+  role          String?
+  roleEn        String?
+  showLogo      Boolean     @default(true)
+  order         Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  activity      Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, institutionId])
+  @@index([activityId, order])
+  @@index([institutionId])
+  @@map("activity_institutions")
+}
+
+model ActivityVerifier {
+  id        String   @id @default(uuid())
+  userId    String
+  activityId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity  Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityId])
+  @@index([userId])
+  @@index([activityId])
+  @@map("activity_verifiers")
 }

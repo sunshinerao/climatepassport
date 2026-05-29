@@ -304,7 +304,10 @@ export const accountSnapshotByLocale: Record<CoreLocale, {
 export const siteContent: Record<CoreLocale, SiteDictionary> = {
   en: {
     shell: {
-      nav: [],
+      nav: [
+        { href: "/activities", label: "Activities" },
+        { href: "/certificates", label: "Certificates" },
+      ],
       switchLabel: "Language",
       actions: {
         summerSchool: "Summer School",
@@ -645,7 +648,10 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
   },
   zh: {
     shell: {
-      nav: [],
+      nav: [
+        { href: "/activities", label: "活动" },
+        { href: "/certificates", label: "证书" },
+      ],
       switchLabel: "语言切换",
       actions: {
         summerSchool: "夏校申请",
@@ -986,7 +992,10 @@ function buildFrDictionary(base: SiteDictionary): SiteDictionary {
     ...base,
     shell: {
       ...base.shell,
-      nav: [],
+      nav: [
+        { href: "/activities", label: "Activités" },
+        { href: "/certificates", label: "Certificats" },
+      ],
       switchLabel: "Langue",
       actions: {
         ...base.shell.actions,
@@ -1096,7 +1105,10 @@ function buildDeDictionary(base: SiteDictionary): SiteDictionary {
     ...base,
     shell: {
       ...base.shell,
-      nav: [],
+      nav: [
+        { href: "/activities", label: "Aktivitäten" },
+        { href: "/certificates", label: "Zertifikate" },
+      ],
       switchLabel: "Sprache",
       actions: {
         ...base.shell.actions,

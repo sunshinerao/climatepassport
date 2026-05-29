@@ -64,6 +64,8 @@ function describeResult(locale: Locale, payload: ApiResponse): { message: string
       return { message: t(locale, "无效或未识别的二维码", "Invalid or unrecognized QR"), detail: null };
     case "wrong_event":
       return { message: t(locale, "活动不匹配", "QR belongs to another event"), detail: null };
+    case "wrong_activity":
+      return { message: t(locale, "活动不匹配", "QR belongs to another activity"), detail: null };
     case "permission_denied":
       return { message: t(locale, "没有权限验证该活动", "No permission for this event"), detail: null };
     case "not_registered":

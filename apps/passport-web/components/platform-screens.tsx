@@ -220,7 +220,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
       </section>
 
       {/* How It Works */}
-      <section className="proto-section how-it-works">
+      <section className="section how-it-works">
         <div className="proto-home-inner">
           <header className="section-header">
             <span className="section-label">{isZh ? "使用方式" : "How It Works"}</span>
@@ -261,7 +261,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
 
       {/* Events */}
       {upcomingEvents.length > 0 && (
-        <section className="proto-section events">
+        <section className="section events">
           <div className="proto-home-inner">
             <header className="section-header">
               <span className="section-label">{isZh ? "近期活动" : "Upcoming Events"}</span>
@@ -307,7 +307,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
       )}
 
       {/* Features */}
-      <section className="proto-section features">
+      <section className="section features">
         <div className="proto-home-inner">
           <header className="section-header">
             <span className="section-label">{isZh ? "功能" : "Features"}</span>

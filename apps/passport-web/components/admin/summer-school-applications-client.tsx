@@ -108,10 +108,10 @@ export default function SummerSchoolApplicationsClient({ locale }: { locale: Loc
   };
 
   if (loading) {
-    return <div className="proto-admin-loading">{isZh ? "加载中…" : "Loading…"}</div>;
+    return <div >{isZh ? "加载中…" : "Loading…"}</div>;
   }
   if (error) {
-    return <div className="proto-admin-error">{error}</div>;
+    return <div >{error}</div>;
   }
 
   return (

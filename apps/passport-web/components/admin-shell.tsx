@@ -93,6 +93,149 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
       ],
     },
     {
+      href: `${prefix}/admin/activities`,
+      icon: "◇",
+      label: t(locale, "活动中心", "Activity Center"),
+      match: `${prefix}/admin/activities`,
+      roles: ["ADMIN", "EVENT_MANAGER"],
+      children: [
+        // ── EVENT 活动管理 ──────────────────────────────────────
+        {
+          href: `${prefix}/admin/activities?type=EVENT`,
+          icon: "▸",
+          label: t(locale, "【活动】列表", "【Events】List"),
+          match: `${prefix}/admin/activities`,
+        },
+        {
+          href: `${prefix}/admin/activities/new?type=EVENT`,
+          icon: "·",
+          label: t(locale, "· 创建活动", "· New Event"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        {
+          href: `${prefix}/admin/activities/applications?type=EVENT`,
+          icon: "·",
+          label: t(locale, "· 报名审核", "· Applications"),
+        },
+        {
+          href: `${prefix}/admin/activities/checkin?type=EVENT`,
+          icon: "·",
+          label: t(locale, "· 签到管理", "· Check-in"),
+        },
+        {
+          href: `${prefix}/admin/activities-checkin`,
+          icon: "·",
+          label: t(locale, "· 扫码签到站", "· QR Scanner"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        // ── LEARNING 学习体验 ───────────────────────────────────
+        {
+          href: `${prefix}/admin/activities?type=LEARNING`,
+          icon: "▸",
+          label: t(locale, "【学习体验】列表", "【Learning】List"),
+          match: `${prefix}/admin/activities`,
+        },
+        {
+          href: `${prefix}/admin/activities/new?type=LEARNING`,
+          icon: "·",
+          label: t(locale, "· 创建学习项目", "· New Learning"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        {
+          href: `${prefix}/admin/activities/applications?type=LEARNING`,
+          icon: "·",
+          label: t(locale, "· 申请审核", "· Applications"),
+        },
+        {
+          href: `${prefix}/admin/activities/participations?type=LEARNING`,
+          icon: "·",
+          label: t(locale, "· 参与管理", "· Participants"),
+        },
+        // ── CHALLENGE 挑战行动 ──────────────────────────────────
+        {
+          href: `${prefix}/admin/activities?type=CHALLENGE`,
+          icon: "▸",
+          label: t(locale, "【挑战行动】列表", "【Challenges】List"),
+          match: `${prefix}/admin/activities`,
+        },
+        {
+          href: `${prefix}/admin/activities/new?type=CHALLENGE`,
+          icon: "·",
+          label: t(locale, "· 创建挑战", "· New Challenge"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        {
+          href: `${prefix}/admin/activities/participations?type=CHALLENGE`,
+          icon: "·",
+          label: t(locale, "· 参与与积分", "· Participants"),
+        },
+        // ── PROJECT 项目孵化 ────────────────────────────────────
+        {
+          href: `${prefix}/admin/activities?type=PROJECT`,
+          icon: "▸",
+          label: t(locale, "【项目孵化】列表", "【Projects】List"),
+          match: `${prefix}/admin/activities`,
+        },
+        {
+          href: `${prefix}/admin/activities/new?type=PROJECT`,
+          icon: "·",
+          label: t(locale, "· 创建项目", "· New Project"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        // ── COURSE 课程 ─────────────────────────────────────────
+        {
+          href: `${prefix}/admin/activities?type=COURSE`,
+          icon: "▸",
+          label: t(locale, "【课程】列表", "【Courses】List"),
+          match: `${prefix}/admin/activities`,
+        },
+        {
+          href: `${prefix}/admin/activities/new?type=COURSE`,
+          icon: "·",
+          label: t(locale, "· 创建课程", "· New Course"),
+          roles: ["ADMIN", "EVENT_MANAGER"],
+        },
+        // ── 跨类型管理 ──────────────────────────────────────────
+        {
+          href: `${prefix}/admin/activities/tasks`,
+          icon: "▸",
+          label: t(locale, "【任务管理】", "【Tasks】"),
+        },
+        {
+          href: `${prefix}/admin/activities/submissions`,
+          icon: "·",
+          label: t(locale, "· 作品审核", "· Submissions"),
+        },
+        {
+          href: `${prefix}/admin/activities/rewards`,
+          icon: "·",
+          label: t(locale, "· 奖励规则", "· Reward Rules"),
+        },
+        {
+          href: `${prefix}/admin/activities/certificates`,
+          icon: "·",
+          label: t(locale, "· 证书规则", "· Certificate Rules"),
+        },
+        {
+          href: `${prefix}/admin/activities/reviews`,
+          icon: "·",
+          label: t(locale, "· 评审工作流", "· Review Workflows"),
+        },
+        {
+          href: `${prefix}/admin/activities/form-templates`,
+          icon: "·",
+          label: t(locale, "· 表单模板", "· Form Templates"),
+          roles: ["ADMIN"],
+        },
+        {
+          href: `${prefix}/admin/activity-organizers`,
+          icon: "·",
+          label: t(locale, "· 主办方管理", "· Organizers"),
+          roles: ["ADMIN"],
+        },
+      ],
+    },
+    {
       href: `${prefix}/admin/certificates`,
       icon: "◇",
       label: t(locale, "证书中心", "Certificate Hub"),

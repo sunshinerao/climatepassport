@@ -111,6 +111,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
             <div className="footer-col">
               <h4>{locale === "zh" ? "导航" : "Navigate"}</h4>
               <Link href={`/${locale}`}>{locale === "zh" ? "首页" : "Home"}</Link>
+              <Link href={`/${locale}/activities`}>{locale === "zh" ? "活动" : "Activities"}</Link>
               <Link href={`/${locale}/certificates`}>{locale === "zh" ? "证书" : "Certificates"}</Link>
               <Link href={`/${locale}/contact`}>{locale === "zh" ? "合作" : "Partners"}</Link>
               <Link href={`/${locale}/about`}>{locale === "zh" ? "关于我们" : "About Us"}</Link>

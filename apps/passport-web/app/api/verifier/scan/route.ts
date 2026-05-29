@@ -5,6 +5,8 @@ import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canVerifyActivity } from "@/lib/server/verifier-activity";
+import { triggerActivityRewards } from "@/lib/server/activity-rewards";
 
 const scanSchema = z.object({
   token: z.string().trim().min(8),
@@ -93,6 +95,111 @@ export async function POST(request: Request) {
     });
   }
 
+  // Handle ACTIVITY_CHECKIN (unified Activity framework)
+  if (qr.type === "ACTIVITY_CHECKIN" && qr.activityId && qr.userId) {
+    if (payload.data.eventId && payload.data.eventId !== qr.activityId) {
+      await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity", subjectId: qr.activityId, result: "wrong_activity", ...auditContext });
+      return NextResponse.json({ result: "wrong_event" }, { status: 409 });
+    }
+
+    if (!(await canVerifyActivity(prisma, verifier, qr.activityId))) {
+      await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity", subjectId: qr.activityId, result: "permission_denied", ...auditContext });
+      return NextResponse.json({ result: "permission_denied" }, { status: 403 });
+    }
+
+    const participation = await prisma.activityParticipation.findUnique({
+      where: {
+        activityId_userId: {
+          activityId: qr.activityId,
+          userId: qr.userId,
+        },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (!participation) {
+      await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity", subjectId: qr.activityId, result: "not_registered", ...auditContext });
+      return NextResponse.json({ result: "not_registered" }, { status: 404 });
+    }
+
+    if (!["REGISTERED", "ACCEPTED", "CHECKED_IN"].includes(participation.status)) {
+      await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity_participation", subjectId: participation.id, result: "not_approved", ...auditContext });
+      return NextResponse.json({ result: "not_approved" }, { status: 409 });
+    }
+
+    if (participation.status === "CHECKED_IN") {
+      await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity_participation", subjectId: participation.id, result: "already_checked_in", ...auditContext });
+      return NextResponse.json({ result: "already_checked_in" });
+    }
+
+    const activity = await prisma.activity.findUnique({
+      where: { id: qr.activityId },
+      select: { id: true, title: true, titleEn: true },
+    });
+
+    const now = new Date();
+    await prisma.$transaction([
+      prisma.activityParticipation.update({
+        where: { id: participation.id },
+        data: {
+          status: "CHECKED_IN",
+        },
+      }),
+      prisma.activityCheckinRecord.create({
+        data: {
+          activityId: qr.activityId,
+          userId: qr.userId,
+          method: "QR_CODE",
+          status: "VALID",
+          verifiedByUserId: verifier.id,
+          checkinAt: now,
+        },
+      }),
+      prisma.qrToken.update({
+        where: { id: qr.id },
+        data: {
+          status: "CONSUMED",
+          consumedAt: now,
+        },
+      }),
+    ]);
+
+    await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity_participation", subjectId: participation.id, result: "checked_in", ...auditContext });
+
+    // Trigger rewards
+    void triggerActivityRewards({
+      activityId: qr.activityId,
+      userId: qr.userId,
+      trigger: "CHECKIN_COMPLETED",
+    });
+
+    await createAchievementRecord({
+      userId: qr.userId,
+      name: activity?.titleEn ?? activity?.title ?? "Activity check-in",
+      description: "Activity attendance verified by QR check-in.",
+      type: "EVENT",
+      sourceType: "EVENT_CHECKIN",
+      sourceId: `checkin:${participation.id}`,
+      verificationLevel: "PLATFORM_VERIFIED",
+      points: 30,
+      relatedEventId: qr.activityId,
+      completedAt: now,
+      skillTags: ["participation"],
+      topicTags: ["event"],
+      sdgTags: ["SDG13"],
+    });
+
+    return NextResponse.json({
+      result: "checked_in",
+      user: {
+        name: qr.user?.name ?? null,
+        climatePassportId: qr.user?.climatePassportId ?? null,
+      },
+      event: activity,
+    });
+  }
+
+  // Handle legacy EVENT_CHECKIN (Event model)
   if (qr.type !== "EVENT_CHECKIN" || !qr.eventId || !qr.userId) {
     await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.scan", subjectType: "qr_token", subjectId: qr.id, result: "unsupported", ...auditContext });
     return NextResponse.json({ result: "unsupported" }, { status: 400 });
