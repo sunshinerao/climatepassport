@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Activity — Admin | Climate Passport</title>
+<style>
+:root{--forest-deep:#0b3d2e;--forest:#1a5d48;--moss:#4a8a6a;--sage:#8fb89a;--leaf-light:#c4dcc8;--amber-warm:#c4893f;--amber-soft:#e8c88a;--cream:#faf8f3;--paper:#f5f2ec;--ink:#0f2a20;--ink-soft:#2d5245;--gold:#b8860b;--verify-green:#16a34a;--danger:#dc2626;--danger-soft:#fef2f2;--blue:#2563eb;--blue-soft:#eff6ff;--purple:#7c3aed;--purple-soft:#f5f3ff;--sidebar-w:260px;--panel-w:300px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Noto Sans SC","PingFang SC",sans-serif;color:var(--ink);background:var(--cream);line-height:1.6;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit}
+
+/* ── Sidebar (same as admin-activities) ── */
+.admin-layout{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+.sidebar{background:var(--forest-deep);color:var(--sage);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-brand svg{width:28px;height:28px;color:var(--amber-soft);flex-shrink:0}
+.sidebar-brand span{font-weight:700;font-size:15px;color:var(--cream);letter-spacing:-.01em}
+.sidebar-nav{flex:1;padding:16px 0}
+.sidebar-section{padding:0 16px;margin-bottom:6px}
+.sidebar-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);padding:12px 8px 6px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--sage);transition:all .2s;cursor:pointer;margin-bottom:2px}
+.sidebar-item:hover{background:rgba(255,255,255,.07);color:var(--cream)}
+.sidebar-item.active{background:rgba(255,255,255,.12);color:var(--cream);font-weight:600}
+.sidebar-item svg{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.sidebar-item.active svg{opacity:1}
+.sidebar-badge{margin-left:auto;background:var(--amber-warm);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.3)}
+
+/* ── Main area ── */
+.main-area{min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(250,248,243,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(11,61,46,.06);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-left h1{font-size:18px;font-weight:700;color:var(--forest-deep)}
+.topbar-breadcrumb{font-size:12px;color:var(--ink-soft);opacity:.7}
+.topbar-breadcrumb a{color:var(--forest);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 22px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .25s cubic-bezier(.4,0,.2,1);white-space:nowrap}
+.btn-forest{background:var(--forest);color:#fff;box-shadow:0 2px 10px rgba(26,93,72,.2)}
+.btn-forest:hover{background:var(--forest-deep);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,93,72,.28)}
+.btn-outline{background:#fff;color:var(--ink-soft);border:1.5px solid rgba(11,61,46,.12)}
+.btn-outline:hover{border-color:var(--moss);color:var(--forest)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-amber{background:var(--amber-warm);color:#fff;box-shadow:0 2px 8px rgba(196,137,63,.2)}
+.btn-amber:hover{background:#b07a35;transform:translateY(-1px)}
+.btn-danger{background:var(--danger-soft);color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-ghost{color:var(--ink-soft);padding:8px 14px;font-size:12px;font-weight:600}
+.btn-ghost:hover{color:var(--forest);background:rgba(11,61,46,.04);border-radius:8px}
+
+/* ── Content layout: form + right panel ── */
+.content-wrap{display:grid;grid-template-columns:1fr var(--panel-w);gap:0;flex:1}
+.form-area{padding:32px 36px;max-width:860px}
+.right-panel{position:sticky;top:64px;height:calc(100vh - 64px);border-left:1px solid rgba(11,61,46,.06);background:var(--paper);padding:24px 20px;overflow-y:auto}
+
+/* ── Type Selector ── */
+.type-selector{margin-bottom:32px}
+.type-selector-label{font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.type-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.type-card{background:#fff;border:2px solid rgba(11,61,46,.08);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);position:relative}
+.type-card:hover{border-color:rgba(11,61,46,.2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(11,61,46,.06)}
+.type-card.selected{border-color:var(--forest);background:rgba(26,93,72,.03);box-shadow:0 4px 16px rgba(26,93,72,.1)}
+.type-card.selected::after{content:"✓";position:absolute;top:6px;right:8px;font-size:11px;font-weight:700;color:var(--forest);background:var(--leaf-light);width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+.type-card-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:grid;place-items:center}
+.type-card-icon svg{width:20px;height:20px;color:#fff}
+.type-card[data-type="EVENT"] .type-card-icon{background:var(--forest)}
+.type-card[data-type="LEARNING"] .type-card-icon{background:var(--blue)}
+.type-card[data-type="CHALLENGE"] .type-card-icon{background:var(--amber-warm)}
+.type-card[data-type="PROJECT"] .type-card-icon{background:var(--purple)}
+.type-card[data-type="TASK"] .type-card-icon{background:var(--moss)}
+.type-card[data-type="COURSE"] .type-card-icon{background:var(--gold)}
+.type-card-name{font-size:12px;font-weight:700;color:var(--forest-deep);margin-bottom:2px}
+.type-card-desc{font-size:10px;color:var(--ink-soft);line-height:1.4}
+
+/* ── Form Sections ── */
+.form-section{margin-bottom:28px;background:#fff;border:1px solid rgba(11,61,46,.08);border-radius:18px;padding:24px 26px;transition:all .25s}
+.form-section:hover{border-color:rgba(11,61,46,.14);box-shadow:0 4px 20px rgba(11,61,46,.04)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(11,61,46,.06)}
+.section-title{display:flex;align-items:center;gap:10px}
+.section-title-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--paper)}
+.section-title-icon svg{width:16px;height:16px;color:var(--forest)}
+.section-title h3{font-size:15px;font-weight:700;color:var(--forest-deep)}
+.section-title .section-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(11,61,46,.06);color:var(--ink-soft)}
+.section-desc{font-size:12px;color:var(--ink-soft);margin-top:-10px;margin-bottom:16px}
+
+/* ── Form fields ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-row.single{grid-template-columns:1fr}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:700;color:var(--ink-soft);letter-spacing:.02em}
+.form-label .required{color:var(--danger);margin-left:2px}
+.form-label .optional{font-weight:400;color:var(--sage);margin-left:4px;font-size:11px}
+.form-input{padding:10px 14px;border:1.5px solid rgba(11,61,46,.1);border-radius:10px;font-size:13.5px;color:var(--ink);background:#fff;transition:.2s;outline:none}
+.form-input:focus{border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.form-input::placeholder{color:var(--sage)}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.6}
+.form-select{padding:10px 14px;border:1.5px solid rgba(11,61,46,.1);border-radius:10px;font-size:13px;color:var(--ink);background:#fff;cursor:pointer;outline:none;transition:.2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%232d5245' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-select:focus{border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.form-hint{font-size:11px;color:var(--sage);margin-top:2px}
+.form-toggle{display:flex;align-items:center;gap:10px;cursor:pointer}
+.toggle-switch{width:40px;height:22px;border-radius:999px;background:rgba(11,61,46,.12);position:relative;transition:.25s;flex-shrink:0}
+.toggle-switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.form-toggle input{display:none}
+.form-toggle input:checked + .toggle-switch{background:var(--forest)}
+.form-toggle input:checked + .toggle-switch::after{left:21px}
+.form-toggle-text{font-size:13px;color:var(--ink-soft)}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border:1.5px solid rgba(11,61,46,.1);border-radius:10px;min-height:42px;align-items:center;cursor:text;transition:.2s}
+.tag-input-wrap:focus-within{border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.tag-pill{display:inline-flex;align-items:center;gap:4px;background:var(--leaf-light);color:var(--forest-deep);font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px}
+.tag-pill button{color:var(--moss);font-size:14px;line-height:1;padding:0 2px}
+.tag-pill button:hover{color:var(--danger)}
+.tag-input-wrap input{border:none;outline:none;background:none;font-size:13px;color:var(--ink);min-width:80px;flex:1}
+.cover-upload{width:100%;height:140px;border:2px dashed rgba(11,61,46,.12);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;background:var(--paper)}
+.cover-upload:hover{border-color:var(--moss);background:rgba(74,138,106,.03)}
+.cover-upload svg{width:28px;height:28px;color:var(--sage)}
+.cover-upload span{font-size:12px;color:var(--ink-soft);font-weight:500}
+.cover-upload .hint{font-size:11px;color:var(--sage)}
+
+/* ── Dynamic list items (agenda, speakers, etc.) ── */
+.dynamic-list{display:flex;flex-direction:column;gap:10px}
+.dynamic-item{background:var(--paper);border:1px solid rgba(11,61,46,.06);border-radius:12px;padding:14px 16px;position:relative;transition:.2s}
+.dynamic-item:hover{border-color:rgba(11,61,46,.12);background:#fff}
+.dynamic-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dynamic-item-index{font-size:10px;font-weight:700;color:var(--moss);background:var(--leaf-light);width:22px;height:22px;border-radius:6px;display:grid;place-items:center}
+.dynamic-item-actions{display:flex;gap:4px}
+.dynamic-item-actions button{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;transition:.15s;color:var(--ink-soft)}
+.dynamic-item-actions button:hover{background:rgba(11,61,46,.06);color:var(--forest-deep)}
+.dynamic-item-actions button.del:hover{background:var(--danger-soft);color:var(--danger)}
+.dynamic-item-actions button svg{width:14px;height:14px}
+.dynamic-item-body{display:grid;gap:10px}
+.dynamic-item-body .form-row{margin-bottom:0}
+.add-item-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:2px dashed rgba(11,61,46,.1);border-radius:12px;font-size:13px;font-weight:600;color:var(--moss);transition:.2s;cursor:pointer;background:none;width:100%}
+.add-item-btn:hover{border-color:var(--moss);background:rgba(74,138,106,.03);color:var(--forest)}
+.add-item-btn svg{width:16px;height:16px}
+
+/* ── Speaker card ── */
+.speaker-card{display:flex;gap:14px;background:var(--paper);border:1px solid rgba(11,61,46,.06);border-radius:14px;padding:16px;transition:.2s;position:relative}
+.speaker-card:hover{border-color:rgba(11,61,46,.12);background:#fff}
+.speaker-avatar{width:56px;height:56px;border-radius:12px;background:var(--leaf-light);display:grid;place-items:center;flex-shrink:0;overflow:hidden;position:relative}
+.speaker-avatar svg{width:24px;height:24px;color:var(--moss)}
+.speaker-avatar img{width:100%;height:100%;object-fit:cover}
+.speaker-info{flex:1;min-width:0}
+.speaker-info h4{font-size:14px;font-weight:700;color:var(--forest-deep);margin-bottom:2px}
+.speaker-info .speaker-title{font-size:12px;color:var(--ink-soft);margin-bottom:4px}
+.speaker-info .speaker-bio{font-size:11px;color:var(--sage);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.speaker-card .speaker-actions{position:absolute;top:12px;right:12px;display:flex;gap:4px}
+.speaker-card .speaker-actions button{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;color:var(--ink-soft);transition:.15s}
+.speaker-card .speaker-actions button:hover{background:rgba(11,61,46,.06);color:var(--forest-deep)}
+.speaker-card .speaker-actions button.del:hover{background:var(--danger-soft);color:var(--danger)}
+.speaker-card .speaker-actions button svg{width:14px;height:14px}
+.speaker-role-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;margin-right:4px;margin-top:4px}
+.role-speaker{background:rgba(37,99,235,.1);color:var(--blue)}
+.role-moderator{background:rgba(124,58,237,.1);color:var(--purple)}
+.role-panelist{background:rgba(196,137,63,.1);color:var(--amber-warm)}
+.role-mentor{background:rgba(22,163,74,.1);color:var(--verify-green)}
+.role-guest{background:rgba(107,114,128,.1);color:#6b7280}
+
+/* ── Agenda timeline ── */
+.agenda-timeline{position:relative;padding-left:24px}
+.agenda-timeline::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:2px;background:rgba(11,61,46,.08);border-radius:2px}
+.agenda-item{position:relative;margin-bottom:14px;background:var(--paper);border:1px solid rgba(11,61,46,.06);border-radius:12px;padding:14px 16px;transition:.2s}
+.agenda-item:hover{border-color:rgba(11,61,46,.12);background:#fff}
+.agenda-item::before{content:"";position:absolute;left:-18px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--moss);border:2px solid var(--cream);z-index:1}
+.agenda-item.break-item::before{background:var(--amber-soft)}
+.agenda-item-time{font-size:11px;font-weight:700;color:var(--moss);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.agenda-item-time .break-badge{font-size:9px;font-weight:700;background:rgba(196,137,63,.15);color:var(--amber-warm);padding:2px 6px;border-radius:4px}
+.agenda-item-title{font-size:13px;font-weight:700;color:var(--forest-deep);margin-bottom:4px}
+.agenda-item-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--ink-soft)}
+.agenda-item-meta .speaker-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(37,99,235,.06);color:var(--blue);padding:2px 8px;border-radius:6px;font-weight:600}
+.agenda-item-meta .location-chip{display:inline-flex;align-items:center;gap:3px}
+.agenda-item-actions{position:absolute;top:10px;right:10px;display:flex;gap:3px}
+.agenda-item-actions button{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--ink-soft);transition:.15s}
+.agenda-item-actions button:hover{background:rgba(11,61,46,.06);color:var(--forest-deep)}
+.agenda-item-actions button.del:hover{background:var(--danger-soft);color:var(--danger)}
+.agenda-item-actions button svg{width:13px;height:13px}
+
+/* ── Highlights ── */
+.highlight-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.highlight-card{background:var(--paper);border:1px solid rgba(11,61,46,.06);border-radius:14px;overflow:hidden;transition:.2s;position:relative}
+.highlight-card:hover{border-color:rgba(11,61,46,.12);box-shadow:0 4px 16px rgba(11,61,46,.05)}
+.highlight-thumb{height:90px;background:linear-gradient(135deg,var(--leaf-light),var(--sage));display:grid;place-items:center;position:relative}
+.highlight-thumb svg{width:28px;height:28px;color:var(--forest);opacity:.4}
+.highlight-thumb .highlight-order{position:absolute;top:8px;left:8px;background:var(--forest-deep);color:#fff;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:6px;display:grid;place-items:center}
+.highlight-body{padding:12px 14px}
+.highlight-body h4{font-size:13px;font-weight:700;color:var(--forest-deep);margin-bottom:3px}
+.highlight-body p{font-size:11px;color:var(--ink-soft);line-height:1.5}
+.highlight-card .highlight-actions{position:absolute;top:8px;right:8px;display:flex;gap:3px}
+.highlight-card .highlight-actions button{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:rgba(255,255,255,.85);color:var(--ink-soft);transition:.15s;backdrop-filter:blur(4px)}
+.highlight-card .highlight-actions button:hover{background:#fff;color:var(--forest-deep)}
+.highlight-card .highlight-actions button.del:hover{background:var(--danger-soft);color:var(--danger)}
+.highlight-card .highlight-actions button svg{width:13px;height:13px}
+.highlight-featured-badge{position:absolute;bottom:8px;right:8px;font-size:9px;font-weight:700;background:var(--amber-warm);color:#fff;padding:2px 7px;border-radius:4px}
+
+/* ── VIP showcase ── */
+.vip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.vip-card{background:var(--paper);border:1px solid rgba(11,61,46,.06);border-radius:14px;padding:16px;text-align:center;transition:.2s;position:relative}
+.vip-card:hover{border-color:rgba(11,61,46,.12);background:#fff}
+.vip-card.is-featured{border-color:rgba(196,137,63,.3);background:rgba(196,137,63,.02)}
+.vip-avatar{width:52px;height:52px;border-radius:50%;background:var(--leaf-light);margin:0 auto 8px;display:grid;place-items:center;overflow:hidden}
+.vip-avatar svg{width:22px;height:22px;color:var(--moss)}
+.vip-card h4{font-size:13px;font-weight:700;color:var(--forest-deep);margin-bottom:2px}
+.vip-card .vip-role{font-size:11px;color:var(--ink-soft);margin-bottom:6px}
+.vip-priority{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;background:var(--amber-warm);color:#fff;width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+.vip-card-actions{display:flex;justify-content:center;gap:4px;margin-top:8px}
+.vip-card-actions button{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--ink-soft);transition:.15s}
+.vip-card-actions button:hover{background:rgba(11,61,46,.06);color:var(--forest-deep)}
+.vip-card-actions button.del:hover{background:var(--danger-soft);color:var(--danger)}
+.vip-card-actions button svg{width:13px;height:13px}
+
+/* ── Right panel ── */
+.panel-section{margin-bottom:20px}
+.panel-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(11,61,46,.06)}
+.panel-field{margin-bottom:12px}
+.panel-field label{font-size:11px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px}
+.panel-field .form-input,.panel-field .form-select{padding:8px 12px;font-size:12px;border-radius:8px}
+.panel-progress{margin-bottom:20px}
+.panel-progress-label{font-size:11px;color:var(--ink-soft);margin-bottom:6px;display:flex;justify-content:space-between}
+.panel-progress-bar{height:4px;background:rgba(11,61,46,.08);border-radius:4px;overflow:hidden}
+.panel-progress-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.fill-green{background:var(--verify-green)}
+.fill-amber{background:var(--amber-warm)}
+.fill-red{background:var(--danger)}
+.panel-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.panel-actions .btn{width:100%;justify-content:center}
+.panel-divider{height:1px;background:rgba(11,61,46,.06);margin:16px 0}
+.panel-checklist{list-style:none}
+.panel-checklist li{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);padding:5px 0}
+.panel-checklist li .check-icon{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+.panel-checklist li .check-icon svg{width:12px;height:12px}
+.check-done{background:rgba(22,163,74,.1);color:var(--verify-green)}
+.check-pending{background:rgba(107,114,128,.08);color:#9ca3af}
+.check-warn{background:rgba(220,38,38,.08);color:var(--danger)}
+
+/* ── Type-specific sections visibility ── */
+.type-section{display:none}
+.type-section.visible{display:block}
+
+/* ── Responsive ── */
+@media(max-width:1200px){.content-wrap{grid-template-columns:1fr;}.right-panel{position:static;height:auto;border-left:none;border-top:1px solid rgba(11,61,46,.06)}.type-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){.admin-layout{grid-template-columns:1fr}.sidebar{display:none}.form-row{grid-template-columns:1fr}.form-row.triple{grid-template-columns:1fr}.highlight-grid{grid-template-columns:1fr}.vip-grid{grid-template-columns:repeat(2,1fr)}.type-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.type-grid{grid-template-columns:1fr 1fr}.form-area{padding:20px 16px}.topbar{padding:0 16px}.vip-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.6C11.5 4.7 14.3 3.8 17 4c.5 0 1 .1 1.4.2.4.1.7.3 1 .5l-1.8 8.2a7 7 0 0 1-6.6 7.1z"/><path d="M12 20a7 7 0 0 0 6.3-9.8c-2.3 1.1-4.3 3-5.6 5.3A10.5 10.5 0 0 0 11 20z"/></svg>
+    <span>Climate Passport</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Core Modules</div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Events</div>
+      <div class="sidebar-item active" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Activities<span class="sidebar-badge">25</span></div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>Certificates</div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Learning Experiences</div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>People</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Operations</div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Verification</div>
+      <div class="sidebar-item" onclick="location.href='#'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Climate Passport Admin v1.0</div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main-area">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div>
+        <h1>Create Activity</h1>
+        <div class="topbar-breadcrumb"><a href="#">Admin</a> / <a href="#">Activities</a> / Create</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="alert('Preview')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="alert('Save as Draft')">Save Draft</button>
+      <button class="btn btn-forest" onclick="alert('Published!')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Publish
+      </button>
+    </div>
+  </header>
+
+  <div class="content-wrap">
+    <div class="form-area">
+
+      <!-- ══════════ TYPE SELECTOR ══════════ -->
+      <div class="type-selector">
+        <div class="type-selector-label">Activity Type</div>
+        <div class="type-grid">
+          <div class="type-card selected" data-type="EVENT" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div class="type-card-name">Event</div>
+            <div class="type-card-desc">Conference, summit, ceremony</div>
+          </div>
+          <div class="type-card" data-type="LEARNING" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+            <div class="type-card-name">Learning</div>
+            <div class="type-card-desc">Program, workshop, exchange</div>
+          </div>
+          <div class="type-card" data-type="CHALLENGE" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            <div class="type-card-name">Challenge</div>
+            <div class="type-card-desc">Campaign, competition</div>
+          </div>
+          <div class="type-card" data-type="PROJECT" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+            <div class="type-card-name">Project</div>
+            <div class="type-card-desc">Team project, action lab</div>
+          </div>
+          <div class="type-card" data-type="TASK" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+            <div class="type-card-name">Task</div>
+            <div class="type-card-desc">Check-in, submission, quiz</div>
+          </div>
+          <div class="type-card" data-type="COURSE" onclick="selectType(this)">
+            <div class="type-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 3 6 3s6-1 6-3v-5"/></svg></div>
+            <div class="type-card-name">Course</div>
+            <div class="type-card-desc">Online course, LMS sync</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 1: Basic Info (shared) ══════════ -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+            <h3>Basic Information</h3>
+            <span class="section-badge">All Types</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Title (ZH)<span class="required">*</span></label><input class="form-input" placeholder="活动标题" value=""></div>
+          <div class="form-group"><label class="form-label">Title (EN)<span class="optional">optional</span></label><input class="form-input" placeholder="Activity title in English"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Subtitle<span class="optional">optional</span></label><input class="form-input" placeholder="副标题"></div>
+          <div class="form-group"><label class="form-label">Subtitle (EN)<span class="optional">optional</span></label><input class="form-input" placeholder="Subtitle in English"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Slug<span class="required">*</span></label><input class="form-input" placeholder="auto-generated-from-title" style="color:var(--sage)"><div class="form-hint">Auto-generated from title. Edit to customize URL path.</div></div>
+          <div class="form-group"><label class="form-label">Category</label><select class="form-select"><option value="">Select category…</option><option>Climate Action</option><option>Green Finance</option><option>Youth Leadership</option><option>Education</option><option>Technology</option><option>Biodiversity</option></select></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Summary (ZH)<span class="optional">optional</span></label><textarea class="form-input" rows="2" placeholder="一句话描述…"></textarea></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Summary (EN)<span class="optional">optional</span></label><textarea class="form-input" rows="2" placeholder="One-line summary…"></textarea></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Description (ZH)</label><textarea class="form-input" rows="4" placeholder="详细描述…支持 Markdown"></textarea></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Description (EN)</label><textarea class="form-input" rows="4" placeholder="Full description… Markdown supported"></textarea></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label class="form-label">Cover Image</label>
+            <div class="cover-upload" onclick="alert('Upload cover image')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Click to upload cover image</span>
+              <span class="hint">Recommended: 1200×630px, JPG or PNG, max 5MB</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Organizer</label><input class="form-input" placeholder="Organizer name" value="Climate Passport Admin"></div>
+          <div class="form-group"><label class="form-label">Partners</label><input class="form-input" placeholder="Partner organizations (comma-separated)"></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label class="form-label">Tags</label>
+            <div class="tag-input-wrap">
+              <span class="tag-pill">Official Event <button onclick="this.parentElement.remove()">×</button></span>
+              <span class="tag-pill">SHCW2026 <button onclick="this.parentElement.remove()">×</button></span>
+              <input type="text" placeholder="Add tag + Enter" onkeydown="addTag(event,this)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 2: Time & Location (shared) ══════════ -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <h3>Time & Location</h3>
+            <span class="section-badge">All Types</span>
+          </div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label class="form-label">Start Time</label><input class="form-input" type="datetime-local" value="2026-06-15T09:00"></div>
+          <div class="form-group"><label class="form-label">End Time</label><input class="form-input" type="datetime-local" value="2026-06-18T17:00"></div>
+          <div class="form-group"><label class="form-label">Timezone</label><select class="form-select"><option>Asia/Shanghai (UTC+8)</option><option>UTC</option><option>America/New_York</option><option>Europe/London</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Location Type</label>
+            <div style="display:flex;gap:8px;margin-top:2px">
+              <button class="btn btn-sm btn-forest" onclick="setLocType(this,'offline')" id="loc-offline">Offline</button>
+              <button class="btn btn-sm btn-outline" onclick="setLocType(this,'online')" id="loc-online">Online</button>
+              <button class="btn btn-sm btn-outline" onclick="setLocType(this,'hybrid')" id="loc-hybrid">Hybrid</button>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Online URL<span class="optional">for online/hybrid</span></label><input class="form-input" placeholder="https://zoom.us/j/..."></div>
+        </div>
+        <div class="form-row" id="offline-location">
+          <div class="form-group"><label class="form-label">Venue Name</label><input class="form-input" placeholder="Shanghai Exhibition Center"></div>
+          <div class="form-group"><label class="form-label">Address</label><input class="form-input" placeholder="1000 Nanjing West Road, Jing'an, Shanghai"></div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group"><label class="form-label">Map URL<span class="optional">optional</span></label><input class="form-input" placeholder="https://maps.google.com/..."></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 3: EVENT-specific — Agenda ══════════ -->
+      <div class="type-section visible" data-types="EVENT">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+              <h3>Agenda / Schedule</h3>
+              <span class="section-badge">EVENT</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleAgendaDay()">+ Add Day</button>
+          </div>
+          <p class="section-desc">Build the event schedule day by day. Drag to reorder, assign speakers from the guest pool.</p>
+
+          <!-- Day tabs -->
+          <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid rgba(11,61,46,.06);padding-bottom:8px">
+            <button class="btn btn-sm btn-forest day-tab active" onclick="switchDay(this,1)">Day 1 · Jun 15</button>
+            <button class="btn btn-sm btn-outline day-tab" onclick="switchDay(this,2)">Day 2 · Jun 16</button>
+            <button class="btn btn-sm btn-outline day-tab" onclick="switchDay(this,3)">Day 3 · Jun 17</button>
+            <button class="btn btn-sm btn-outline day-tab" onclick="switchDay(this,4)">Day 4 · Jun 18</button>
+          </div>
+
+          <!-- Agenda timeline -->
+          <div class="agenda-timeline" id="agenda-list">
+            <div class="agenda-item">
+              <div class="agenda-item-time">09:00 – 09:30</div>
+              <div class="agenda-item-title">Registration & Welcome Coffee</div>
+              <div class="agenda-item-meta"><span class="location-chip">Main Lobby</span></div>
+              <div class="agenda-item-actions">
+                <button title="Edit" onclick="alert('Edit agenda item')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.agenda-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-item-time">09:30 – 10:15</div>
+              <div class="agenda-item-title">Opening Keynote: The Future of Climate Action</div>
+              <div class="agenda-item-meta"><span class="speaker-chip">Dr. Sarah Chen</span><span class="location-chip">Grand Hall A</span></div>
+              <div class="agenda-item-actions">
+                <button title="Edit" onclick="alert('Edit agenda item')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.agenda-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-item-time">10:15 – 11:00</div>
+              <div class="agenda-item-title">Panel Discussion: Green Finance & Global Climate Governance</div>
+              <div class="agenda-item-meta"><span class="speaker-chip">Prof. Wang Lei</span><span class="speaker-chip">Michael Torres</span><span class="speaker-chip">Dr. Aiko Tanaka</span><span class="location-chip">Grand Hall A</span></div>
+              <div class="agenda-item-actions">
+                <button title="Edit" onclick="alert('Edit agenda item')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.agenda-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="agenda-item break-item">
+              <div class="agenda-item-time">11:00 – 11:15 <span class="break-badge">Break</span></div>
+              <div class="agenda-item-title">Tea Break & Networking</div>
+              <div class="agenda-item-actions">
+                <button title="Edit" onclick="alert('Edit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.agenda-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="agenda-item">
+              <div class="agenda-item-time">11:15 – 12:30</div>
+              <div class="agenda-item-title">Workshop: Building Climate-Resilient Communities</div>
+              <div class="agenda-item-meta"><span class="speaker-chip">Dr. Li Ming</span><span class="location-chip">Room 201</span></div>
+              <div class="agenda-item-actions">
+                <button title="Edit" onclick="alert('Edit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.agenda-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="add-item-btn" style="flex:1" onclick="alert('Add agenda item')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Session</button>
+            <button class="add-item-btn" style="flex:1;border-color:rgba(196,137,63,.2);color:var(--amber-warm)" onclick="alert('Add break')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Break</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 4: EVENT — Speakers & Guests ══════════ -->
+      <div class="type-section visible" data-types="EVENT,LEARNING">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <h3>Speakers & Guests</h3>
+              <span class="section-badge">EVENT · LEARNING</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="alert('Import from People module')">Import from People</button>
+          </div>
+          <p class="section-desc">Manage the speaker/guest pool for this activity. Assign roles and link to agenda sessions.</p>
+
+          <div class="dynamic-list" id="speaker-list">
+            <div class="speaker-card">
+              <div class="speaker-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="speaker-info">
+                <h4>Dr. Sarah Chen</h4>
+                <div class="speaker-title">Director, UN Climate Change Division</div>
+                <div class="speaker-bio">Leading expert in international climate policy with 20+ years of experience in UN climate negotiations and sustainable development frameworks.</div>
+                <div><span class="speaker-role-badge role-speaker">Keynote Speaker</span></div>
+              </div>
+              <div class="speaker-actions">
+                <button title="Edit" onclick="alert('Edit speaker')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.speaker-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="speaker-card">
+              <div class="speaker-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="speaker-info">
+                <h4>Prof. Wang Lei</h4>
+                <div class="speaker-title">Professor of Environmental Economics, Fudan University</div>
+                <div class="speaker-bio">Specializes in green finance mechanisms and carbon trading systems. Advisor to the Shanghai Municipal Government on sustainability policy.</div>
+                <div><span class="speaker-role-badge role-panelist">Panelist</span><span class="speaker-role-badge role-mentor">Mentor</span></div>
+              </div>
+              <div class="speaker-actions">
+                <button title="Edit" onclick="alert('Edit speaker')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.speaker-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="speaker-card">
+              <div class="speaker-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="speaker-info">
+                <h4>Michael Torres</h4>
+                <div class="speaker-title">CEO, GreenTech Ventures</div>
+                <div class="speaker-bio">Serial entrepreneur focused on climate-tech startups. Portfolio includes 30+ companies in renewable energy, carbon capture, and sustainable agriculture.</div>
+                <div><span class="speaker-role-badge role-panelist">Panelist</span></div>
+              </div>
+              <div class="speaker-actions">
+                <button title="Edit" onclick="alert('Edit speaker')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.speaker-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="speaker-card">
+              <div class="speaker-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="speaker-info">
+                <h4>Dr. Aiko Tanaka</h4>
+                <div class="speaker-title">Senior Researcher, IPCC Working Group II</div>
+                <div class="speaker-bio">Climate adaptation and resilience expert. Lead author of the IPCC AR6 chapter on Asia-Pacific regional impacts.</div>
+                <div><span class="speaker-role-badge role-moderator">Moderator</span></div>
+              </div>
+              <div class="speaker-actions">
+                <button title="Edit" onclick="alert('Edit speaker')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.speaker-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <button class="add-item-btn" style="margin-top:12px" onclick="alert('Add speaker')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Speaker / Guest</button>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 5: EVENT — Highlights ══════════ -->
+      <div class="type-section visible" data-types="EVENT,LEARNING,PROJECT">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+              <h3>Highlights</h3>
+              <span class="section-badge">EVENT · LEARNING · PROJECT</span>
+            </div>
+          </div>
+          <p class="section-desc">Key moments and featured content displayed prominently on the activity detail page and social sharing cards.</p>
+
+          <div class="highlight-grid" id="highlight-list">
+            <div class="highlight-card">
+              <div class="highlight-thumb">
+                <span class="highlight-order">1</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div class="highlight-body">
+                <h4>Opening Ceremony & Keynote</h4>
+                <p>Grand opening with UN Climate Division Director's keynote on global climate action roadmap.</p>
+              </div>
+              <span class="highlight-featured-badge">Featured</span>
+              <div class="highlight-actions">
+                <button title="Edit" onclick="alert('Edit highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.highlight-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-thumb" style="background:linear-gradient(135deg,var(--amber-soft),var(--amber-warm))">
+                <span class="highlight-order">2</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div class="highlight-body">
+                <h4>Green Finance Panel</h4>
+                <p>Industry leaders discuss sustainable investment and carbon trading mechanisms across global markets.</p>
+              </div>
+              <div class="highlight-actions">
+                <button title="Edit" onclick="alert('Edit highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.highlight-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <div class="highlight-thumb" style="background:linear-gradient(135deg,#dbeafe,#93c5fd)">
+                <span class="highlight-order">3</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div class="highlight-body">
+                <h4>Youth Innovation Showcase</h4>
+                <p>Student teams present climate solutions with live demos and interactive exhibitions.</p>
+              </div>
+              <div class="highlight-actions">
+                <button title="Edit" onclick="alert('Edit highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="del" title="Remove" onclick="this.closest('.highlight-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <button class="add-item-btn" style="margin-top:12px" onclick="alert('Add highlight')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Highlight</button>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 6: VIP Showcase ══════════ -->
+      <div class="type-section visible" data-types="EVENT,LEARNING">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div>
+              <h3>VIP & Important Guests</h3>
+              <span class="section-badge">EVENT · LEARNING</span>
+            </div>
+          </div>
+          <p class="section-desc">Select speakers to feature prominently on the activity page. Drag to set display priority (1 = highest).</p>
+
+          <div class="vip-grid" id="vip-list">
+            <div class="vip-card is-featured">
+              <span class="vip-priority">1</span>
+              <div class="vip-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <h4>Dr. Sarah Chen</h4>
+              <div class="vip-role">Keynote Speaker · UN Climate Change</div>
+              <div class="vip-card-actions">
+                <button title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+                <button title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+                <button class="del" title="Remove from VIP" onclick="this.closest('.vip-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+            </div>
+            <div class="vip-card">
+              <span class="vip-priority">2</span>
+              <div class="vip-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <h4>Prof. Wang Lei</h4>
+              <div class="vip-role">Panelist · Fudan University</div>
+              <div class="vip-card-actions">
+                <button title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+                <button title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+                <button class="del" title="Remove from VIP" onclick="this.closest('.vip-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+            </div>
+            <div class="vip-card">
+              <span class="vip-priority">3</span>
+              <div class="vip-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <h4>Michael Torres</h4>
+              <div class="vip-role">Panelist · GreenTech Ventures</div>
+              <div class="vip-card-actions">
+                <button title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+                <button title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+                <button class="del" title="Remove from VIP" onclick="this.closest('.vip-card').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <button class="add-item-btn" style="margin-top:12px" onclick="alert('Select speaker to feature as VIP')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add VIP from Speaker Pool</button>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 7: EVENT — Check-in & Tickets ══════════ -->
+      <div class="type-section visible" data-types="EVENT">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-title">
+              <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+              <h3>Check-in & Tickets</h3>
+              <span class="section-badge">EVENT</span>
+            </div>
+          </div>
+          <div class="form-row triple">
+            <div class="form-group"><label class="form-label">Check-in Method</label><select class="form-select"><option>QR Code</option><option>Manual</option><option>Geo Location</option><option>NFC</option></select></div>
+            <div class="form-group"><label class="form-label">Check-in Window</label><input class="form-input" type="number" placeholder="30" value="30"><div class="form-hint">Minutes before/after session start</div></div>
+            <div class="form-group"><label class="form-label">Venue Capacity</label><input class="form-input" type="number" placeholder="300" value="300"></div>
+          </div>
+          <div style="margin-top:14px">
+            <label class="form-label" style="margin-bottom:8px;display:block">Ticket Types</label>
+            <div class="dynamic-list" id="ticket-list">
+              <div class="dynamic-item">
+                <div class="dynamic-item-header"><span class="dynamic-item-index">1</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+                <div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Name</label><input class="form-input" value="Standard"></div><div class="form-group"><label class="form-label">Price (CNY)</label><input class="form-input" type="number" value="0"></div><div class="form-group"><label class="form-label">Capacity</label><input class="form-input" type="number" value="250"></div></div></div>
+              </div>
+              <div class="dynamic-item">
+                <div class="dynamic-item-header"><span class="dynamic-item-index">2</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+                <div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Name</label><input class="form-input" value="VIP"></div><div class="form-group"><label class="form-label">Price (CNY)</label><input class="form-input" type="number" value="500"></div><div class="form-group"><label class="form-label">Capacity</label><input class="form-input" type="number" value="50"></div></div></div>
+              </div>
+            </div>
+            <button class="add-item-btn" style="margin-top:10px" onclick="alert('Add ticket type')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Ticket Type</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 8: LEARNING-specific ══════════ -->
+      <div class="type-section" data-types="LEARNING">
+        <div class="form-section">
+          <div class="section-header"><div class="section-title"><div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><h3>Curriculum & Learning Outcomes</h3><span class="section-badge">LEARNING</span></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Curriculum Overview</label><textarea class="form-input" rows="3" placeholder="Describe the program curriculum…"></textarea></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Learning Outcomes</label><textarea class="form-input" rows="3" placeholder="List expected learning outcomes…"></textarea></div></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Min. Attendance (%)</label><input class="form-input" type="number" value="80" min="0" max="100"></div><div class="form-group"><label class="form-label">Certificate on Completion</label><label class="form-toggle" style="margin-top:4px"><input type="checkbox" checked><span class="toggle-switch"></span><span class="form-toggle-text">Auto-issue certificate</span></label></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Application Requirements</label><textarea class="form-input" rows="2" placeholder="Describe any prerequisites or application requirements…"></textarea></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 9: CHALLENGE-specific ══════════ -->
+      <div class="type-section" data-types="CHALLENGE">
+        <div class="form-section">
+          <div class="section-header"><div class="section-title"><div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Challenge Configuration</h3><span class="section-badge">CHALLENGE</span></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Challenge Rules</label><textarea class="form-input" rows="3" placeholder="Describe challenge rules, scoring, and milestones…"></textarea></div></div>
+          <div class="form-row triple">
+            <div class="form-group"><label class="form-label">Leaderboard</label><label class="form-toggle" style="margin-top:4px"><input type="checkbox" checked><span class="toggle-switch"></span><span class="form-toggle-text">Enable leaderboard</span></label></div>
+            <div class="form-group"><label class="form-label">Team Mode</label><label class="form-toggle" style="margin-top:4px"><input type="checkbox"><span class="toggle-switch"></span><span class="form-toggle-text">Allow teams</span></label></div>
+            <div class="form-group"><label class="form-label">Max Team Size</label><input class="form-input" type="number" value="5" min="2"></div>
+          </div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Base Points</label><input class="form-input" type="number" value="10"></div><div class="form-group"><label class="form-label">Bonus Conditions</label><input class="form-input" placeholder="streak:3, perfect_week, team_complete"></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 10: PROJECT-specific ══════════ -->
+      <div class="type-section" data-types="PROJECT">
+        <div class="form-section">
+          <div class="section-header"><div class="section-title"><div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><h3>Project Configuration</h3><span class="section-badge">PROJECT</span></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Project Background</label><textarea class="form-input" rows="3" placeholder="Describe the project context, goals, and scope…"></textarea></div></div>
+          <div style="margin-top:8px"><label class="form-label" style="margin-bottom:8px;display:block">Milestones</label>
+            <div class="dynamic-list" id="milestone-list">
+              <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">1</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row"><div class="form-group"><label class="form-label">Title</label><input class="form-input" value="Research & Discovery"></div><div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" value="2026-05-15"></div></div></div></div>
+              <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">2</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row"><div class="form-group"><label class="form-label">Title</label><input class="form-input" value="Prototype & Testing"></div><div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" value="2026-06-30"></div></div></div></div>
+            </div>
+            <button class="add-item-btn" style="margin-top:10px" onclick="alert('Add milestone')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Milestone</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 11: TASK-specific ══════════ -->
+      <div class="type-section" data-types="TASK">
+        <div class="form-section">
+          <div class="section-header"><div class="section-title"><div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Task Configuration</h3><span class="section-badge">TASK</span></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Task Instructions</label><textarea class="form-input" rows="3" placeholder="Describe what participants need to do…"></textarea></div></div>
+          <div class="form-row triple">
+            <div class="form-group"><label class="form-label">Verification Method</label><select class="form-select"><option>Photo Upload</option><option>Admin Review</option><option>Auto (Geo/QR)</option><option>Peer Review</option></select></div>
+            <div class="form-group"><label class="form-label">Points Awarded</label><input class="form-input" type="number" value="10"></div>
+            <div class="form-group"><label class="form-label">Proof Required</label><select class="form-select"><option>Photo</option><option>Text</option><option>Link</option><option>None</option></select></div>
+          </div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Allow Repeated Check-in</label><label class="form-toggle" style="margin-top:4px"><input type="checkbox"><span class="toggle-switch"></span><span class="form-toggle-text">Participants can check in multiple times</span></label></div><div class="form-group"></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 12: COURSE-specific ══════════ -->
+      <div class="type-section" data-types="COURSE">
+        <div class="form-section">
+          <div class="section-header"><div class="section-title"><div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 3 6 3s6-1 6-3v-5"/></svg></div><h3>Course Configuration</h3><span class="section-badge">COURSE</span></div></div>
+          <div class="form-row single"><div class="form-group"><label class="form-label">Course Outline</label><textarea class="form-input" rows="3" placeholder="Describe the course structure and learning path…"></textarea></div></div>
+          <div style="margin-top:8px"><label class="form-label" style="margin-bottom:8px;display:block">Lessons</label>
+            <div class="dynamic-list" id="lesson-list">
+              <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">1</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Title</label><input class="form-input" value="Introduction to Climate Science"></div><div class="form-group"><label class="form-label">Content URL</label><input class="form-input" placeholder="https://…"></div><div class="form-group"><label class="form-label">Duration (min)</label><input class="form-input" type="number" value="45"></div></div></div></div>
+              <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">2</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Title</label><input class="form-input" value="Carbon Cycles & Greenhouse Gases"></div><div class="form-group"><label class="form-label">Content URL</label><input class="form-input" placeholder="https://…"></div><div class="form-group"><label class="form-label">Duration (min)</label><input class="form-input" type="number" value="60"></div></div></div></div>
+            </div>
+            <button class="add-item-btn" style="margin-top:10px" onclick="alert('Add lesson')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Lesson</button>
+          </div>
+          <div class="form-row triple" style="margin-top:16px">
+            <div class="form-group"><label class="form-label">Quiz Passing Score (%)</label><input class="form-input" type="number" value="70"></div>
+            <div class="form-group"><label class="form-label">Max Quiz Attempts</label><input class="form-input" type="number" value="3"></div>
+            <div class="form-group"><label class="form-label">Min. Lesson Completion (%)</label><input class="form-input" type="number" value="80"></div>
+          </div>
+          <div class="form-row"><div class="form-group"><label class="form-label">LMS Provider</label><select class="form-select"><option>Internal</option><option>Canvas</option><option>Moodle</option><option>Custom</option></select></div><div class="form-group"><label class="form-label">External Course URL<span class="optional">optional</span></label><input class="form-input" placeholder="https://lms.example.com/course/…"></div></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 13: Registration Settings (shared) ══════════ -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div>
+            <h3>Registration Settings</h3>
+            <span class="section-badge">All Types</span>
+          </div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label class="form-label">Capacity</label><input class="form-input" type="number" value="80" placeholder="Max participants"></div>
+          <div class="form-group"><label class="form-label">Registration Opens</label><input class="form-input" type="datetime-local"></div>
+          <div class="form-group"><label class="form-label">Registration Closes</label><input class="form-input" type="datetime-local"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Requires Approval</label><label class="form-toggle" style="margin-top:4px"><input type="checkbox" checked><span class="toggle-switch"></span><span class="form-toggle-text">Applicants need admin approval</span></label></div>
+          <div class="form-group"><label class="form-label">Application Form</label><select class="form-select"><option>Default Form</option><option>Summer School Application</option><option>Custom Template…</option></select></div>
+        </div>
+      </div>
+
+      <!-- ══════════ SECTION 14: Rewards (shared) ══════════ -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div>
+            <h3>Rewards & Certificates</h3>
+            <span class="section-badge">All Types</span>
+          </div>
+        </div>
+        <div class="dynamic-list" id="reward-list">
+          <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">1</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Trigger</label><select class="form-select"><option>Check-in Completed</option><option>Registration Approved</option><option>Task Completed</option><option>Course Completed</option><option>Submission Approved</option></select></div><div class="form-group"><label class="form-label">Reward Type</label><select class="form-select"><option>Points</option><option>Badge</option><option>Certificate</option><option>Passport Entry</option></select></div><div class="form-group"><label class="form-label">Value</label><input class="form-input" value="20 points"></div></div></div></div>
+          <div class="dynamic-item"><div class="dynamic-item-header"><span class="dynamic-item-index">2</span><div class="dynamic-item-actions"><button class="del" title="Remove" onclick="this.closest('.dynamic-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div><div class="dynamic-item-body"><div class="form-row triple"><div class="form-group"><label class="form-label">Trigger</label><select class="form-select"><option>Participation Completed</option></select></div><div class="form-group"><label class="form-label">Reward Type</label><select class="form-select"><option>Certificate</option></select></div><div class="form-group"><label class="form-label">Certificate Template</label><select class="form-select"><option>SHCW 2026 Certificate</option><option>Generic Certificate</option></select></div></div></div></div>
+        </div>
+        <button class="add-item-btn" style="margin-top:10px" onclick="alert('Add reward rule')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Reward Rule</button>
+      </div>
+
+    </div><!-- /form-area -->
+
+    <!-- ══════════ RIGHT PANEL ══════════ -->
+    <div class="right-panel">
+      <!-- Progress -->
+      <div class="panel-section">
+        <div class="panel-section-title">Completion</div>
+        <div class="panel-progress">
+          <div class="panel-progress-label"><span>Required fields</span><span>7 / 10</span></div>
+          <div class="panel-progress-bar"><div class="panel-progress-fill fill-amber" style="width:70%"></div></div>
+        </div>
+        <ul class="panel-checklist">
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Activity type selected</li>
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Title provided</li>
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Date & time set</li>
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Location configured</li>
+          <li><span class="check-icon check-pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Description needed</li>
+          <li><span class="check-icon check-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Cover image missing</li>
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Agenda has items</li>
+          <li><span class="check-icon check-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Speakers added</li>
+        </ul>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Publish settings -->
+      <div class="panel-section">
+        <div class="panel-section-title">Publishing</div>
+        <div class="panel-field"><label>Status</label><select class="form-select"><option>Draft</option><option>Published</option><option>Scheduled</option></select></div>
+        <div class="panel-field"><label>Visibility</label><select class="form-select"><option>Public</option><option>Private</option><option>Unlisted</option><option>Invite Only</option></select></div>
+        <div class="panel-field"><label>Language</label><select class="form-select"><option>中文 (ZH)</option><option>English (EN)</option><option>Bilingual</option></select></div>
+        <div class="panel-field">
+          <label>Featured</label>
+          <label class="form-toggle" style="margin-top:4px"><input type="checkbox" checked><span class="toggle-switch"></span><span class="form-toggle-text">Show in featured section</span></label>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Actions -->
+      <div class="panel-section">
+        <div class="panel-section-title">Actions</div>
+        <div class="panel-actions">
+          <button class="btn btn-forest" onclick="alert('Published!')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Publish Now</button>
+          <button class="btn btn-outline" onclick="alert('Saved as draft')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save as Draft</button>
+          <button class="btn btn-outline" onclick="alert('Preview')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
+          <button class="btn btn-ghost" onclick="alert('Duplicate activity')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Duplicate</button>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Quick info -->
+      <div class="panel-section">
+        <div class="panel-section-title">Info</div>
+        <div style="font-size:11px;color:var(--ink-soft);line-height:1.8">
+          <div><strong>Slug:</strong> sustainability-summer-school-2026</div>
+          <div><strong>Created:</strong> —</div>
+          <div><strong>Last saved:</strong> —</div>
+          <div><strong>Activity ID:</strong> <span style="color:var(--sage)">auto-assigned</span></div>
+        </div>
+      </div>
+    </div><!-- /right-panel -->
+
+  </div><!-- /content-wrap -->
+</div><!-- /main-area -->
+</div><!-- /admin-layout -->
+
+<script>
+/* ── Type selector ── */
+var currentType = 'EVENT';
+
+function selectType(card) {
+  document.querySelectorAll('.type-card').forEach(function(c) { c.classList.remove('selected'); });
+  card.classList.add('selected');
+  currentType = card.getAttribute('data-type');
+  updateTypeSections();
+}
+
+function updateTypeSections() {
+  document.querySelectorAll('.type-section').forEach(function(sec) {
+    var types = sec.getAttribute('data-types').split(',');
+    if (types.indexOf(currentType) !== -1) {
+      sec.classList.add('visible');
+    } else {
+      sec.classList.remove('visible');
+    }
+  });
+  /* Update type badge in sidebar */
+  var badge = document.querySelector('.section-badge[data-dynamic-type]');
+  /* Update right panel checklist */
+  updateChecklist();
+}
+
+/* ── Location type toggle ── */
+function setLocType(btn, type) {
+  document.querySelectorAll('#loc-offline,#loc-online,#loc-hybrid').forEach(function(b) {
+    b.className = 'btn btn-sm btn-outline';
+  });
+  btn.className = 'btn btn-sm btn-forest';
+  var offLoc = document.getElementById('offline-location');
+  if (type === 'online') {
+    offLoc.style.display = 'none';
+  } else {
+    offLoc.style.display = '';
+  }
+}
+
+/* ── Tag input ── */
+function addTag(e, input) {
+  if (e.key === 'Enter' && input.value.trim()) {
+    e.preventDefault();
+    var pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = input.value.trim() + ' <button onclick="this.parentElement.remove()">×</button>';
+    input.parentElement.insertBefore(pill, input);
+    input.value = '';
+  }
+}
+
+/* ── Day tab switching ── */
+function switchDay(btn, day) {
+  document.querySelectorAll('.day-tab').forEach(function(b) { b.className = 'btn btn-sm btn-outline day-tab'; });
+  btn.className = 'btn btn-sm btn-forest day-tab active';
+  /* In a real app, this would load the agenda for that day */
+}
+
+function toggleAgendaDay() {
+  alert('Add new day to schedule');
+}
+
+/* ── Update right panel checklist ── */
+function updateChecklist() {
+  /* Placeholder: in real app, validate form fields and update checklist */
+}
+
+/* ── Initialize ── */
+updateTypeSections();
+</script>
+</body>
+</html>

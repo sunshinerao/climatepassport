@@ -107,7 +107,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
     fr: "ere climatique",
     de: "Klima-Zeitalter",
   };
-  const heroTerm = heroTermByLocale[locale];
+  const heroTerm = heroTermByLocale[locale] ?? heroTermByLocale.en;
   const normalizedTitle = home.title.toLowerCase();
   const normalizedHeroTerm = heroTerm.toLowerCase();
   const heroTermIndex = normalizedTitle.indexOf(normalizedHeroTerm);

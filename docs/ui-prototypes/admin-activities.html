@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activities — Admin Console | Climate Passport</title>
+<style>
+:root{--forest-deep:#0b3d2e;--forest:#1a5d48;--moss:#4a8a6a;--sage:#8fb89a;--leaf-light:#c4dcc8;--amber-warm:#c4893f;--amber-soft:#e8c88a;--cream:#faf8f3;--paper:#f5f2ec;--ink:#0f2a20;--ink-soft:#2d5245;--gold:#b8860b;--verify-green:#16a34a;--danger:#dc2626;--danger-soft:#fef2f2;--blue:#2563eb;--blue-soft:#eff6ff;--purple:#7c3aed;--purple-soft:#f5f3ff;--sidebar-w:260px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Noto Sans SC","PingFang SC",sans-serif;color:var(--ink);background:var(--cream);line-height:1.6;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font:inherit}
+
+/* ── Sidebar ── */
+.admin-layout{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+.sidebar{background:var(--forest-deep);color:var(--sage);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-brand svg{width:28px;height:28px;color:var(--amber-soft);flex-shrink:0}
+.sidebar-brand span{font-weight:700;font-size:15px;color:var(--cream);letter-spacing:-.01em}
+.sidebar-nav{flex:1;padding:16px 0}
+.sidebar-section{padding:0 16px;margin-bottom:6px}
+.sidebar-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);padding:12px 8px 6px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--sage);transition:all .2s;cursor:pointer;margin-bottom:2px}
+.sidebar-item:hover{background:rgba(255,255,255,.07);color:var(--cream)}
+.sidebar-item.active{background:rgba(255,255,255,.12);color:var(--cream);font-weight:600}
+.sidebar-item svg{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.sidebar-item.active svg{opacity:1}
+.sidebar-badge{margin-left:auto;background:var(--amber-warm);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.3)}
+
+/* ── Main area ── */
+.main-area{min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(250,248,243,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(11,61,46,.06);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-left h1{font-size:18px;font-weight:700;color:var(--forest-deep)}
+.topbar-breadcrumb{font-size:12px;color:var(--ink-soft);opacity:.7}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 22px;border-radius:999px;font-weight:600;font-size:13.5px;transition:all .25s cubic-bezier(.4,0,.2,1);white-space:nowrap}
+.btn-forest{background:var(--forest);color:#fff;box-shadow:0 2px 10px rgba(26,93,72,.2)}
+.btn-forest:hover{background:var(--forest-deep);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,93,72,.28)}
+.btn-outline{background:#fff;color:var(--ink-soft);border:1.5px solid rgba(11,61,46,.12)}
+.btn-outline:hover{border-color:var(--moss);color:var(--forest)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-danger{background:var(--danger-soft);color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+
+
+/* ── Content ── */
+.content{padding:32px;flex:1;max-width:1280px;width:100%}
+
+/* ── Page header ── */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.page-header-text h2{font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:400;color:var(--forest-deep);margin-bottom:4px}
+.page-header-text p{font-size:14px;color:var(--ink-soft)}
+.page-header-actions{display:flex;gap:10px;align-items:center}
+
+/* ── Summary stats strip ── */
+.stats-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:32px}
+.stat-chip{background:#fff;border:1px solid rgba(11,61,46,.08);border-radius:16px;padding:16px 18px;text-align:center;transition:.2s}
+.stat-chip:hover{border-color:rgba(11,61,46,.16);box-shadow:0 4px 16px rgba(11,61,46,.05)}
+.stat-chip strong{display:block;font-size:24px;font-weight:700;color:var(--forest-deep);line-height:1.1}
+.stat-chip span{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em}
+
+/* ── Category section ── */
+.category-section{margin-bottom:36px}
+.category-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;border-bottom:2px solid rgba(11,61,46,.08);margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.category-title{display:flex;align-items:center;gap:10px}
+.category-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+.category-icon svg{width:20px;height:20px;color:#fff}
+.cat-event .category-icon{background:var(--forest)}
+.cat-learning .category-icon{background:var(--blue)}
+.cat-challenge .category-icon{background:var(--amber-warm)}
+.cat-project .category-icon{background:var(--purple)}
+.cat-task .category-icon{background:var(--moss)}
+.cat-course .category-icon{background:var(--gold)}
+.category-title h3{font-size:16px;font-weight:700;color:var(--forest-deep)}
+.category-count{font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--paper);padding:3px 10px;border-radius:999px}
+.category-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search-input{display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid rgba(11,61,46,.1);border-radius:10px;padding:7px 12px;min-width:200px;transition:.2s}
+.search-input:focus-within{border-color:var(--moss);box-shadow:0 0 0 3px rgba(74,138,106,.1)}
+.search-input svg{width:15px;height:15px;color:var(--ink-soft);opacity:.5;flex-shrink:0}
+.search-input input{border:none;outline:none;background:none;font-size:13px;color:var(--ink);width:100%}
+.search-input input::placeholder{color:var(--ink-soft);opacity:.5}
+.sort-select{padding:7px 12px;border-radius:10px;border:1.5px solid rgba(11,61,46,.1);background:#fff;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer;outline:none}
+.sort-select:focus{border-color:var(--moss)}
+.show-toggle{display:flex;background:var(--paper);border-radius:8px;overflow:hidden;border:1px solid rgba(11,61,46,.08)}
+.show-toggle button{padding:6px 12px;font-size:11px;font-weight:700;color:var(--ink-soft);background:none;transition:.2s}
+.show-toggle button.active{background:var(--forest);color:#fff}
+.show-toggle button:hover:not(.active){background:rgba(11,61,46,.06)}
+
+/* ── Card grid ── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+
+/* ── Activity card ── */
+.activity-card{background:#fff;border:1px solid rgba(11,61,46,.08);border-radius:18px;padding:22px;transition:all .25s cubic-bezier(.4,0,.2,1);position:relative;display:flex;flex-direction:column;gap:14px}
+.activity-card:hover{border-color:rgba(11,61,46,.16);box-shadow:0 12px 36px rgba(11,61,46,.07);transform:translateY(-2px)}
+.activity-card.is-starred{border-color:rgba(196,137,63,.3)}
+.activity-card.is-starred::before{content:"";position:absolute;top:0;right:24px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid var(--amber-warm);border-radius:0 0 4px 4px}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-title{font-size:16px;font-weight:700;color:var(--forest-deep);line-height:1.35;flex:1}
+.card-status{font-size:10px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;letter-spacing:.04em}
+.status-published{background:rgba(22,163,74,.1);color:#15803d}
+.status-draft{background:rgba(107,114,128,.1);color:#6b7280}
+.status-ongoing{background:rgba(37,99,235,.1);color:#1d4ed8}
+.status-completed{background:rgba(16,185,129,.1);color:#047857}
+.status-cancelled{background:rgba(220,38,38,.08);color:#b91c1c}
+.status-archived{background:rgba(107,114,128,.08);color:#9ca3af}
+
+.card-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-soft)}
+.card-meta-item{display:flex;align-items:center;gap:5px}
+.card-meta-item svg{width:13px;height:13px;opacity:.6}
+
+.card-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;letter-spacing:.02em}
+.tag-official{background:rgba(26,93,72,.1);color:var(--forest)}
+.tag-connect{background:rgba(37,99,235,.1);color:#1d4ed8}
+.tag-new{background:rgba(22,163,74,.12);color:#15803d}
+.tag-live{background:rgba(220,38,38,.1);color:#dc2626}
+.tag-ended{background:rgba(107,114,128,.1);color:#6b7280}
+.tag-featured{background:rgba(196,137,63,.12);color:var(--amber-warm)}
+.tag-invite{background:rgba(124,58,237,.1);color:var(--purple)}
+.tag-hybrid{background:rgba(245,158,11,.1);color:#b45309}
+.tag-online{background:rgba(6,182,212,.1);color:#0e7490}
+
+.card-desc{font-size:13px;color:var(--ink-soft);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid rgba(11,61,46,.06);gap:8px;flex-wrap:wrap}
+.card-stats{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:4px}
+.card-stats svg{width:14px;height:14px;opacity:.5}
+.card-stats .highlight{color:var(--forest);font-weight:700}
+.card-actions{display:flex;gap:4px;align-items:center}
+.action-btn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;transition:.2s;position:relative}
+.action-btn:hover{background:rgba(11,61,46,.06)}
+.action-btn svg{width:16px;height:16px;color:var(--ink-soft)}
+.action-btn:hover svg{color:var(--forest-deep)}
+.action-btn.is-star{color:var(--amber-warm)}
+.action-btn.is-star svg{color:var(--amber-warm);fill:var(--amber-warm)}
+.action-btn.is-active{background:rgba(22,163,74,.08)}
+.action-btn.is-active svg{color:var(--verify-green)}
+.action-btn.is-hidden svg{opacity:.35}
+.action-btn.is-danger:hover{background:var(--danger-soft)}
+.action-btn.is-danger:hover svg{color:var(--danger)}
+.action-tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--forest-deep);color:#fff;font-size:10px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:.15s;margin-bottom:4px}
+.action-btn:hover .action-tooltip{opacity:1}
+.action-more{position:relative}
+.action-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid rgba(11,61,46,.1);border-radius:12px;box-shadow:0 8px 28px rgba(11,61,46,.1);padding:6px;min-width:180px;z-index:20;display:none}
+.action-dropdown.open{display:block}
+.action-dropdown button{width:100%;text-align:left;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500;color:var(--ink-soft);display:flex;align-items:center;gap:8px;transition:.15s}
+.action-dropdown button:hover{background:rgba(11,61,46,.04);color:var(--forest-deep)}
+.action-dropdown button svg{width:14px;height:14px;opacity:.6}
+.action-dropdown button.danger{color:var(--danger)}
+.action-dropdown button.danger:hover{background:var(--danger-soft)}
+.action-dropdown button.danger svg{color:var(--danger)}
+.action-divider{height:1px;background:rgba(11,61,46,.06);margin:4px 0}
+
+/* ── Show more link ── */
+.show-more{text-align:center;padding:12px 0}
+.show-more a{font-size:13px;font-weight:600;color:var(--forest);display:inline-flex;align-items:center;gap:5px;transition:.2s}
+.show-more a:hover{color:var(--amber-warm)}
+
+/* ── Responsive ── */
+@media(max-width:1200px){.stats-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){
+  .admin-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .card-grid{grid-template-columns:1fr}
+  .stats-strip{grid-template-columns:repeat(2,1fr)}
+  .content{padding:20px}
+}
+@media(max-width:640px){
+  .stats-strip{grid-template-columns:1fr}
+  .category-header{flex-direction:column;align-items:flex-start}
+  .category-toolbar{width:100%;flex-direction:column}
+  .search-input{min-width:100%}
+  .topbar{padding:0 16px}
+  .content{padding:16px}
+  .page-header{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.6C11.5 4.7 14.3 3.8 17 4c.5 0 1 .1 1.4.2.4.1.7.3 1 .5l-1.8 8.2a7 7 0 0 1-6.6 7.1z"/><path d="M12 20a7 7 0 0 0 6.3-9.8c-2.3 1.1-4.3 3-5.6 5.3A10.5 10.5 0 0 0 11 20z"/></svg>
+    <span>Climate Passport</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Core Modules</div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Events
+      </div>
+      <div class="sidebar-item active" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        Activities
+        <span class="sidebar-badge">25</span>
+      </div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        Certificates
+      </div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Learning Experiences
+      </div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        People
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Operations</div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Verification
+      </div>
+      <div class="sidebar-item" onclick="location.href='#'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">Climate Passport Admin v1.0</div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main-area">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div>
+        <h1>Activity Management</h1>
+        <div class="topbar-breadcrumb">Admin / Activities</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm">Export CSV</button>
+      <button class="btn btn-forest" onclick="alert('Create Activity')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Activity
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-header-text">
+        <h2>Activities</h2>
+        <p>Manage all activities across types — events, learning, challenges, projects, tasks, and courses.</p>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="stat-chip"><strong>25</strong><span>Total</span></div>
+      <div class="stat-chip"><strong>8</strong><span>Published</span></div>
+      <div class="stat-chip"><strong>5</strong><span>Draft</span></div>
+      <div class="stat-chip"><strong>6</strong><span>Ongoing</span></div>
+      <div class="stat-chip"><strong>4</strong><span>Completed</span></div>
+      <div class="stat-chip"><strong>2</strong><span>Archived</span></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Events ═══════════════════ -->
+    <div class="category-section cat-event" id="sec-events">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <h3>Events</h3>
+          <span class="category-count">8 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search events..." oninput="filterCards(this,'events')">
+          </div>
+          <select class="sort-select">
+            <option>Newest first</option>
+            <option>Oldest first</option>
+            <option>Title A-Z</option>
+            <option>Status</option>
+          </select>
+          <div class="show-toggle" data-section="events">
+            <button onclick="toggleShow(this,3)" class="active">3</button>
+            <button onclick="toggleShow(this,5)">5</button>
+            <button onclick="toggleShow(this,10)">10</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-events">
+        <!-- Event 1 -->
+        <div class="activity-card is-starred">
+          <div class="card-top">
+            <div class="card-title">Sustainability Summer School 2026 — Orientation Day</div>
+            <span class="card-status status-ongoing">Ongoing</span>
+          </div>
+          <div class="card-meta">
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Jun 15 – Jun 18, 2026 · 09:00–17:00
+            </div>
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Shanghai, China
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-official">Official Event</span>
+            <span class="tag tag-featured">Featured</span>
+            <span class="tag tag-new">New</span>
+          </div>
+          <div class="card-desc">Annual sustainability summer school orientation day. Welcome address, campus tour, and team building activities for all admitted students.</div>
+          <div class="card-footer">
+            <div class="card-stats">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span class="highlight">42</span> / 80
+            </div>
+            <div class="card-actions">
+              <button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+              <button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button>
+              <button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+              <button class="action-btn is-star" title="Starred"><span class="action-tooltip">Starred</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+              <button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <!-- Event 2 -->
+        <div class="activity-card">
+          <div class="card-top">
+            <div class="card-title">SHCW 2026 Grand Opening Ceremony</div>
+            <span class="card-status status-published">Published</span>
+          </div>
+          <div class="card-meta">
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Apr 22, 2026 · 13:00–17:45
+            </div>
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Shanghai Exhibition Center
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-official">Official Event</span>
+            <span class="tag tag-live">Live</span>
+            <span class="tag tag-featured">Featured</span>
+          </div>
+          <div class="card-desc">Shanghai Climate Week 2026 grand opening ceremony. Global climate leaders gather for keynote speeches and panel discussions.</div>
+          <div class="card-footer">
+            <div class="card-stats">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span class="highlight">287</span> / 300
+            </div>
+            <div class="card-actions">
+              <button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+              <button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button>
+              <button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+              <button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+              <button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <!-- Event 3 -->
+        <div class="activity-card">
+          <div class="card-top">
+            <div class="card-title">"Connect+" Closed Roundtable — Green Finance</div>
+            <span class="card-status status-completed">Completed</span>
+          </div>
+          <div class="card-meta">
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Apr 23, 2026 · 10:00–12:00
+            </div>
+            <div class="card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Shanghai Oriental Business Center
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-connect">Connect+</span>
+            <span class="tag tag-ended">Ended</span>
+            <span class="tag tag-invite">Invite Only</span>
+          </div>
+          <div class="card-desc">Explore the intersection of green finance and global climate action. Build a "universe" framework for sustainable investment across upper, middle, and lower tiers.</div>
+          <div class="card-footer">
+            <div class="card-stats">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span class="highlight">48</span> / 50
+            </div>
+            <div class="card-actions">
+              <button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+              <button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+              <button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button>
+              <button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+              <button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+              <button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="show-more"><a href="#">View all 8 events →</a></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Learning Experiences ═══════════════════ -->
+    <div class="category-section cat-learning" id="sec-learning">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h3>Learning Experiences</h3>
+          <span class="category-count">4 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search learning..." oninput="filterCards(this,'learning')"></div>
+          <select class="sort-select"><option>Newest first</option><option>Oldest first</option><option>Title A-Z</option><option>Status</option></select>
+          <div class="show-toggle" data-section="learning"><button onclick="toggleShow(this,3)" class="active">3</button><button onclick="toggleShow(this,5)">5</button><button onclick="toggleShow(this,10)">10</button></div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-learning">
+        <div class="activity-card is-starred">
+          <div class="card-top"><div class="card-title">Youth Climate Leadership Program 2026</div><span class="card-status status-ongoing">Ongoing</span></div>
+          <div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jul 1 – Aug 15, 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Shanghai + Virtual (Hybrid)</div></div>
+          <div class="card-tags"><span class="tag tag-official">Official</span><span class="tag tag-hybrid">Hybrid</span><span class="tag tag-new">New</span></div>
+          <div class="card-desc">A 6-week intensive program for emerging climate leaders. Covers policy analysis, communication, project management, and field practice.</div>
+          <div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">28</span> / 40</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn is-star" title="Starred"><span class="action-tooltip">Starred</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+        <div class="activity-card">
+          <div class="card-top"><div class="card-title">Climate Data Visualization Workshop</div><span class="card-status status-published">Published</span></div>
+          <div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>May 28, 2026 · 14:00–17:00</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Online (Zoom)</div></div>
+          <div class="card-tags"><span class="tag tag-online">Online</span><span class="tag tag-new">New</span></div>
+          <div class="card-desc">Hands-on workshop teaching participants how to create compelling climate data visualizations using open-source tools and datasets.</div>
+          <div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">18</span> / 30</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+        <div class="activity-card">
+          <div class="card-top"><div class="card-title">Field Study: Yangtze Delta Wetland Restoration</div><span class="card-status status-draft">Draft</span></div>
+          <div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>TBD</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Chongming Island, Shanghai</div></div>
+          <div class="card-tags"><span class="tag tag-official">Official</span></div>
+          <div class="card-desc">A 3-day immersive field study exploring wetland restoration techniques in the Yangtze River Delta region. Hands-on ecological monitoring activities.</div>
+          <div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">0</span> / 25</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+      </div>
+      <div class="show-more"><a href="#">View all 4 learning experiences →</a></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Challenges ═══════════════════ -->
+    <div class="category-section cat-challenge" id="sec-challenges">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <h3>Challenges</h3><span class="category-count">3 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search challenges..." oninput="filterCards(this,'challenges')"></div>
+          <select class="sort-select"><option>Newest first</option><option>Oldest first</option><option>Title A-Z</option><option>Status</option></select>
+          <div class="show-toggle" data-section="challenges"><button onclick="toggleShow(this,3)" class="active">3</button><button onclick="toggleShow(this,5)">5</button><button onclick="toggleShow(this,10)">10</button></div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-challenges">
+        <div class="activity-card"><div class="card-top"><div class="card-title">Call for Action: 30-Day Carbon Reduction Challenge</div><span class="card-status status-ongoing">Ongoing</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>May 1 – May 31, 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Global (Online)</div></div><div class="card-tags"><span class="tag tag-new">New</span><span class="tag tag-online">Online</span></div><div class="card-desc">Individuals and teams compete to reduce carbon footprint over 30 days. Daily tasks, weekly milestones, and a leaderboard with prizes.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">156</span> / 500</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Campus Green Innovation Hackathon</div><span class="card-status status-published">Published</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jun 7 – Jun 8, 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Tongji University, Shanghai</div></div><div class="card-tags"><span class="tag tag-official">Official</span><span class="tag tag-new">New</span></div><div class="card-desc">48-hour hackathon where student teams build green innovation prototypes for campus sustainability. Judged by industry experts.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">34</span> / 100</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Community Tree Planting Verification Drive</div><span class="card-status status-draft">Draft</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>TBD</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Multiple locations</div></div><div class="card-tags"><span class="tag tag-official">Official</span></div><div class="card-desc">Community-driven tree planting campaign with photo verification. Participants earn badges and points for each verified tree planted.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">0</span> / 200</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+      </div>
+      <div class="show-more"><a href="#">View all 3 challenges →</a></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Tasks ═══════════════════ -->
+    <div class="category-section cat-task" id="sec-tasks">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          <h3>Tasks</h3><span class="category-count">5 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search tasks..." oninput="filterCards(this,'tasks')"></div>
+          <select class="sort-select"><option>Newest first</option><option>Oldest first</option><option>Title A-Z</option><option>Status</option></select>
+          <div class="show-toggle" data-section="tasks"><button onclick="toggleShow(this,3)" class="active">3</button><button onclick="toggleShow(this,5)">5</button><button onclick="toggleShow(this,10)">10</button></div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-tasks">
+        <div class="activity-card"><div class="card-top"><div class="card-title">Daily Eco-Commute Check-in</div><span class="card-status status-ongoing">Ongoing</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>May 1 – May 31, 2026 · Daily</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Anywhere (Geo QR)</div></div><div class="card-tags"><span class="tag tag-online">Online</span><span class="tag tag-new">New</span></div><div class="card-desc">Check in daily using green transportation. QR-based verification at transit stations. Earn points for consecutive days.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">89</span> / unlimited</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Submit Climate Action Reflection Essay</div><span class="card-status status-published">Published</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Due: Jun 15, 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Online (Submission)</div></div><div class="card-tags"><span class="tag tag-official">Official</span></div><div class="card-desc">Write a 500-word reflection on your personal climate action journey. Reviewed by mentors with feedback and scoring.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">12</span> / unlimited</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Photo Upload: Zero-Waste Lunch Challenge</div><span class="card-status status-archived">Archived</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Mar 1 – Mar 31, 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Anywhere</div></div><div class="card-tags"><span class="tag tag-ended">Ended</span></div><div class="card-desc">Upload photos of zero-waste lunches for 30 days. Community voting on best entries. Top 10 win eco-friendly gift packs.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">203</span> completed</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+      </div>
+      <div class="show-more"><a href="#">View all 5 tasks →</a></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Projects ═══════════════════ -->
+    <div class="category-section cat-project" id="sec-projects">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Projects</h3><span class="category-count">3 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search projects..." oninput="filterCards(this,'projects')"></div>
+          <select class="sort-select"><option>Newest first</option><option>Oldest first</option><option>Title A-Z</option><option>Status</option></select>
+          <div class="show-toggle" data-section="projects"><button onclick="toggleShow(this,3)" class="active">3</button><button onclick="toggleShow(this,5)">5</button><button onclick="toggleShow(this,10)">10</button></div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-projects">
+        <div class="activity-card"><div class="card-top"><div class="card-title">Youth Sustainable City Design Lab</div><span class="card-status status-ongoing">Ongoing</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Apr – Jul 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Shanghai + Online</div></div><div class="card-tags"><span class="tag tag-official">Official</span><span class="tag tag-hybrid">Hybrid</span></div><div class="card-desc">Student teams design sustainable urban solutions for real Shanghai neighborhoods. 4 milestones with mentor review and final presentation.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">8</span> teams / 15 max</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn is-star" title="Starred"><span class="action-tooltip">Starred</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Corporate ESG Reporting Mentorship</div><span class="card-status status-published">Published</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jun – Sep 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Virtual</div></div><div class="card-tags"><span class="tag tag-invite">Invite Only</span><span class="tag tag-new">New</span></div><div class="card-desc">3-month mentorship program pairing students with corporate sustainability officers. Teams produce ESG reports for real companies.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">5</span> / 10 teams</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
+        <div class="activity-card"><div class="card-top"><div class="card-title">Campus Biodiversity Mapping Project</div><span class="card-status status-completed">Completed</span></div><div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jan – Mar 2026</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Fudan University</div></div><div class="card-tags"><span class="tag tag-official">Official</span><span class="tag tag-ended">Ended</span></div><div class="card-desc">Students mapped 200+ plant species on campus using GPS and photo documentation. Final deliverable: interactive biodiversity map.</div><div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">12</span> / 12 teams</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+      </div>
+      <div class="show-more"><a href="#">View all 3 projects →</a></div>
+    </div>
+
+    <!-- ═══════════════════ SECTION: Courses ═══════════════════ -->
+    <div class="category-section cat-course" id="sec-courses">
+      <div class="category-header">
+        <div class="category-title">
+          <div class="category-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 4 3 6 3s6-1 6-3v-5"/></svg></div>
+          <h3>Courses</h3><span class="category-count">2 activities</span>
+        </div>
+        <div class="category-toolbar">
+          <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search courses..." oninput="filterCards(this,'courses')"></div>
+          <select class="sort-select"><option>Newest first</option><option>Oldest first</option><option>Title A-Z</option><option>Status</option></select>
+          <div class="show-toggle" data-section="courses"><button onclick="toggleShow(this,3)" class="active">3</button><button onclick="toggleShow(this,5)">5</button><button onclick="toggleShow(this,10)">10</button></div>
+        </div>
+      </div>
+      <div class="card-grid" id="grid-courses">
+        <div class="activity-card is-starred">
+          <div class="card-top"><div class="card-title">Introduction to Climate Science — Online Certificate Course</div><span class="card-status status-ongoing">Ongoing</span></div>
+          <div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Self-paced · 8 modules</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Online (LMS Platform)</div></div>
+          <div class="card-tags"><span class="tag tag-official">Official</span><span class="tag tag-online">Online</span><span class="tag tag-featured">Featured</span></div>
+          <div class="card-desc">Comprehensive introductory course covering climate science fundamentals, carbon cycles, renewable energy, and policy frameworks. Certificate upon completion.</div>
+          <div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">312</span> enrolled</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-active" title="Visible"><span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn is-star" title="Starred"><span class="action-tooltip">Starred</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+        <div class="activity-card">
+          <div class="card-top"><div class="card-title">Advanced ESG Analysis & Reporting</div><span class="card-status status-draft">Draft</span></div>
+          <div class="card-meta"><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Sep 1 – Nov 30, 2026 · 12 weeks</div><div class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Hybrid (Shanghai + Online)</div></div>
+          <div class="card-tags"><span class="tag tag-hybrid">Hybrid</span><span class="tag tag-invite">Invite Only</span></div>
+          <div class="card-desc">Advanced course on ESG metrics, reporting standards (GRI, SASB, TCFD), and corporate sustainability assessment. Industry guest lecturers included.</div>
+          <div class="card-footer"><div class="card-stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="highlight">0</span> / 50</div><div class="card-actions"><button class="action-btn" title="Edit"><span class="action-tooltip">Edit</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="action-btn" title="Details"><span class="action-tooltip">Details</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button><button class="action-btn is-hidden" title="Hidden"><span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button><button class="action-btn" title="Applications"><span class="action-tooltip">Applications</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></button><button class="action-btn" title="Invitation"><span class="action-tooltip">Invitation</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button><button class="action-btn" title="Star"><span class="action-tooltip">Star</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button><button class="action-btn is-danger" title="Delete"><span class="action-tooltip">Delete</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>
+      </div>
+      <div class="show-more"><a href="#">View all 2 courses →</a></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main-area -->
+</div><!-- /admin-layout -->
+
+<script>
+/* ── Filter cards by search input ── */
+function filterCards(input, sectionId) {
+  var query = input.value.toLowerCase().trim();
+  var grid = document.getElementById('grid-' + sectionId);
+  if (!grid) return;
+  var cards = grid.querySelectorAll('.activity-card');
+  var visibleCount = 0;
+  cards.forEach(function(card) {
+    var title = card.querySelector('.card-title');
+    var desc = card.querySelector('.card-desc');
+    var tags = card.querySelector('.card-tags');
+    var text = '';
+    if (title) text += title.textContent + ' ';
+    if (desc) text += desc.textContent + ' ';
+    if (tags) text += tags.textContent;
+    text = text.toLowerCase();
+    if (query === '' || text.indexOf(query) !== -1) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  /* Update count badge */
+  var section = document.getElementById('sec-' + sectionId);
+  if (section) {
+    var badge = section.querySelector('.category-count');
+    if (badge) {
+      var origText = badge.getAttribute('data-original') || badge.textContent;
+      if (!badge.getAttribute('data-original')) badge.setAttribute('data-original', origText);
+      if (query === '') {
+        badge.textContent = origText;
+      } else {
+        badge.textContent = visibleCount + ' matching';
+      }
+    }
+  }
+}
+
+/* ── Toggle show 3/5/10 cards ── */
+function toggleShow(btn, count) {
+  var toggleGroup = btn.parentElement;
+  var sectionId = toggleGroup.getAttribute('data-section');
+  var grid = document.getElementById('grid-' + sectionId);
+  if (!grid) return;
+  /* Update active button */
+  toggleGroup.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  /* Show/hide cards */
+  var cards = grid.querySelectorAll('.activity-card');
+  cards.forEach(function(card, idx) {
+    card.style.display = idx < count ? '' : 'none';
+  });
+  /* Update show-more visibility */
+  var section = document.getElementById('sec-' + sectionId);
+  if (section) {
+    var showMore = section.querySelector('.show-more');
+    if (showMore) {
+      showMore.style.display = cards.length > count ? '' : 'none';
+    }
+  }
+}
+
+/* ── Action button star toggle ── */
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.action-btn');
+  if (!btn) return;
+  /* Star toggle */
+  if (btn.title === 'Star' || btn.title === 'Starred') {
+    btn.classList.toggle('is-star');
+    if (btn.classList.contains('is-star')) {
+      btn.title = 'Starred';
+      var tooltip = btn.querySelector('.action-tooltip');
+      if (tooltip) tooltip.textContent = 'Starred';
+      var card = btn.closest('.activity-card');
+      if (card) card.classList.add('is-starred');
+    } else {
+      btn.title = 'Star';
+      var tooltip2 = btn.querySelector('.action-tooltip');
+      if (tooltip2) tooltip2.textContent = 'Star';
+      var card2 = btn.closest('.activity-card');
+      if (card2) card2.classList.remove('is-starred');
+    }
+  }
+  /* Visibility toggle */
+  if (btn.title === 'Visible' || btn.title === 'Hidden') {
+    if (btn.classList.contains('is-active')) {
+      btn.classList.remove('is-active');
+      btn.classList.add('is-hidden');
+      btn.title = 'Hidden';
+      var t = btn.querySelector('.action-tooltip');
+      if (t) t.textContent = 'Hidden';
+      /* Swap to eye-off icon */
+      btn.innerHTML = '<span class="action-tooltip">Hidden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    } else if (btn.classList.contains('is-hidden')) {
+      btn.classList.remove('is-hidden');
+      btn.classList.add('is-active');
+      btn.title = 'Visible';
+      btn.innerHTML = '<span class="action-tooltip">Visible</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+  }
+  /* Delete confirmation */
+  if (btn.title === 'Delete') {
+    var cardTitle = btn.closest('.activity-card').querySelector('.card-title').textContent;
+    if (confirm('Are you sure you want to delete "' + cardTitle + '"?')) {
+      var card = btn.closest('.activity-card');
+      card.style.transition = 'all .3s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      setTimeout(function() { card.style.display = 'none'; }, 300);
+    }
+  }
+});
+
+/* ── Close dropdowns on outside click ── */
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.action-more')) {
+    document.querySelectorAll('.action-dropdown.open').forEach(function(d) {
+      d.classList.remove('open');
+    });
+  }
+});
+</script>
+</body>
+</html>

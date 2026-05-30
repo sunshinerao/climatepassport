@@ -11,19 +11,90 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
 
   const prisma = getPrismaClient();
   if (!prisma) throw new Error("Database unavailable");
-  const activity = await prisma.activity.findUnique({
-    where: { id: params.id },
-    include: {
-      _count: {
-        select: {
-          applications: true,
-          participations: true,
-          checkinRecords: true,
-          submissions: true,
+  const [activity, activityDetail, agendaItems, speakerLinks, allSpeakers, verifiers, availableVerifiers, institutions, availableInstitutions] = await Promise.all([
+    prisma.activity.findUnique({
+      where: { id: params.id },
+      include: {
+        _count: {
+          select: {
+            applications: true,
+            participations: true,
+            checkinRecords: true,
+            submissions: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.activityDetail.findUnique({
+      where: { activityId: params.id },
+      select: { configJson: true },
+    }),
+    prisma.activityAgendaItem.findMany({
+      where: { activityId: params.id },
+      include: {
+        moderator: {
+          select: { id: true, name: true, nameEn: true, title: true, titleEn: true, organization: true, organizationEn: true, avatar: true },
+        },
+        speakers: {
+          orderBy: { order: "asc" },
+          include: {
+            speaker: {
+              select: { id: true, name: true, nameEn: true, title: true, titleEn: true, organization: true, organizationEn: true, avatar: true },
+            },
+          },
+        },
+      },
+      orderBy: [{ agendaDate: "asc" }, { startTime: "asc" }, { order: "asc" }],
+    }),
+    prisma.activitySpeaker.findMany({
+      where: { activityId: params.id },
+      include: {
+        speaker: {
+          select: { id: true, name: true, nameEn: true, title: true, titleEn: true, organization: true, organizationEn: true, avatar: true },
+        },
+      },
+      orderBy: { order: "asc" },
+    }),
+    prisma.speaker.findMany({
+      where: { isVisible: true },
+      select: { id: true, name: true, nameEn: true, title: true, titleEn: true, organization: true, organizationEn: true, avatar: true },
+      orderBy: { name: "asc" },
+      take: 200,
+    }),
+    prisma.activityVerifier.findMany({
+      where: { activityId: params.id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: {
+        role: { in: ["VERIFIER", "ADMIN", "EVENT_MANAGER"] },
+        status: "ACTIVE",
+      },
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: { name: "asc" },
+      take: 200,
+    }),
+    prisma.activityInstitution.findMany({
+      where: { activityId: params.id },
+      include: {
+        institution: {
+          select: { id: true, name: true, nameEn: true, logo: true, website: true },
+        },
+      },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.institution.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, nameEn: true, logo: true, website: true },
+      orderBy: [{ order: "asc" }, { name: "asc" }],
+      take: 200,
+    }),
+  ]);
 
   if (!activity) notFound();
 
@@ -46,8 +117,39 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
           startTime: activity.startTime ? activity.startTime.toISOString() : null,
           endTime: activity.endTime ? activity.endTime.toISOString() : null,
           createdAt: activity.createdAt.toISOString(),
+          registrationOpenAt: activity.registrationOpenAt ? activity.registrationOpenAt.toISOString() : null,
+          registrationCloseAt: activity.registrationCloseAt ? activity.registrationCloseAt.toISOString() : null,
+          locationJson:
+            activity.locationJson &&
+            typeof activity.locationJson === "object" &&
+            !Array.isArray(activity.locationJson)
+              ? (activity.locationJson as Record<string, string>)
+              : null,
         }}
+        activityDetailConfig={
+          activityDetail?.configJson &&
+          typeof activityDetail.configJson === "object" &&
+          !Array.isArray(activityDetail.configJson)
+            ? activityDetail.configJson
+            : null
+        }
+        agendaItems={agendaItems.map((item) => ({
+          ...item,
+          agendaDate: item.agendaDate.toISOString(),
+        }))}
+        allSpeakers={allSpeakers}
+        availableInstitutions={availableInstitutions}
+        availableVerifiers={availableVerifiers}
+        institutions={institutions.map((item) => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+        }))}
         locale={params.locale}
+        speakerLinks={speakerLinks}
+        verifiers={verifiers.map((item) => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+        }))}
       />
     </div>
   );

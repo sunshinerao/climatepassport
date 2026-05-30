@@ -14,6 +14,9 @@
 @import "./styles/features/landing-page.css";
 @import "./styles/features/admin-certificate-management.css";
 @import "./styles/features/enhanced-registration-form.css";
+@import "./styles/features/activity-admin-console.css";
+@import "./styles/features/admin-activities.css";
+@import "./styles/features/admin-create-activity.css";
 @import "./styles/features/prototype-alignment-overrides.css";
 @import "./styles/features/prototype-alignment-v3.css";
 
