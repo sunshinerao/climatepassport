@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { locales } from "@/lib/site-content";
 import { getPrismaClient } from "@/lib/server/prisma";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://climatepass.org").replace(/\/$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climatepass.org").replace(/\/$/, "");
 
 export const dynamic = "force-dynamic";
 

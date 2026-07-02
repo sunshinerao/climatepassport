@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import { HomeScreen } from "@/components/platform-screens";
+import { homePageMetadata } from "@/lib/seo";
+
+export const metadata = homePageMetadata("en");
 
 export default function HomePage() {
-  redirect("/en");
+  return <HomeScreen locale="en" />;
 }

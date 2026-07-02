@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getDictionary, locales, type Locale } from "@/lib/site-content";
 
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://climatepass.org").replace(/\/$/, "");
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climatepass.org").replace(/\/$/, "");
 
 export const siteName = "Climate Passport";
 export const defaultSeoTitle = "Climate Passport | Verified climate identity, credentials, and action records";
