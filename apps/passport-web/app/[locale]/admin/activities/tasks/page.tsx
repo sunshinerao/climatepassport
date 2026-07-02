@@ -43,7 +43,7 @@ export default async function AdminActivitiesTasksPage({ params }: { params: { l
             <tbody>
               {tasks.map((t) => (
                 <tr key={t.id}>
-                  <td style={{ fontSize: "0.85em" }}>
+                  <td style={{ fontSize: "var(--cp-text-small)" }}>
                     <a href={`/${params.locale}/admin/activities/${t.activityId}/tasks`}>{t.activity?.title ?? t.activityId}</a>
                   </td>
                   <td>{t.title}</td>

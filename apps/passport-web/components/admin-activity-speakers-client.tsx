@@ -275,7 +275,7 @@ export function AdminActivitySpeakersClient({
             <tbody>
               {sortedLinks.map((link) => (
                 <tr key={link.id}>
-                  <td style={{ color: "#9ca3af", fontSize: "0.85rem" }}>{link.order}</td>
+                  <td style={{ color: "#9ca3af", fontSize: "var(--cp-text-small)" }}>{link.order}</td>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       {link.speaker.avatar && (
@@ -287,9 +287,9 @@ export function AdminActivitySpeakersClient({
                       )}
                       <div>
                         <div style={{ fontWeight: 500 }}>{link.speaker.name}</div>
-                        {link.speaker.nameEn && <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>{link.speaker.nameEn}</div>}
+                        {link.speaker.nameEn && <div style={{ color: "#6b7280", fontSize: "var(--cp-text-small)" }}>{link.speaker.nameEn}</div>}
                         {(link.speaker.title || link.speaker.organization) && (
-                          <div style={{ color: "#9ca3af", fontSize: "0.8rem" }}>
+                          <div style={{ color: "#9ca3af", fontSize: "var(--cp-text-small)" }}>
                             {[link.speaker.title, link.speaker.organization].filter(Boolean).join(" · ")}
                           </div>
                         )}
@@ -326,8 +326,8 @@ export function AdminActivitySpeakersClient({
                       </div>
                     ) : (
                       <div>
-                        {link.role && <div style={{ fontSize: "0.85rem" }}>{link.role}</div>}
-                        {link.roleEn && <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>{link.roleEn}</div>}
+                        {link.role && <div style={{ fontSize: "var(--cp-text-small)" }}>{link.role}</div>}
+                        {link.roleEn && <div style={{ color: "#6b7280", fontSize: "var(--cp-text-small)" }}>{link.roleEn}</div>}
                         {!link.role && !link.roleEn && "—"}
                       </div>
                     )}

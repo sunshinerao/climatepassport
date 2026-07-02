@@ -311,7 +311,7 @@ export function AdminActivityApplicationsClient({
                 borderBottomStyle: "solid",
                 borderBottomColor: isActive ? "#2563eb" : "transparent",
                 cursor: "pointer",
-                fontSize: "0.9rem",
+                fontSize: "var(--cp-text-body)",
               }}
             >
               {t(tab)} ({count})
@@ -330,7 +330,7 @@ export function AdminActivityApplicationsClient({
         />
         {selectedIds.size > 0 && (
           <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
-            <span style={{ fontSize: "0.85rem", color: "#6b7280", marginRight: "0.25rem" }}>
+            <span style={{ fontSize: "var(--cp-text-small)", color: "#6b7280", marginRight: "0.25rem" }}>
               {selectedIds.size} {zh ? "条已选" : "selected"}
             </span>
             <button
@@ -402,12 +402,12 @@ export function AdminActivityApplicationsClient({
                     <td>
                       <div style={{ fontWeight: 500 }}>{app.user.name ?? "—"}</div>
                       {app.user.climatePassportId && (
-                        <div style={{ fontSize: "0.75rem", color: "#9ca3af", fontFamily: "monospace" }}>
+                        <div style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af" }}>
                           {app.user.climatePassportId}
                         </div>
                       )}
                     </td>
-                    <td style={{ fontSize: "0.85rem" }}>{app.user.email}</td>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>{app.user.email}</td>
                     <td>{app.roleType ?? "—"}</td>
                     <td>
                       <span className={STATUS_BADGE[app.status] ?? "chip"}>
@@ -428,7 +428,7 @@ export function AdminActivityApplicationsClient({
                         />
                       )}
                       {app.reviewComment && !canReview && (
-                        <span style={{ fontSize: "0.85rem" }}>{app.reviewComment}</span>
+                        <span style={{ fontSize: "var(--cp-text-small)" }}>{app.reviewComment}</span>
                       )}
                     </td>
                     <td>
@@ -460,7 +460,7 @@ export function AdminActivityApplicationsClient({
                           </button>
                         </div>
                       ) : (
-                        <span style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                        <span style={{ color: "var(--color-text-muted)", fontSize: "var(--cp-text-small)" }}>
                           {app.reviewedAt ? new Date(app.reviewedAt).toLocaleDateString() : "—"}
                         </span>
                       )}

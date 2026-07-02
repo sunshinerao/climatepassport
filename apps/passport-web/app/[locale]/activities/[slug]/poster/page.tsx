@@ -48,7 +48,7 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
         alignItems: "center",
         justifyContent: "center",
         padding: "2rem",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: "var(--cp-font-sans)",
       }}
     >
       <div
@@ -70,23 +70,23 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
           />
         ) : (
           <div style={{ width: "100%", height: 200, background: "linear-gradient(135deg, #16a34a, #0ea5e9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 72, color: "rgba(255,255,255,0.5)" }}>🌍</span>
+            <span style={{ fontSize: "var(--cp-fs-72)", color: "rgba(255,255,255,0.5)" }}>🌍</span>
           </div>
         )}
 
         {/* Content */}
         <div style={{ padding: "2rem" }}>
-          <div style={{ fontSize: "0.8rem", color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>
+          <div style={{ fontSize: "var(--cp-text-small)", color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem" }}>
             {zh ? "活动" : "EVENT"}
           </div>
-          <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.8rem", lineHeight: 1.2, color: "#111827" }}>{title}</h1>
-          {subtitle && <p style={{ margin: "0 0 1.5rem", color: "#6b7280", fontSize: "1rem" }}>{subtitle}</p>}
+          <h1 style={{ margin: "0 0 0.5rem", fontSize: "var(--cp-fs-r-1-8)", lineHeight: 1.2, color: "#111827" }}>{title}</h1>
+          {subtitle && <p style={{ margin: "0 0 1.5rem", color: "#6b7280", fontSize: "var(--cp-text-body)" }}>{subtitle}</p>}
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1.5rem" }}>
             {activity.startTime && (
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <span style={{ fontSize: "1.2rem" }}>📅</span>
-                <span style={{ color: "#374151", fontSize: "0.95rem" }}>
+                <span style={{ fontSize: "var(--cp-fs-20)" }}>📅</span>
+                <span style={{ color: "#374151", fontSize: "var(--cp-text-body)" }}>
                   {formatDate(activity.startTime as Date)}
                   {activity.endTime && (activity.endTime as Date).toDateString() !== (activity.startTime as Date).toDateString()
                     ? ` – ${formatDate(activity.endTime as Date)}`
@@ -96,14 +96,14 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
             )}
             {venue && (
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <span style={{ fontSize: "1.2rem" }}>📍</span>
-                <span style={{ color: "#374151", fontSize: "0.95rem" }}>{venue}</span>
+                <span style={{ fontSize: "var(--cp-fs-20)" }}>📍</span>
+                <span style={{ color: "#374151", fontSize: "var(--cp-text-body)" }}>{venue}</span>
               </div>
             )}
             {activity.organizerName && (
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <span style={{ fontSize: "1.2rem" }}>🏢</span>
-                <span style={{ color: "#374151", fontSize: "0.95rem" }}>{activity.organizerName}</span>
+                <span style={{ fontSize: "var(--cp-fs-20)" }}>🏢</span>
+                <span style={{ color: "#374151", fontSize: "var(--cp-text-body)" }}>{activity.organizerName}</span>
               </div>
             )}
           </div>
@@ -116,10 +116,10 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
               style={{ width: 100, height: 100, borderRadius: "0.5rem", flexShrink: 0 }}
             />
             <div>
-              <div style={{ fontSize: "0.78rem", color: "#9ca3af", marginBottom: "0.25rem" }}>
+              <div style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af", marginBottom: "0.25rem" }}>
                 {zh ? "扫码查看详情 / 报名" : "Scan to view details & register"}
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#6b7280", wordBreak: "break-all" }}>{detailUrl}</div>
+              <div style={{ fontSize: "var(--cp-text-caption)", color: "#6b7280", wordBreak: "break-all" }}>{detailUrl}</div>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
       {/* Print button (non-print) */}
       <div className="no-print" style={{ position: "fixed", bottom: "2rem", right: "2rem" }}>
         <button
-          style={{ padding: "0.75rem 1.5rem", background: "#16a34a", color: "#fff", border: "none", borderRadius: "0.5rem", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}
+            style={{ padding: "0.75rem 1.5rem", background: "#16a34a", color: "#fff", border: "none", borderRadius: "0.5rem", cursor: "pointer", fontWeight: 600, fontSize: "var(--cp-text-small)" }}
           onClick={() => window.print()}
         >
           {zh ? "🖨️ 打印 / 保存" : "🖨️ Print / Save"}

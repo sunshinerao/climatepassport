@@ -1,0 +1,77 @@
+:root {
+  --cp-font-sans: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --cp-font-mono: "SF Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Generic size ramp for legacy literal migration (non-home). */
+  --cp-fs-10: 10px;
+  --cp-fs-9: 9px;
+  --cp-fs-11: 11px;
+  --cp-fs-12: 12px;
+  --cp-fs-12-5: 12.5px;
+  --cp-fs-13: 13px;
+  --cp-fs-14: 14px;
+  --cp-fs-15: 15px;
+  --cp-fs-16: 16px;
+  --cp-fs-17: 17px;
+  --cp-fs-18: 18px;
+  --cp-fs-19: 19px;
+  --cp-fs-20: 20px;
+  --cp-fs-21: 21px;
+  --cp-fs-22: 22px;
+  --cp-fs-24: 24px;
+  --cp-fs-26: 26px;
+  --cp-fs-28: 28px;
+  --cp-fs-30: 30px;
+  --cp-fs-32: 32px;
+  --cp-fs-34: 34px;
+  --cp-fs-36: 36px;
+  --cp-fs-46: 46px;
+  --cp-fs-52: 52px;
+  --cp-fs-64: 64px;
+  --cp-fs-72: 72px;
+
+  --cp-fs-r-0-71875: 0.71875rem;
+  --cp-fs-r-0-82: 0.82rem;
+  --cp-fs-r-1-28: 1.28rem;
+  --cp-fs-r-1-7: 1.7rem;
+  --cp-fs-r-1-75: 1.75rem;
+  --cp-fs-r-1-8: 1.8rem;
+
+  --cp-fs-caption: var(--cp-text-caption);
+  --cp-fs-small: var(--cp-text-small);
+  --cp-fs-body: var(--cp-text-body);
+  --cp-fs-body-lg: var(--cp-text-body-lg);
+
+  --cp-fs-admin-caption: var(--cp-admin-text-caption);
+  --cp-fs-admin-small: var(--cp-admin-text-small);
+  --cp-fs-admin-body: var(--cp-admin-text-body);
+  --cp-fs-admin-body-lg: var(--cp-admin-text-body-lg);
+}
+
+/* Shared typography utilities for all non-home modules */
+.cp-type-caption { font-size: var(--cp-fs-caption); }
+.cp-type-small { font-size: var(--cp-fs-small); }
+.cp-type-body { font-size: var(--cp-fs-body); }
+.cp-type-body-lg { font-size: var(--cp-fs-body-lg); }
+.cp-type-admin-caption { font-size: var(--cp-fs-admin-caption); }
+.cp-type-admin-small { font-size: var(--cp-fs-admin-small); }
+.cp-type-admin-body { font-size: var(--cp-fs-admin-body); }
+.cp-type-admin-body-lg { font-size: var(--cp-fs-admin-body-lg); }
+
+.cp-font-sans { font-family: var(--cp-font-sans); }
+.cp-font-mono { font-family: var(--cp-font-mono); }
+
+/* Module-level root classes should inherit from global typography by default. */
+.proto-admin-main,
+.proto-dashboard-main,
+.admin-activities-content,
+.activity-admin-console,
+.activity-admin-index,
+.create-activity-wrap,
+.cpca-shell,
+.proto-verifier-shell,
+.identity-verify-shell,
+.summer-school-page,
+.certificate-profile-page {
+  font-family: var(--cp-font-sans);
+}

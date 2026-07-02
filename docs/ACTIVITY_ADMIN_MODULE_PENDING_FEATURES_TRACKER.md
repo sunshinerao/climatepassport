@@ -1,6 +1,6 @@
 # Activity Admin Module Pending Features Tracker
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
 ## Status Legend
 
@@ -19,3 +19,9 @@ Last updated: 2026-05-29
 - [ ] AACT-TODO-006 `todo` decide whether application review should gain a lightweight inline drawer/summary mode inside detail while keeping the full review page intact.
 - [ ] AACT-TODO-007 `todo` add screenshot-based or browser-level regression coverage for activities admin list/detail console flows.
 - [ ] AACT-TODO-008 `todo` refine role-aware empty states and permissions copy for EVENT_MANAGER vs ADMIN views.
+- [x] AACT-TODO-009 `done` fix inline agenda modal interaction issue by decoupling overlay classes from admin shell mobile overlay.
+- [x] AACT-TODO-010 `done` add minimal admin institutions data API to support institution link/unlink deep validation in low-sample environments.
+- [x] AACT-TODO-011 `done` align activities-related pages typography (font family and key text-size scale) with global design tokens.
+- [x] AACT-TODO-012 `done` establish global typography system file and migrate non-home font-family declarations to global variables, with module-level class boundary documentation.
+- [x] AACT-TODO-013 `done` complete second-round activities/admin hardcoded size tokenization and add global typography governance rule doc for future modules.
+- [x] AACT-TODO-014 `done` finish third-round non-home font-size literal migration, add extended global size tokens, and publish non-home typography audit checklist.

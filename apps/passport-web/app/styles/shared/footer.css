@@ -75,12 +75,12 @@
   background: rgba(255, 255, 255, 0.1);
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
   flex-shrink: 0;
 }
 
 .footer-brand-name {
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: white;
@@ -88,7 +88,7 @@
 }
 
 .footer-brand-tagline {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.22em;
@@ -99,7 +99,7 @@
 .footer-brand-desc {
   margin-top: 28px;
   max-width: 380px;
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   line-height: 1.75;
   color: rgba(255, 255, 255, 0.68);
 }
@@ -120,7 +120,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.1);
   padding: 10px 18px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
   color: white;
   cursor: pointer;
@@ -141,7 +141,7 @@
 }
 
 .footer-col h4 {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -159,7 +159,7 @@
 }
 
 .footer-col a {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
@@ -188,7 +188,7 @@
 }
 
 .footer-disclaimer {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.48);
   max-width: 720px;
@@ -204,7 +204,7 @@
 
 .footer-legal a,
 .footer-legal span {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
@@ -218,7 +218,7 @@
 /* Legacy footer classes – kept for fallback */
 .footer-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; }
 .footer-panel { padding: 18px; border-radius: 20px; }
-.footer-panel h3 { margin: 0 0 10px; font-size: 18px; font-weight: 600; }
+.footer-panel h3 { margin: 0 0 10px; font-size: var(--cp-fs-18); font-weight: 600; }
 .footer-links { display: grid; gap: 10px; }
 .footer-links a { color: rgba(255,255,255,0.88); }
 .footer-bottom { padding-top: 0; padding-bottom: 26px; color: rgba(255,255,255,0.64); font-size: var(--cp-text-small); }

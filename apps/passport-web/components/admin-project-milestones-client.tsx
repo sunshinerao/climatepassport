@@ -169,7 +169,7 @@ export default function AdminProjectMilestonesClient({ activityId, locale, miles
                   <td style={{ color: "var(--color-text-muted)" }}>{i + 1}</td>
                   <td>
                     <strong>{m.title}</strong>
-                    {m.description && <div style={{ fontSize: "0.82em", color: "var(--color-text-muted)" }}>{m.description}</div>}
+                    {m.description && <div style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{m.description}</div>}
                   </td>
                   <td>{m.dueDate ? new Date(m.dueDate).toLocaleDateString(zh ? "zh-CN" : "en-US") : "—"}</td>
                   <td>

@@ -253,6 +253,11 @@ enum BadgeAwardStatus {
   REVOKED
 }
 
+enum AuthEmailTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
 model User {
   id                   String               @id @default(uuid())
   email                String               @unique
@@ -307,6 +312,7 @@ model User {
   activityWishlists    ActivityWishlist[]
   activityVerifiers    ActivityVerifier[]
   activityApplications ActivityApplication[]
+  authEmailTokens      AuthEmailToken[]
 
   @@index([email])
   @@index([passCode])
@@ -398,6 +404,26 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model AuthEmailToken {
+  id         String                @id @default(uuid())
+  userId     String
+  email      String
+  purpose    AuthEmailTokenPurpose
+  tokenHash  String                @unique
+  code       String?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int                   @default(0)
+  createdAt  DateTime              @default(now())
+
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt])
+  @@index([email, purpose, createdAt])
+  @@index([expiresAt])
+  @@map("auth_email_tokens")
 }
 
 model Track {

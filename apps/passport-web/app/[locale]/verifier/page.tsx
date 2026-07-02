@@ -4,8 +4,10 @@ import { loadVerifiableEvents } from "@/lib/server/verifier";
 import { loadVerifiableActivities } from "@/lib/server/verifier-activity";
 import { VerifierScanner } from "@/components/verifier-scanner";
 import type { Locale } from "@/lib/site-content";
+import { privatePageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata = privatePageMetadata;
 
 export default async function VerifierConsolePage({ params }: { params: { locale: Locale } }) {
   noStore();

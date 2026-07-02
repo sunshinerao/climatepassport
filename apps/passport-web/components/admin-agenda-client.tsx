@@ -289,18 +289,18 @@ export function AdminAgendaClient({
               <tbody>
                 {dayItems.sort((a, b) => a.startTime.localeCompare(b.startTime) || a.order - b.order).map((item) => (
                   <tr key={item.id}>
-                    <td style={{ whiteSpace: "nowrap", fontSize: "0.85rem" }}>{item.startTime} – {item.endTime}</td>
+                    <td style={{ whiteSpace: "nowrap", fontSize: "var(--cp-text-small)" }}>{item.startTime} – {item.endTime}</td>
                     <td>
                       <div style={{ fontWeight: 500 }}>{item.title}</div>
-                      {item.titleEn && <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>{item.titleEn}</div>}
-                      {item.venue && <div style={{ color: "#9ca3af", fontSize: "0.8rem" }}>📍 {item.venue}</div>}
+                      {item.titleEn && <div style={{ color: "#6b7280", fontSize: "var(--cp-text-small)" }}>{item.titleEn}</div>}
+                      {item.venue && <div style={{ color: "#9ca3af", fontSize: "var(--cp-text-small)" }}>📍 {item.venue}</div>}
                     </td>
                     <td>
-                      <span className="chip chip" style={{ fontSize: "0.75rem" }}>
+                      <span className="chip chip" style={{ fontSize: "var(--cp-text-caption)" }}>
                         {locale === "zh" ? TYPE_LABELS_ZH[item.type] ?? item.type : item.type}
                       </span>
                     </td>
-                    <td style={{ fontSize: "0.85rem" }}>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>
                       {item.moderator && <div style={{ marginBottom: "2px" }}>🎤 {item.moderator.name}</div>}
                       {item.speakers.map((sl) => (
                         <div key={sl.id}>{sl.speaker.name}</div>

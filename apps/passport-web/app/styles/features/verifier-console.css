@@ -17,16 +17,16 @@
 }
 .proto-verifier-head h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--cp-fs-24);
   font-weight: 600;
 }
 .proto-verifier-head p {
   margin: 4px 0 0;
   color: #6b7280;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
 }
 .proto-verifier-status {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   padding: 4px 10px;
   border-radius: 999px;
   background: #f3f4f6;
@@ -55,12 +55,12 @@
 }
 .proto-verifier-card h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
   font-weight: 600;
 }
 .proto-verifier-card label {
   display: block;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: #374151;
   margin-bottom: 6px;
   font-weight: 500;
@@ -72,7 +72,7 @@
   border-radius: 10px;
   border: 1px solid #d1d5db;
   background: #fff;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
 }
 .proto-verifier-video {
   position: relative;
@@ -94,7 +94,7 @@
   align-items: center;
   justify-content: center;
   color: #f3f4f6;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   background: rgba(15, 23, 42, 0.55);
   text-align: center;
   padding: 16px;
@@ -107,7 +107,7 @@
 .proto-verifier-btn {
   padding: 9px 16px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   font-weight: 500;
   border: 1px solid transparent;
   cursor: pointer;
@@ -134,18 +134,18 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
 }
 .proto-verifier-history article[data-tone="ok"] { border-left-color: #16a34a; }
 .proto-verifier-history article[data-tone="warn"] { border-left-color: #f59e0b; }
 .proto-verifier-history article[data-tone="error"] { border-left-color: #dc2626; }
 .proto-verifier-history article strong { font-weight: 600; color: #111827; }
-.proto-verifier-history article small { color: #6b7280; font-size: 12px; }
-.proto-verifier-muted { color: #6b7280; font-size: 13px; }
+.proto-verifier-history article small { color: #6b7280; font-size: var(--cp-fs-12); }
+.proto-verifier-muted { color: #6b7280; font-size: var(--cp-fs-13); }
 .proto-verifier-warn {
   background: #fef3c7;
   color: #92400e;
   border-radius: 8px;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
 }

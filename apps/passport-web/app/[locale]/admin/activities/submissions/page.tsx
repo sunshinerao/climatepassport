@@ -42,7 +42,7 @@ export default async function AdminActivitiesSubmissionsPage({ params }: { param
               {submissions.map((s) => (
                 <tr key={s.id}>
                   <td><a href={`/${params.locale}/admin/activities/${s.activityId}/submissions`}>{s.activity?.title ?? s.activityId}</a></td>
-                  <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{s.userId}</td>
+                  <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{s.userId}</td>
                   <td><span className="chip cpca-badge cpca-badge-amber">{s.status}</span></td>
                   <td>{s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : "—"}</td>
                   <td>

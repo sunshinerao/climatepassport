@@ -397,13 +397,13 @@ export default async function ActivityLeaderboardPage({
                       <td>
                         {medal(entry.rank)}
                         {entry.isCurrentUser && (
-                          <span style={{ marginLeft: "0.25rem", fontSize: "0.75em", color: "var(--color-primary)" }}>
+                          <span style={{ marginLeft: "0.25rem", fontSize: "var(--cp-text-caption)", color: "var(--color-primary)" }}>
                             {zh ? "（我）" : "(you)"}
                           </span>
                         )}
                       </td>
                       <td>{entry.name}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>
+                      <td style={{ fontSize: "var(--cp-text-small)" }}>
                         {entry.climatePassportId ?? "—"}
                       </td>
                       <td style={{ textAlign: "right", fontWeight: 600 }}>{entry.points}</td>

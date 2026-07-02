@@ -49,9 +49,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: var(--cp-fs-32);
   font-weight: 700;
-  font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
 }
 
 .cpp-header-info {
@@ -68,8 +68,8 @@
 
 .cpp-name-row h1 {
   margin: 0;
-  font-size: 32px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-32);
+  font-family: var(--cp-font-sans);
   line-height: 1.1;
 }
 
@@ -80,7 +80,7 @@
   padding: 4px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.2);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .cpp-stat strong {
-  font-size: 24px;
+  font-size: var(--cp-fs-24);
   font-weight: 700;
 }
 
@@ -131,8 +131,8 @@
 
 .cpp-section h2 {
   margin: 0;
-  font-size: 22px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-22);
+  font-family: var(--cp-font-sans);
 }
 
 /* Featured Grid */
@@ -195,14 +195,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
 }
 
 .cpp-featured-card h3 {
   margin: 0;
-  font-size: 17px;
-  font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-17);
+  font-family: var(--cp-font-sans);
   line-height: 1.2;
 }
 
@@ -242,21 +242,21 @@
 }
 
 .cpp-skill-advanced {
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   background: #e8f5e9;
   color: #0b3d2e;
   border: 1.5px solid rgba(26, 93, 72, 0.3);
 }
 
 .cpp-skill-intermediate {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   background: #f0f7f2;
   color: #1a5d48;
   border: 1px solid rgba(26, 93, 72, 0.15);
 }
 
 .cpp-skill-beginner {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   background: var(--cp-bg-soft);
   color: var(--cp-text-secondary);
   border: 1px solid var(--cp-line);
@@ -321,7 +321,7 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   background: #e8f5e9;
   color: #1a5d48;
@@ -346,7 +346,7 @@
   border: 1px solid var(--cp-line);
   border-radius: 999px;
   background: transparent;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
@@ -383,7 +383,7 @@
 }
 
 .cpp-credential-icon {
-  font-size: 20px;
+  font-size: var(--cp-fs-20);
 }
 
 .cpp-credential-info {
@@ -412,7 +412,7 @@
 .cpp-credential-type-badge {
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   background: var(--cp-bg-soft);
   color: var(--cp-text-secondary);
@@ -442,7 +442,7 @@
 
 .cpp-program-card h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
 }
 
@@ -457,7 +457,7 @@
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   width: fit-content;
 }
@@ -485,13 +485,13 @@
   }
 
   .cpp-name-row h1 {
-    font-size: 24px;
+    font-size: var(--cp-fs-24);
   }
 
   .cpp-avatar {
     width: 60px;
     height: 60px;
-    font-size: 24px;
+    font-size: var(--cp-fs-24);
   }
 
   .cpp-stats-row {

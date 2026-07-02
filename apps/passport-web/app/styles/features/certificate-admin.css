@@ -22,7 +22,7 @@
   --cpca-radius: 18px;
   color: var(--cpca-ink);
   display: grid;
-  font-family: Inter, system-ui, -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
+  font-family: var(--cp-font-sans);
   gap: 20px;
   line-height: 1.6;
   max-width: 1220px;
@@ -73,7 +73,7 @@
   color: var(--cpca-ink-soft);
   display: flex;
   flex-wrap: wrap;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   gap: 6px;
 }
 
@@ -113,7 +113,7 @@
   border-radius: 999px;
   color: var(--cpca-ink-soft);
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   padding: 7px 13px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -143,8 +143,8 @@
 
 .cpca-page-head h1 {
   color: var(--cpca-forest-deep);
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-size: 26px;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-26);
   font-weight: 400;
   line-height: 1.2;
   margin: 0;
@@ -152,7 +152,7 @@
 
 .cpca-page-head p {
   color: var(--cpca-ink-soft);
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   margin: 5px 0 0;
 }
 
@@ -163,7 +163,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.cpca-stats.compact .cpca-stat strong { font-size: 22px; }
+.cpca-stats.compact .cpca-stat strong { font-size: var(--cp-fs-22); }
 
 .cpca-stat,
 .cpca-card,
@@ -210,7 +210,7 @@
 .cpca-stat span {
   color: rgba(45, 82, 69, 0.7);
   display: block;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
@@ -220,7 +220,7 @@
 .cpca-stat strong {
   color: var(--cpca-forest-deep);
   display: block;
-  font-size: 28px;
+  font-size: var(--cp-fs-28);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -231,14 +231,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   margin-top: 8px;
 }
 
 .cpca-stat small::before {
   content: "↑";
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
 }
 
 .cpca-stat small.is-down {
@@ -286,7 +286,7 @@
 
 .cpca-card-head h2 {
   color: var(--cpca-forest-deep);
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   font-weight: 700;
   margin: 0;
 }
@@ -306,7 +306,7 @@
 .cpca-table th {
   border-bottom: 1.5px solid rgba(11, 61, 46, 0.08);
   color: rgba(45, 82, 69, 0.7);
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 11px 14px;
@@ -320,7 +320,7 @@
 
 .cpca-table td {
   border-bottom: 1px solid rgba(11, 61, 46, 0.04);
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   padding: 13px 14px;
   vertical-align: middle;
   transition: background 0.15s;
@@ -328,19 +328,19 @@
 
 .cpca-table tr:hover td { background: rgba(11, 61, 46, 0.02); }
 .cpca-table tr:last-child td { border-bottom: none; }
-.cpca-table small { color: var(--cpca-ink-soft); display: block; font-size: 12px; margin-top: 2px; }
+.cpca-table small { color: var(--cpca-ink-soft); display: block; font-size: var(--cp-fs-12); margin-top: 2px; }
 .cpca-table input[type="checkbox"] { accent-color: var(--cpca-moss); width: 15px; height: 15px; cursor: pointer; }
 
 .cpca-strong { color: var(--cpca-forest-deep); font-weight: 600; }
-.cpca-muted { color: var(--cpca-ink-soft); font-size: 12px; }
-.cpca-mono { color: var(--cpca-forest-deep); font-family: "SF Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; }
+.cpca-muted { color: var(--cpca-ink-soft); font-size: var(--cp-fs-12); }
+.cpca-mono { color: var(--cpca-forest-deep); font-family: var(--cp-font-mono); font-size: var(--cp-fs-12); font-weight: 700; letter-spacing: -0.01em; }
 
 /* Badges - Enhanced with dot animation */
 .cpca-badge {
   align-items: center;
   border-radius: 999px;
   display: inline-flex;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   gap: 5px;
   padding: 4px 10px;
@@ -382,7 +382,7 @@
   background: #fff;
   color: var(--cpca-ink-soft);
   display: inline-flex;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   gap: 5px;
   justify-content: center;
@@ -451,7 +451,7 @@
 
 .cpca-bar-row span {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -487,7 +487,7 @@
 
 .cpca-bar-row strong {
   color: var(--cpca-forest-deep);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   text-align: right;
 }
@@ -519,7 +519,7 @@
   color: var(--cpca-forest-deep);
   display: grid;
   flex: 0 0 36px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 800;
   height: 36px;
   place-items: center;
@@ -532,9 +532,9 @@
   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
 }
 
-.cpca-feed p { margin: 0; font-size: 13px; line-height: 1.4; }
+.cpca-feed p { margin: 0; font-size: var(--cp-fs-13); line-height: 1.4; }
 .cpca-feed p strong { color: var(--cpca-forest-deep); }
-.cpca-feed small { color: var(--cpca-ink-soft); display: block; font-size: 11px; margin-top: 3px; }
+.cpca-feed small { color: var(--cpca-ink-soft); display: block; font-size: var(--cp-fs-11); margin-top: 3px; }
 
 /* Quick Actions Grid - Enhanced */
 .cpca-quick-grid {
@@ -561,7 +561,7 @@
 
 .cpca-quick-grid span {
   color: var(--cpca-moss);
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -570,13 +570,13 @@
 .cpca-quick-grid strong {
   color: var(--cpca-forest-deep);
   display: block;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   margin: 4px 0 3px;
 }
 
 .cpca-quick-grid small {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   line-height: 1.4;
 }
 
@@ -607,7 +607,7 @@
   border-radius: 4px;
   color: var(--cpca-ink-soft);
   display: flex;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   height: 80%;
   justify-content: center;
   letter-spacing: 0.1em;
@@ -631,9 +631,9 @@
 .cpca-template-thumb.tone-5 div { border-radius: 12px; height: 65%; width: 50%; }
 
 .cpca-template-body { padding: 14px 16px; }
-.cpca-template-body h3 { color: var(--cpca-forest-deep); font-size: 14px; font-weight: 700; margin: 0 0 4px; }
-.cpca-template-meta { align-items: center; color: var(--cpca-ink-soft); display: flex; flex-wrap: wrap; font-size: 12px; gap: 8px; margin-bottom: 8px; }
-.cpca-template-body small { color: var(--cpca-ink-soft); font-size: 11px; }
+.cpca-template-body h3 { color: var(--cpca-forest-deep); font-size: var(--cp-fs-14); font-weight: 700; margin: 0 0 4px; }
+.cpca-template-meta { align-items: center; color: var(--cpca-ink-soft); display: flex; flex-wrap: wrap; font-size: var(--cp-fs-12); gap: 8px; margin-bottom: 8px; }
+.cpca-template-body small { color: var(--cpca-ink-soft); font-size: var(--cp-fs-11); }
 
 /* Forms - Enhanced */
 .cpca-form-card { scroll-margin-top: 110px; }
@@ -650,7 +650,7 @@
 
 .cpca-form-grid label { display: grid; gap: 6px; }
 .cpca-form-grid label.wide { grid-column: 1 / -1; }
-.cpca-form-grid span, .cpca-toggle-row label { color: var(--cpca-ink-soft); font-size: 12px; font-weight: 600; }
+.cpca-form-grid span, .cpca-toggle-row label { color: var(--cpca-ink-soft); font-size: var(--cp-fs-12); font-weight: 600; }
 
 .cpca-form-grid input,
 .cpca-form-grid select,
@@ -661,7 +661,7 @@
   border: 1.5px solid rgba(11, 61, 46, 0.1);
   border-radius: 11px;
   color: var(--cpca-ink);
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   padding: 10px 14px;
   transition: all 0.2s;
 }
@@ -709,7 +709,7 @@
 }
 
 .cpca-toggle-row input { accent-color: var(--cpca-moss); }
-.cpca-message { color: var(--cpca-forest-deep); font-size: 13px; font-weight: 600; margin: 14px 0 0; }
+.cpca-message { color: var(--cpca-forest-deep); font-size: var(--cp-fs-13); font-weight: 600; margin: 14px 0 0; }
 
 .template-layout-hint div {
   align-items: center;
@@ -718,7 +718,7 @@
   border-radius: 11px;
   color: var(--cpca-forest-deep);
   display: flex;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   min-height: 40px;
   padding: 0 14px;
@@ -747,13 +747,13 @@
 
 .template-inline-preview-head h3 {
   color: var(--cpca-forest-deep);
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   margin: 0;
 }
 
 .template-inline-preview-head small {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
 }
 
 .template-inline-preview-stage {
@@ -789,7 +789,7 @@
 
 .template-inline-kicker {
   color: rgba(11, 61, 46, 0.72);
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -797,13 +797,13 @@
 
 .template-inline-preview-sheet strong {
   color: var(--cpca-forest-deep);
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
   line-height: 1.15;
 }
 
 .template-inline-preview-sheet span {
   color: var(--cpca-ink-soft);
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
 }
 
 .template-json-help {
@@ -817,14 +817,14 @@
 
 .template-json-help h3 {
   color: var(--cpca-forest-deep);
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   margin: 0;
 }
 
 .template-json-help summary {
   color: var(--cpca-forest-deep);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   font-weight: 700;
   list-style: none;
 }
@@ -849,7 +849,7 @@
 
 .template-json-help p {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   line-height: 1.55;
   margin: 0;
 }
@@ -863,7 +863,7 @@
 
 .template-json-help li {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   line-height: 1.55;
 }
 
@@ -876,7 +876,7 @@
 
 .template-variable-copy-btn {
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   min-height: 28px;
   padding: 4px 10px;
 }
@@ -885,7 +885,7 @@
   background: #0f2d25;
   border-radius: 10px;
   color: #dff7ee;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   line-height: 1.45;
   margin: 0;
   overflow: auto;
@@ -933,12 +933,12 @@
 
 .cpca-preview-modal-head strong {
   color: var(--cpca-forest-deep);
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
 }
 
 .cpca-preview-modal-head small {
   color: var(--cpca-ink-soft);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
 }
 
 .cpca-preview-modal-body {
@@ -1016,7 +1016,7 @@
   align-items: center;
   color: var(--cpca-ink-soft);
   display: flex;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   justify-content: space-between;
   padding-top: 8px;
 }
@@ -1029,7 +1029,7 @@
   border-radius: 8px;
   color: var(--cpca-ink-soft);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   height: 32px;
   width: 32px;
@@ -1067,7 +1067,7 @@
 @media (max-width: 640px) {
   .cpca-page-head,
   .cpca-pager { align-items: stretch; flex-direction: column; gap: 10px; }
-  .cpca-page-head h1 { font-size: 22px; }
+  .cpca-page-head h1 { font-size: var(--cp-fs-22); }
   .cpca-stats,
   .cpca-template-grid,
   .cpca-form-grid { grid-template-columns: 1fr; }
@@ -1076,7 +1076,7 @@
   .cpca-table { min-width: 720px; }
   .cpca-bar-row { grid-template-columns: 104px 1fr 42px; }
   .cpca-module-nav { border-radius: 12px; padding: 12px; }
-  .cpca-section-links a { font-size: 11px; padding: 6px 10px; }
+  .cpca-section-links a { font-size: var(--cp-fs-11); padding: 6px 10px; }
 }
 
 
@@ -1106,7 +1106,7 @@
 
 .proto-admin-main .cpca-card-head h2,
 .proto-admin-main .cpca-featured-card h3 {
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
 }
 
 .proto-admin-main .cpca-table th {

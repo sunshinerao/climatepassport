@@ -2,6 +2,11 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { getPrismaClient } from "@/lib/server/prisma";
 import type { Locale } from "@/lib/site-content";
+import { platformPageMetadata } from "@/lib/seo";
+
+export function generateMetadata({ params }: { params: { locale: Locale } }) {
+  return platformPageMetadata(params.locale, "activities");
+}
 
 export default async function ActivitiesPage({ params }: { params: { locale: Locale } }) {
   noStore();
@@ -95,7 +100,7 @@ export default async function ActivitiesPage({ params }: { params: { locale: Loc
       {/* Pinned events banner */}
       {pinnedEvents.length > 0 && (
         <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#dc2626", marginBottom: "0.75rem" }}>
+          <h2 style={{ fontSize: "var(--cp-text-body)", fontWeight: 700, color: "#dc2626", marginBottom: "0.75rem" }}>
             📌 {zh ? "置顶活动" : "Featured Events"}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -115,17 +120,17 @@ export default async function ActivitiesPage({ params }: { params: { locale: Loc
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.25rem" }}>
-                    <span className="chip cpca-badge cpca-badge-blue" style={{ fontSize: "0.7rem" }}>{zh ? "活动" : "Event"}</span>
+                    <span className="chip cpca-badge cpca-badge-blue" style={{ fontSize: "var(--cp-text-caption)" }}>{zh ? "活动" : "Event"}</span>
                     {a.eventLayer && (
-                      <span className="chip chip" style={{ fontSize: "0.7rem" }}>
+                      <span className="chip chip" style={{ fontSize: "var(--cp-text-caption)" }}>
                         {EVENT_LAYER_LABELS[a.eventLayer]?.[zh ? "zh" : "en"] ?? a.eventLayer}
                       </span>
                     )}
-                    {a.isPrivate && <span className="chip" style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff" }}>{zh ? "闭门会" : "Closed"}</span>}
+                    {a.isPrivate && <span className="chip" style={{ fontSize: "var(--cp-text-caption)", background: "#7c3aed", color: "#fff" }}>{zh ? "闭门会" : "Closed"}</span>}
                   </div>
                   <div style={{ fontWeight: 600 }}>{zh ? a.title : (a.titleEn ?? a.title)}</div>
                   {a.startTime && (
-                    <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                    <div style={{ fontSize: "var(--cp-text-small)", color: "#6b7280" }}>
                       📅 {new Date(a.startTime).toLocaleDateString(zh ? "zh-CN" : "en-US")}
                     </div>
                   )}
@@ -172,12 +177,12 @@ export default async function ActivitiesPage({ params }: { params: { locale: Loc
                   </span>
                   {a.isFeatured && <span className="chip cpca-badge cpca-badge-amber">{zh ? "精选" : "Featured"}</span>}
                   {a.type === "EVENT" && a.eventLayer && (
-                    <span className="chip chip" style={{ fontSize: "0.7rem" }}>
+                    <span className="chip chip" style={{ fontSize: "var(--cp-text-caption)" }}>
                       {EVENT_LAYER_LABELS[a.eventLayer]?.[zh ? "zh" : "en"] ?? a.eventLayer}
                     </span>
                   )}
                   {a.isPrivate && (
-                    <span className="chip" style={{ fontSize: "0.7rem", background: "#7c3aed", color: "#fff" }}>
+                    <span className="chip" style={{ fontSize: "var(--cp-text-caption)", background: "#7c3aed", color: "#fff" }}>
                       {zh ? "闭门会" : "Closed"}
                     </span>
                   )}

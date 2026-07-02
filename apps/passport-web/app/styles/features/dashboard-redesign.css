@@ -39,14 +39,14 @@
   border: 1px solid rgba(255,255,255,0.22);
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .dash-id-tag {
-  font-size: 11px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", monospace;
+  font-size: var(--cp-fs-11);
+  font-family: var(--cp-font-mono);
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.65);
   margin-top: 4px;
@@ -68,7 +68,7 @@
 
 .dash-point-box strong {
   display: block;
-  font-size: 26px;
+  font-size: var(--cp-fs-26);
   font-weight: 700;
   letter-spacing: -0.04em;
   color: var(--cp-white);
@@ -76,7 +76,7 @@
 
 .dash-point-box span {
   display: block;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -91,7 +91,7 @@
 .dash-level-label {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: rgba(255,255,255,0.7);
   margin-bottom: 6px;
 }
@@ -123,13 +123,13 @@
 
 .dash-section-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .dash-section-header a {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
   color: var(--cp-forest);
 }
@@ -166,17 +166,17 @@
   background: linear-gradient(135deg, #eef6f1 0%, #f8fbf8 100%);
   display: grid;
   place-items: center;
-  font-size: 20px;
+  font-size: var(--cp-fs-20);
 }
 
 .cert-card h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
 }
 
 .cert-card-meta {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-text-secondary);
   line-height: 1.5;
 }
@@ -185,7 +185,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #16a34a;
@@ -200,7 +200,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #d97706;
@@ -237,17 +237,17 @@
 
 .dash-achievement.locked { opacity: 0.38; }
 
-.dash-achievement-icon { font-size: 30px; line-height: 1; }
+.dash-achievement-icon { font-size: var(--cp-fs-30); line-height: 1; }
 
 .dash-achievement-name {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   color: var(--cp-text);
   line-height: 1.3;
 }
 
 .dash-achievement-pts {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-text-muted);
 }
 
@@ -280,13 +280,13 @@
 .dash-feed-body { flex: 1; }
 
 .dash-feed-title {
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   color: var(--cp-text);
 }
 
 .dash-feed-time {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-text-muted);
   margin-top: 2px;
   font-weight: 600;
@@ -320,7 +320,7 @@
 
 .passport-dashboard-welcome-text h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(var(--cp-title-page-min), calc(3.2vw * var(--cp-title-scale)), var(--cp-title-page-max));
   font-weight: 400;
   line-height: 1.15;
@@ -330,7 +330,7 @@
 .passport-dashboard-welcome-text p {
   margin: 6px 0 0;
   color: var(--cp-text-secondary);
-  font-size: 0.9375rem;
+  font-size: var(--cp-fs-15);
   line-height: 1.6;
 }
 
@@ -368,7 +368,7 @@
 .passport-dashboard-card-title {
   margin: 0 0 16px;
   font-size: var(--cp-title-md);
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-weight: 400;
   line-height: 1.2;
   color: var(--cp-forest);
@@ -392,7 +392,7 @@
 }
 
 .passport-dashboard-hero-header {
-  font-size: 0.9375rem;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -401,7 +401,7 @@
 
 .passport-dashboard-hero-name {
   margin-top: 10px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(calc(1.95rem * var(--cp-title-scale)), calc(4vw * var(--cp-title-scale)), calc(2.75rem * var(--cp-title-scale)));
   font-weight: 400;
   line-height: 1.15;
@@ -421,7 +421,7 @@
   border-radius: 999px;
   background: rgba(196, 137, 63, 0.24);
   color: #f3d6ac;
-  font-size: 0.96rem;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
 }
 
@@ -439,13 +439,13 @@
 
 .passport-dashboard-hero-stat-value {
   font-size: clamp(1.7rem, 2.8vw, 2.34rem);
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-weight: 600;
   line-height: 1;
 }
 
 .passport-dashboard-hero-stat-label {
-  font-size: 0.9375rem;
+  font-size: var(--cp-fs-15);
   color: rgba(255, 255, 255, 0.78);
   font-weight: 500;
   line-height: 1.45;
@@ -453,8 +453,8 @@
 
 .passport-dashboard-hero-id {
   margin-top: 32px;
-  font-size: 0.8125rem;
-  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: var(--cp-fs-13);
+  font-family: var(--cp-font-mono);
   color: rgba(255, 255, 255, 0.62);
   letter-spacing: 0.04em;
 }
@@ -475,7 +475,7 @@
   border: 1px solid rgba(218, 236, 228, 0.24);
   background: rgba(225, 240, 233, 0.14);
   color: rgba(242, 250, 246, 0.95);
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   line-height: 1.45;
   font-weight: 500;
   backdrop-filter: blur(2px);
@@ -522,8 +522,8 @@
 }
 
 .passport-dashboard-hero-qr-code-line strong {
-  font-family: "SF Mono", ui-monospace, monospace;
-  font-size: 11px;
+  font-family: var(--cp-font-mono);
+  font-size: var(--cp-fs-11);
   font-weight: 400;
   color: #36564c;
   max-width: none;
@@ -550,7 +550,7 @@
 
 .passport-dashboard-hero-qr-help {
   margin-top: 0;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   line-height: 1.45;
   font-weight: 400;
   letter-spacing: 0.1em;
@@ -573,20 +573,20 @@
 }
 
 .passport-dashboard-stat-mini-icon {
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
   margin-bottom: 6px;
 }
 
 .passport-dashboard-stat-mini-value {
-  font-size: 1.7rem;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-r-1-7);
+  font-family: var(--cp-font-sans);
   font-weight: 600;
   color: var(--cp-forest);
 }
 
 .passport-dashboard-stat-mini-label {
   margin-top: 2px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   line-height: 1.5;
   color: var(--cp-text-secondary);
 }
@@ -618,8 +618,8 @@
 }
 
 .passport-dashboard-date-day {
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-size: 1.25rem;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-20);
   font-weight: 600;
   line-height: 1;
   color: var(--cp-forest);
@@ -627,7 +627,7 @@
 
 .passport-dashboard-date-month {
   margin-top: -2px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: var(--cp-text-secondary);
 }
 
@@ -639,7 +639,7 @@
 
 .passport-dashboard-timeline-meta {
   margin-top: 2px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   line-height: 1.5;
   color: var(--cp-text-secondary);
 }
@@ -659,14 +659,14 @@
 
 .passport-dashboard-timeline-empty-meta {
   margin-top: 4px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: var(--cp-text-secondary);
   line-height: 1.5;
 }
 
 .passport-dashboard-climate-passport .passport-dashboard-welcome-text h1,
 .passport-dashboard-climate-passport .passport-dashboard-hero-name {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(var(--cp-title-page-min), calc(2.9vw * var(--cp-title-scale)), var(--cp-title-page-max));
   font-weight: 700;
   line-height: normal;
@@ -674,30 +674,30 @@
 }
 
 .passport-dashboard-climate-passport .passport-dashboard-hero-header {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 400;
   letter-spacing: 1.54px;
   text-transform: none;
 }
 
 .passport-dashboard-climate-passport .passport-dashboard-hero-stat-value {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
-  font-size: 22px;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-22);
   font-weight: 700;
   line-height: normal;
   letter-spacing: normal;
 }
 
 .passport-dashboard-climate-passport .passport-dashboard-stat-mini-value {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
-  font-size: 28px;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-28);
   font-weight: 700;
   line-height: normal;
   letter-spacing: -0.04em;
 }
 
 .passport-dashboard-climate-passport .passport-dashboard-card-title {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-family: var(--cp-font-sans);
   font-size: var(--cp-title-md);
   font-weight: 700;
   line-height: normal;
@@ -706,8 +706,8 @@
 
 .passport-dashboard-climate-passport .passport-dashboard-hero-stat-label,
 .passport-dashboard-climate-passport .passport-dashboard-stat-mini-label {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
-  font-size: 11px;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-11);
   font-weight: 400;
   letter-spacing: 0.1em;
 }
@@ -716,7 +716,7 @@
 .passport-dashboard-climate-passport .passport-dashboard-hero-qr-help,
 .passport-dashboard-climate-passport .passport-dashboard-hero-qr-code-line strong,
 .passport-dashboard-climate-passport .passport-dashboard-hero-qr-code-line span {
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-family: var(--cp-font-sans);
 }
 
 .passport-dashboard-pill {
@@ -726,7 +726,7 @@
   min-height: 34px;
   padding: 0 14px;
   border-radius: 999px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
 }
 
@@ -771,7 +771,7 @@
   background: rgba(196, 137, 63, 0.16);
   display: grid;
   place-items: center;
-  font-size: 20px;
+  font-size: var(--cp-fs-20);
 }
 
 .passport-dashboard-cert-download {
@@ -795,7 +795,7 @@
 .passport-dashboard-cert-issuer,
 .passport-dashboard-cert-date {
   margin-top: 4px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   line-height: 1.5;
   color: var(--cp-text-secondary);
 }
@@ -860,8 +860,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 28px;
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: var(--cp-fs-28);
+  font-family: var(--cp-font-sans);
   font-weight: 700;
   color: var(--cp-progress-active-start);
   line-height: normal;
@@ -872,7 +872,7 @@
   left: 50%;
   bottom: 28px;
   transform: translateX(-50%);
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   line-height: 1.45;
   color: var(--cp-text-secondary);
 }
@@ -900,7 +900,7 @@
 }
 
 .passport-dashboard-badge-icon {
-  font-size: 20px;
+  font-size: var(--cp-fs-20);
 }
 
 .passport-dashboard-badge-name {
@@ -912,7 +912,7 @@
 
 .passport-dashboard-badge .passport-dashboard-timeline-meta {
   margin-top: 4px;
-  font-size: 0.71875rem;
+  font-size: var(--cp-fs-r-0-71875);
   line-height: 1.4;
 }
 
@@ -928,7 +928,7 @@
   background: linear-gradient(135deg, rgba(143, 184, 154, 0.08) 0%, rgba(196, 220, 200, 0.08) 100%);
   padding: 14px 10px;
   text-align: center;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
   line-height: 1.45;
   color: var(--cp-ink);
@@ -955,7 +955,7 @@
   border-radius: 999px;
   background: var(--cp-white);
   color: var(--cp-text);
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   padding: 8px 14px;
 }
@@ -981,7 +981,7 @@
 .field-hint {
   display: block;
   margin-top: 6px;
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   line-height: 1.5;
   color: var(--cp-text-secondary);
 }
@@ -1008,7 +1008,7 @@
   background: linear-gradient(135deg, rgba(31, 90, 78, 0.08) 0%, rgba(232, 200, 138, 0.14) 100%);
   color: var(--cp-ink);
   padding: 9px 14px;
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -1022,7 +1022,7 @@
 }
 
 .profile-avatar-upload-filename {
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: var(--cp-text-secondary);
 }
 
@@ -1056,7 +1056,7 @@
   background: transparent;
   color: var(--cp-text);
   text-align: left;
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -1070,7 +1070,7 @@
 .country-combobox-empty {
   padding: 10px;
   color: var(--cp-text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
 }
 
 .profile-avatar-preview {
@@ -1090,7 +1090,7 @@
 }
 
 .profile-avatar-meta {
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   color: var(--cp-text-secondary);
   line-height: 1.4;
 }
@@ -1120,7 +1120,7 @@
   .passport-dashboard-hero-id,
   .passport-dashboard-hero-qr-help,
   .passport-dashboard-hero-tag {
-    font-size: 0.8125rem;
+    font-size: var(--cp-fs-13);
   }
 
   .passport-dashboard-hero-qr-frame {
@@ -1167,7 +1167,7 @@
   }
 
   .passport-dashboard-hero-role {
-    font-size: 0.8125rem;
+    font-size: var(--cp-fs-13);
     padding: 6px 14px;
   }
 

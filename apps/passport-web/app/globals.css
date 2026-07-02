@@ -1,4 +1,5 @@
 @import "./styles/features/home.css";
+@import "./styles/shared/typography-system.css";
 @import "./styles/shared/extended-components.css";
 @import "./styles/shared/certificate-foundation.css";
 @import "./styles/shared/footer.css";
@@ -98,7 +99,7 @@ body {
   margin: 0;
   color: var(--cp-text);
   font-size: var(--cp-text-body);
-  font-family: Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--cp-font-sans);
   background: linear-gradient(180deg, var(--cp-bg-page-top) 0%, var(--cp-bg-page-mid) 46%, var(--cp-white) 100%);
 }
 

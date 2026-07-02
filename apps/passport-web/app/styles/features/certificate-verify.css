@@ -72,7 +72,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: var(--cp-fs-36);
   font-weight: 700;
   color: #fff;
   background: var(--cpv-accent);
@@ -81,8 +81,8 @@
 
 .cpv-banner h1 {
   margin: 0;
-  font-size: 32px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-32);
+  font-family: var(--cp-font-sans);
   line-height: 1.1;
 }
 
@@ -129,7 +129,7 @@
   flex-shrink: 0;
   background: var(--cpv-accent);
   color: #fff;
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
 }
 
 .cpv-notice strong {
@@ -182,8 +182,8 @@
 
 .cpv-summary-header h2 {
   margin: 6px 0 0;
-  font-size: 24px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-24);
+  font-family: var(--cp-font-sans);
   line-height: 1.15;
 }
 
@@ -193,7 +193,7 @@
   gap: 6px;
   padding: 6px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -252,8 +252,8 @@
 }
 
 .cpv-mono {
-  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
-  font-size: 13px;
+  font-family: var(--cp-font-mono);
+  font-size: var(--cp-fs-13);
   letter-spacing: -0.02em;
 }
 
@@ -279,7 +279,7 @@
 .cpv-tag {
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
 }
 
@@ -308,7 +308,7 @@
 
 .cpv-suggestions h2 {
   margin: 0 0 16px;
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
 }
 
 .cpv-suggestions ul {
@@ -339,7 +339,7 @@
 
 .cpv-verification-details h3 {
   margin: 0 0 16px;
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
 }
 
 .cpv-verify-items {
@@ -375,8 +375,8 @@
 }
 
 .cpv-verify-item code {
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 13px;
+  font-family: var(--cp-font-mono);
+  font-size: var(--cp-fs-13);
   padding: 4px 10px;
   background: var(--cp-bg-soft);
   border-radius: 6px;
@@ -387,7 +387,7 @@
   border: 1px solid var(--cp-line);
   border-radius: 6px;
   background: var(--cp-white);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   cursor: pointer;
   transition: 0.15s;
@@ -403,7 +403,7 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
 }
 
@@ -435,8 +435,8 @@
 }
 
 .cpv-trust-badge strong {
-  font-size: 18px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-size: var(--cp-fs-18);
+  font-family: var(--cp-font-sans);
 }
 
 .cpv-trust-badge p {
@@ -463,7 +463,7 @@
 
 .cpv-verify-another h3 {
   margin: 0 0 16px;
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
 }
 
 .cpv-verify-form {
@@ -514,13 +514,13 @@
   }
 
   .cpv-banner h1 {
-    font-size: 24px;
+    font-size: var(--cp-fs-24);
   }
 
   .cpv-icon-badge {
     width: 60px;
     height: 60px;
-    font-size: 28px;
+    font-size: var(--cp-fs-28);
   }
 
   .cpv-detail-grid {

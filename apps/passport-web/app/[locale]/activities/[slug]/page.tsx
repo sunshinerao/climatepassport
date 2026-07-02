@@ -215,17 +215,17 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                     <div className="data-card" key={sl.id} style={{ textAlign: "center", padding: "1rem" }}>
                       {sl.speaker.avatar
                         ? <img alt={sl.speaker.name} src={sl.speaker.avatar} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", margin: "0 auto 0.5rem" }} />
-                        : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#e5e7eb", margin: "0 auto 0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "#6b7280" }}>👤</div>
+                        : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#e5e7eb", margin: "0 auto 0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--cp-fs-28)", color: "#6b7280" }}>👤</div>
                       }
                       <div style={{ fontWeight: 600 }}>{zh ? sl.speaker.name : (sl.speaker.nameEn ?? sl.speaker.name)}</div>
                       {(sl.role || sl.roleEn) && (
-                        <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: 2 }}>{zh ? sl.role : (sl.roleEn ?? sl.role)}</div>
+                        <div style={{ fontSize: "var(--cp-text-small)", color: "#6b7280", marginTop: 2 }}>{zh ? sl.role : (sl.roleEn ?? sl.role)}</div>
                       )}
                       {(sl.speaker.title || sl.speaker.titleEn) && (
-                        <div style={{ fontSize: "0.8rem", color: "#9ca3af" }}>{zh ? sl.speaker.title : (sl.speaker.titleEn ?? sl.speaker.title)}</div>
+                        <div style={{ fontSize: "var(--cp-text-small)", color: "#9ca3af" }}>{zh ? sl.speaker.title : (sl.speaker.titleEn ?? sl.speaker.title)}</div>
                       )}
                       {(sl.speaker.organization || (sl.speaker as any).organizationEn) && (
-                        <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{zh ? sl.speaker.organization : ((sl.speaker as any).organizationEn ?? sl.speaker.organization)}</div>
+                        <div style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af" }}>{zh ? sl.speaker.organization : ((sl.speaker as any).organizationEn ?? sl.speaker.organization)}</div>
                       )}
                     </div>
                   ))}
@@ -359,7 +359,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
 
             {/* Share QR code */}
             <div className="data-card" style={{ marginTop: "1rem", textAlign: "center" }}>
-              <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: "0 0 0.5rem" }}>
+              <p style={{ fontSize: "var(--cp-text-small)", color: "#6b7280", margin: "0 0 0.5rem" }}>
                 {zh ? "扫码分享活动" : "Share this event"}
               </p>
               <img
@@ -370,7 +370,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
               <a
                 className="button button button-secondary"
                 href={`/${params.locale}/activities/${params.slug}/poster`}
-                style={{ display: "inline-block", marginTop: "0.75rem", fontSize: "0.8rem" }}
+                style={{ display: "inline-block", marginTop: "0.75rem", fontSize: "var(--cp-text-small)" }}
               >
                 {zh ? "查看活动海报" : "View Event Poster"}
               </a>
@@ -442,8 +442,8 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                 {activity.tasks.map((task) => (
                   <li className="list-item" key={task.id}>
                     <div style={{ fontWeight: 600 }}>{task.title}</div>
-                    {task.description && <p style={{ margin: "0.25rem 0 0", fontSize: "0.9em" }}>{task.description}</p>}
-                    <div style={{ fontSize: "0.85em", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+                    {task.description && <p style={{ margin: "0.25rem 0 0", fontSize: "var(--cp-text-small)" }}>{task.description}</p>}
+                    <div style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
                       <span className="chip chip">{task.taskType}</span>
                       {task.points > 0 && <span style={{ marginLeft: "0.5rem" }}>{task.points} pts</span>}
                     </div>
@@ -464,9 +464,9 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                     <div className="list">
                       {(cfg.agenda as { time?: string; title: string; speaker?: string }[]).map((item, i) => (
                         <div className="list-item" key={i}>
-                          {item.time && <span style={{ fontFamily: "monospace", minWidth: "5rem" }}>{item.time}</span>}
+                          {item.time && <span style={{ fontFamily: "var(--cp-font-mono)", minWidth: "5rem" }}>{item.time}</span>}
                           <span style={{ flex: 1 }}>{item.title}</span>
-                          {item.speaker && <span style={{ color: "var(--color-text-muted)", fontSize: "0.9em" }}>{item.speaker}</span>}
+                          {item.speaker && <span style={{ color: "var(--color-text-muted)", fontSize: "var(--cp-text-small)" }}>{item.speaker}</span>}
                         </div>
                       ))}
                     </div>
@@ -587,10 +587,10 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                       {(cfg.milestones as { title: string; due_date?: string; deliverables?: string[] }[]).map((m, i) => (
                         <div className="list-item" key={i} style={{ flexDirection: "column", alignItems: "flex-start" }}>
                           <strong>{m.title}</strong>
-                          {m.due_date && <span style={{ fontSize: "0.85em", color: "var(--color-text-muted)" }}>{zh ? "截止：" : "Due: "}{m.due_date}</span>}
+                          {m.due_date && <span style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{zh ? "截止：" : "Due: "}{m.due_date}</span>}
                           {Array.isArray(m.deliverables) && m.deliverables.length > 0 && (
                             <ul style={{ margin: "0.25rem 0 0 1rem", padding: 0 }}>
-                              {m.deliverables.map((d, j) => <li key={j} style={{ fontSize: "0.85em" }}>{d}</li>)}
+                              {m.deliverables.map((d, j) => <li key={j} style={{ fontSize: "var(--cp-text-small)" }}>{d}</li>)}
                             </ul>
                           )}
                         </div>
@@ -615,8 +615,8 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                       {(cfg.roles_available as { role: string; quota?: number; description?: string }[]).map((r, i) => (
                         <div className="list-item" key={i}>
                           <span className="chip chip">{r.role}</span>
-                          {typeof r.quota === "number" && <span style={{ fontSize: "0.85em" }}>{zh ? `名额: ${r.quota}` : `Quota: ${r.quota}`}</span>}
-                          {r.description && <span style={{ fontSize: "0.85em", color: "var(--color-text-muted)" }}>{r.description}</span>}
+                          {typeof r.quota === "number" && <span style={{ fontSize: "var(--cp-text-small)" }}>{zh ? `名额: ${r.quota}` : `Quota: ${r.quota}`}</span>}
+                          {r.description && <span style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{r.description}</span>}
                         </div>
                       ))}
                     </div>

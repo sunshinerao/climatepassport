@@ -62,8 +62,8 @@ export default async function AdminActivityCheckinPage({ params }: { params: { l
               ) : (
                 records.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{r.userId}</td>
-                    <td style={{ fontSize: "0.85em" }}>{r.taskId ?? "—"}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{r.userId}</td>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>{r.taskId ?? "—"}</td>
                     <td><span className="chip chip">{r.method}</span></td>
                     <td>
                       <span className={r.status === "VALID" ? "chip cpca-badge cpca-badge-green" : r.status === "DUPLICATE" ? "chip cpca-badge cpca-badge-amber" : "chip cpca-badge cpca-badge-red"}>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { CountryCombobox } from "@/components/country-combobox";
 import type { Locale } from "@/lib/site-content";
@@ -111,9 +112,18 @@ export function AuthForm(props: AuthFormProps) {
         body: JSON.stringify(payload),
       });
 
-      const result = (await response.json()) as { error?: string; redirectTo?: string };
+      const result = (await response.json()) as {
+        error?: string;
+        redirectTo?: string;
+        requiresVerification?: boolean;
+      };
 
       if (!response.ok) {
+        if (result.redirectTo && result.requiresVerification) {
+          window.location.assign(result.redirectTo);
+          return;
+        }
+
         setError(result.error ?? "Unable to complete this request.");
         setIsSubmitting(false);
         return;
@@ -203,6 +213,13 @@ export function AuthForm(props: AuthFormProps) {
       </label>
 
       {error ? <p className="form-error">{error}</p> : null}
+      {props.mode === "login" ? (
+        <p className="footer-note">
+          <Link href={`/${props.locale}/auth/forgot-password`}>{isZh ? "忘记密码？" : "Forgot password?"}</Link>
+          {" · "}
+          <Link href={`/${props.locale}/auth/verify-email`}>{isZh ? "验证邮箱" : "Verify email"}</Link>
+        </p>
+      ) : null}
       <div className="button-row">
         <button className="button" disabled={isSubmitting} type="submit">
           {isSubmitting ? (isZh ? "处理中…" : "Processing…") : props.labels.submit}

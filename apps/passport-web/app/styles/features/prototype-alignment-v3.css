@@ -53,7 +53,7 @@
 }
 .proto-how-it-works h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(22px, 2.6vw, 30px);
   color: var(--forest-deep, #0b3d2e);
 }
@@ -93,7 +93,7 @@
 }
 .proto-how-it-works-steps strong {
   display: block;
-  font-size: 17px;
+  font-size: var(--cp-fs-17);
   color: var(--forest-deep, #0b3d2e);
   margin-bottom: 6px;
 }
@@ -118,7 +118,7 @@
 }
 .proto-section-header h2 {
   margin: 0 0 12px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(26px, 3.5vw, 40px);
   font-weight: 400;
   color: var(--forest-deep, #0b3d2e);
@@ -127,7 +127,7 @@
 }
 .proto-section-header p {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
   color: var(--ink-soft, #2d5245);
   max-width: 56ch;
   margin-inline: auto;
@@ -181,7 +181,7 @@
 }
 
 .proto-feature-card h3 {
-  font-size: 1.25rem;
+  font-size: var(--cp-fs-20);
   font-weight: 700;
   color: var(--forest-deep, #0b3d2e);
   margin: 0 0 10px;
@@ -190,7 +190,7 @@
 
 .proto-feature-card p {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   color: var(--ink-soft, #2d5245);
   line-height: 1.7;
 }
@@ -245,7 +245,7 @@
 
 .proto-event-preview-status {
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -258,7 +258,7 @@
 
 .proto-event-preview-body h3 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
   font-weight: 700;
   color: var(--forest-deep, #0b3d2e);
   line-height: 1.35;
@@ -268,7 +268,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--ink-soft, #2d5245);
 }
 
@@ -295,7 +295,7 @@
 }
 
 .proto-stats-strip strong {
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
 }
 
 /* --- Hero: passport card rotate effect --- */
@@ -320,7 +320,7 @@
   padding: 14px 18px;
   border-radius: 14px;
   border: 1.5px solid rgba(11, 61, 46, 0.12);
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   flex: 1;
   min-width: 0;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -359,7 +359,7 @@
 }
 
 .footer-col h4 {
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -389,7 +389,7 @@
     padding: 28px 24px;
   }
   .proto-section-header h2 {
-    font-size: 24px;
+    font-size: var(--cp-fs-24);
   }
 }
 
@@ -406,7 +406,7 @@
   background: #fff
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23577a6e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.5' y2='16.5'/></svg>")
     no-repeat 14px center / 18px 18px;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .proto-events-search input:focus {
@@ -427,7 +427,7 @@
   transform: translateY(-1px);
 }
 .proto-filter-count {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   padding: 2px 8px;
   border-radius: 999px;
   background: rgba(11, 61, 46, 0.08);
@@ -466,7 +466,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
   color: var(--forest-deep, #0b3d2e);
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   box-shadow: 0 4px 10px rgba(11, 61, 46, 0.12);
@@ -508,7 +508,7 @@
 .proto-events-past-list p {
   margin: 4px 0 0;
   color: var(--ink-soft, #36524b);
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
 }
 
 /* --- Auth: blob decorations + value list + testimonial --- */
@@ -579,7 +579,7 @@
   background: rgba(255, 255, 255, 0.18);
   color: #f2e4ca;
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
 }
 .proto-auth-testimonial {
   margin: 18px 0 0;
@@ -597,7 +597,7 @@
 .proto-auth-testimonial cite {
   display: block;
   margin-top: 10px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-style: normal;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.7);
@@ -613,7 +613,7 @@
 }
 .proto-dashboard-ring-card > p {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-text-muted, #6c7d77);
   text-align: center;
 }
@@ -650,12 +650,12 @@
   gap: 2px;
 }
 .proto-dashboard-ring-label strong {
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
   letter-spacing: -0.03em;
   color: var(--cp-forest, #0b3d2e);
 }
 .proto-dashboard-ring-label span {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--cp-text-muted, #6c7d77);
@@ -679,13 +679,13 @@
   gap: 2px;
 }
 .proto-dashboard-datebox-month {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--cp-text-muted, #6c7d77);
 }
 .proto-dashboard-datebox-day {
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
   font-weight: 700;
   color: var(--cp-forest, #0b3d2e);
   line-height: 1;
@@ -742,20 +742,20 @@
 }
 .proto-admin-sidebar-head > span {
   display: block;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.6);
 }
 .proto-admin-sidebar-head h1 {
   margin: 6px 0 8px;
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
   color: #fff;
   letter-spacing: -0.02em;
 }
 .proto-admin-sidebar-head p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.72);
 }
@@ -771,7 +771,7 @@
 .proto-admin-nav-section {
   margin-top: 10px;
   padding: 0 6px;
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
@@ -787,13 +787,13 @@
   padding: 9px 12px;
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 13.5px;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   text-decoration: none;
   transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 .proto-admin-nav a span[aria-hidden] {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   color: rgba(255, 255, 255, 0.5);
 }
 .proto-admin-nav a:hover {
@@ -827,7 +827,7 @@
 .proto-admin-subnav a {
   padding: 7px 10px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: var(--cp-fs-12-5);
   font-weight: 550;
 }
 .proto-admin-nav-disabled {
@@ -837,12 +837,12 @@
   padding: 9px 12px;
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.4);
-  font-size: 13.5px;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   cursor: default;
 }
 .proto-admin-nav-disabled span[aria-hidden] {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
 }
 
 .proto-admin-mobilebar {
@@ -959,7 +959,7 @@
   }
   .proto-admin-mobilebar strong {
     color: #0b3d2e;
-    font-size: 14px;
+    font-size: var(--cp-fs-14);
   }
   .proto-admin-overlay.is-open {
     background: rgba(15, 42, 32, 0.42);

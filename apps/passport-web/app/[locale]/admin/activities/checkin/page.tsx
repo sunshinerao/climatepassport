@@ -65,7 +65,7 @@ export default async function AdminActivitiesCheckinPage({ params }: { params: {
                       {r.activity?.title ?? r.activityId}
                     </a>
                   </td>
-                  <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{r.userId}</td>
+                  <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{r.userId}</td>
                   <td><span className="chip chip">{r.method}</span></td>
                   <td>
                     <span className={r.status === "VALID" ? "chip cpca-badge cpca-badge-green" : "chip cpca-badge cpca-badge-amber"}>

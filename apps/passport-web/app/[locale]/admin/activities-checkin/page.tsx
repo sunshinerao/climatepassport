@@ -58,17 +58,17 @@ export default async function ActivitiesCheckinPage({ params }: { params: { loca
                 return (
                   <div className="list-item" key={record.id} style={{ alignItems: "flex-start" }}>
                     <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500, fontFamily: "monospace", fontSize: "0.85em" }}>{record.userId}</div>
+                    <div style={{ fontWeight: 500, fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{record.userId}</div>
                       {record.activity && (
-                        <div style={{ fontSize: "0.85em", color: "var(--color-text-muted)" }}>{record.activity.title}</div>
+                        <div style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{record.activity.title}</div>
                       )}
                       {record.task && (
-                        <div style={{ fontSize: "0.8em", color: "var(--color-text-muted)" }}>{record.task.title}</div>
+                        <div style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{record.task.title}</div>
                       )}
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <span className={`chip ${statusCls}`}>{record.status}</span>
-                      <div style={{ fontSize: "0.75em", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+                      <div style={{ fontSize: "var(--cp-text-caption)", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
                         {new Date(record.checkinAt).toLocaleTimeString(zh ? "zh-CN" : "en-US")}
                       </div>
                     </div>

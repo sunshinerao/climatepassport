@@ -43,7 +43,7 @@
 }
 
 .certificate-card h3 {
-  font-size: 22px;
+  font-size: var(--cp-fs-22);
 }
 
 .certificate-card p,
@@ -135,14 +135,14 @@
 .certificate-preview-panel h2 {
   max-width: 13ch;
   margin-top: 38px;
-  font-size: 46px;
+  font-size: var(--cp-fs-46);
 }
 
 .certificate-holder-name {
   margin: 42px 0 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--cp-line-strong);
-  font-size: 32px;
+  font-size: var(--cp-fs-32);
   font-weight: 600;
 }
 
@@ -201,7 +201,7 @@
 .certificate-action-note {
   max-width: 220px;
   color: var(--cp-text-muted);
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
 }
 
 .certificate-verify-page {
@@ -222,7 +222,7 @@
 }
 
 .certificate-verify-result h1 {
-  font-size: 52px;
+  font-size: var(--cp-fs-52);
 }
 
 .certificate-verify-result.valid {
@@ -336,7 +336,7 @@
   }
 
   .certificate-preview-panel h2 {
-    font-size: 34px;
+    font-size: var(--cp-fs-34);
   }
 
   .certificate-operation-links,

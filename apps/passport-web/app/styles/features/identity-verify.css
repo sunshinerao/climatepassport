@@ -35,7 +35,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 1.28rem;
+  font-size: var(--cp-fs-r-1-28);
   font-weight: 700;
   color: var(--cp-white);
   background: linear-gradient(135deg, #1f5a4e 0%, #2f7a67 100%);
@@ -47,7 +47,7 @@
 
 .idv-head h1 {
   margin: 8px 0 10px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: var(--cp-font-sans);
   font-size: clamp(1.72rem, 3.4vw, 2.3rem);
   font-weight: 400;
   line-height: 1.2;
@@ -56,7 +56,7 @@
 
 .idv-head p {
   margin: 0;
-  font-size: 0.96rem;
+  font-size: var(--cp-fs-15);
   line-height: 1.65;
   color: var(--cp-text-secondary);
 }
@@ -67,8 +67,8 @@
 
 .idv-section h2 {
   margin: 0 0 10px;
-  font-family: Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  font-size: 1.25rem;
+  font-family: var(--cp-font-sans);
+  font-size: var(--cp-fs-20);
   font-weight: 400;
   color: var(--cp-text);
 }
@@ -79,7 +79,7 @@
 
 .idv-privacy-note {
   margin: 12px 2px 0;
-  font-size: 0.86rem;
+  font-size: var(--cp-fs-14);
   line-height: 1.6;
   color: var(--cp-text-secondary);
 }
@@ -89,7 +89,7 @@
   align-items: center;
   padding: 4px 11px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -112,19 +112,19 @@
 }
 
 .idv-grid dt {
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: var(--cp-text-secondary);
 }
 
 .idv-grid dd {
   margin: 6px 0 0;
-  font-size: 0.96rem;
+  font-size: var(--cp-fs-15);
   font-weight: 600;
   color: var(--cp-text);
 }
 
 .idv-mono {
-  font-family: "SF Mono", ui-monospace, monospace;
+  font-family: var(--cp-font-mono);
   letter-spacing: 0.02em;
 }
 
@@ -138,13 +138,13 @@
 
 .idv-error-box strong {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: #9f2c2c;
 }
 
 .idv-error-box p {
   margin: 8px 0 0;
-  font-size: 0.9375rem;
+  font-size: var(--cp-fs-15);
   color: #7d2d2d;
 }
 
@@ -153,7 +153,7 @@
   padding-left: 18px;
   display: grid;
   gap: 6px;
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   color: #7d2d2d;
 }
 
@@ -161,7 +161,7 @@
   margin-top: 12px;
   display: grid;
   gap: 4px;
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
   color: #7d2d2d;
 }
 

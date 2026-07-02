@@ -119,7 +119,7 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
             </span>
             <div className="cert-mgr-list">
               {categories.length === 0 ? (
-                <p style={{ color: "var(--cp-text-muted)", fontSize: 14 }}>
+                <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)" }}>
                   {isZh ? "暂无证书分类数据" : "No categories found"}
                 </p>
               ) : (
@@ -148,12 +148,12 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
             <div className="cert-mgr-detail">
               <span className="label">{isZh ? "分类详情" : "Category detail"}</span>
               <h3 style={{ margin: "10px 0 6px" }}>{isZh ? selectedCategory.name : (selectedCategory.nameEn ?? selectedCategory.name)}</h3>
-              <p style={{ color: "var(--cp-text-secondary)", fontSize: 14, margin: "0 0 18px" }}>
+              <p style={{ color: "var(--cp-text-secondary)", fontSize: "var(--cp-fs-14)", margin: "0 0 18px" }}>
                 {selectedCategory.description ?? (isZh ? "暂无描述" : "No description")}
               </p>
               <div className="cert-list">
                 {categoryTemplates.length === 0 ? (
-                  <p style={{ color: "var(--cp-text-muted)", fontSize: 14 }}>
+                  <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)" }}>
                     {isZh ? "该分类暂无模版" : "No templates in this category"}
                   </p>
                 ) : (
@@ -174,7 +174,7 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
             </div>
           ) : (
             <div className="cert-mgr-detail" style={{ display: "grid", placeItems: "center", minHeight: 200 }}>
-              <p style={{ color: "var(--cp-text-muted)", fontSize: 14 }}>
+              <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)" }}>
                 {isZh ? "← 选择一个分类查看详情" : "← Select a category to view details"}
               </p>
             </div>
@@ -191,7 +191,7 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
             </span>
             <div className="cert-mgr-list">
               {templates.length === 0 ? (
-                <p style={{ color: "var(--cp-text-muted)", fontSize: 14 }}>
+                <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)" }}>
                   {isZh ? "暂无证书模版数据" : "No templates found"}
                 </p>
               ) : (
@@ -227,14 +227,14 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
                   {selectedTemplate.isActive ? (isZh ? "活跃" : "Active") : (isZh ? "停用" : "Inactive")}
                 </span>
               </div>
-              <p style={{ color: "var(--cp-text-secondary)", fontSize: 14, margin: 0 }}>
+              <p style={{ color: "var(--cp-text-secondary)", fontSize: "var(--cp-fs-14)", margin: 0 }}>
                 {isZh ? "关联分类：" : "Category: "}
                 {categories.find((c) => c.id === selectedTemplate.categoryId)?.name ?? "—"}
               </p>
             </div>
           ) : (
             <div className="cert-mgr-detail" style={{ display: "grid", placeItems: "center", minHeight: 200 }}>
-              <p style={{ color: "var(--cp-text-muted)", fontSize: 14 }}>
+              <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)" }}>
                 {isZh ? "← 选择一个模版查看详情" : "← Select a template to view details"}
               </p>
             </div>
@@ -293,7 +293,7 @@ export function AdminCertManager({ locale, categories, templates, recentIssues }
               {isZh ? "近期颁发记录" : "Recent issues"}
             </span>
             {recentIssues.length === 0 ? (
-              <p style={{ color: "var(--cp-text-muted)", fontSize: 14, margin: 0 }}>
+              <p style={{ color: "var(--cp-text-muted)", fontSize: "var(--cp-fs-14)", margin: 0 }}>
                 {isZh ? "暂无颁发记录" : "No recent issues found"}
               </p>
             ) : (

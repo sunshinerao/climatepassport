@@ -132,7 +132,7 @@ export function AdminActivityVerifiersClient({
           </button>
         </div>
         {candidates.length === 0 && (
-          <div style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+          <div style={{ marginTop: "0.75rem", fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>
             {zh ? "暂无可分配的验证员。" : "No available verifiers to assign."}
           </div>
         )}

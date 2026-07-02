@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { requireRoleAccess } from "@/lib/server/auth";
 import type { Locale } from "@/lib/site-content";
+import { privatePageMetadata } from "@/lib/seo";
+
+export const metadata = privatePageMetadata;
 
 export default async function LocalizedAdminLayout({
   children,

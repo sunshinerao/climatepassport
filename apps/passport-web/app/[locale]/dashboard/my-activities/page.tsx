@@ -191,7 +191,7 @@ export default async function MyActivitiesPage({ params }: { params: { locale: L
       {/* Upcoming Events Schedule */}
       {upcomingEventApplications.length > 0 && (
         <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <h2 style={{ fontSize: "var(--cp-text-body)", fontWeight: 700, margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
             📅 {zh ? "即将到来的活动日程" : "Upcoming Event Schedule"}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -209,13 +209,13 @@ export default async function MyActivitiesPage({ params }: { params: { locale: L
                 >
                   {startDate && (
                     <div style={{ minWidth: 48, textAlign: "center", background: "#16a34a", color: "#fff", borderRadius: "0.375rem", padding: "0.25rem 0.5rem" }}>
-                      <div style={{ fontSize: "0.7rem", lineHeight: 1 }}>{startDate.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short" })}</div>
-                      <div style={{ fontSize: "1.2rem", fontWeight: 700, lineHeight: 1.1 }}>{startDate.getDate()}</div>
+                      <div style={{ fontSize: "var(--cp-text-caption)", lineHeight: 1 }}>{startDate.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short" })}</div>
+                      <div style={{ fontSize: "var(--cp-fs-20)", fontWeight: 700, lineHeight: 1.1 }}>{startDate.getDate()}</div>
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600 }}>{title}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                    <div style={{ fontSize: "var(--cp-text-small)", color: "#6b7280" }}>
                       {startDate && (
                         <span>{startDate.toLocaleString(zh ? "zh-CN" : "en-US", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: a.timezone ?? "Asia/Shanghai" })}</span>
                       )}
@@ -223,7 +223,7 @@ export default async function MyActivitiesPage({ params }: { params: { locale: L
                     </div>
                   </div>
                   {a.eventLayer && (
-                    <span className="chip chip" style={{ fontSize: "0.7rem", flexShrink: 0 }}>
+                    <span className="chip chip" style={{ fontSize: "var(--cp-text-caption)", flexShrink: 0 }}>
                       {a.eventLayer}
                     </span>
                   )}

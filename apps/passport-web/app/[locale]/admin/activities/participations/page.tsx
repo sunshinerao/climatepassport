@@ -66,7 +66,7 @@ export default async function AdminActivitiesParticipationsPage({ params }: { pa
                   <td>
                     <a href={`/${params.locale}/admin/activities/${p.activityId}`}>{p.activity?.title ?? p.activityId}</a>
                   </td>
-                  <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{p.userId}</td>
+                  <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{p.userId}</td>
                   <td><span className="chip">{p.status}</span></td>
                   <td>{p.pointsEarned}</td>
                   <td>{p.passportSynced ? (zh ? "是" : "Yes") : (zh ? "否" : "No")}</td>

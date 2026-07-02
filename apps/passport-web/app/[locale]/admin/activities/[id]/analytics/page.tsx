@@ -105,7 +105,7 @@ export default async function AdminActivityAnalyticsPage({
           <span >{zh ? "总参与" : "Participations"}</span>
           <span >{totalParticipations}</span>
           {capacityFillPct !== null && (
-            <span style={{ fontSize: "0.75em", color: "var(--color-text-muted)" }}>
+            <span style={{ fontSize: "var(--cp-text-caption)", color: "var(--color-text-muted)" }}>
               {zh ? `名额占用 ${capacityFillPct}%` : `${capacityFillPct}% capacity`}
             </span>
           )}
@@ -125,7 +125,7 @@ export default async function AdminActivityAnalyticsPage({
         <div className="data-card">
           <span >{zh ? "积分发放" : "Points Issued"}</span>
           <span >{totalPoints}</span>
-          <span style={{ fontSize: "0.75em", color: "var(--color-text-muted)" }}>
+          <span style={{ fontSize: "var(--cp-text-caption)", color: "var(--color-text-muted)" }}>
             {zh ? `${totalPointTxns} 笔` : `${totalPointTxns} txns`}
           </span>
         </div>
@@ -206,7 +206,7 @@ export default async function AdminActivityAnalyticsPage({
                   const pct = Math.round((count / max) * 100);
                   return (
                     <tr key={day}>
-                      <td style={{ fontFamily: "monospace" }}>{day}</td>
+                      <td style={{ fontFamily: "var(--cp-font-mono)" }}>{day}</td>
                       <td>{count}</td>
                       <td>
                         <div style={{ background: "var(--color-border)", borderRadius: "2px", height: "8px", width: "100%" }}>

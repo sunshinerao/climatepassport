@@ -155,7 +155,7 @@ export default async function ActivityWorkspacePage({ params }: { params: { loca
                       <div>
                         <strong>{task.title}</strong>
                         {task.isRequired && <span className="chip cpca-badge cpca-badge-red chip" style={{ marginLeft: "0.5rem" }}>{zh ? "必做" : "Required"}</span>}
-                        {task.points > 0 && <span style={{ marginLeft: "0.5rem", fontSize: "0.85em" }}>{task.points} pts</span>}
+                        {task.points > 0 && <span style={{ marginLeft: "0.5rem", fontSize: "var(--cp-text-small)" }}>{task.points} pts</span>}
                       </div>
                       {done ? (
                         <span className="chip cpca-badge cpca-badge-green">{zh ? "已完成" : "Done"}</span>
@@ -217,7 +217,7 @@ export default async function ActivityWorkspacePage({ params }: { params: { loca
                   <div className="list-item" key={s.id}>
                     <div>
                       <span style={{ fontWeight: 500 }}>{s.task?.title ?? (zh ? "活动级提交" : "Activity Submission")}</span>
-                      {s.score !== null && <span style={{ marginLeft: "0.5rem", fontSize: "0.85em" }}>{zh ? `评分: ${s.score}` : `Score: ${s.score}`}</span>}
+                      {s.score !== null && <span style={{ marginLeft: "0.5rem", fontSize: "var(--cp-text-small)" }}>{zh ? `评分: ${s.score}` : `Score: ${s.score}`}</span>}
                     </div>
                     <span className={`chip ${ss?.cls ?? ""}`}>{ss?.[zh ? "zh" : "en"] ?? s.status}</span>
                   </div>

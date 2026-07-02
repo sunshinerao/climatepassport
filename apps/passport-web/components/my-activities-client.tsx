@@ -177,7 +177,7 @@ export default function MyActivitiesClient({ locale, cards }: Props) {
             >
               {zh ? t.zh : t.en}
               {count > 0 && (
-                <span style={{ marginLeft: "0.3rem", fontSize: "0.78em", opacity: 0.7 }}>
+                <span style={{ marginLeft: "0.3rem", fontSize: "var(--cp-text-caption)", opacity: 0.7 }}>
                   ({count})
                 </span>
               )}
@@ -215,7 +215,7 @@ export default function MyActivitiesClient({ locale, cards }: Props) {
                       alignItems: "center",
                     }}
                   >
-                    <span className="chip chip" style={{ fontSize: "0.78em" }}>
+                    <span className="chip chip" style={{ fontSize: "var(--cp-text-caption)" }}>
                       {c.type}
                     </span>
                     {statusInfo && (
@@ -234,12 +234,12 @@ export default function MyActivitiesClient({ locale, cards }: Props) {
                       </span>
                     )}
                     {c.pointsEarned > 0 && (
-                      <span style={{ fontSize: "0.85em", color: "var(--color-accent)" }}>
+                      <span style={{ fontSize: "var(--cp-text-small)", color: "var(--color-accent)" }}>
                         +{c.pointsEarned} pts
                       </span>
                     )}
                     {c.badgeCount > 0 && (
-                      <span style={{ fontSize: "0.85em" }}>🏅 {c.badgeCount}</span>
+                      <span style={{ fontSize: "var(--cp-text-small)" }}>🏅 {c.badgeCount}</span>
                     )}
                     {c.hasCertificate && (
                       <span className="chip cpca-badge cpca-badge-blue">{zh ? "证书" : "Cert"}</span>
@@ -263,7 +263,7 @@ export default function MyActivitiesClient({ locale, cards }: Props) {
                   }}
                 >
                   {c.startTime && (
-                    <span style={{ fontSize: "0.78em", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: "var(--cp-text-caption)", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
                       {new Date(c.startTime).toLocaleDateString(zh ? "zh-CN" : "en-US")}
                     </span>
                   )}

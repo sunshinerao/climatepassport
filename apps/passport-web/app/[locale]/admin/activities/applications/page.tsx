@@ -82,7 +82,7 @@ export default async function AdminActivityApplicationsPage({ params }: { params
                     <td>
                       <a href={`/${params.locale}/admin/activities/${app.activityId}`}>{app.activity?.title ?? app.activityId}</a>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{app.userId}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{app.userId}</td>
                     <td>{app.roleType ?? "—"}</td>
                     <td>
                       <span className="chip">{STATUS_LABEL[app.status] ?? app.status}</span>

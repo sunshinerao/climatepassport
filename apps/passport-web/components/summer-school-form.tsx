@@ -902,7 +902,7 @@ export function SummerSchoolForm({ locale, climatePassportId, headerRow }: Summe
           <form className="form-grid" onSubmit={handleSubmit}>
             <fieldset className="form-grid" disabled={isReadOnly} style={{ border: "none", margin: 0, padding: 0 }}>
             <div className="panel" style={{ background: "var(--cp-bg-soft)", border: "none" }}>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--cp-text-secondary)" }}>
+              <p style={{ margin: 0, fontSize: "var(--cp-fs-14)", lineHeight: 1.7, color: "var(--cp-text-secondary)" }}>
                 <span style={{ whiteSpace: "pre-line" }}>
                   {isZh
                     ? "提交本申请即表示你已阅读并同意《Climate Passport 隐私政策》及本申请相关个人信息处理说明。相关主办/承办机构及本项目必要的合作方，将在合法、正当、必要和最小化原则下，收集、使用和处理你在申请表中提交的个人信息，仅用于夏校项目申请审核、身份确认、录取与候补管理、项目沟通、证书或 Climate Passport ID 生成、项目组织与安全管理等与本项目直接相关的目的。\n\n除法律法规要求、项目执行所必需，或经你另行明确同意外，我们不会出售你的个人信息，也不会将其用于与本项目无关的商业营销、画像或广告用途。你可根据适用法律法规，申请访问、更正、删除你的个人信息，撤回同意，或就个人信息处理提出咨询与投诉。若申请人为未成年人，应由其父母或法定监护人知情并同意后提交。"

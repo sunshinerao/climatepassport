@@ -5,6 +5,9 @@
   grid-template-columns: 1fr 300px;
   gap: 0;
   flex: 1;
+  font-family: inherit;
+  font-size: var(--cp-admin-text-body);
+  line-height: 1.6;
 }
 
 .create-form-area {
@@ -28,7 +31,7 @@
 }
 
 .type-selector-label {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   color: var(--cp-ink);
   text-transform: uppercase;
@@ -71,7 +74,7 @@
   position: absolute;
   top: 6px;
   right: 8px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   color: var(--cp-forest);
   background: var(--cp-bg-soft);
@@ -105,14 +108,14 @@
 .type-card[data-type="COURSE"] .type-card-icon { background: #b8860b; }
 
 .type-card-name {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 2px;
 }
 
 .type-card-desc {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   color: var(--cp-ink);
   line-height: 1.4;
   opacity: 0.6;
@@ -167,13 +170,13 @@
 }
 
 .create-section-title h3 {
-  font-size: 15px;
+  font-size: var(--cp-fs-15);
   font-weight: 700;
   color: var(--cp-forest);
 }
 
 .create-section-badge {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
@@ -183,7 +186,7 @@
 }
 
 .create-section-desc {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   margin-top: -10px;
   margin-bottom: 16px;
@@ -213,7 +216,7 @@
 }
 
 .create-form-label {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 700;
   color: var(--cp-ink);
   letter-spacing: 0.02em;
@@ -229,7 +232,7 @@
   font-weight: 400;
   color: var(--cp-forest);
   margin-left: 4px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   opacity: 0.6;
 }
 
@@ -237,7 +240,7 @@
   padding: 10px 14px;
   border: 1.5px solid rgba(11, 61, 46, 0.1);
   border-radius: 10px;
-  font-size: 13.5px;
+  font-size: var(--cp-fs-14);
   color: var(--cp-ink);
   background: #fff;
   transition: 0.2s;
@@ -266,7 +269,7 @@ textarea.create-form-input {
   border-radius: 10px;
   border: 1.5px solid rgba(11, 61, 46, 0.1);
   background: #fff;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--cp-ink);
   cursor: pointer;
   outline: none;
@@ -286,7 +289,7 @@ textarea.create-form-input {
 }
 
 .create-form-hint {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-forest);
   margin-top: 2px;
   opacity: 0.6;
@@ -335,7 +338,7 @@ textarea.create-form-input {
 }
 
 .create-form-toggle-text {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--cp-ink);
   opacity: 0.7;
 }
@@ -365,7 +368,7 @@ textarea.create-form-input {
   gap: 4px;
   background: var(--cp-bg-soft);
   color: var(--cp-forest);
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 6px;
@@ -373,7 +376,7 @@ textarea.create-form-input {
 
 .create-tag-pill button {
   color: var(--cp-forest);
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   line-height: 1;
   padding: 0 2px;
   border: none;
@@ -389,7 +392,7 @@ textarea.create-form-input {
   border: none;
   outline: none;
   background: none;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--cp-ink);
   min-width: 80px;
   flex: 1;
@@ -424,14 +427,14 @@ textarea.create-form-input {
 }
 
 .create-cover-upload span {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   font-weight: 500;
   opacity: 0.7;
 }
 
 .create-cover-upload .hint {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-forest);
   opacity: 0.5;
 }
@@ -465,7 +468,7 @@ textarea.create-form-input {
 }
 
 .create-dynamic-item-index {
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   color: var(--cp-forest);
   background: var(--cp-bg-soft);
@@ -528,7 +531,7 @@ textarea.create-form-input {
   padding: 12px;
   border: 2px dashed rgba(11, 61, 46, 0.1);
   border-radius: 12px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
   color: var(--cp-forest);
   transition: 0.2s;
@@ -596,21 +599,21 @@ textarea.create-form-input {
 }
 
 .create-speaker-info h4 {
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 2px;
 }
 
 .create-speaker-title {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   margin-bottom: 4px;
   opacity: 0.7;
 }
 
 .create-speaker-bio {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-forest);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -661,7 +664,7 @@ textarea.create-form-input {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
@@ -725,7 +728,7 @@ textarea.create-form-input {
 }
 
 .create-agenda-item-time {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 4px;
@@ -735,7 +738,7 @@ textarea.create-form-input {
 }
 
 .create-agenda-item-time .break-badge {
-  font-size: 9px;
+  font-size: var(--cp-fs-9);
   font-weight: 700;
   background: rgba(196, 137, 63, 0.15);
   color: var(--cp-accent-gold);
@@ -744,7 +747,7 @@ textarea.create-form-input {
 }
 
 .create-agenda-item-title {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 4px;
@@ -754,7 +757,7 @@ textarea.create-form-input {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-ink);
   opacity: 0.7;
 }
@@ -856,7 +859,7 @@ textarea.create-form-input {
   left: 8px;
   background: var(--cp-forest);
   color: #fff;
-  font-size: 10px;
+  font-size: var(--cp-fs-10);
   font-weight: 700;
   width: 20px;
   height: 20px;
@@ -870,14 +873,14 @@ textarea.create-form-input {
 }
 
 .create-highlight-body h4 {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 3px;
 }
 
 .create-highlight-body p {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-ink);
   line-height: 1.5;
   opacity: 0.7;
@@ -926,7 +929,7 @@ textarea.create-form-input {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  font-size: 9px;
+  font-size: var(--cp-fs-9);
   font-weight: 700;
   background: var(--cp-accent-gold);
   color: #fff;
@@ -980,14 +983,14 @@ textarea.create-form-input {
 }
 
 .create-vip-card h4 {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   color: var(--cp-forest);
   margin-bottom: 2px;
 }
 
 .create-vip-role {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-ink);
   margin-bottom: 6px;
   opacity: 0.7;
@@ -997,7 +1000,7 @@ textarea.create-form-input {
   position: absolute;
   top: 8px;
   right: 8px;
-  font-size: 9px;
+  font-size: var(--cp-fs-9);
   font-weight: 700;
   background: var(--cp-accent-gold);
   color: #fff;
@@ -1051,7 +1054,7 @@ textarea.create-form-input {
 }
 
 .create-panel-section-title {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1067,7 +1070,7 @@ textarea.create-form-input {
 }
 
 .create-panel-field label {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   color: var(--cp-ink);
   display: block;
@@ -1078,7 +1081,7 @@ textarea.create-form-input {
 .create-panel-field .create-form-input,
 .create-panel-field .create-form-select {
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   border-radius: 8px;
 }
 
@@ -1087,7 +1090,7 @@ textarea.create-form-input {
 }
 
 .create-panel-progress-label {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   color: var(--cp-ink);
   margin-bottom: 6px;
   display: flex;
@@ -1138,7 +1141,7 @@ textarea.create-form-input {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   padding: 5px 0;
   opacity: 0.7;
@@ -1181,7 +1184,7 @@ textarea.create-form-input {
 .create-loc-type-group button {
   padding: 6px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   border: 1.5px solid rgba(11, 61, 46, 0.12);
   background: #fff;
@@ -1208,7 +1211,7 @@ textarea.create-form-input {
 .create-day-tab {
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   border: 1.5px solid rgba(11, 61, 46, 0.12);
   background: #fff;
@@ -1264,7 +1267,7 @@ textarea.create-form-input {
   color: #dc2626;
   padding: 12px 16px;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 500;
 }
 

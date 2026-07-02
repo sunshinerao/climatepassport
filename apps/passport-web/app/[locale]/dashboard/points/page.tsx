@@ -100,7 +100,7 @@ export default async function DashboardPointsPage({ params }: { params: { locale
               <tbody>
                 {Array.from(activitySummaryMap.entries()).map(([id, { total, count }]) => (
                   <tr key={id}>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{id}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{id}</td>
                     <td><strong>{total > 0 ? `+${total}` : total}</strong></td>
                     <td>{count}</td>
                     <td>
@@ -138,14 +138,14 @@ export default async function DashboardPointsPage({ params }: { params: { locale
               <tbody>
                 {transactions.map((tx) => (
                   <tr key={tx.id}>
-                    <td style={{ whiteSpace: "nowrap", fontSize: "0.85em" }}>
+                    <td style={{ whiteSpace: "nowrap", fontSize: "var(--cp-text-small)" }}>
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
                     <td>
                       <span className="chip chip">{tx.type}</span>
                     </td>
                     <td>{tx.description}</td>
-                    <td style={{ fontSize: "0.8em", color: "var(--color-text-muted)" }}>
+                    <td style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>
                       {tx.activityId
                         ? (zh ? "活动" : "Activity")
                         : tx.event

@@ -8,6 +8,7 @@ import {
   verifyUserPassword,
 } from "@/lib/server/auth";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
+import { createEmailToken, sendVerificationEmail } from "@/lib/server/auth-email";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
@@ -50,6 +51,8 @@ export async function POST(request: Request) {
     where: { email: normalizedEmail },
     select: {
       id: true,
+      email: true,
+      emailVerified: true,
       password: true,
       role: true,
       status: true,
@@ -64,6 +67,47 @@ export async function POST(request: Request) {
 
   if (!passwordMatches) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+  }
+
+  if (!user.emailVerified) {
+    const token = await createEmailToken({
+      userId: user.id,
+      email: user.email,
+      purpose: "VERIFY_EMAIL",
+    });
+
+    try {
+      const origin = new URL(request.url).origin;
+      await sendVerificationEmail({
+        locale: locale as Locale,
+        email: user.email,
+        token: token.token,
+        code: token.code,
+        origin,
+      });
+    } catch (error) {
+      console.error("[auth/login] failed to send verification email", error);
+      return NextResponse.json(
+        { error: "Email is not verified and we could not send a verification message. Please try again later." },
+        { status: 502 },
+      );
+    }
+
+    const fallbackPath = getDashboardPathForRole(locale as Locale, user.role);
+    const safeNext = sanitizeLocalRedirectPath(next, fallbackPath);
+    const verifyParams = new URLSearchParams({
+      email: user.email,
+      next: safeNext,
+    });
+
+    return NextResponse.json(
+      {
+        error: "Please verify your email before logging in.",
+        requiresVerification: true,
+        redirectTo: `/${locale}/auth/verify-email?${verifyParams.toString()}`,
+      },
+      { status: 403 },
+    );
   }
 
   await createUserSession(user.id);

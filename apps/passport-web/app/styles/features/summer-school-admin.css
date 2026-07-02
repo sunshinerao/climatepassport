@@ -13,7 +13,7 @@
   flex-wrap: wrap;
 }
 .ssa-count {
-  font-size: 0.9rem;
+  font-size: var(--cp-fs-14);
   color: var(--cp-text-secondary, #555);
 }
 .ssa-btn-primary {
@@ -22,7 +22,7 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -35,7 +35,7 @@
   opacity: 0.85;
 }
 .ssa-btn-link {
-  font-size: 0.8rem;
+  font-size: var(--cp-fs-13);
   color: #1a3a2a;
   text-decoration: underline;
   white-space: nowrap;
@@ -44,7 +44,7 @@
   opacity: 0.7;
 }
 .ssa-empty {
-  font-size: 0.9rem;
+  font-size: var(--cp-fs-14);
   color: var(--cp-text-secondary, #555);
   padding: 32px 0;
 }
@@ -56,7 +56,7 @@
 .ssa-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: var(--cp-fs-r-0-82);
   min-width: 900px;
 }
 .ssa-table thead th {
@@ -115,30 +115,30 @@
   font-weight: 600;
 }
 .ssa-preferred {
-  font-size: 0.78rem;
+  font-size: var(--cp-fs-12);
   color: #666;
   margin-left: 4px;
 }
 .ssa-td-email {
-  font-size: 0.78rem;
+  font-size: var(--cp-fs-12);
   word-break: break-all;
 }
 .ssa-td-phone {
   white-space: nowrap;
 }
 .ssa-guardian-email {
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   color: #666;
   margin-top: 2px;
 }
 .ssa-td-passportid code {
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   background: #f0f0f0;
   padding: 1px 5px;
   border-radius: 3px;
 }
 .ssa-td-date {
-  font-size: 0.78rem;
+  font-size: var(--cp-fs-12);
   white-space: normal;
   color: #555;
 }
@@ -149,7 +149,7 @@
 /* Status badges */
 .ssa-badge {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 12px;

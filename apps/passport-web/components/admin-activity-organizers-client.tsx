@@ -77,7 +77,7 @@ export default function AdminActivityOrganizersClient({ organizers, locale }: Pr
         />
       </div>
 
-      <h3 style={{ marginBottom: "0.5rem", fontSize: "1rem", fontWeight: 600 }}>
+      <h3 style={{ marginBottom: "0.5rem", fontSize: "var(--cp-text-body)", fontWeight: 600 }}>
         {zh ? `当前主办方（${managers.length} 人）` : `Current Managers (${managers.length})`}
       </h3>
 
@@ -100,7 +100,7 @@ export default function AdminActivityOrganizersClient({ organizers, locale }: Pr
               {managers.map((u) => (
                 <tr key={u.id}>
                   <td>{u.name}</td>
-                  <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{u.email}</td>
+                  <td style={{ fontSize: "var(--cp-text-small)" }}>{u.email}</td>
                   <td>
                     <span className="chip chip">{u.organizedActivityCount}</span>
                   </td>
@@ -114,7 +114,7 @@ export default function AdminActivityOrganizersClient({ organizers, locale }: Pr
         </div>
       )}
 
-      <h3 style={{ marginBottom: "0.5rem", fontSize: "1rem", fontWeight: 600 }}>
+      <h3 style={{ marginBottom: "0.5rem", fontSize: "var(--cp-text-body)", fontWeight: 600 }}>
         {zh ? `其他用户（可授权，共 ${others.length} 条结果）` : `Other Users (${others.length} results)`}
       </h3>
 
@@ -137,7 +137,7 @@ export default function AdminActivityOrganizersClient({ organizers, locale }: Pr
               {others.map((u) => (
                 <tr key={u.id}>
                   <td>{u.name}</td>
-                  <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{u.email}</td>
+                  <td style={{ fontSize: "var(--cp-text-small)" }}>{u.email}</td>
                   <td><span className="chip chip">{u.role}</span></td>
                   <td>
                     <RoleToggleButton userId={u.id} currentRole={u.role} locale={locale} />

@@ -5,6 +5,9 @@
   flex: 1;
   max-width: 1280px;
   width: 100%;
+  font-family: inherit;
+  font-size: var(--cp-admin-text-body);
+  line-height: 1.6;
 }
 
 /* ── Page header ── */
@@ -18,15 +21,17 @@
 }
 
 .admin-page-header-text h2 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 28px;
-  font-weight: 400;
+  font-family: inherit;
+  font-size: clamp(28px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
   color: var(--cp-forest);
   margin-bottom: 4px;
 }
 
 .admin-page-header-text p {
-  font-size: 14px;
+  font-size: var(--cp-admin-text-small);
   color: var(--cp-ink);
   opacity: 0.7;
 }
@@ -61,14 +66,14 @@
 
 .admin-stat-chip strong {
   display: block;
-  font-size: 24px;
+  font-size: var(--cp-fs-24);
   font-weight: 700;
   color: var(--cp-forest);
   line-height: 1.1;
 }
 
 .admin-stat-chip span {
-  font-size: 11px;
+  font-size: var(--cp-admin-text-caption);
   color: var(--cp-ink);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -120,13 +125,13 @@
 .cat-course .admin-category-icon { background: #b8860b; }
 
 .admin-category-title h3 {
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
   font-weight: 700;
   color: var(--cp-forest);
 }
 
 .admin-category-count {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   color: var(--cp-ink);
   background: var(--cp-bg-soft);
@@ -172,7 +177,7 @@
   border: none;
   outline: none;
   background: none;
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--cp-ink);
   width: 100%;
 }
@@ -188,7 +193,7 @@
   border-radius: 10px;
   border: 1.5px solid rgba(11, 61, 46, 0.1);
   background: #fff;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   font-weight: 600;
   color: var(--cp-ink);
   cursor: pointer;
@@ -210,7 +215,7 @@
 
 .admin-show-toggle button {
   padding: 6px 12px;
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 700;
   color: var(--cp-ink);
   background: none;
@@ -280,7 +285,7 @@
 }
 
 .admin-card-title {
-  font-size: 16px;
+  font-size: var(--cp-fs-16);
   font-weight: 700;
   color: var(--cp-forest);
   line-height: 1.35;
@@ -288,7 +293,7 @@
 }
 
 .admin-card-status {
-  font-size: 10px;
+  font-size: var(--cp-admin-text-caption);
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 999px;
@@ -309,7 +314,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   opacity: 0.7;
 }
@@ -335,7 +340,7 @@
 }
 
 .admin-tag {
-  font-size: 11px;
+  font-size: var(--cp-fs-11);
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 6px;
@@ -354,7 +359,7 @@
 
 /* ── Card desc ── */
 .admin-card-desc {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   color: var(--cp-ink);
   line-height: 1.6;
   display: -webkit-box;
@@ -376,7 +381,7 @@
 }
 
 .admin-card-stats {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   display: flex;
   align-items: center;
@@ -467,7 +472,7 @@
   transform: translateX(-50%);
   background: var(--cp-forest);
   color: #fff;
-  font-size: 10px;
+  font-size: var(--cp-text-caption);
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 6px;
@@ -491,7 +496,7 @@
 
 .admin-show-more a,
 .admin-show-more button {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 600;
   color: var(--cp-forest);
   display: inline-flex;
@@ -524,13 +529,13 @@
 }
 
 .admin-activities-topbar-left h1 {
-  font-size: 18px;
+  font-size: var(--cp-fs-18);
   font-weight: 700;
   color: var(--cp-forest);
 }
 
 .admin-activities-topbar-breadcrumb {
-  font-size: 12px;
+  font-size: var(--cp-fs-12);
   color: var(--cp-ink);
   opacity: 0.7;
 }

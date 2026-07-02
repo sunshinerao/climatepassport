@@ -50,9 +50,9 @@ export default async function AdminActivitiesCertificatesPage({ params }: { para
                     <td>
                       <a href={`/${params.locale}/admin/activities/${r.activityId}`}>{r.activity?.title ?? r.activityId}</a>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{r.certificateDefinitionId}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{r.certificateDefinitionId}</td>
                     <td>{r.autoIssue ? (zh ? "是" : "Yes") : (zh ? "否" : "No")}</td>
-                    <td style={{ fontSize: "0.85em" }}>{r.conditionJson ? JSON.stringify(r.conditionJson) : "—"}</td>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>{r.conditionJson ? JSON.stringify(r.conditionJson) : "—"}</td>
                     <td>{new Date(r.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))

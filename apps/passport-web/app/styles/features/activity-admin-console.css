@@ -17,7 +17,7 @@
 .activity-index-hero h2,
 .activity-console-hero h2 {
   margin: 8px 0 10px;
-  font-size: 32px;
+  font-size: clamp(28px, 3vw, 34px);
   line-height: 1.05;
 }
 
@@ -65,7 +65,7 @@
 .activity-admin-card-stats strong,
 .activity-console-stat-card span:first-child {
   display: block;
-  font-size: 28px;
+  font-size: clamp(24px, 2.6vw, 30px);
   font-weight: 700;
   color: var(--cp-ink);
 }
@@ -73,7 +73,7 @@
 .activity-index-stats span,
 .activity-admin-card-stats span,
 .activity-console-stat-card span:last-child {
-  font-size: 12px;
+  font-size: var(--cp-admin-text-caption);
   color: var(--cp-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -99,7 +99,7 @@
 .activity-index-summary {
   margin: 0;
   color: var(--cp-text-muted);
-  font-size: 13px;
+  font-size: var(--cp-admin-text-small);
 }
 
 .activity-card-grid {
@@ -128,7 +128,7 @@
 
 .activity-admin-card-head h3 {
   margin: 6px 0 4px;
-  font-size: 22px;
+  font-size: clamp(20px, 2vw, 24px);
 }
 
 .activity-admin-card-head p {
@@ -139,7 +139,7 @@
 .activity-admin-card-slug,
 .activity-console-meta span,
 .activity-admin-card-meta span {
-  font-size: 12px;
+  font-size: var(--cp-admin-text-caption);
   color: var(--cp-text-muted);
 }
 
@@ -229,12 +229,12 @@
 
 .activity-console-panel-head h3 {
   margin: 6px 0 0;
-  font-size: 22px;
+  font-size: clamp(20px, 2vw, 24px);
 }
 
 .activity-console-panel-head a {
   color: var(--cp-forest);
-  font-size: 13px;
+  font-size: var(--cp-admin-text-small);
   font-weight: 700;
 }
 
@@ -245,7 +245,7 @@
 }
 
 .activity-console-dl dt {
-  font-size: 12px;
+  font-size: var(--cp-admin-text-caption);
   color: var(--cp-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -304,7 +304,7 @@
 .activity-institution-copy a {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: var(--cp-admin-text-small);
   color: var(--cp-text-secondary);
 }
 
@@ -323,7 +323,7 @@
 }
 
 .activity-inline-form span {
-  font-size: 12px;
+  font-size: var(--cp-admin-text-caption);
   color: var(--cp-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -354,6 +354,21 @@
 
 .activity-institution-copy {
   min-width: 0;
+}
+
+.activity-agenda-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(11, 43, 36, 0.42);
+}
+
+.activity-agenda-modal {
+  max-height: min(86vh, 840px);
+  overflow: auto;
 }
 
 @media (max-width: 1100px) {

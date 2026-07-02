@@ -195,7 +195,7 @@ export default function AdminRewardRuleFormClient({ activityId, locale, onCreate
               value={rewardValueRaw}
               onChange={(e) => setRewardValueRaw(e.target.value)}
               placeholder={hintForRewardType}
-              style={{ fontFamily: "monospace", fontSize: "0.85em" }}
+              style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}
             />
           )}
         </div>
@@ -212,7 +212,7 @@ export default function AdminRewardRuleFormClient({ activityId, locale, onCreate
               onChange={(e) => setStreakRequired(e.target.value)}
               style={{ maxWidth: "120px" }}
             />
-            <p style={{ fontSize: "0.8em", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+            <p style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
               {zh ? "用户连续签到满此天数时触发" : "Reward fires when user reaches this consecutive-day streak"}
             </p>
           </div>
@@ -227,7 +227,7 @@ export default function AdminRewardRuleFormClient({ activityId, locale, onCreate
               value={conditionRaw}
               onChange={(e) => setConditionRaw(e.target.value)}
               placeholder='{}'
-              style={{ fontFamily: "monospace", fontSize: "0.85em" }}
+              style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}
             />
           </div>
         )}

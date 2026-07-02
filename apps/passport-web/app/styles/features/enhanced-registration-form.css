@@ -21,7 +21,7 @@
 }
 
 .form-section-head strong {
-  font-size: 13px;
+  font-size: var(--cp-fs-13);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -37,7 +37,7 @@
   border: 1px solid var(--cp-line);
   background: var(--cp-bg-soft);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--cp-fs-14);
   font-weight: 600;
   color: var(--cp-text-secondary);
   width: 100%;
@@ -80,7 +80,7 @@
   background: transparent;
   color: var(--cp-text);
   text-align: left;
-  font-size: 0.875rem;
+  font-size: var(--cp-fs-14);
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -94,7 +94,7 @@
 .country-combobox-empty {
   padding: 10px;
   color: var(--cp-text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--cp-fs-13);
 }
 
 @media (max-width: 720px) {

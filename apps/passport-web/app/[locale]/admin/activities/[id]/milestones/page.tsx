@@ -105,13 +105,13 @@ export default async function AdminActivityMilestonesPage({
                   ) : m.deliverables.map((d) => (
                     <tr key={d.id}>
                       <td>{m.title}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: "0.82em" }}>{d.id}</td>
+                      <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{d.id}</td>
                       <td>
                         <span className={`chip ${d.status === "approved" ? "cpca-badge cpca-badge-green" : d.status === "submitted" ? "cpca-badge cpca-badge-blue" : "chip"}`}>
                           {d.status}
                         </span>
                       </td>
-                      <td style={{ fontFamily: "monospace", fontSize: "0.82em" }}>
+                      <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>
                         {d.submissionId ?? "—"}
                       </td>
                     </tr>

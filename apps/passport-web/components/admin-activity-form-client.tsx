@@ -120,6 +120,57 @@ const SECTION_ICONS: Record<string, React.FC<{ s?: number }>> = {
   task: IconCheckSquare, course: IconGraduation,
 };
 
+function Section({ icon, title, badge, desc, children, right }: {
+  icon: string; title: string; badge?: string; desc?: string;
+  children: React.ReactNode; right?: React.ReactNode;
+}) {
+  const Icon = SECTION_ICONS[icon] ?? IconEdit;
+  return (
+    <div className="create-form-section">
+      <div className="create-section-header">
+        <div className="create-section-title">
+          <div className="create-section-title-icon"><Icon /></div>
+          <h3>{title}</h3>
+          {badge ? <span className="create-section-badge">{badge}</span> : null}
+        </div>
+        {right}
+      </div>
+      {desc ? <p className="create-section-desc">{desc}</p> : null}
+      {children}
+    </div>
+  );
+}
+
+function Row({ children, single = false, triple = false, style }: { children: React.ReactNode; single?: boolean; triple?: boolean; style?: React.CSSProperties }) {
+  return <div className={`create-form-row ${single ? "single" : ""} ${triple ? "triple" : ""}`} style={style}>{children}</div>;
+}
+
+function Group({ label, children, required = false, optional = false, hint, optionalText = "optional" }: {
+  label: string; children: React.ReactNode; required?: boolean; optional?: boolean; hint?: string; optionalText?: string;
+}) {
+  return (
+    <div className="create-form-group">
+      <label className="create-form-label">
+        {label}
+        {required ? <span className="required">*</span> : null}
+        {optional ? <span className="optional">{optionalText}</span> : null}
+      </label>
+      {children}
+      {hint ? <div className="create-form-hint">{hint}</div> : null}
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="create-form-toggle">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="create-toggle-switch" />
+      <span className="create-form-toggle-text">{label}</span>
+    </label>
+  );
+}
+
 /* ── Main Component ── */
 export function AdminActivityFormClient({
   locale,
@@ -330,60 +381,6 @@ export function AdminActivityFormClient({
     }
   }
 
-  /* ── Section wrapper ── */
-  function Section({ icon, title, badge, desc, children, right }: {
-    icon: string; title: string; badge?: string; desc?: string;
-    children: React.ReactNode; right?: React.ReactNode;
-  }) {
-    const Icon = SECTION_ICONS[icon] ?? IconEdit;
-    return (
-      <div className="create-form-section">
-        <div className="create-section-header">
-          <div className="create-section-title">
-            <div className="create-section-title-icon"><Icon /></div>
-            <h3>{title}</h3>
-            {badge ? <span className="create-section-badge">{badge}</span> : null}
-          </div>
-          {right}
-        </div>
-        {desc ? <p className="create-section-desc">{desc}</p> : null}
-        {children}
-      </div>
-    );
-  }
-
-  /* ── Form row helpers ── */
-  function Row({ children, single = false, triple = false, style }: { children: React.ReactNode; single?: boolean; triple?: boolean; style?: React.CSSProperties }) {
-    return <div className={`create-form-row ${single ? "single" : ""} ${triple ? "triple" : ""}`} style={style}>{children}</div>;
-  }
-
-  function Group({ label, children, required = false, optional = false, hint }: {
-    label: string; children: React.ReactNode; required?: boolean; optional?: boolean; hint?: string;
-  }) {
-    return (
-      <div className="create-form-group">
-        <label className="create-form-label">
-          {label}
-          {required ? <span className="required">*</span> : null}
-          {optional ? <span className="optional">{t("可选", "optional")}</span> : null}
-        </label>
-        {children}
-        {hint ? <div className="create-form-hint">{hint}</div> : null}
-      </div>
-    );
-  }
-
-  /* ── Toggle helper ── */
-  function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-    return (
-      <label className="create-form-toggle">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-        <span className="create-toggle-switch" />
-        <span className="create-form-toggle-text">{label}</span>
-      </label>
-    );
-  }
-
   return (
     <form onSubmit={(e) => handleSubmit(e)}>
       {error ? <div className="form-error" style={{ margin: "0 36px 16px" }}>{error}</div> : null}
@@ -419,15 +416,15 @@ export function AdminActivityFormClient({
               <Group label={t("标题（中文）", "Title (ZH)")} required>
                 <input className="create-form-input" value={title} onChange={(e) => { setTitle(e.target.value); if (mode === "create" && !slug) setSlug(autoSlug(e.target.value)); }} placeholder={t("活动标题", "Activity title")} />
               </Group>
-              <Group label={t("标题（英文）", "Title (EN)")} optional>
+              <Group label={t("标题（英文）", "Title (EN)")} optional optionalText={t("可选", "optional")}>
                 <input className="create-form-input" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="Activity title in English" />
               </Group>
             </Row>
             <Row>
-              <Group label={t("副标题", "Subtitle")} optional>
+              <Group label={t("副标题", "Subtitle")} optional optionalText={t("可选", "optional")}>
                 <input className="create-form-input" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={t("副标题", "Subtitle")} />
               </Group>
-              <Group label={t("副标题（英文）", "Subtitle (EN)")} optional>
+              <Group label={t("副标题（英文）", "Subtitle (EN)")} optional optionalText={t("可选", "optional")}>
                 <input className="create-form-input" value={subtitleEn} onChange={(e) => setSubtitleEn(e.target.value)} placeholder="Subtitle in English" />
               </Group>
             </Row>
@@ -448,12 +445,12 @@ export function AdminActivityFormClient({
               </Group>
             </Row>
             <Row single>
-              <Group label={t("摘要（中文）", "Summary (ZH)")} optional>
+              <Group label={t("摘要（中文）", "Summary (ZH)")} optional optionalText={t("可选", "optional")}>
                 <textarea className="create-form-input" rows={2} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder={t("一句话描述…", "One-line summary…")} />
               </Group>
             </Row>
             <Row single>
-              <Group label={t("摘要（英文）", "Summary (EN)")} optional>
+              <Group label={t("摘要（英文）", "Summary (EN)")} optional optionalText={t("可选", "optional")}>
                 <textarea className="create-form-input" rows={2} value={summaryEn} onChange={(e) => setSummaryEn(e.target.value)} placeholder="One-line summary…" />
               </Group>
             </Row>
@@ -554,7 +551,7 @@ export function AdminActivityFormClient({
               title={t("议程 / 日程", "Agenda / Schedule")}
               badge="EVENT"
               desc={t("按天构建活动日程。拖放重新排序，从嘉宾池中分配演讲者。", "Build the event schedule day by day. Drag to reorder, assign speakers from the guest pool.")}
-              right={<button type="button" className="button button-ghost" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => alert(t("添加日期", "Add Day"))}>+ {t("添加日期", "Add Day")}</button>}
+              right={<button type="button" className="button button-ghost" style={{ padding: "6px 12px", fontSize: "var(--cp-text-caption)" }} onClick={() => alert(t("添加日期", "Add Day"))}>+ {t("添加日期", "Add Day")}</button>}
             >
               <div className="create-day-tabs">
                 <button type="button" className="create-day-tab active">{t("第一天 · 6月15日", "Day 1 · Jun 15")}</button>
@@ -594,7 +591,7 @@ export function AdminActivityFormClient({
               title={t("演讲者与嘉宾", "Speakers & Guests")}
               badge="EVENT · LEARNING"
               desc={t("管理此活动的演讲者/嘉宾池。分配角色并关联到议程环节。", "Manage the speaker/guest pool for this activity. Assign roles and link to agenda sessions.")}
-              right={<button type="button" className="button button-ghost" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => alert(t("从人员模块导入", "Import from People"))}>{t("从人员导入", "Import from People")}</button>}
+              right={<button type="button" className="button button-ghost" style={{ padding: "6px 12px", fontSize: "var(--cp-text-caption)" }} onClick={() => alert(t("从人员模块导入", "Import from People"))}>{t("从人员导入", "Import from People")}</button>}
             >
               <div className="create-dynamic-list">
                 {speakers.map((sp) => (
@@ -965,7 +962,7 @@ export function AdminActivityFormClient({
           {/* Info */}
           <div className="create-panel-section">
             <div className="create-panel-section-title">{t("信息", "Info")}</div>
-            <div style={{ fontSize: "11px", color: "var(--cp-ink)", lineHeight: 1.8, opacity: 0.7 }}>
+            <div style={{ fontSize: "var(--cp-text-caption)", color: "var(--cp-ink)", lineHeight: 1.8, opacity: 0.7 }}>
               <div><strong>Slug:</strong> {slug || autoSlug(title) || "—"}</div>
               <div><strong>{t("创建时间", "Created")}:</strong> —</div>
               <div><strong>{t("最后保存", "Last saved")}:</strong> —</div>

@@ -51,7 +51,7 @@ export default async function AdminActivitiesReviewsPage({ params }: { params: {
                   <tr key={w.id}>
                     <td><a href={`/${params.locale}/admin/activities/${w.activityId}`}>{w.activity?.title ?? w.activityId}</a></td>
                     <td><span className="chip chip">{w.objectType}</span></td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.8em" }}>{w.objectId.slice(0, 12)}…</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{w.objectId.slice(0, 12)}…</td>
                     <td>{w.reviewType}</td>
                     <td><span className="chip cpca-badge cpca-badge-amber">{w.status}</span></td>
                     <td>{new Date(w.createdAt).toLocaleDateString()}</td>

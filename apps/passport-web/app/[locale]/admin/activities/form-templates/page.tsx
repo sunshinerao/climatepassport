@@ -46,7 +46,7 @@ export default async function AdminActivitiesFormTemplatesPage({ params }: { par
                     <td style={{ fontWeight: 600 }}>{t.name}</td>
                     <td><span className="chip chip">{t.type}</span></td>
                     <td>{Array.isArray(t.fieldsJson) ? (t.fieldsJson as any[]).length : "—"}</td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{t.createdByUserId}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{t.createdByUserId}</td>
                     <td>{new Date(t.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))

@@ -115,10 +115,10 @@ export default async function AdminActivityRewardsPage({
                         {REWARD_TYPE_LABELS[rule.rewardType] ?? rule.rewardType}
                       </span>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>
                       {JSON.stringify(rule.rewardValueJson)}
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em", color: "var(--color-text-muted)" }}>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>
                       {rule.conditionJson ? JSON.stringify(rule.conditionJson) : "—"}
                     </td>
                     <td>{new Date(rule.createdAt).toLocaleDateString()}</td>
@@ -157,13 +157,13 @@ export default async function AdminActivityRewardsPage({
               <tbody>
                 {certRules.map((rule) => (
                   <tr key={rule.id}>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{rule.certificateDefinitionId}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{rule.certificateDefinitionId}</td>
                     <td>
                       <span className={`chip ${rule.autoIssue ? "cpca-badge cpca-badge-green" : "chip"}`}>
                         {rule.autoIssue ? (zh ? "是" : "Yes") : (zh ? "否" : "No")}
                       </span>
                     </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em", color: "var(--color-text-muted)" }}>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>
                       {rule.conditionJson ? JSON.stringify(rule.conditionJson) : "—"}
                     </td>
                     <td>{new Date(rule.createdAt).toLocaleDateString()}</td>

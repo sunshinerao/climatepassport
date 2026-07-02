@@ -99,7 +99,7 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
         >
           <div
             style={{
-              fontSize: "1.75rem",
+              fontSize: "var(--cp-fs-r-1-75)",
               fontWeight: 700,
               color: resultColor,
               marginBottom: "0.75rem",
@@ -110,28 +110,28 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
 
           {result.user && (
             <div style={{ marginBottom: "0.5rem" }}>
-              <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>{result.user.name ?? result.user.email}</div>
+              <div style={{ fontWeight: 600, fontSize: "var(--cp-text-body-lg)" }}>{result.user.name ?? result.user.email}</div>
               {result.user.climatePassportId && (
-                <div style={{ fontSize: "0.85em", color: "var(--color-text-muted)" }}>ID: {result.user.climatePassportId}</div>
+                <div style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>ID: {result.user.climatePassportId}</div>
               )}
             </div>
           )}
 
           {result.activity && (
-            <div style={{ fontSize: "0.9em", marginTop: "0.25rem" }}>
+            <div style={{ fontSize: "var(--cp-text-small)", marginTop: "0.25rem" }}>
               {zh ? "活动" : "Activity"}: {result.activity.title}
             </div>
           )}
 
           {result.message && result.result !== "VALID" && (
-            <div style={{ marginTop: "0.5rem", fontSize: "0.9em", color: resultColor }}>
+            <div style={{ marginTop: "0.5rem", fontSize: "var(--cp-text-small)", color: resultColor }}>
               {result.message}
             </div>
           )}
         </div>
       )}
 
-      <div style={{ marginTop: "2rem", fontSize: "0.85em", color: "var(--color-text-muted)" }}>
+      <div style={{ marginTop: "2rem", fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>
         {zh
           ? "将扫码枪对准参与者的二维码，系统将自动完成签到"
           : "Point the scanner at the participant's QR code. The system will check in automatically."}

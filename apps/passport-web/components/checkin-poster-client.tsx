@@ -49,10 +49,10 @@ export function CheckinPosterClient({
       {/* Toolbar — hidden on print */}
       <div className=" no-print" style={{ marginBottom: "1.5rem" }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+          <h2 style={{ margin: 0, fontSize: "var(--cp-text-body-lg)", fontWeight: 700 }}>
             {zh ? "签到海报" : "Check-in Poster"}
           </h2>
-          <p style={{ margin: "0.2rem 0 0", color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+          <p style={{ margin: "0.2rem 0 0", color: "var(--color-text-muted)", fontSize: "var(--cp-text-small)" }}>
             {zh ? "打印后在活动现场出示二维码完成签到" : "Print and show the QR code at the venue to check in"}
           </p>
         </div>
@@ -82,7 +82,7 @@ export function CheckinPosterClient({
           borderRadius: "1rem",
           overflow: "hidden",
           boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: "var(--cp-font-sans)",
         }}
       >
         {/* Banner */}
@@ -103,24 +103,24 @@ export function CheckinPosterClient({
               justifyContent: "center",
             }}
           >
-            <span style={{ fontSize: 64, opacity: 0.7 }}>🌱</span>
+            <span style={{ fontSize: "var(--cp-fs-64)", opacity: 0.7 }}>🌱</span>
           </div>
         )}
 
         {/* Content */}
         <div style={{ padding: "1.75rem 2rem" }}>
           {/* Badge */}
-          <div style={{ display: "inline-block", background: "#dcfce7", color: "#15803d", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0.25rem 0.65rem", borderRadius: "2rem", marginBottom: "0.75rem" }}>
+          <div style={{ display: "inline-block", background: "#dcfce7", color: "#15803d", fontSize: "var(--cp-text-caption)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0.25rem 0.65rem", borderRadius: "2rem", marginBottom: "0.75rem" }}>
             {zh ? "气候护照 · 签到凭证" : "Climate Passport · Check-in"}
           </div>
 
           {/* Activity title */}
-          <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem", lineHeight: 1.3 }}>
+          <h1 style={{ fontSize: "var(--cp-fs-20)", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem", lineHeight: 1.3 }}>
             {activityData.title}
           </h1>
 
           {/* Date / Venue */}
-          <div style={{ fontSize: "0.875rem", color: "#475569", marginBottom: "1.25rem", lineHeight: 1.6 }}>
+          <div style={{ fontSize: "var(--cp-text-small)", color: "#475569", marginBottom: "1.25rem", lineHeight: 1.6 }}>
             {activityData.startTime && (
               <div>
                 📅 {formatDate(activityData.startTime)}
@@ -152,15 +152,15 @@ export function CheckinPosterClient({
                 flexShrink: 0,
                 color: "#fff",
                 fontWeight: 700,
-                fontSize: "1.2rem",
+                fontSize: "var(--cp-fs-20)",
               }}
             >
               {userData.displayName.slice(0, 1).toUpperCase()}
             </div>
             <div>
-              <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "1rem" }}>{userData.displayName}</div>
+              <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "var(--cp-text-body)" }}>{userData.displayName}</div>
               {userData.passportId && (
-                <div style={{ fontSize: "0.78rem", color: "#64748b", fontFamily: "monospace" }}>
+                <div style={{ fontSize: "var(--cp-text-caption)", color: "#64748b", fontFamily: "var(--cp-font-mono)" }}>
                   {zh ? "护照 ID: " : "Passport ID: "}{userData.passportId}
                 </div>
               )}
@@ -187,12 +187,12 @@ export function CheckinPosterClient({
                   src={qrDataUrl}
                   style={{ width: 180, height: 180, display: "block", imageRendering: "pixelated" }}
                 />
-                <div style={{ fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
+                <div style={{ fontSize: "var(--cp-text-caption)", color: "#64748b", textAlign: "center" }}>
                   {zh ? "扫描此二维码完成活动签到" : "Scan this QR code to check in at the event"}
                 </div>
               </>
             ) : (
-              <div style={{ color: hasParticipation ? "#dc2626" : "#64748b", fontSize: "0.875rem", padding: "1.5rem", textAlign: "center" }}>
+              <div style={{ color: hasParticipation ? "#dc2626" : "#64748b", fontSize: "var(--cp-text-small)", padding: "1.5rem", textAlign: "center" }}>
                 {hasParticipation
                   ? (zh ? "签到二维码生成失败，请刷新页面" : "Failed to generate QR code. Please refresh.")
                   : (zh ? "报名后方可生成签到二维码" : "Register for this activity to get your check-in QR code")}
@@ -201,7 +201,7 @@ export function CheckinPosterClient({
           </div>
 
           {/* Footer */}
-          <div style={{ marginTop: "1.25rem", textAlign: "center", fontSize: "0.72rem", color: "#94a3b8" }}>
+          <div style={{ marginTop: "1.25rem", textAlign: "center", fontSize: "var(--cp-text-caption)", color: "#94a3b8" }}>
             {zh ? "本二维码为个人专属，请勿转发他人使用" : "This QR code is personal. Do not share or transfer."}
           </div>
         </div>

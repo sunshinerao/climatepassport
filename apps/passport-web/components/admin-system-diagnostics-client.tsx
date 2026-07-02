@@ -70,7 +70,7 @@ export function AdminSystemDiagnosticsClient({ locale }: { locale: Locale }) {
       <div className="section-header">
         <div>
           <span className="label">{isZh ? "性能诊断" : "Performance diagnostics"}</span>
-          <h2 style={{ fontSize: "1.25rem", marginTop: "0.25rem", marginBottom: "0.25rem" }}>
+          <h2 style={{ fontSize: "var(--cp-fs-20)", marginTop: "0.25rem", marginBottom: "0.25rem" }}>
             {isZh ? "系统响应与数据库连接速度检测" : "Response & database latency check"}
           </h2>
         </div>

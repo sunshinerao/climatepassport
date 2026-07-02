@@ -70,7 +70,7 @@ export default async function AdminActivityParticipationsPage({ params }: { para
               ) : (
                 participations.map((p) => (
                   <tr key={p.id}>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{p.userId}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{p.userId}</td>
                     <td>{p.roleType ?? "—"}</td>
                     <td><span className="chip">{STATUS_LABEL[p.status] ?? p.status}</span></td>
                     <td>{p.pointsEarned}</td>

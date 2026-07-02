@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { locales, type Locale } from "@/lib/site-content";
 import {
-  createUserSession,
   generateClimatePassportId,
-  getDashboardPathForRole,
   hashUserPassword,
   normalizeUserEmail,
 } from "@/lib/server/auth";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import { createAchievementRecord } from "@/lib/server/achievement-badge";
+import { createEmailToken, sendVerificationEmail } from "@/lib/server/auth-email";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
@@ -90,6 +89,7 @@ export async function POST(request: Request) {
           password: passwordHash,
           role: existingUser.role ?? "ATTENDEE",
           status: "ACTIVE",
+          emailVerified: null,
           climatePassportId: resolvedPassportId,
           salutation: salutation || null,
           title: title || null,
@@ -152,6 +152,7 @@ export async function POST(request: Request) {
         password: passwordHash,
         role: "ATTENDEE",
         status: "ACTIVE",
+        emailVerified: null,
         climatePassportId,
         salutation: salutation || null,
         title: title || null,
@@ -214,12 +215,38 @@ export async function POST(request: Request) {
     sdgTags: ["SDG13"],
   });
 
-  await createUserSession(user.id);
+  const token = await createEmailToken({
+    userId: user.id,
+    email: normalizedEmail,
+    purpose: "VERIFY_EMAIL",
+  });
 
-  const fallbackPath = getDashboardPathForRole(locale as Locale, user.role);
+  try {
+    const origin = new URL(request.url).origin;
+    await sendVerificationEmail({
+      locale: locale as Locale,
+      email: normalizedEmail,
+      token: token.token,
+      code: token.code,
+      origin,
+    });
+  } catch (error) {
+    console.error("[auth/register] failed to send verification email", error);
+    return NextResponse.json(
+      { error: "Account created, but verification email could not be sent. Please request a new verification email." },
+      { status: 502 },
+    );
+  }
+
+  const fallbackPath = `/${locale}/dashboard/climate-passport`;
+  const safeNext = sanitizeLocalRedirectPath(next, fallbackPath);
+  const verifyParams = new URLSearchParams({
+    email: normalizedEmail,
+    next: safeNext,
+  });
 
   return NextResponse.json({
     ok: true,
-    redirectTo: sanitizeLocalRedirectPath(next, fallbackPath),
+    redirectTo: `/${locale}/auth/verify-email?${verifyParams.toString()}`,
   });
 }

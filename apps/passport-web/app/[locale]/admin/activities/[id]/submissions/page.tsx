@@ -72,23 +72,23 @@ export default async function AdminActivitySubmissionsPage({ params }: { params:
               ) : (
                 submissions.map((s) => (
                   <tr key={s.id}>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{s.userId}</td>
-                    <td style={{ fontSize: "0.85em" }}>{s.task?.title ?? "—"}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{s.userId}</td>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>{s.task?.title ?? "—"}</td>
                     <td>{s.mediaType ?? "—"}</td>
                     <td><span className="chip">{STATUS_LABEL[s.status] ?? s.status}</span></td>
                     <td>{s.score !== null ? s.score?.toString() : "—"}</td>
                     <td>{s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : "—"}</td>
                     <td>
                       {s.linkUrl && (
-                        <a href={s.linkUrl} rel="noopener noreferrer" style={{ fontSize: "0.85em" }} target="_blank">
+                        <a href={s.linkUrl} rel="noopener noreferrer" style={{ fontSize: "var(--cp-text-small)" }} target="_blank">
                           {zh ? "链接" : "Link"}
                         </a>
                       )}
                       {s.fileUrls.length > 0 && (
-                        <span style={{ fontSize: "0.85em" }}>{zh ? `${s.fileUrls.length} 个文件` : `${s.fileUrls.length} file(s)`}</span>
+                        <span style={{ fontSize: "var(--cp-text-small)" }}>{zh ? `${s.fileUrls.length} 个文件` : `${s.fileUrls.length} file(s)`}</span>
                       )}
                       {s.textContent && (
-                        <span style={{ fontSize: "0.85em", color: "var(--color-text-muted)" }}>{s.textContent.slice(0, 40)}…</span>
+                        <span style={{ fontSize: "var(--cp-text-small)", color: "var(--color-text-muted)" }}>{s.textContent.slice(0, 40)}…</span>
                       )}
                     </td>
                   </tr>

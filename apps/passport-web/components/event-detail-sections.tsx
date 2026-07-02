@@ -101,7 +101,7 @@ export function EventDetailSections({
               }}
             >
               {/* Time */}
-              <div style={{ minWidth: "80px", fontSize: "0.85rem", color: "#6b7280", fontVariantNumeric: "tabular-nums", paddingTop: 2 }}>
+              <div style={{ minWidth: "80px", fontSize: "var(--cp-text-small)", color: "#6b7280", fontVariantNumeric: "tabular-nums", paddingTop: 2 }}>
                 <div>{item.startTime}</div>
                 <div>{item.endTime}</div>
               </div>
@@ -111,7 +111,7 @@ export function EventDetailSections({
                 <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.25rem" }}>
                   <span
                     style={{
-                      fontSize: "0.7rem",
+                      fontSize: "var(--cp-text-caption)",
                       fontWeight: 600,
                       padding: "1px 6px",
                       borderRadius: 4,
@@ -123,25 +123,25 @@ export function EventDetailSections({
                     {zh ? TYPE_LABELS_ZH[item.type] ?? item.type : item.type}
                   </span>
                   {item.venue && (
-                    <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                    <span style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af" }}>
                       📍 {zh ? item.venue : (item.venueEn ?? item.venue)}
                     </span>
                   )}
                 </div>
 
-                <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+                <div style={{ fontWeight: 600, fontSize: "var(--cp-text-body)" }}>
                   {zh ? item.title : (item.titleEn ?? item.title)}
                 </div>
 
                 {(zh ? item.description : (item.descriptionEn ?? item.description)) && (
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>
+                  <div style={{ fontSize: "var(--cp-text-small)", color: "#6b7280", marginTop: "0.25rem" }}>
                     {zh ? item.description : (item.descriptionEn ?? item.description)}
                   </div>
                 )}
 
                 {/* Moderator */}
                 {item.moderator && (
-                  <div style={{ marginTop: "0.4rem", fontSize: "0.82rem", color: "#6b7280" }}>
+                  <div style={{ marginTop: "0.4rem", fontSize: "var(--cp-text-small)", color: "#6b7280" }}>
                     🎤 {zh ? "主持：" : "Moderator: "}
                     <span style={{ fontWeight: 500, color: "#374151" }}>
                       {zh ? item.moderator.name : (item.moderator.nameEn ?? item.moderator.name)}
@@ -159,9 +159,9 @@ export function EventDetailSections({
                       <div key={sl.id} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                         {sl.speaker.avatar
                           ? <img alt={sl.speaker.name} src={sl.speaker.avatar} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} />
-                          : <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>👤</span>
+                          : <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "var(--cp-fs-12)" }}>👤</span>
                         }
-                        <span style={{ fontSize: "0.82rem", color: "#374151" }}>
+                        <span style={{ fontSize: "var(--cp-text-small)", color: "#374151" }}>
                           {zh ? sl.speaker.name : (sl.speaker.nameEn ?? sl.speaker.name)}
                         </span>
                       </div>

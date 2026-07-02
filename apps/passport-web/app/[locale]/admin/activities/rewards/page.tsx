@@ -52,7 +52,7 @@ export default async function AdminActivitiesRewardsPage({ params }: { params: {
                     </td>
                     <td><span className="chip chip">{r.trigger}</span></td>
                     <td><span className="chip">{r.rewardType}</span></td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{JSON.stringify(r.rewardValueJson)}</td>
+                    <td style={{ fontFamily: "var(--cp-font-mono)", fontSize: "var(--cp-text-small)" }}>{JSON.stringify(r.rewardValueJson)}</td>
                     <td>{new Date(r.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))

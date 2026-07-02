@@ -256,8 +256,8 @@ export function AdminActivityAgendaClient({
       )}
 
       {showForm && (
-        <div className="proto-admin-overlay">
-          <div className="panel" style={{ maxWidth: "720px", width: "100%" }}>
+        <div className="activity-agenda-modal-overlay">
+          <div className="panel activity-agenda-modal" style={{ maxWidth: "720px", width: "100%" }}>
             <div className="compact-header">
               <h3 className="label">
                 {editId ? (zh ? "编辑议程项" : "Edit Item") : (zh ? "新建议程项" : "New Item")}
@@ -468,23 +468,23 @@ export function AdminActivityAgendaClient({
                   .sort((a, b) => a.startTime.localeCompare(b.startTime) || a.order - b.order)
                   .map((item) => (
                     <tr key={item.id}>
-                      <td style={{ whiteSpace: "nowrap", fontSize: "0.85rem" }}>
+                      <td style={{ whiteSpace: "nowrap", fontSize: "var(--cp-text-small)" }}>
                         {item.startTime} – {item.endTime}
                       </td>
                       <td>
                         <div style={{ fontWeight: 500 }}>{item.title}</div>
-                        {item.titleEn && <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>{item.titleEn}</div>}
+                        {item.titleEn && <div style={{ color: "#6b7280", fontSize: "var(--cp-text-small)" }}>{item.titleEn}</div>}
                       </td>
                       <td>
-                        <span className={TYPE_BADGE_CLASS[item.type] ?? "chip chip"} style={{ fontSize: "0.75rem" }}>
+                        <span className={TYPE_BADGE_CLASS[item.type] ?? "chip chip"} style={{ fontSize: "var(--cp-text-caption)" }}>
                           {zh ? TYPE_LABELS_ZH[item.type] ?? item.type : item.type}
                         </span>
                       </td>
-                      <td style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                      <td style={{ fontSize: "var(--cp-text-small)", color: "#6b7280" }}>
                         {item.venue ?? "—"}
-                        {item.venueEn ? <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{item.venueEn}</div> : null}
+                        {item.venueEn ? <div style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af" }}>{item.venueEn}</div> : null}
                       </td>
-                      <td style={{ fontSize: "0.85rem" }}>
+                      <td style={{ fontSize: "var(--cp-text-small)" }}>
                         {item.moderator && (
                           <div style={{ marginBottom: "2px" }}>
                             🎤 {item.moderator.name}
