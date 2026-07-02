@@ -69,6 +69,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  const rootRoute = {
+    url: `${siteUrl}/`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 1,
+  };
+
   const activityDetailRoutes = locales.flatMap((locale) =>
     activityRoutes.map((activity) => ({
       url: `${siteUrl}/${locale}/activities/${activity.slug}`,
@@ -78,5 +85,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
-  return [...staticRoutes, ...activityDetailRoutes];
+  return [rootRoute, ...staticRoutes, ...activityDetailRoutes];
 }

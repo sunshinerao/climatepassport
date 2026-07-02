@@ -97,6 +97,37 @@ export function homePageMetadata(locale: Locale): Metadata {
   });
 }
 
+export function rootHomePageMetadata(): Metadata {
+  const { home } = getDictionary("en");
+  const languages = Object.fromEntries(
+    locales.map((locale) => [localeLanguageTags[locale], absoluteUrl(localizedPath(locale))]),
+  );
+
+  return {
+    ...publicPageMetadata({
+      locale: "en",
+      title: home.title,
+      description: home.body,
+      keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
+    }),
+    alternates: {
+      canonical: absoluteUrl("/"),
+      languages: {
+        ...languages,
+        "x-default": absoluteUrl("/"),
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName,
+      locale: localeLanguageTags.en,
+      url: absoluteUrl("/"),
+      title: home.title,
+      description: home.body,
+    },
+  };
+}
+
 export function platformPageMetadata(
   locale: Locale,
   page: "activities" | "certificates" | "events" | "speakers",

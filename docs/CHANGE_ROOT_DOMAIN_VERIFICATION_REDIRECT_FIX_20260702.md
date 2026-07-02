@@ -16,13 +16,15 @@
 - `apps/passport-web/app/page.tsx`
   - 移除 `redirect("/en")`。
   - 直接渲染 `HomeScreen locale="en"`。
-  - 为根路径补充英文首页 metadata。
+  - 为根路径补充专用英文首页 metadata，使 canonical 指向 `https://www.climatepass.org/`。
 - `apps/passport-web/lib/seo.ts`
   - 默认 `siteUrl` 从 `https://climatepass.org` 调整为 `https://www.climatepass.org`。
+  - 新增根首页 metadata helper，避免 `/` 的 canonical 继续指向 `/en/`。
 - `apps/passport-web/app/robots.ts`
   - 默认 host/sitemap 域名调整为 `https://www.climatepass.org`。
 - `apps/passport-web/app/sitemap.ts`
   - 默认 sitemap URL 域名调整为 `https://www.climatepass.org`。
+  - 将根路径 `https://www.climatepass.org/` 加入 sitemap，匹配根路径 canonical。
 - `.env.example`
   - `NEXT_PUBLIC_SITE_URL` 示例调整为 `https://www.climatepass.org`。
 
