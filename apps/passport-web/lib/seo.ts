@@ -5,6 +5,7 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climate
 
 export const siteName = "Climate Passport";
 export const defaultSeoTitle = "Climate Passport | Verified climate identity, credentials, and action records";
+export const homeSeoTitle = "Climate Passport | Trusted Digital Identity for the Climate Era";
 export const climatePassportDefinition =
   "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.";
 export const defaultSeoDescription =
@@ -96,12 +97,14 @@ export function publicPageMetadata(options: {
 export function homePageMetadata(locale: Locale): Metadata {
   const { home } = getDictionary(locale);
 
-  return publicPageMetadata({
+  const metadata = publicPageMetadata({
     locale,
-    title: home.title,
+    title: locale === "en" ? homeSeoTitle : home.title,
     description: home.body,
     keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
   });
+
+  return locale === "en" ? { ...metadata, title: { absolute: homeSeoTitle } } : metadata;
 }
 
 export function rootHomePageMetadata(): Metadata {
@@ -110,10 +113,11 @@ export function rootHomePageMetadata(): Metadata {
   return {
     ...publicPageMetadata({
       locale: "en",
-      title: home.title,
+      title: homeSeoTitle,
       description: home.body,
       keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
     }),
+    title: { absolute: homeSeoTitle },
     alternates: {
       canonical: new URL(absoluteUrl("/")),
       languages: {
@@ -126,7 +130,7 @@ export function rootHomePageMetadata(): Metadata {
       siteName,
       locale: localeLanguageTags.en,
       url: absoluteUrl("/"),
-      title: home.title,
+      title: homeSeoTitle,
       description: home.body,
     },
   };
