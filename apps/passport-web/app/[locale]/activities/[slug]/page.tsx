@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
 import type { Locale } from "@/lib/site-content";
+import { activityEventJsonLd } from "@/lib/seo";
 import { EventDetailSections } from "@/components/event-detail-sections";
 import { isActivityRegistrationUnavailable } from "@/lib/server/activity-event-utils";
 import { ActivityPosterButtons } from "@/components/activity-poster-buttons";
@@ -114,6 +115,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
     !isActivityRegistrationUnavailable(activity);
 
   const registrationUnavailable = isActivityRegistrationUnavailable(activity);
+  const structuredData = activityEventJsonLd(activity, params.locale);
 
   // Serialize dates for client components
   const serializedActivity = {
@@ -135,6 +137,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
   if (activity.type === "EVENT") {
     return (
       <main className="page">
+        {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />}
         {/* Hero / poster */}
         {(activity as any).posterImage && (
           <div style={{ width: "100%", maxHeight: 400, overflow: "hidden", borderRadius: "0.75rem", marginBottom: "1.5rem" }}>

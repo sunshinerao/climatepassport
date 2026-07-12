@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { defaultSeoDescription, defaultSeoTitle, organizationJsonLd, siteName, siteUrl, softwareApplicationJsonLd, websiteJsonLd } from "@/lib/seo";
+import { defaultSeoDescription, defaultSeoTitle, definedTermsJsonLd, organizationJsonLd, siteName, siteUrl, softwareApplicationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const structuredData = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
+  const structuredData = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd(), definedTermsJsonLd()];
 
   return (
     <html lang="en">

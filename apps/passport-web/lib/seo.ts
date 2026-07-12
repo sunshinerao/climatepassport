@@ -22,6 +22,11 @@ export const localeNames: Record<Locale, string> = {
   de: "German",
 };
 
+export const organizationId = `${siteUrl}/#organization`;
+export const websiteId = `${siteUrl}/#website`;
+export const softwareApplicationId = `${siteUrl}/#software`;
+export const definedTermSetId = `${siteUrl}/#climate-passport-terms`;
+
 export function absoluteUrl(path = "/") {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -31,16 +36,16 @@ export function localizedPath(locale: Locale, path = "") {
   return `/${locale}${normalizedPath}`;
 }
 
-export function localizedAlternates(path = "") {
+export function localizedAlternates(locale: Locale, path = "") {
   const languages = Object.fromEntries(
     locales.map((locale) => [localeLanguageTags[locale], absoluteUrl(localizedPath(locale, path))]),
   );
 
   return {
-    canonical: absoluteUrl(localizedPath("en", path)),
+    canonical: absoluteUrl(localizedPath(locale, path)),
     languages: {
       ...languages,
-      "x-default": absoluteUrl(localizedPath("en", path)),
+      "x-default": path === "" || path === "/" ? absoluteUrl("/") : absoluteUrl(localizedPath("en", path)),
     },
   };
 }
@@ -58,7 +63,7 @@ export function publicPageMetadata(options: {
     title: options.title,
     description: options.description,
     keywords: options.keywords,
-    alternates: localizedAlternates(options.path ?? ""),
+    alternates: localizedAlternates(options.locale, options.path ?? ""),
     openGraph: {
       type: "website",
       siteName,
@@ -167,6 +172,7 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": organizationId,
     name: siteName,
     url: siteUrl,
     email: "contact@climatepass.org",
@@ -179,8 +185,10 @@ export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": websiteId,
     name: siteName,
     url: siteUrl,
+    publisher: { "@id": organizationId },
     inLanguage: locales.map((locale) => localeLanguageTags[locale]),
     potentialAction: {
       "@type": "SearchAction",
@@ -194,15 +202,178 @@ export function softwareApplicationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": softwareApplicationId,
     name: siteName,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     url: siteUrl,
     description: defaultSeoDescription,
+    provider: { "@id": organizationId },
+    publisher: { "@id": organizationId },
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
     },
+  };
+}
+
+export function definedTermsJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "@id": definedTermSetId,
+    name: "Climate Passport terminology",
+    url: siteUrl,
+    publisher: { "@id": organizationId },
+    hasDefinedTerm: [
+      {
+        "@type": "DefinedTerm",
+        name: "Climate Passport",
+        description: defaultSeoDescription,
+      },
+      {
+        "@type": "DefinedTerm",
+        name: "verified climate credentials",
+        description: "Digital certificate and credential records managed by Climate Passport for climate learning, participation, and action.",
+      },
+      {
+        "@type": "DefinedTerm",
+        name: "climate action records",
+        description: "Participation, learning, certificate, and verification records associated with a Climate Passport profile.",
+      },
+      {
+        "@type": "DefinedTerm",
+        name: "certificate verification",
+        description: "Public verification of Climate Passport certificate records through the platform verification portal.",
+      },
+    ],
+  };
+}
+
+export function aboutPageJsonLd(locale: Locale) {
+  const content = getDictionary(locale).info.about;
+  const url = absoluteUrl(localizedPath(locale, "/about"));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${url}#about-page`,
+    url,
+    name: content.title,
+    description: content.intro,
+    inLanguage: localeLanguageTags[locale],
+    isPartOf: { "@id": websiteId },
+    about: { "@id": organizationId },
+    publisher: { "@id": organizationId },
+  };
+}
+
+const privatePathPrefixes = ["/admin", "/auth", "/dashboard", "/profile", "/api"];
+
+const breadcrumbLabels: Record<string, string> = {
+  about: "About",
+  activities: "Activities",
+  certificates: "Certificates",
+  contact: "Contact",
+  events: "Events",
+  faq: "FAQ",
+  privacy: "Privacy",
+  speakers: "Speakers",
+  terms: "Terms",
+  verify: "Verify",
+  verifier: "Verifier",
+};
+
+function humanizeSegment(segment: string) {
+  return breadcrumbLabels[segment] ?? segment.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export function breadcrumbJsonLdForPath(locale: Locale, pathname: string) {
+  const localePrefix = `/${locale}`;
+  if (!pathname.startsWith(localePrefix)) {
+    return null;
+  }
+
+  const pathAfterLocale = pathname.slice(localePrefix.length) || "/";
+  if (privatePathPrefixes.some((prefix) => pathAfterLocale === prefix || pathAfterLocale.startsWith(`${prefix}/`))) {
+    return null;
+  }
+
+  const segments = pathAfterLocale.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    return null;
+  }
+
+  const itemListElement = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: absoluteUrl(localizedPath(locale)),
+    },
+    ...segments.map((segment, index) => {
+      const path = `/${segments.slice(0, index + 1).join("/")}`;
+      return {
+        "@type": "ListItem",
+        position: index + 2,
+        name: humanizeSegment(segment),
+        item: absoluteUrl(localizedPath(locale, path)),
+      };
+    }),
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement,
+  };
+}
+
+export function activityEventJsonLd(activity: {
+  slug: string;
+  type: string;
+  title: string;
+  titleEn: string | null;
+  summary: string | null;
+  summaryEn: string | null;
+  startTime: Date | null;
+  endTime: Date | null;
+  locationType: string | null;
+  organizerName: string | null;
+}, locale: Locale) {
+  if (activity.type !== "EVENT" || !activity.startTime) {
+    return null;
+  }
+
+  const url = absoluteUrl(localizedPath(locale, `/activities/${activity.slug}`));
+  const zh = locale === "zh";
+  const name = zh ? activity.title : activity.titleEn ?? activity.title;
+  const description = zh ? activity.summary ?? activity.summaryEn : activity.summaryEn ?? activity.summary;
+  const attendanceMode = activity.locationType === "ONLINE"
+    ? "https://schema.org/OnlineEventAttendanceMode"
+    : activity.locationType === "HYBRID"
+      ? "https://schema.org/MixedEventAttendanceMode"
+      : "https://schema.org/OfflineEventAttendanceMode";
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "@id": `${url}#event`,
+    name,
+    description: description ?? defaultSeoDescription,
+    url,
+    inLanguage: localeLanguageTags[locale],
+    startDate: activity.startTime.toISOString(),
+    endDate: activity.endTime?.toISOString(),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: attendanceMode,
+    location: activity.locationType === "ONLINE"
+      ? { "@type": "VirtualLocation", url }
+      : { "@type": "Place", name: activity.locationType ?? "Event venue" },
+    organizer: activity.organizerName
+      ? { "@type": "Organization", name: activity.organizerName }
+      : { "@id": organizationId },
+    isAccessibleForFree: true,
   };
 }

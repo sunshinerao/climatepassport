@@ -7,7 +7,7 @@ ${defaultSeoDescription}
 
 ## Primary Pages
 
-- Home: ${absoluteUrl("/en")}
+- Home: ${absoluteUrl("/")}
 - Activities: ${absoluteUrl("/en/activities")}
 - Certificates: ${absoluteUrl("/en/certificates")}
 - Events: ${absoluteUrl("/en/events")}
