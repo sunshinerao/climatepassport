@@ -18,6 +18,7 @@
 
 - 新增 `apps/passport-web/components/climate-records-credentials-screen.tsx`，包含四语 H1、目录锚点、核心定义、身份边界、相关概念和 locale-aware 内部链接。
 - 新增 `apps/passport-web/app/[locale]/climate-records-and-credentials/page.tsx`，提供多语言 metadata、结构化数据和页面渲染。
+- 新增 `apps/passport-web/app/climate-records-and-credentials/page.tsx`，将未加语言前缀的访问路径重定向到英文 canonical 页面 `/en/climate-records-and-credentials`。
 - 更新 `apps/passport-web/lib/seo.ts`，增加支持 locale/name/description 的 Knowledge Hub WebPage JSON-LD helper 与 breadcrumb label。
 - 更新 `apps/passport-web/app/sitemap.ts`，将 `/climate-records-and-credentials` 加入常规多语言 publicRoutes。
 - 更新 `apps/passport-web/components/about-entity-screen.tsx`，加入从 `/en/about` 到 Knowledge Hub 的可见内链。
