@@ -595,6 +595,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
         intro: "These terms govern use of the platform identity, event participation, and certificate records managed by Climate Passport.",
         sections: [
           { title: "Platform scope", body: "Using Climate Passport means your registration, event participation, and certificate activities may be processed across multiple climate-related partner channels that rely on the platform." },
+          { title: "Identity boundary", body: "Climate Passport is not a government-issued identity, national identity credential or travel document. It is a platform identity and record layer for Climate Passport account, participation, credential, certificate, and verification workflows." },
           { title: "Record integrity", body: "Users must not manipulate attendance, certificate verification, or access workflows. Verified records are part of the platform archive." },
         ],
       },
@@ -934,6 +935,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
         intro: "这些条款适用于 Climate Passport 管理的账号身份、活动参与和证书记录。",
         sections: [
           { title: "平台范围", body: "使用 Climate Passport 意味着你的注册、参与和证书活动可能会在多个依赖该平台的气候渠道中被处理。" },
+          { title: "身份边界", body: "Climate Passport 不是政府签发的身份证明、国家身份凭证或旅行证件。它是用于 Climate Passport 账户、参与、资质、证书和核验流程的平台身份与记录层。" },
           { title: "记录完整性", body: "用户不得操纵签到、证书验真或准入流程。已核验记录属于平台正式档案。" },
         ],
       },

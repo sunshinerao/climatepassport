@@ -10,6 +10,8 @@ type AboutSection = {
 
 const definitionEn = "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.";
 const definitionZh = "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。";
+const identityBoundaryEn = "Climate Passport is not a government-issued identity, national identity credential or travel document.";
+const identityBoundaryZh = "Climate Passport 不是政府签发的身份证明、国家身份凭证或旅行证件。";
 
 const enSections: AboutSection[] = [
   {
@@ -31,8 +33,16 @@ const enSections: AboutSection[] = [
     ],
   },
   {
+    id: "identity-boundary",
+    title: "3. Identity boundary",
+    lead: identityBoundaryEn,
+    paragraphs: [
+      "The identity layer is used for platform account ownership, climate participation records, credential verification, and connected program workflows. It does not replace legal identity documents or official travel documents issued by public authorities.",
+    ],
+  },
+  {
     id: "verifiable-credentials",
-    title: "3. Verifiable credentials",
+    title: "4. Verifiable credentials",
     paragraphs: [
       "Climate Passport credentials represent records such as participation, learning milestones, certificates, achievements, and other recognized climate-related outcomes.",
       "They are designed to be portable, shareable, and easier for institutions and organizations to verify through public verification flows and platform-controlled record integrity.",
@@ -40,7 +50,7 @@ const enSections: AboutSection[] = [
   },
   {
     id: "growth-profile",
-    title: "4. Continuously growing digital profile",
+    title: "5. Continuously growing digital profile",
     paragraphs: [
       "A Climate Passport profile is not limited to a static certificate wallet. It grows as a user attends events, completes learning, earns credentials, records achievements, and participates in climate action.",
       "This makes the profile useful as a long-term record of climate capability, participation, and contribution.",
@@ -48,7 +58,7 @@ const enSections: AboutSection[] = [
   },
   {
     id: "institutional-use",
-    title: "5. Institutional and partner use",
+    title: "6. Institutional and partner use",
     paragraphs: [
       "Partner channels can present Climate Passport-powered flows for registration, participation, certificates, and verification while relying on the platform as the shared identity and record layer.",
       "The goal is to reduce fragmented records and make climate participation easier to recognize across programs, organizations, and regions.",
@@ -76,8 +86,16 @@ const zhSections: AboutSection[] = [
     ],
   },
   {
+    id: "identity-boundary",
+    title: "3. 身份边界",
+    lead: identityBoundaryZh,
+    paragraphs: [
+      "该身份层用于平台账户归属、气候参与记录、资质核验和连接项目流程，不替代公共机关签发的法定身份证件或官方旅行证件。",
+    ],
+  },
+  {
     id: "verifiable-credentials",
-    title: "3. 可验证资质",
+    title: "4. 可验证资质",
     paragraphs: [
       "Climate Passport 的资质记录包括参与证明、学习里程碑、证书、成就以及其他被认可的气候相关成果。",
       "这些记录被设计为可携带、可分享，并更便于机构和组织通过公开验证流程与平台记录完整性进行核验。",
@@ -85,7 +103,7 @@ const zhSections: AboutSection[] = [
   },
   {
     id: "growth-profile",
-    title: "4. 持续成长的数字档案",
+    title: "5. 持续成长的数字档案",
     paragraphs: [
       "Climate Passport 档案不是静态证书钱包。它会随着用户参加活动、完成学习、获得资质、记录成就并参与气候行动而持续成长。",
       "因此，这份档案可以作为长期记录气候能力、参与和贡献的可信资料。",
@@ -93,7 +111,7 @@ const zhSections: AboutSection[] = [
   },
   {
     id: "institutional-use",
-    title: "5. 机构与合作方使用方式",
+    title: "6. 机构与合作方使用方式",
     paragraphs: [
       "合作渠道可以承载由 Climate Passport 支持的注册、参与、证书和验证流程，同时把平台作为共享身份与记录层。",
       "目标是减少分散记录，让气候参与更容易在项目、组织与地区之间被识别和核验。",

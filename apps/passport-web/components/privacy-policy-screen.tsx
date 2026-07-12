@@ -27,6 +27,7 @@ const zhSections: PolicySection[] = [
       "安全、尊重与问责：提供访问、更正、删除、撤回同意等权利路径。",
     ],
     paragraphs: [
+      "Climate Passport 不是政府签发的身份证明、国家身份凭证或旅行证件。平台身份仅用于 Climate Passport 服务中的账户、参与、资质、证书与记录核验场景。",
       "除法律法规要求、项目执行所必需，或经你另行明确同意外，我们不会出售你的个人信息，也不会将其用于与本项目或平台服务无关的商业广告、定向营销、通用 AI 模型训练或不透明的自动化决策。",
     ],
   },
@@ -220,6 +221,9 @@ const enSections: PolicySection[] = [
       "Lawful, fair, and transparent processing",
       "Purpose limitation and data minimization",
       "Security controls and user rights pathways",
+    ],
+    paragraphs: [
+      "Climate Passport is not a government-issued identity, national identity credential or travel document. Platform identity is used only for Climate Passport account, participation, credential, certificate, and record verification contexts.",
     ],
   },
   {
