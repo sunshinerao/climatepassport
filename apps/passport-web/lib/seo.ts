@@ -182,7 +182,7 @@ export function organizationJsonLd() {
     url: siteUrl,
     email: "contact@climatepass.org",
     description: defaultSeoDescription,
-    sameAs: [siteUrl],
+    sameAs: ["https://www.linkedin.com/company/climate-passport/"],
   };
 }
 
