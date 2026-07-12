@@ -34,20 +34,20 @@ export function absoluteUrl(path = "/") {
 }
 
 export function localizedPath(locale: Locale, path = "") {
-  const normalizedPath = path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
+  const normalizedPath = path === "" || path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
   return `/${locale}${normalizedPath}`;
 }
 
 export function localizedAlternates(locale: Locale, path = "") {
   const languages = Object.fromEntries(
-    locales.map((locale) => [localeLanguageTags[locale], absoluteUrl(localizedPath(locale, path))]),
+    locales.map((locale) => [localeLanguageTags[locale], localizedPath(locale, path)]),
   );
 
   return {
-    canonical: absoluteUrl(localizedPath(locale, path)),
+    canonical: path === "" || path === "/" ? new URL(absoluteUrl(localizedPath(locale, path))) : localizedPath(locale, path),
     languages: {
       ...languages,
-      "x-default": path === "" || path === "/" ? absoluteUrl("/") : absoluteUrl(localizedPath("en", path)),
+      "x-default": path === "" || path === "/" ? "/" : localizedPath("en", path),
     },
   };
 }
@@ -106,9 +106,6 @@ export function homePageMetadata(locale: Locale): Metadata {
 
 export function rootHomePageMetadata(): Metadata {
   const { home } = getDictionary("en");
-  const languages = Object.fromEntries(
-    locales.map((locale) => [localeLanguageTags[locale], absoluteUrl(localizedPath(locale))]),
-  );
 
   return {
     ...publicPageMetadata({
@@ -118,10 +115,10 @@ export function rootHomePageMetadata(): Metadata {
       keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
     }),
     alternates: {
-      canonical: absoluteUrl("/"),
+      canonical: new URL(absoluteUrl("/")),
       languages: {
-        ...languages,
-        "x-default": absoluteUrl("/"),
+        ...Object.fromEntries(locales.map((locale) => [localeLanguageTags[locale], localizedPath(locale)])),
+        "x-default": "/",
       },
     },
     openGraph: {
