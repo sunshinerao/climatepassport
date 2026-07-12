@@ -5,8 +5,10 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climate
 
 export const siteName = "Climate Passport";
 export const defaultSeoTitle = "Climate Passport | Verified climate identity, credentials, and action records";
+export const climatePassportDefinition =
+  "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.";
 export const defaultSeoDescription =
-  "Climate Passport is a trusted digital identity platform for climate learning, participation, certificates, and verifiable action records.";
+  climatePassportDefinition;
 
 export const localeLanguageTags: Record<Locale, string> = {
   en: "en",
@@ -235,12 +237,12 @@ export function definedTermsJsonLd() {
       {
         "@type": "DefinedTerm",
         name: "verified climate credentials",
-        description: "Digital certificate and credential records managed by Climate Passport for climate learning, participation, and action.",
+        description: "Verifiable credential records that contribute to a portable Climate Passport digital profile for climate learning, participation, and action.",
       },
       {
         "@type": "DefinedTerm",
         name: "climate action records",
-        description: "Participation, learning, certificate, and verification records associated with a Climate Passport profile.",
+        description: "Learning, participation, credential, and action records associated with a continuously growing Climate Passport digital profile.",
       },
       {
         "@type": "DefinedTerm",

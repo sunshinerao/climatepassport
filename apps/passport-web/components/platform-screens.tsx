@@ -54,10 +54,10 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
   const climateEraTip = "“气候时代”并非一个单一机构正式定义的法律或科学术语，而是基于联合国、IPCC、UNFCCC等国际权威语境形成的传播表达。它指的是气候变化、能源转型、可持续发展和绿色经济正在深刻影响个人能力、产业结构、城市治理与全球合作的新阶段。";
   const climateEraTipGlobal = "\"Climate era\" is not a formal legal or scientific term defined by one institution. It is a communication expression formed in the context of UN, IPCC, UNFCCC, and other international authorities, describing a new stage where climate change, energy transition, sustainable development, and green economy are reshaping individual capabilities, industry structures, urban governance, and global collaboration.";
   const climatePassportTipByLocale: Record<Locale, string> = {
-    zh: "在气候变化重塑世界的今天，每一次学习、参与和行动，都可能成为面向未来的重要能力与可信记录。Climate Passport 帮助你建立一份属于自己的可信数字档案。Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
-    en: "As climate change reshapes the world, every learning step, participation, and action can become future-facing capability and a trusted record. Climate Passport helps you build a trusted digital profile that belongs to you. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
-    fr: "Alors que le changement climatique transforme le monde, chaque apprentissage, participation et action peut devenir une capacite pour l'avenir et un enregistrement fiable. Climate Passport vous aide a construire un profil numerique de confiance qui vous appartient. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
-    de: "Da der Klimawandel die Welt neu formt, kann jeder Lernschritt, jede Teilnahme und jede Handlung zu einer zukunftsorientierten Fahigkeit und zu einem vertrauenswurdigen Nachweis werden. Climate Passport hilft Ihnen, ein vertrauenswurdiges digitales Profil aufzubauen, das Ihnen gehort. Climate Passport is an AI-driven digital identity infrastructure for the climate era.",
+    zh: "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
+    en: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
+    fr: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
+    de: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
   };
   const heroSubtitleByLocale: Record<Locale, { line1: string; line2: string }> = {
     zh: {
@@ -78,8 +78,8 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
     },
   };
   const heroDescByLocale: Record<Locale, string> = {
-    zh: "Climate Passport 将你的学习、参与、证书与气候行动，转化为一份由你拥有、可验证、可分享的可信数字档案。让每一次努力被看见，让每一次行动成为未来的价值。",
-    en: "Climate Passport transforms your learning, participation, certificates, and climate action into a trusted digital profile that you own, can verify, and can share. Let every effort be seen, and let every action become value for the future.",
+    zh: "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。让每一次努力被看见，让每一次行动成为未来的价值。",
+    en: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
     fr: "Climate Passport transforme vos apprentissages, votre participation, vos certificats et vos actions climatiques en un dossier numerique fiable que vous possedez, pouvez verifier et partager. Que chaque effort soit vu, et que chaque action devienne une valeur pour l'avenir.",
     de: "Climate Passport verwandelt Ihr Lernen, Ihre Teilnahme, Ihre Zertifikate und Ihre Klimaaktionen in ein vertrauenswurdiges digitales Profil, das Ihnen gehort, verifizierbar und teilbar ist. Jede Anstrengung soll sichtbar werden, und jede Aktion soll zu einem Wert fur die Zukunft werden.",
   };

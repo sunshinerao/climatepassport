@@ -373,8 +373,8 @@ export function CertificateVerifyPage({
           <p>
             {t(
               locale,
-              "Climate Passport 是由上海气候周 (SHCW) 运营的可信数字证书平台，为气候行动参与者提供可独立验证的能力记录。",
-              "Climate Passport is a trusted digital credential platform operated by Shanghai Climate Week (SHCW), providing independently verifiable capability records for climate action participants."
+              "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
+              "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile."
             )}
           </p>
           <Link className="cpv-trust-link" href={`/${locale}`}>

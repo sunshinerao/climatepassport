@@ -320,7 +320,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
       footer: {
         platformTitle: "Climate Passport",
         platformText:
-          "The trusted platform for verified identity, credentials, learning records, and climate action. Your verified profile, wherever you go.",
+          "AI-driven trusted digital identity infrastructure for the climate era, turning climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
         sitemapTitle: "Platform",
         infoTitle: "Information",
         infoLinks: [
@@ -336,7 +336,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
         certificateTitle: "Certificates",
         certificateText:
           "Browse certificate categories, earn credentials through events and learning, and verify any Climate Passport certificate through the public verification portal.",
-        rights: "\u00a9 2026 Climate Passport. Trusted identity infrastructure for the climate era.",
+        rights: "\u00a9 2026 Climate Passport. AI-driven trusted digital identity infrastructure for the climate era.",
       },
     },
     home: {
@@ -344,7 +344,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
       title: "Building trusted digital identity infrastructure for the climate era.",
       subtitle: "For the planet, for yourself, for the future",
       body:
-        "Climate Passport records your credentials, events, learning, and climate action into a trusted digital profile you own and can share anywhere.",
+        "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
       primaryCta: "Create my Passport",
       secondaryCta: "Explore certificates",
       proofTitle: "Why Climate Passport",
@@ -574,9 +574,9 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
       about: {
         label: "About Climate Passport",
         title: "About the independent Climate Passport platform",
-        intro: "Climate Passport is the system of record for identity, participation, achievements, certificates, and long-term climate growth profiles across partner channels.",
+        intro: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
         sections: [
-          { title: "What it is", body: "Climate Passport is not a campaign microsite. It is the shared platform layer that owns accounts, event participation, certificate issuance, and user growth records." },
+          { title: "What it is", body: "Climate Passport is not a campaign microsite. It is trusted identity infrastructure that connects accounts, event participation, credential issuance, climate action, and long-term growth records into one portable profile." },
           { title: "How channel integration works", body: "Partner channels can present Climate Passport-powered flows, while user and participation data remains owned by the Passport platform." },
         ],
       },
@@ -663,7 +663,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
       },
       footer: {
         platformTitle: "Climate Passport",
-        platformText: "可信气候身份与凭证平台，记录你的学习、参与、证书和气候行动。你的可验证档案，随时可用。",
+        platformText: "面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
         sitemapTitle: "平台",
         infoTitle: "平台信息",
         infoLinks: [
@@ -679,14 +679,14 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
         certificateTitle: "证书",
         certificateText:
           "浏览证书类别，通过活动和学习获取凭证，并通过公开验证页核验任意 Climate Passport 证书的真实性。",
-        rights: "© 2026 Climate Passport，气候时代的可信身份基础设施。",
+        rights: "© 2026 Climate Passport，面向气候时代的 AI 驱动可信数字身份基础设施。",
       },
     },
     home: {
       kicker: "气候身份基础设施",
       title: "属于你的气候时代可信档案",
       subtitle: "为地球，为自己，为未来",
-      body: "Climate Passport 将你的凭证、活动参与、学习记录和气候行动，汇聚成一份你拥有、可随时分享的可信数字档案。",
+      body: "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
       primaryCta: "创建我的护照",
       secondaryCta: "查看证书",
       proofTitle: "选择 Climate Passport",
@@ -913,9 +913,9 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
       about: {
         label: "关于 Climate Passport",
         title: "关于独立的 Climate Passport 平台",
-        intro: "Climate Passport 是合作渠道共同使用的身份、参与、成就、证书与长期气候成长档案系统。",
+        intro: "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
         sections: [
-          { title: "它是什么", body: "Climate Passport 不是宣传站点，而是统一承载账号、活动参与、证书签发和用户成长档案的共享平台层。" },
+          { title: "它是什么", body: "Climate Passport 不是宣传站点，而是将账号、活动参与、资质签发、气候行动与长期成长记录连接为同一份可携带档案的可信身份基础设施。" },
           { title: "渠道集成方式", body: "合作渠道可承载 Passport 流程，但用户与参与主数据归属于 Passport 平台。" },
         ],
       },

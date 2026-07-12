@@ -20,7 +20,7 @@ export async function SiteShell({ children, locale }: { children: ReactNode; loc
   const supportEmail = branding?.supportEmail ?? "contact@climatepass.org";
   const supportLocation = locale === "zh" ? "中国上海" : "Shanghai, China";
   const footerDisclaimer = branding?.copyrightText
-    ?? "© 2026 Climate Passport. 保留所有权利。面向气候时代的可信数字身份基础设施。";
+    ?? "© 2026 Climate Passport. 保留所有权利。面向气候时代的 AI 驱动可信数字身份基础设施。";
 
   // Minimal shell: hide nav + footer main content on focused pages
   const pathname = headers().get("x-pathname") ?? "";

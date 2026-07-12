@@ -20,7 +20,7 @@ const zhSections: PolicySection[] = [
     id: "overview",
     title: "1. 我们的隐私承诺",
     lead:
-      "Climate Passport 是面向气候时代的可信数字身份与可持续能力记录平台。我们相信，个人在学习、行动、证书、项目参与和国际合作中形成的数据，应受到尊重、保护和负责任的使用。",
+      "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。我们相信，个人在学习、行动、证书、项目参与和国际合作中形成的数据，应受到尊重、保护和负责任的使用。",
     bullets: [
       "合法、正当、透明：在处理前尽可能清晰说明目的、范围和方式。",
       "目的限定与最小必要：仅处理实现服务所必需的信息。",
@@ -215,7 +215,7 @@ const enSections: PolicySection[] = [
     id: "overview",
     title: "1. Our Privacy Commitment",
     lead:
-      "Climate Passport is a trusted digital identity and sustainability record platform for the climate era. We process personal data with respect, protection, and accountability.",
+      "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile. We process personal data with respect, protection, and accountability.",
     bullets: [
       "Lawful, fair, and transparent processing",
       "Purpose limitation and data minimization",
