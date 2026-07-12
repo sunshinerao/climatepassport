@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { locales } from "@/lib/site-content";
 import { getPrismaClient } from "@/lib/server/prisma";
-
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climatepass.org").replace(/\/$/, "");
+import { absoluteUrl, localeLanguageTags, localizedPath } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -10,18 +9,24 @@ const publicRoutes = [
   "",
   "/about",
   "/activities",
+  "/certificate-verification",
   "/certificates",
+  "/climate-passport-id",
   "/contact",
   "/events",
   "/faq",
   "/privacy",
   "/speakers",
   "/terms",
+  "/verifiable-credentials",
 ];
 
 const routePriority = new Map<string, number>([
   ["", 1],
   ["/activities", 0.8],
+  ["/climate-passport-id", 0.8],
+  ["/verifiable-credentials", 0.8],
+  ["/certificate-verification", 0.75],
   ["/certificates", 0.8],
   ["/events", 0.8],
   ["/speakers", 0.7],
@@ -31,6 +36,21 @@ const routePriority = new Map<string, number>([
   ["/privacy", 0.3],
   ["/terms", 0.3],
 ]);
+
+function localizedUrl(locale: string, route = "") {
+  return absoluteUrl(`/${locale}${route}`);
+}
+
+function localizedAlternates(route = "") {
+  return {
+    languages: {
+      ...Object.fromEntries(
+        locales.map((locale) => [localeLanguageTags[locale], absoluteUrl(localizedPath(locale, route))]),
+      ),
+      "x-default": route === "" ? absoluteUrl("/") : absoluteUrl(localizedPath("en", route)),
+    },
+  };
+}
 
 async function getPublicActivityRoutes() {
   const prisma = getPrismaClient();
@@ -62,26 +82,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes = locales.flatMap((locale) =>
     publicRoutes.map((route) => ({
-      url: `${siteUrl}/${locale}${route}`,
+      url: localizedUrl(locale, route),
       lastModified: now,
       changeFrequency: route === "" ? "weekly" as const : "monthly" as const,
       priority: routePriority.get(route) ?? 0.5,
+      alternates: localizedAlternates(route),
     })),
   );
 
   const rootRoute = {
-    url: `${siteUrl}/`,
+    url: absoluteUrl("/"),
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 1,
+    alternates: localizedAlternates(""),
   };
 
   const activityDetailRoutes = locales.flatMap((locale) =>
     activityRoutes.map((activity) => ({
-      url: `${siteUrl}/${locale}/activities/${activity.slug}`,
+      url: localizedUrl(locale, `/activities/${activity.slug}`),
       lastModified: activity.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,
+      alternates: localizedAlternates(`/activities/${activity.slug}`),
     })),
   );
 
