@@ -1,4 +1,4 @@
-import { InfoScreen } from "@/components/platform-screens";
+import { AboutEntityScreen } from "@/components/about-entity-screen";
 import type { Locale } from "@/lib/site-content";
 import { aboutPageJsonLd, infoPageMetadata } from "@/lib/seo";
 
@@ -12,7 +12,7 @@ export default function LocalizedAboutPage({ params }: { params: { locale: Local
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <InfoScreen locale={params.locale} pageKey="about" />
+      <AboutEntityScreen locale={params.locale} />
     </>
   );
 }

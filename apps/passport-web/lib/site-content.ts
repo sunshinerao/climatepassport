@@ -573,7 +573,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     info: {
       about: {
         label: "About Climate Passport",
-        title: "About the independent Climate Passport platform",
+        title: "What is Climate Passport?",
         intro: "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.",
         sections: [
           { title: "What it is", body: "Climate Passport is not a campaign microsite. It is trusted identity infrastructure that connects accounts, event participation, credential issuance, climate action, and long-term growth records into one portable profile." },
@@ -912,7 +912,7 @@ export const siteContent: Record<CoreLocale, SiteDictionary> = {
     info: {
       about: {
         label: "关于 Climate Passport",
-        title: "关于独立的 Climate Passport 平台",
+        title: "What is Climate Passport?",
         intro: "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。",
         sections: [
           { title: "它是什么", body: "Climate Passport 不是宣传站点，而是将账号、活动参与、资质签发、气候行动与长期成长记录连接为同一份可携带档案的可信身份基础设施。" },

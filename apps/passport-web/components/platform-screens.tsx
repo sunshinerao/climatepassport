@@ -132,7 +132,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              <span>{isZh ? "超过10,000名气候先锋信赖" : "Trusted by 10,000+ climate champions"}</span>
+              <span>{isZh ? "连接持续成长的全球气候社区" : "Connected to a growing global climate community"}</span>
             </div>
             <h1 className={isZh ? "proto-title proto-title-hero-unified proto-title-zh-single-line" : "proto-title proto-title-hero-unified"}>
               {isZh ? (
@@ -346,7 +346,7 @@ export async function HomeScreen({ locale }: { locale: Locale }) {
                 </svg>
               </div>
               <h3>{isZh ? "可信证书" : "Trusted Certificates"}</h3>
-              <p>{isZh ? "与个人成长路径关联的可验证证书。可分享、区块链支持，受全球雇主信赖。" : "Verifiable certificates connected to your growth path. Shareable, blockchain-backed, and trusted by employers worldwide."}</p>
+              <p>{isZh ? "与个人成长路径关联的可验证资质。设计为可携带、可分享，并更便于机构和组织核验。" : "Verifiable credentials connected to your growth path. Designed to be portable, shareable and easier for institutions and organizations to verify."}</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">
