@@ -6,6 +6,8 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.climate
 export const siteName = "Climate Passport";
 export const defaultSeoTitle = "Climate Passport | Verified climate identity, credentials, and action records";
 export const homeSeoTitle = "Climate Passport | Trusted Digital Identity for the Climate Era";
+export const homeSeoDescription =
+  "Climate Passport is a trusted digital identity platform for climate learning, participation, credentials and verifiable action records.";
 export const climatePassportDefinition =
   "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.";
 export const defaultSeoDescription =
@@ -100,7 +102,7 @@ export function homePageMetadata(locale: Locale): Metadata {
   const metadata = publicPageMetadata({
     locale,
     title: locale === "en" ? homeSeoTitle : home.title,
-    description: home.body,
+    description: locale === "en" ? homeSeoDescription : home.body,
     keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
   });
 
@@ -114,7 +116,7 @@ export function rootHomePageMetadata(): Metadata {
     ...publicPageMetadata({
       locale: "en",
       title: homeSeoTitle,
-      description: home.body,
+      description: homeSeoDescription,
       keywords: ["Climate Passport", "climate identity", "verified climate credentials", "climate action records"],
     }),
     title: { absolute: homeSeoTitle },
@@ -131,7 +133,7 @@ export function rootHomePageMetadata(): Metadata {
       locale: localeLanguageTags.en,
       url: absoluteUrl("/"),
       title: homeSeoTitle,
-      description: home.body,
+      description: homeSeoDescription,
     },
   };
 }
