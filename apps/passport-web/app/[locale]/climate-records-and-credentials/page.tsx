@@ -1,46 +1,36 @@
-import { notFound } from "next/navigation";
 import { ClimateRecordsCredentialsScreen, climateRecordsHubDescription, climateRecordsHubPath, climateRecordsHubTitle } from "@/components/climate-records-credentials-screen";
 import type { Locale } from "@/lib/site-content";
 import { breadcrumbJsonLdForPath, knowledgeHubWebPageJsonLd, publicPageMetadata } from "@/lib/seo";
 
 export function generateMetadata({ params }: { params: { locale: Locale } }) {
-  if (params.locale !== "en") {
-    return {};
-  }
+  const title = climateRecordsHubTitle(params.locale);
+  const description = climateRecordsHubDescription(params.locale);
 
   return {
     ...publicPageMetadata({
-      locale: "en",
+      locale: params.locale,
       path: climateRecordsHubPath,
-      title: climateRecordsHubTitle,
-      description: climateRecordsHubDescription,
+      title,
+      description,
       keywords: ["climate credentials", "climate records", "credential verification", "climate digital identity", "Climate Passport"],
     }),
-    title: { absolute: climateRecordsHubTitle },
-    alternates: {
-      canonical: climateRecordsHubPath,
-      languages: {
-        en: climateRecordsHubPath,
-        "x-default": climateRecordsHubPath,
-      },
-    },
+    title: { absolute: title },
   };
 }
 
 export default function ClimateRecordsAndCredentialsPage({ params }: { params: { locale: Locale } }) {
-  if (params.locale !== "en") {
-    notFound();
-  }
+  const title = climateRecordsHubTitle(params.locale);
+  const description = climateRecordsHubDescription(params.locale);
 
   const structuredData = [
-    knowledgeHubWebPageJsonLd(),
-    breadcrumbJsonLdForPath("en", `/en${climateRecordsHubPath}`),
+    knowledgeHubWebPageJsonLd(params.locale, title, description),
+    breadcrumbJsonLdForPath(params.locale, `/${params.locale}${climateRecordsHubPath}`),
   ].filter(Boolean);
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <ClimateRecordsCredentialsScreen />
+      <ClimateRecordsCredentialsScreen locale={params.locale} />
     </>
   );
 }

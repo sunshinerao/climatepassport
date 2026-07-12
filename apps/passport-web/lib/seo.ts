@@ -295,17 +295,17 @@ function humanizeSegment(segment: string) {
   return breadcrumbLabels[segment] ?? segment.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export function knowledgeHubWebPageJsonLd() {
-  const url = absoluteUrl(localizedPath("en", "/climate-records-and-credentials"));
+export function knowledgeHubWebPageJsonLd(locale: Locale, name: string, description: string) {
+  const url = absoluteUrl(localizedPath(locale, "/climate-records-and-credentials"));
 
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "@id": `${url}#webpage`,
     url,
-    name: "Climate Records & Credentials | Climate Passport",
-    description: "A practical guide to climate credentials, verification, learning records, participation records, action records and climate digital identity.",
-    inLanguage: localeLanguageTags.en,
+    name,
+    description,
+    inLanguage: localeLanguageTags[locale],
     isPartOf: { "@id": websiteId },
     about: { "@id": organizationId },
     publisher: { "@id": organizationId },

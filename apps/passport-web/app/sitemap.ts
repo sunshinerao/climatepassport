@@ -11,6 +11,7 @@ const publicRoutes = [
   "/activities",
   "/certificate-verification",
   "/certificates",
+  "/climate-records-and-credentials",
   "/climate-passport-id",
   "/contact",
   "/events",
@@ -24,6 +25,7 @@ const publicRoutes = [
 const routePriority = new Map<string, number>([
   ["", 1],
   ["/activities", 0.8],
+  ["/climate-records-and-credentials", 0.75],
   ["/climate-passport-id", 0.8],
   ["/verifiable-credentials", 0.8],
   ["/certificate-verification", 0.75],
@@ -36,10 +38,6 @@ const routePriority = new Map<string, number>([
   ["/privacy", 0.3],
   ["/terms", 0.3],
 ]);
-
-const englishOnlyPublicRoutes = [
-  "/climate-records-and-credentials",
-];
 
 function localizedUrl(locale: string, route = "") {
   return absoluteUrl(`/${locale}${route}`);
@@ -102,13 +100,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: localizedAlternates(""),
   };
 
-  const englishOnlyRoutes = englishOnlyPublicRoutes.map((route) => ({
-    url: localizedUrl("en", route),
-    lastModified: now,
-    changeFrequency: "monthly" as const,
-    priority: 0.75,
-  }));
-
   const activityDetailRoutes = locales.flatMap((locale) =>
     activityRoutes.map((activity) => ({
       url: localizedUrl(locale, `/activities/${activity.slug}`),
@@ -119,5 +110,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
-  return [rootRoute, ...staticRoutes, ...englishOnlyRoutes, ...activityDetailRoutes];
+  return [rootRoute, ...staticRoutes, ...activityDetailRoutes];
 }
