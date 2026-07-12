@@ -17,7 +17,7 @@ type TopicContent = {
   sections: TopicSection[];
 };
 
-const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent }> = {
+const topicContent: Record<EntityTopicKey, Record<Locale, TopicContent>> = {
   "climate-passport-id": {
     en: {
       label: "Climate Passport ID",
@@ -85,6 +85,72 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
         },
       ],
     },
+    fr: {
+      label: "Climate Passport ID",
+      title: "Qu'est-ce qu'un Climate Passport ID ?",
+      intro: "Le Climate Passport ID est l'ancre d'identite persistante d'un profil Climate Passport. Il relie la propriete du compte, l'apprentissage climatique, la participation, les justificatifs, les evenements de verification et les realisations dans un dossier portable.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          lead: "Le Climate Passport ID est un identifiant d'identite de plateforme, pas un document d'identite legal.",
+          paragraphs: [
+            "Il aide Climate Passport a relier le profil d'une personne, l'identite QR, la participation aux evenements, les dossiers d'apprentissage, les certificats et l'historique des realisations dans les workflows pris en charge.",
+          ],
+        },
+        {
+          id: "uses",
+          title: "2. Ce qu'il relie",
+          bullets: [
+            "Propriete du compte et continuite du profil",
+            "Inscription, check-in et dossiers de participation aux evenements",
+            "Resultats d'apprentissage, de justificatifs et de certificats",
+            "Recherche par QR code et workflows de verification lorsque cela est autorise",
+          ],
+        },
+        {
+          id: "boundary",
+          title: "3. Limite d'identite",
+          lead: "Climate Passport n'est pas une identite delivree par un gouvernement, un justificatif d'identite national ou un document de voyage.",
+          paragraphs: [
+            "Un Climate Passport ID est utilise dans les services Climate Passport et les workflows partenaires connectes. Il ne remplace pas un passeport, une carte nationale d'identite, un visa, un permis de residence ou tout document officiel emis par une autorite publique.",
+          ],
+        },
+      ],
+    },
+    de: {
+      label: "Climate Passport ID",
+      title: "Was ist eine Climate Passport ID?",
+      intro: "Die Climate Passport ID ist der dauerhafte Identitatsanker fur ein Climate Passport Profil. Sie verbindet Kontoinhaberschaft, klimabezogenes Lernen, Teilnahme, Nachweise, Verifizierungsereignisse und Leistungen in einem portablen Datensatz.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          lead: "Die Climate Passport ID ist eine Plattform-Identitatskennung, kein rechtliches Identitatsdokument.",
+          paragraphs: [
+            "Sie hilft Climate Passport, Profil, QR-Identitat, Veranstaltungsteilnahme, Lernnachweise, Zertifikatsdatensatze und Leistungshistorie uber unterstutzte Plattformablaufe hinweg zu verbinden.",
+          ],
+        },
+        {
+          id: "uses",
+          title: "2. Was sie verbindet",
+          bullets: [
+            "Kontoinhaberschaft und Profilkontinuitat",
+            "Veranstaltungsregistrierung, Check-in und Teilnahmedatensatze",
+            "Lern-, Nachweis- und Zertifikatsergebnisse",
+            "QR-basierte Suche und Verifizierungsablaufe, sofern autorisiert",
+          ],
+        },
+        {
+          id: "boundary",
+          title: "3. Identitatsgrenze",
+          lead: "Climate Passport ist keine staatlich ausgestellte Identitat, kein nationaler Identitatsnachweis und kein Reisedokument.",
+          paragraphs: [
+            "Eine Climate Passport ID wird innerhalb der Climate Passport Dienste und verbundener Partnerablaufe verwendet. Sie ersetzt keinen Reisepass, Personalausweis, kein Visum, keine Aufenthaltserlaubnis und kein offizielles Dokument einer offentlichen Stelle.",
+          ],
+        },
+      ],
+    },
   },
   "verifiable-credentials": {
     en: {
@@ -113,6 +179,13 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
           title: "3. Portability and sharing",
           paragraphs: [
             "Credentials are designed to connect to the user's growth path and be shared where appropriate, while verification remains tied to platform-controlled record integrity.",
+          ],
+        },
+        {
+          id: "identity-boundary",
+          title: "4. Identity boundary",
+          paragraphs: [
+            "A Climate Passport verifiable credential is not a government-issued identity, national identity credential or travel document. It is a platform-supported record whose meaning depends on its issuer, recipient, record status and verification context.",
           ],
         },
       ],
@@ -145,6 +218,87 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
             "资质记录被设计为连接用户成长路径，并可在适当场景下分享；核验仍然基于平台控制的记录完整性。",
           ],
         },
+        {
+          id: "identity-boundary",
+          title: "4. 身份边界",
+          paragraphs: [
+            "Climate Passport 可验证资质不是政府签发的身份证明、国家身份凭证或旅行证件。它是平台支持的记录，其含义取决于签发方、接收者、记录状态和验证上下文。",
+          ],
+        },
+      ],
+    },
+    fr: {
+      label: "Justificatifs verifiables",
+      title: "Que sont les justificatifs verifiables de Climate Passport ?",
+      intro: "Les justificatifs verifiables de Climate Passport sont des dossiers relies a l'apprentissage climatique, a la participation, aux certificats, aux realisations et a l'historique d'action d'une personne. Ils sont concus pour etre portables, partageables et plus faciles a verifier par les institutions et organisations.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          paragraphs: [
+            "Un justificatif verifiable dans Climate Passport peut representer un certificat emis, un dossier de participation, un jalon d'apprentissage, une realisation ou un autre resultat climatique reconnu.",
+          ],
+        },
+        {
+          id: "verification",
+          title: "2. Pourquoi la verification compte",
+          bullets: [
+            "Elle aide les institutions a verifier si un dossier a ete emis par un workflow Climate Passport reconnu.",
+            "Elle reduit les preuves fragmentees entre evenements, programmes et certificats.",
+            "Elle soutient un profil en croissance continue plutot que des documents ponctuels isoles.",
+          ],
+        },
+        {
+          id: "portability",
+          title: "3. Portabilite et partage",
+          paragraphs: [
+            "Les justificatifs sont concus pour se connecter au parcours de progression de la personne et etre partages lorsque cela est approprie, tandis que la verification reste liee a l'integrite des dossiers controlee par la plateforme.",
+          ],
+        },
+        {
+          id: "identity-boundary",
+          title: "4. Limite d'identite",
+          paragraphs: [
+            "Un justificatif verifiable Climate Passport n'est pas une identite delivree par un gouvernement, un justificatif d'identite national ou un document de voyage. C'est un dossier pris en charge par la plateforme, dont la signification depend de l'emetteur, du beneficiaire, du statut du dossier et du contexte de verification.",
+          ],
+        },
+      ],
+    },
+    de: {
+      label: "Verifizierbare Nachweise",
+      title: "Was sind verifizierbare Climate Passport Nachweise?",
+      intro: "Verifizierbare Climate Passport Nachweise sind Datensatze, die mit klimabezogenem Lernen, Teilnahme, Zertifikaten, Leistungen und Aktionshistorie einer Person verbunden sind. Sie sind portabel, teilbar und fur Institutionen und Organisationen leichter zu prufen.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          paragraphs: [
+            "Ein verifizierbarer Nachweis in Climate Passport kann ein ausgestelltes Zertifikat, einen Teilnahmedatensatz, einen Lernmeilenstein, eine Leistung oder ein anderes anerkanntes klimabezogenes Ergebnis darstellen.",
+          ],
+        },
+        {
+          id: "verification",
+          title: "2. Warum Verifizierung wichtig ist",
+          bullets: [
+            "Sie hilft Institutionen zu prufen, ob ein Datensatz durch einen anerkannten Climate Passport Workflow ausgestellt wurde.",
+            "Sie reduziert fragmentierte Nachweise uber Veranstaltungen, Programme und Zertifikate hinweg.",
+            "Sie unterstutzt ein kontinuierlich wachsendes Profil statt isolierter Einzeldokumente.",
+          ],
+        },
+        {
+          id: "portability",
+          title: "3. Portabilitat und Teilen",
+          paragraphs: [
+            "Nachweise sollen mit dem Entwicklungsweg der Person verbunden und bei Bedarf geteilt werden konnen, wahrend die Verifizierung an die plattformkontrollierte Integritat der Datensatze gebunden bleibt.",
+          ],
+        },
+        {
+          id: "identity-boundary",
+          title: "4. Identitatsgrenze",
+          paragraphs: [
+            "Ein verifizierbarer Climate Passport Nachweis ist keine staatlich ausgestellte Identitat, kein nationaler Identitatsnachweis und kein Reisedokument. Er ist ein von der Plattform unterstutzter Datensatz, dessen Bedeutung von Aussteller, Empfanger, Datensatzstatus und Verifizierungskontext abhangt.",
+          ],
+        },
       ],
     },
   },
@@ -175,6 +329,7 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
           title: "3. Privacy and access boundary",
           paragraphs: [
             "Public verification pages should confirm record authenticity without exposing unnecessary private profile data. Code-based and token-based verification URLs are generated by platform workflows and are not listed directly in the sitemap.",
+            "Certificate verification confirms the status of a platform record. It does not turn a certificate into a government-issued identity, national identity credential or travel document.",
           ],
         },
       ],
@@ -205,6 +360,69 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
           title: "3. 隐私与访问边界",
           paragraphs: [
             "公开验证页面应确认记录真实性，同时避免暴露不必要的个人档案数据。基于 code 或 token 的验证详情 URL 由平台流程生成，不直接列入 sitemap。",
+            "证书验证确认的是平台记录状态，不会把证书变成政府签发的身份证明、国家身份凭证或旅行证件。",
+          ],
+        },
+      ],
+    },
+    fr: {
+      label: "Verification des certificats",
+      title: "Comment fonctionne la verification des certificats Climate Passport ?",
+      intro: "La verification des certificats Climate Passport aide les participants, institutions et organisations a verifier si un dossier de certificat Climate Passport est valide et connecte a la couche de dossiers de justificatifs de la plateforme.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          paragraphs: [
+            "La verification des certificats est le processus public permettant de verifier le statut et l'integrite d'un dossier de certificat Climate Passport au moyen d'un code de verification ou d'un parcours lie a un QR code.",
+          ],
+        },
+        {
+          id: "what-it-shows",
+          title: "2. Ce que la verification peut montrer",
+          bullets: [
+            "Si un dossier de certificat est valide, expire ou revoque",
+            "Le resultat de justificatif ou de participation relie au certificat",
+            "Le contexte du profil Climate Passport ou de l'ID associe au dossier lorsque cela est autorise",
+          ],
+        },
+        {
+          id: "privacy",
+          title: "3. Confidentialite et limite d'acces",
+          paragraphs: [
+            "Les pages publiques de verification doivent confirmer l'authenticite du dossier sans exposer de donnees privees inutiles. Les URL de verification basees sur un code ou un jeton sont generees par les workflows de la plateforme et ne sont pas listees directement dans le sitemap.",
+            "La verification d'un certificat confirme le statut d'un dossier de plateforme. Elle ne transforme pas un certificat en identite delivree par un gouvernement, en justificatif d'identite national ou en document de voyage.",
+          ],
+        },
+      ],
+    },
+    de: {
+      label: "Zertifikatsverifizierung",
+      title: "Wie funktioniert die Climate Passport Zertifikatsverifizierung?",
+      intro: "Die Climate Passport Zertifikatsverifizierung hilft Teilnehmenden, Institutionen und Organisationen zu prufen, ob ein Climate Passport Zertifikatsdatensatz gultig und mit der Nachweisschicht der Plattform verbunden ist.",
+      sections: [
+        {
+          id: "definition",
+          title: "1. Definition",
+          paragraphs: [
+            "Zertifikatsverifizierung ist der offentliche Prozess zur Prufung von Status und Integritat eines Climate Passport Zertifikatsdatensatzes uber einen Verifizierungscode oder einen QR-gestutzten Verifizierungsablauf.",
+          ],
+        },
+        {
+          id: "what-it-shows",
+          title: "2. Was Verifizierung zeigen kann",
+          bullets: [
+            "Ob ein Zertifikatsdatensatz gultig, abgelaufen oder widerrufen ist",
+            "Das mit dem Zertifikat verbundene Nachweis- oder Teilnahmeergebnis",
+            "Den Profil- oder ID-Kontext von Climate Passport, der mit dem Datensatz verbunden ist, sofern erlaubt",
+          ],
+        },
+        {
+          id: "privacy",
+          title: "3. Datenschutz und Zugriffsgrenze",
+          paragraphs: [
+            "Offentliche Verifizierungsseiten sollten die Echtheit des Datensatzes bestatigen, ohne unnotige private Profildaten offenzulegen. Code- und tokenbasierte Verifizierungs-URLs werden durch Plattformablaufe erzeugt und nicht direkt im Sitemap gelistet.",
+            "Die Zertifikatsverifizierung bestatigt den Status eines Plattformdatensatzes. Sie macht ein Zertifikat nicht zu einer staatlich ausgestellten Identitat, einem nationalen Identitatsnachweis oder einem Reisedokument.",
           ],
         },
       ],
@@ -213,7 +431,7 @@ const topicContent: Record<EntityTopicKey, { en: TopicContent; zh: TopicContent 
 };
 
 export function getEntityTopicContent(topic: EntityTopicKey, locale: Locale) {
-  return locale === "zh" ? topicContent[topic].zh : topicContent[topic].en;
+  return topicContent[topic][locale];
 }
 
 export function EntityTopicScreen({ locale, topic }: { locale: Locale; topic: EntityTopicKey }) {

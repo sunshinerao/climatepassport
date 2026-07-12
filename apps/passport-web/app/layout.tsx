@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { defaultSeoDescription, defaultSeoTitle, definedTermsJsonLd, organizationJsonLd, siteName, siteUrl, softwareApplicationJsonLd, websiteJsonLd } from "@/lib/seo";
+import { headers } from "next/headers";
+import { defaultSeoDescription, defaultSeoTitle, definedTermsJsonLd, localeLanguageTags, organizationJsonLd, siteName, siteUrl, softwareApplicationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -42,11 +43,17 @@ export const metadata: Metadata = {
   },
 };
 
+function getDocumentLang(pathname: string | null) {
+  const locale = pathname?.split("/").filter(Boolean)[0] as keyof typeof localeLanguageTags | undefined;
+  return locale && locale in localeLanguageTags ? localeLanguageTags[locale] : localeLanguageTags.en;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const structuredData = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd(), definedTermsJsonLd()];
+  const documentLang = getDocumentLang(headers().get("x-pathname"));
 
   return (
-    <html lang="en">
+    <html lang={documentLang}>
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
         {children}

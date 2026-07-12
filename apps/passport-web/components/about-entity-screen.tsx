@@ -11,8 +11,12 @@ type AboutSection = {
 
 const definitionEn = "Climate Passport is an AI-driven trusted digital identity infrastructure for the climate era, designed to turn climate learning, participation, credentials and action into a verifiable, portable and continuously growing digital profile.";
 const definitionZh = "Climate Passport 是面向气候时代的 AI 驱动可信数字身份基础设施，将个人的气候学习、参与、资质与行动转化为可验证、可携带并持续成长的数字档案。";
+const definitionFr = "Climate Passport est une infrastructure d'identite numerique fiable, pilotee par l'IA, pour l'ere climatique. Elle transforme l'apprentissage, la participation, les justificatifs et l'action climatiques en un profil numerique verifiable, portable et en croissance continue.";
+const definitionDe = "Climate Passport ist eine KI-gestutzte Infrastruktur fur vertrauenswurdige digitale Identitat im Klimazeitalter. Sie verbindet klimabezogenes Lernen, Teilnahme, Nachweise und Handeln zu einem verifizierbaren, portablen und kontinuierlich wachsenden digitalen Profil.";
 const identityBoundaryEn = "Climate Passport is not a government-issued identity, national identity credential or travel document.";
 const identityBoundaryZh = "Climate Passport 不是政府签发的身份证明、国家身份凭证或旅行证件。";
+const identityBoundaryFr = "Climate Passport n'est pas une identite delivree par un gouvernement, un justificatif d'identite national ou un document de voyage.";
+const identityBoundaryDe = "Climate Passport ist keine staatlich ausgestellte Identitat, kein nationaler Identitatsnachweis und kein Reisedokument.";
 
 const enSections: AboutSection[] = [
   {
@@ -120,22 +124,172 @@ const zhSections: AboutSection[] = [
   },
 ];
 
+const frSections: AboutSection[] = [
+  {
+    id: "entity-definition",
+    title: "1. Definition de l'entite",
+    lead: definitionFr,
+    paragraphs: [
+      "La plateforme est concue comme une infrastructure plutot que comme une simple page de campagne. Elle donne aux personnes, organisateurs, institutions et programmes partenaires une facon commune de relier identite climatique, apprentissage, participation, justificatifs et dossiers d'action.",
+    ],
+  },
+  {
+    id: "climate-passport-id",
+    title: "2. Climate Passport ID",
+    lead: "Un Climate Passport ID est l'ancre d'identite persistante du profil Climate Passport d'une personne.",
+    bullets: [
+      "Il relie l'identite du compte aux dossiers de participation, d'apprentissage, de justificatifs, de verification et de realisations.",
+      "Il prend en charge les parcours de recherche et de verification par QR code lorsque l'experience de la plateforme l'autorise.",
+      "Il vise a rendre les dossiers portables entre programmes climatiques connectes et canaux partenaires sans fragmenter le profil de progression d'une personne.",
+    ],
+  },
+  {
+    id: "identity-boundary",
+    title: "3. Limite d'identite",
+    lead: identityBoundaryFr,
+    paragraphs: [
+      "Cette couche d'identite sert a la propriete du compte, aux dossiers de participation climatique, a la verification des justificatifs et aux workflows de programmes connectes. Elle ne remplace pas les documents d'identite legale ni les documents de voyage officiels emis par des autorites publiques.",
+    ],
+  },
+  {
+    id: "verifiable-credentials",
+    title: "4. Justificatifs verifiables",
+    paragraphs: [
+      "Les justificatifs Climate Passport representent des dossiers tels que la participation, les jalons d'apprentissage, les certificats, les realisations et d'autres resultats reconnus lies au climat.",
+      "Ils sont concus pour etre portables, partageables et plus faciles a verifier par les institutions et organisations grace a des parcours de verification publics et a l'integrite des dossiers controles par la plateforme.",
+    ],
+  },
+  {
+    id: "growth-profile",
+    title: "5. Profil numerique en croissance continue",
+    paragraphs: [
+      "Un profil Climate Passport ne se limite pas a un portefeuille statique de certificats. Il grandit lorsqu'une personne participe a des evenements, termine des apprentissages, obtient des justificatifs, enregistre des realisations et prend part a l'action climatique.",
+      "Le profil devient ainsi utile comme dossier de long terme sur les capacites, la participation et la contribution climatiques.",
+    ],
+  },
+  {
+    id: "institutional-use",
+    title: "6. Usage institutionnel et partenaire",
+    paragraphs: [
+      "Les canaux partenaires peuvent presenter des parcours d'inscription, de participation, de certificats et de verification propulses par Climate Passport, tout en s'appuyant sur la plateforme comme couche commune d'identite et de dossiers.",
+      "L'objectif est de reduire les dossiers fragmentes et de faciliter la reconnaissance de la participation climatique entre programmes, organisations et regions.",
+    ],
+  },
+];
+
+const deSections: AboutSection[] = [
+  {
+    id: "entity-definition",
+    title: "1. Entitatsdefinition",
+    lead: definitionDe,
+    paragraphs: [
+      "Die Plattform ist als Infrastruktur konzipiert, nicht als einzelne Kampagnenseite. Sie bietet Personen, Organisatoren, Institutionen und Partnerprogrammen eine gemeinsame Methode, klimabezogene Identitat, Lernen, Teilnahme, Nachweise und Aktionsdatensatze zu verbinden.",
+    ],
+  },
+  {
+    id: "climate-passport-id",
+    title: "2. Climate Passport ID",
+    lead: "Eine Climate Passport ID ist der dauerhafte Identitatsanker fur das Climate Passport Profil einer Person.",
+    bullets: [
+      "Sie verbindet Kontoidentitat mit Teilnahme-, Lern-, Nachweis-, Verifizierungs- und Leistungsdatensatzen.",
+      "Sie unterstutzt QR-basierte Such- und Verifizierungsablaufe, wenn diese durch die Plattform autorisiert sind.",
+      "Sie soll Datensatze zwischen verbundenen Klimaprogrammen und Partnerkanalen portabel machen, ohne das Wachstumsprofil einer Person zu fragmentieren.",
+    ],
+  },
+  {
+    id: "identity-boundary",
+    title: "3. Identitatsgrenze",
+    lead: identityBoundaryDe,
+    paragraphs: [
+      "Diese Identitatsschicht dient Kontoinhaberschaft, klimabezogenen Teilnahmedatensatzen, Nachweisverifizierung und verbundenen Programmablaufen. Sie ersetzt keine rechtlichen Identitatsdokumente oder offiziellen Reisedokumente offentlicher Stellen.",
+    ],
+  },
+  {
+    id: "verifiable-credentials",
+    title: "4. Verifizierbare Nachweise",
+    paragraphs: [
+      "Climate Passport Nachweise stehen fur Datensatze wie Teilnahme, Lernmeilensteine, Zertifikate, Leistungen und andere anerkannte klimabezogene Ergebnisse.",
+      "Sie sind so gestaltet, dass sie portabel, teilbar und fur Institutionen und Organisationen leichter verifizierbar sind, gestutzt auf offentliche Verifizierungsablaufe und plattformkontrollierte Datensatzintegritat.",
+    ],
+  },
+  {
+    id: "growth-profile",
+    title: "5. Kontinuierlich wachsendes digitales Profil",
+    paragraphs: [
+      "Ein Climate Passport Profil ist nicht auf eine statische Zertifikatsmappe beschrankt. Es wachst, wenn eine Person Veranstaltungen besucht, Lernangebote abschliesst, Nachweise erhalt, Leistungen dokumentiert und an Klimahandeln teilnimmt.",
+      "Damit wird das Profil zu einem langfristigen Nachweis klimabezogener Fahigkeiten, Teilnahme und Beitrage.",
+    ],
+  },
+  {
+    id: "institutional-use",
+    title: "6. Nutzung durch Institutionen und Partner",
+    paragraphs: [
+      "Partnerkanale konnen Climate Passport gestutzte Ablaufe fur Registrierung, Teilnahme, Zertifikate und Verifizierung anbieten und dabei die Plattform als gemeinsame Identitats- und Datensatzschicht nutzen.",
+      "Ziel ist es, fragmentierte Nachweise zu reduzieren und klimabezogene Teilnahme uber Programme, Organisationen und Regionen hinweg leichter erkennbar zu machen.",
+    ],
+  },
+];
+
 function getSections(locale: Locale) {
-  return locale === "zh" ? zhSections : enSections;
+  if (locale === "zh") {
+    return zhSections;
+  }
+
+  if (locale === "fr") {
+    return frSections;
+  }
+
+  if (locale === "de") {
+    return deSections;
+  }
+
+  return enSections;
+}
+
+function getHeader(locale: Locale) {
+  if (locale === "zh") {
+    return { label: "实体定义", title: "Climate Passport 是什么？", definition: definitionZh };
+  }
+
+  if (locale === "fr") {
+    return { label: "Definition de l'entite", title: "Qu'est-ce que Climate Passport ?", definition: definitionFr };
+  }
+
+  if (locale === "de") {
+    return { label: "Entitatsdefinition", title: "Was ist Climate Passport?", definition: definitionDe };
+  }
+
+  return { label: "Entity Definition", title: "What is Climate Passport?", definition: definitionEn };
+}
+
+function getKnowledgeHubLinkText(locale: Locale) {
+  if (locale === "zh") {
+    return "阅读气候记录、气候凭证与验证的实用指南。";
+  }
+
+  if (locale === "fr") {
+    return "Consulter le guide pratique des enregistrements, justificatifs et verifications climatiques.";
+  }
+
+  if (locale === "de") {
+    return "Den praktischen Leitfaden zu klimabezogenen Datensatzen, Nachweisen und Verifizierung lesen.";
+  }
+
+  return "Explore the practical guide to climate records, credentials and verification.";
 }
 
 export function AboutEntityScreen({ locale }: { locale: Locale }) {
-  const isZh = locale === "zh";
   const sections = getSections(locale);
+  const header = getHeader(locale);
 
   return (
     <>
       <div className="section-header">
         <div>
-          <span className="label">{isZh ? "实体定义" : "Entity Definition"}</span>
-          <h1>What is Climate Passport?</h1>
+          <span className="label">{header.label}</span>
+          <h1>{header.title}</h1>
         </div>
-        <p>{isZh ? definitionZh : definitionEn}</p>
+        <p>{header.definition}</p>
       </div>
 
       <section className="section privacy-policy-content">
@@ -153,9 +307,9 @@ export function AboutEntityScreen({ locale }: { locale: Locale }) {
                 ))}
               </ul>
             ) : null}
-            {!isZh && section.id === "verifiable-credentials" ? (
+            {section.id === "verifiable-credentials" ? (
               <p>
-                <Link href="/en/climate-records-and-credentials">Explore the practical guide to climate records, credentials and verification.</Link>
+                <Link href={`/${locale}/climate-records-and-credentials`}>{getKnowledgeHubLinkText(locale)}</Link>
               </p>
             ) : null}
           </article>
