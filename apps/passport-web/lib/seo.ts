@@ -279,6 +279,7 @@ const privatePathPrefixes = ["/admin", "/auth", "/dashboard", "/profile", "/api"
 const breadcrumbLabels: Record<string, string> = {
   about: "About",
   activities: "Activities",
+  "climate-records-and-credentials": "Climate Records and Credentials",
   certificates: "Certificates",
   contact: "Contact",
   events: "Events",
@@ -292,6 +293,23 @@ const breadcrumbLabels: Record<string, string> = {
 
 function humanizeSegment(segment: string) {
   return breadcrumbLabels[segment] ?? segment.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export function knowledgeHubWebPageJsonLd() {
+  const url = absoluteUrl(localizedPath("en", "/climate-records-and-credentials"));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: "Climate Records & Credentials | Climate Passport",
+    description: "A practical guide to climate credentials, verification, learning records, participation records, action records and climate digital identity.",
+    inLanguage: localeLanguageTags.en,
+    isPartOf: { "@id": websiteId },
+    about: { "@id": organizationId },
+    publisher: { "@id": organizationId },
+  };
 }
 
 export function breadcrumbJsonLdForPath(locale: Locale, pathname: string) {

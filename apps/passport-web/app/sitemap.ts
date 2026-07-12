@@ -37,6 +37,10 @@ const routePriority = new Map<string, number>([
   ["/terms", 0.3],
 ]);
 
+const englishOnlyPublicRoutes = [
+  "/climate-records-and-credentials",
+];
+
 function localizedUrl(locale: string, route = "") {
   return absoluteUrl(`/${locale}${route}`);
 }
@@ -98,6 +102,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: localizedAlternates(""),
   };
 
+  const englishOnlyRoutes = englishOnlyPublicRoutes.map((route) => ({
+    url: localizedUrl("en", route),
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
   const activityDetailRoutes = locales.flatMap((locale) =>
     activityRoutes.map((activity) => ({
       url: localizedUrl(locale, `/activities/${activity.slug}`),
@@ -108,5 +119,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
-  return [rootRoute, ...staticRoutes, ...activityDetailRoutes];
+  return [rootRoute, ...staticRoutes, ...englishOnlyRoutes, ...activityDetailRoutes];
 }

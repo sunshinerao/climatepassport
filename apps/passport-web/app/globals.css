@@ -1009,6 +1009,37 @@ textarea:focus-visible {
   margin: 6px 0;
 }
 
+.knowledge-hub-content {
+  max-width: 920px;
+}
+
+.knowledge-hub-nav h2 {
+  margin: 0 0 14px;
+  font-size: var(--cp-fs-18);
+}
+
+.knowledge-hub-nav ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.knowledge-hub-section h2 {
+  margin: 0;
+  font-size: var(--cp-fs-26);
+  letter-spacing: 0;
+}
+
+.knowledge-hub-section h3 {
+  margin: 4px 0 -4px;
+  font-size: var(--cp-fs-18);
+}
+
+.knowledge-hub-section a {
+  font-weight: 600;
+}
+
 .privacy-policy-table-wrap {
   width: 100%;
   overflow-x: auto;

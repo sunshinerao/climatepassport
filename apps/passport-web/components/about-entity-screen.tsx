@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Locale } from "@/lib/site-content";
 
 type AboutSection = {
@@ -151,6 +152,11 @@ export function AboutEntityScreen({ locale }: { locale: Locale }) {
                   <li key={bullet}>{bullet}</li>
                 ))}
               </ul>
+            ) : null}
+            {!isZh && section.id === "verifiable-credentials" ? (
+              <p>
+                <Link href="/en/climate-records-and-credentials">Explore the practical guide to climate records, credentials and verification.</Link>
+              </p>
             ) : null}
           </article>
         ))}
