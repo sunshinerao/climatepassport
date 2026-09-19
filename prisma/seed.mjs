@@ -1,8 +1,14 @@
 import { PrismaClient } from "@prisma/client";
+import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function resetDatabase() {
+  await prisma.portfolioShareLink.deleteMany();
+  await prisma.portfolioShareConsent.deleteMany();
+  await prisma.portfolioEvidenceRule.deleteMany();
+  await prisma.portfolioRuleSet.deleteMany();
+  await prisma.competencyDimension.deleteMany();
   await prisma.channelSessionBridge.deleteMany();
   await prisma.learningExperienceProgramEventLink.deleteMany();
   await prisma.learningExperienceParticipation.deleteMany();
@@ -34,6 +40,31 @@ async function resetDatabase() {
   await prisma.invitationRequest.deleteMany();
   await prisma.specialPass.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.activityAiContentDraft.deleteMany();
+  await prisma.activityCommunityReport.deleteMany();
+  await prisma.activityCommunityComment.deleteMany();
+  await prisma.activityCommunityPost.deleteMany();
+  await prisma.activityCommunityMember.deleteMany();
+  await prisma.activityCommunity.deleteMany();
+  await prisma.activityDetail.deleteMany();
+  await prisma.activityRole.deleteMany();
+  await prisma.activityTask.deleteMany();
+  await prisma.activityRewardRule.deleteMany();
+  await prisma.activityCertificateRule.deleteMany();
+  await prisma.activityCertificateIssuance.deleteMany();
+  await prisma.activityApplication.deleteMany();
+  await prisma.activityParticipation.deleteMany();
+  await prisma.activityReviewWorkflow.deleteMany();
+  await prisma.activityCheckinRecord.deleteMany();
+  await prisma.activitySubmission.deleteMany();
+  await prisma.activityAgendaItemSpeaker.deleteMany();
+  await prisma.activityAgendaItem.deleteMany();
+  await prisma.activitySpeaker.deleteMany();
+  await prisma.activityWishlist.deleteMany();
+  await prisma.activityDateSlot.deleteMany();
+  await prisma.activityInstitution.deleteMany();
+  await prisma.activityVerifier.deleteMany();
+  await prisma.activity.deleteMany();
   await prisma.institution.deleteMany();
   await prisma.track.deleteMany();
   await prisma.organization.deleteMany();
@@ -44,6 +75,8 @@ async function resetDatabase() {
 }
 
 async function seedPlatformBaseline() {
+  const seedPasswordHash = await hash("seeded-password", 10);
+
   const fellowCreatedAt = new Date("2026-05-01T08:00:00+08:00");
   const adminCreatedAt = new Date("2026-05-03T10:00:00+08:00");
   const managerCreatedAt = new Date("2026-05-04T09:30:00+08:00");
@@ -52,13 +85,14 @@ async function seedPlatformBaseline() {
   const fellow = await prisma.user.create({
     data: {
       email: "lin.qiao@climatepass.org",
-      password: "seeded-password",
+      password: seedPasswordHash,
       name: "Lin Qiao",
       salutation: "Ms.",
       title: "Climate Passport Fellow",
       country: "China",
       role: "ATTENDEE",
       status: "ACTIVE",
+      emailVerified: new Date("2026-05-01T08:00:00+08:00"),
       climatePassportId: "AB73Q2M-8T19KX",
       points: 184,
       createdAt: fellowCreatedAt,
@@ -69,13 +103,14 @@ async function seedPlatformBaseline() {
   const admin = await prisma.user.create({
     data: {
       email: "ops.admin@climatepass.org",
-      password: "seeded-password",
+      password: seedPasswordHash,
       name: "Avery Tan",
       salutation: "Mx.",
       title: "Platform Operations Lead",
       country: "Singapore",
       role: "ADMIN",
       status: "ACTIVE",
+      emailVerified: new Date("2026-05-03T10:00:00+08:00"),
       points: 40,
       createdAt: adminCreatedAt,
       updatedAt: adminCreatedAt,
@@ -85,13 +120,14 @@ async function seedPlatformBaseline() {
   const eventManager = await prisma.user.create({
     data: {
       email: "events.manager@climatepass.org",
-      password: "seeded-password",
+      password: seedPasswordHash,
       name: "Jordan Park",
       salutation: "Mx.",
       title: "Event Manager",
       country: "China",
       role: "EVENT_MANAGER",
       status: "ACTIVE",
+      emailVerified: new Date("2026-05-04T09:30:00+08:00"),
       points: 28,
       createdAt: managerCreatedAt,
       updatedAt: managerCreatedAt,
@@ -101,13 +137,14 @@ async function seedPlatformBaseline() {
   const verifier = await prisma.user.create({
     data: {
       email: "verifier.field@climatepass.org",
-      password: "seeded-password",
+      password: seedPasswordHash,
       name: "Maya Chen",
       salutation: "Ms.",
       title: "Verifier Captain",
       country: "China",
       role: "VERIFIER",
       status: "ACTIVE",
+      emailVerified: new Date("2026-05-05T09:00:00+08:00"),
       points: 72,
       createdAt: verifierCreatedAt,
       updatedAt: verifierCreatedAt,
@@ -117,12 +154,13 @@ async function seedPlatformBaseline() {
   const organizationOwner = await prisma.user.create({
     data: {
       email: "partnerships@futurecitylab.org",
-      password: "seeded-password",
+      password: seedPasswordHash,
       name: "Future City Lab",
       title: "Institution Account",
       country: "China",
       role: "ORGANIZATION",
       status: "ACTIVE",
+      emailVerified: new Date("2026-05-06T10:00:00+08:00"),
       points: 12,
     },
   });
@@ -277,6 +315,66 @@ async function seedPlatformBaseline() {
         endTime: "17:30",
       },
     ],
+  });
+
+  // Activities (new activity module) for E2E / API tests
+  const activityOne = await prisma.activity.create({
+    data: {
+      type: "EVENT",
+      title: "气候系统论坛",
+      titleEn: "Climate Systems Forum",
+      slug: "climate-systems-forum-2026",
+      summary: "围绕城市、产业与政策协同的核心论坛。",
+      summaryEn: "Core forum focused on cities, industry, and policy coordination.",
+      description: "本活动为自动化测试活动，用于验证活动报名、签到与社区流程。",
+      descriptionEn: "This is an automated test activity for validating registration, check-in, and community flows.",
+      status: "PUBLISHED",
+      visibility: "PUBLIC",
+      startTime: new Date("2026-06-08T09:00:00+08:00"),
+      endTime: new Date("2026-06-10T18:00:00+08:00"),
+      timezone: "Asia/Shanghai",
+      locationType: "HYBRID",
+      eventLayer: "INSTITUTION",
+      hostType: "OFFICIAL",
+      capacity: 500,
+      organizerName: "未来城市实验室",
+      isFeatured: true,
+      isPinned: true,
+      language: "zh",
+      tags: ["climate", "systems", "test"],
+      createdByUserId: admin.id,
+      trackId: track.id,
+    },
+  });
+
+  const activityTwo = await prisma.activity.create({
+    data: {
+      type: "PROJECT",
+      title: "城市脱碳行动项目",
+      titleEn: "Urban Decarbonization Project",
+      slug: "urban-decarbonization-project-2026",
+      summary: "聚焦城市更新、能源与基础设施协同的实践项目。",
+      summaryEn: "Practical project focused on urban renewal, energy, and infrastructure coordination.",
+      description: "本测试项目用于验证项目申请与参与流程。",
+      descriptionEn: "This test project validates project application and participation flows.",
+      status: "PUBLISHED",
+      visibility: "PUBLIC",
+      startTime: new Date("2026-06-15T09:00:00+08:00"),
+      endTime: new Date("2026-08-15T18:00:00+08:00"),
+      timezone: "Asia/Shanghai",
+      locationType: "HYBRID",
+      eventLayer: "ECONOMY",
+      hostType: "CO_HOSTED",
+      capacity: 120,
+      organizerName: "未来城市实验室",
+      requiresApproval: true,
+      isFeatured: false,
+      isPinned: false,
+      language: "zh",
+      tags: ["decarbonization", "project", "test"],
+      createdByUserId: admin.id,
+      trackId: track.id,
+    },
   });
 
   const speaker = await prisma.speaker.create({

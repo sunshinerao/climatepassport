@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -57,6 +57,7 @@ enum InvitationStatus {
   PENDING
   UPLOADED
   DOWNLOADED
+  APPROVED
   REJECTED
 }
 
@@ -110,6 +111,35 @@ enum NotificationKind {
   SYSTEM
 }
 
+/// Internal redemption accounting only. These records never initiate a provider call.
+enum RedemptionIntentStatus {
+  CREATED
+  RESERVED
+  CANCELLED
+  EXPIRED
+  SETTLED
+  REFUNDED
+}
+
+enum PointJournalType {
+  RESERVE
+  CANCEL
+  EXPIRE
+  SETTLE
+  REFUND
+}
+
+enum PointPostingAccount {
+  USER_AVAILABLE
+  USER_RESERVED
+  REDEMPTION_CLEARING
+}
+
+enum PointPostingDirection {
+  DEBIT
+  CREDIT
+}
+
 enum CertificateTemplateType {
   ATTENDANCE
   LEARNING
@@ -130,6 +160,56 @@ enum CertificateIssueStatus {
   GENERATED
   ISSUED
   REVOKED
+}
+
+enum CertificateArtifactState {
+  NONE
+  PENDING
+  READY
+  LEGACY_INLINE
+  LEGACY_EXTERNAL
+  MISSING
+  FAILED
+}
+
+enum ActivityCertificateIssuanceStatus {
+  PENDING
+  ISSUED
+  FAILED
+}
+
+enum CertificateIssuingRuleTrigger {
+  ACTIVITY_CHECKIN
+}
+
+enum CertificateApplicationStatus {
+  DRAFT
+  SUBMITTED
+  NEEDS_INFORMATION
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum CertificateBatchSource {
+  MANUAL_LIST
+  CSV
+  ACTIVITY_ELIGIBLE_LIST
+}
+
+enum CertificateBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_FAILURES
+  FAILED
+}
+
+enum CertificateBatchItemStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
 }
 
 enum VerificationResult {
@@ -258,66 +338,379 @@ enum AuthEmailTokenPurpose {
   RESET_PASSWORD
 }
 
-model User {
-  id                   String               @id @default(uuid())
-  email                String               @unique
-  password             String
-  name                 String
-  salutation           String?
-  avatar               String?
-  phone                String?
-  title                String?
-  bio                  String?              @db.Text
-  country              String?
-  role                 UserRole             @default(ATTENDEE)
-  status               UserStatus           @default(ACTIVE)
-  staffPermissions     String?              @db.Text
-  passCode             String               @unique @default(uuid())
-  climatePassportId    String?              @unique
-  points               Int                  @default(0)
-  emailVerified        DateTime?
-  resetToken           String?              @unique
-  resetTokenExpiry     DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+enum ExternalLearningProviderStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
 
-  organization         Organization?
-  registrations        Registration[]
-  checkins             CheckIn[]
-  accounts             Account[]
-  sessions             Session[]
-  wishlist             Wishlist[]
-  pointTransactions    PointTransaction[]
-  invitationRequests   InvitationRequest[]
-  specialPasses        SpecialPass[]
-  contactMessages      ContactMessage[]
-  notificationPreference NotificationPreference?
-  notifications        Notification[]
-  managedEvents        Event[]              @relation("EventManager")
-  assignedEvents       EventVerifier[]
-  certificateIssues    CertificateIssue[]   @relation("CertificateOwner")
-  approvedCertificates CertificateIssue[]   @relation("CertificateApprover")
-  certificateChecks    CertificateVerification[] @relation("CertificateVerifiedBy")
-  qrTokens             QrToken[]
-  auditLogs            CoreAuditLog[]       @relation("CoreAuditActor")
-  unlockedAchievements UserAchievement[]
-  achievements         Achievement[]
-  badgeAwards          BadgeAward[]
-  milestones           PassportMilestone[]
-  channelSessionBridges ChannelSessionBridge[]
-  managedLearningExperiencePrograms LearningExperienceProgram[] @relation("LearningExperienceManager")
-  learningExperienceApplications LearningExperienceApplication[]
-  learningExperienceParticipations LearningExperienceParticipation[]
-  summerSchoolApplications SummerSchoolApplication[]
-  activityWishlists    ActivityWishlist[]
-  activityVerifiers    ActivityVerifier[]
-  activityApplications ActivityApplication[]
-  authEmailTokens      AuthEmailToken[]
+enum ExternalLearningAccountStatus {
+  PENDING
+  VERIFIED
+  DISABLED
+}
+
+enum ExternalLearningMappingStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ExternalLearningSignatureStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ExternalLearningInboxProcessingStatus {
+  RECEIVED
+  REJECTED
+  PENDING_RECONCILIATION
+}
+
+enum ExternalLearningEvidenceState {
+  RECEIVED
+  RECONCILIATION_PENDING
+  RECONCILED
+  REJECTED
+}
+
+enum ExternalLearningReconciliationState {
+  NOT_STARTED
+  PENDING
+  MATCHED
+  UNMATCHED
+  REJECTED
+}
+
+enum ExternalLearningWritebackState {
+  NOT_REQUESTED
+  BLOCKED
+}
+
+enum PortfolioRuleSetStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum PortfolioEvidenceSourceKind {
+  ISSUED_CERTIFICATE
+  VERIFIED_ACHIEVEMENT
+  LEARNING_COMPLETION
+  VERIFIED_ACTIVITY_PARTICIPATION
+}
+
+enum PortfolioShareConsentMode {
+  PRIVATE
+  PUBLIC_PROFILE
+  DIRECT_SHARE
+}
+
+enum PortfolioShareConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum PortfolioShareLinkStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum PersonVerificationStatus {
+  DRAFT
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PersonAffiliationStatus {
+  ACTIVE
+  ENDED
+  PENDING
+}
+
+enum PersonRoleType {
+  SPEAKER
+  MODERATOR
+  PANELIST
+  MENTOR
+  ORGANIZER
+  PARTNER
+  MEDIA
+  VOLUNTEER
+  STAFF
+  OTHER
+}
+
+enum InstitutionVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+model User {
+  id                String     @id @default(uuid())
+  email             String     @unique
+  password          String
+  name              String
+  salutation        String?
+  avatar            String?
+  phone             String?
+  title             String?
+  bio               String?    @db.Text
+  country           String?
+  role              UserRole   @default(ATTENDEE)
+  status            UserStatus @default(ACTIVE)
+  staffPermissions  String?    @db.Text
+  passCode          String     @unique @default(uuid())
+  climatePassportId String?    @unique
+  points            Int        @default(0)
+  emailVerified     DateTime?
+  resetToken        String?    @unique
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  organization                      Organization?
+  registrations                     Registration[]
+  checkins                          CheckIn[]
+  accounts                          Account[]
+  sessions                          Session[]
+  wishlist                          Wishlist[]
+  pointTransactions                 PointTransaction[]
+  redemptionIntents                 RedemptionIntent[]
+  invitationRequests                InvitationRequest[]
+  specialPasses                     SpecialPass[]
+  contactMessages                   ContactMessage[]
+  notificationPreference            NotificationPreference?
+  notifications                     Notification[]
+  managedEvents                     Event[]                           @relation("EventManager")
+  assignedEvents                    EventVerifier[]
+  certificateIssues                 CertificateIssue[]                @relation("CertificateOwner")
+  approvedCertificates              CertificateIssue[]                @relation("CertificateApprover")
+  revokedCertificates               CertificateIssue[]                @relation("CertificateRevoker")
+  restoredCertificates              CertificateIssue[]                @relation("CertificateRestorer")
+  certificateApplications           CertificateApplication[]          @relation("CertificateApplicant")
+  reviewedCertificateApplications   CertificateApplication[]          @relation("CertificateApplicationReviewer")
+  certificateApplicationEvents      CertificateApplicationEvent[]     @relation("CertificateApplicationEventActor")
+  certificateBatchesCreated         CertificateBatch[]                @relation("CertificateBatchCreator")
+  certificateChecks                 CertificateVerification[]         @relation("CertificateVerifiedBy")
+  qrTokens                          QrToken[]
+  auditLogs                         CoreAuditLog[]                    @relation("CoreAuditActor")
+  unlockedAchievements              UserAchievement[]
+  achievements                      Achievement[]
+  badgeAwards                       BadgeAward[]
+  milestones                        PassportMilestone[]
+  channelSessionBridges             ChannelSessionBridge[]
+  managedLearningExperiencePrograms LearningExperienceProgram[]       @relation("LearningExperienceManager")
+  learningExperienceApplications    LearningExperienceApplication[]
+  learningExperienceParticipations  LearningExperienceParticipation[]
+  summerSchoolApplications          SummerSchoolApplication[]
+  activityWishlists                 ActivityWishlist[]
+  activityVerifiers                 ActivityVerifier[]
+  activityApplications              ActivityApplication[]
+  activityCommunityMembers          ActivityCommunityMember[]
+  activityCommunityPosts            ActivityCommunityPost[]           @relation("ActivityCommunityPostAuthor")
+  activityCommunityComments         ActivityCommunityComment[]        @relation("ActivityCommunityCommentAuthor")
+  activityCommunityReports          ActivityCommunityReport[]         @relation("ActivityCommunityReportReporter")
+  authEmailTokens                   AuthEmailToken[]
+  externalLearningAccounts          ExternalLearningAccount[]
+  portfolioShareConsent             PortfolioShareConsent?
+  portfolioShareLinks               PortfolioShareLink[]
+  activityAiContentDrafts           ActivityAiContentDraft[]          @relation("ActivityAiContentDraftActor")
+  person                            Person?
 
   @@index([email])
   @@index([passCode])
   @@index([role])
   @@map("users")
+}
+
+model CompetencyDimension {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  name          String
+  nameEn        String?
+  description   String?  @db.Text
+  descriptionEn String?  @db.Text
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  evidenceRules PortfolioEvidenceRule[]
+
+  @@map("competency_dimensions")
+}
+
+model PortfolioRuleSet {
+  id              String                 @id @default(uuid())
+  version         Int                    @unique
+  status          PortfolioRuleSetStatus @default(DRAFT)
+  name            String
+  createdByUserId String?
+  activatedAt     DateTime?
+  retiredAt       DateTime?
+  createdAt       DateTime               @default(now())
+
+  evidenceRules PortfolioEvidenceRule[]
+
+  @@index([status])
+  @@map("portfolio_rule_sets")
+}
+
+model PortfolioEvidenceRule {
+  id            String                      @id @default(uuid())
+  ruleSetId     String
+  dimensionId   String
+  sourceKind    PortfolioEvidenceSourceKind
+  predicateJson Json
+  weight        Int                         @default(1)
+  reason        String                      @db.Text
+  reasonEn      String?                     @db.Text
+  distinctKey   String?
+  createdAt     DateTime                    @default(now())
+
+  ruleSet   PortfolioRuleSet    @relation(fields: [ruleSetId], references: [id], onDelete: Cascade)
+  dimension CompetencyDimension @relation(fields: [dimensionId], references: [id], onDelete: Restrict)
+
+  @@index([ruleSetId, sourceKind])
+  @@map("portfolio_evidence_rules")
+}
+
+model PortfolioShareConsent {
+  id             String                      @id @default(uuid())
+  userId         String                      @unique
+  mode           PortfolioShareConsentMode   @default(PRIVATE)
+  status         PortfolioShareConsentStatus @default(ACTIVE)
+  fieldAllowlist String[]
+  policyVersion  String
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio_share_consents")
+}
+
+model PortfolioShareLink {
+  id             String                   @id @default(uuid())
+  userId         String
+  tokenHash      String                   @unique
+  fieldAllowlist String[]
+  policyVersion  String
+  expiresAt      DateTime
+  maxAccessCount Int?
+  accessCount    Int                      @default(0)
+  status         PortfolioShareLinkStatus @default(ACTIVE)
+  revokedAt      DateTime?
+  createdAt      DateTime                 @default(now())
+
+  user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectApplicationConsents ProjectApplicationConsent[]
+
+  @@index([userId, status])
+  @@map("portfolio_share_links")
+}
+
+model ExternalLearningProvider {
+  id                     String                         @id @default(uuid())
+  key                    String                         @unique
+  webhookPathKey         String                         @unique
+  displayName            String
+  status                 ExternalLearningProviderStatus @default(DRAFT)
+  verificationConfigJson Json?
+  signingSecretRef       String?
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+
+  accounts       ExternalLearningAccount[]
+  courseMappings ExternalLearningCourseMapping[]
+  inboxEvents    ExternalLearningInboxEvent[]
+  evidence       ExternalLearningEvidence[]
+
+  @@map("external_learning_providers")
+}
+
+model ExternalLearningAccount {
+  id                  String                        @id @default(uuid())
+  providerId          String
+  userId              String
+  externalSubjectHash String
+  status              ExternalLearningAccountStatus @default(PENDING)
+  verifiedAt          DateTime?
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
+
+  provider ExternalLearningProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, externalSubjectHash])
+  @@index([userId, status])
+  @@map("external_learning_accounts")
+}
+
+model ExternalLearningCourseMapping {
+  id                          String                        @id @default(uuid())
+  providerId                  String
+  externalCourseHash          String
+  learningExperienceProgramId String?
+  activityId                  String?
+  status                      ExternalLearningMappingStatus @default(ACTIVE)
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+
+  provider                  ExternalLearningProvider   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  learningExperienceProgram LearningExperienceProgram? @relation(fields: [learningExperienceProgramId], references: [id], onDelete: Restrict)
+  activity                  Activity?                  @relation(fields: [activityId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, externalCourseHash])
+  @@index([learningExperienceProgramId, status])
+  @@index([activityId, status])
+  @@map("external_learning_course_mappings")
+}
+
+model ExternalLearningInboxEvent {
+  id                  String                                @id @default(uuid())
+  providerId          String
+  deliveryId          String
+  eventType           String
+  signatureStatus     ExternalLearningSignatureStatus
+  processingStatus    ExternalLearningInboxProcessingStatus
+  payloadSha256       String
+  redactedHeadersJson Json
+  receivedAt          DateTime                              @default(now())
+
+  provider ExternalLearningProvider   @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  evidence ExternalLearningEvidence[]
+
+  @@unique([providerId, deliveryId])
+  @@index([providerId, processingStatus, receivedAt])
+  @@map("external_learning_inbox_events")
+}
+
+model ExternalLearningEvidence {
+  id                  String                              @id @default(uuid())
+  providerId          String
+  inboxEventId        String
+  externalEventId     String
+  externalSubjectHash String?
+  externalCourseHash  String?
+  occurredAt          DateTime?
+  normalizedDataJson  Json
+  evidenceState       ExternalLearningEvidenceState       @default(RECEIVED)
+  reconciliationState ExternalLearningReconciliationState @default(NOT_STARTED)
+  writebackState      ExternalLearningWritebackState      @default(NOT_REQUESTED)
+  createdAt           DateTime                            @default(now())
+
+  provider   ExternalLearningProvider   @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  inboxEvent ExternalLearningInboxEvent @relation(fields: [inboxEventId], references: [id], onDelete: Restrict)
+
+  @@unique([providerId, externalEventId])
+  @@index([providerId, reconciliationState, createdAt])
+  @@map("external_learning_evidence")
 }
 
 model Organization {
@@ -335,33 +728,33 @@ model Organization {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("organizations")
 }
 
 model SiteSetting {
-  id               String   @id @default(uuid())
-  key              String   @unique
-  siteName         String
-  siteNameEn       String?
-  shortName        String?
-  tagline          String?
-  taglineEn        String?
-  logoColor        String?  @db.Text
-  logoMono         String?  @db.Text
-  favicon          String?  @db.Text
-  supportEmail     String?
-  supportPhone     String?
-  supportWebsite   String?
-  copyrightText    String?  @db.Text
-  copyrightTextEn  String?  @db.Text
-  icpNumber        String?
-  themeColor       String?
-  themeColorDark   String?
-  updatedByUserId  String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  key             String   @unique
+  siteName        String
+  siteNameEn      String?
+  shortName       String?
+  tagline         String?
+  taglineEn       String?
+  logoColor       String?  @db.Text
+  logoMono        String?  @db.Text
+  favicon         String?  @db.Text
+  supportEmail    String?
+  supportPhone    String?
+  supportWebsite  String?
+  copyrightText   String?  @db.Text
+  copyrightTextEn String?  @db.Text
+  icpNumber       String?
+  themeColor      String?
+  themeColorDark  String?
+  updatedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("site_settings")
 }
@@ -380,7 +773,7 @@ model Account {
   id_token          String? @db.Text
   session_state     String?
 
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -392,7 +785,7 @@ model Session {
   userId       String
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -418,7 +811,7 @@ model AuthEmailToken {
   attempts   Int                   @default(0)
   createdAt  DateTime              @default(now())
 
-  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, purpose, createdAt])
   @@index([email, purpose, createdAt])
@@ -442,44 +835,59 @@ model Track {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  events        Event[]
-  activities    Activity[]
+  events     Event[]
+  activities Activity[]
 
   @@map("tracks")
 }
 
 model Institution {
-  id                String    @id @default(uuid())
-  slug              String    @unique
-  name              String
-  nameEn            String?
-  shortName         String?
-  shortNameEn       String?
-  logo              String?
-  website           String?
-  orgType           String?
-  countryOrRegion   String?
-  countryOrRegionEn String?
-  description       String?   @db.Text
-  descriptionEn     String?   @db.Text
-  isActive          Boolean   @default(true)
-  order             Int       @default(0)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                  String                        @id @default(uuid())
+  slug                String                        @unique
+  name                String
+  nameEn              String?
+  shortName           String?
+  shortNameEn         String?
+  legalName           String?
+  aliases             String[]
+  parentInstitutionId String?
+  logo                String?
+  website             String?
+  orgType             String?
+  governanceType      String?
+  countryOrRegion     String?
+  countryOrRegionEn   String?
+  description         String?                       @db.Text
+  descriptionEn       String?                       @db.Text
+  verificationStatus  InstitutionVerificationStatus @default(UNVERIFIED)
+  publicContactEmail  String?
+  publicContactPhone  String?
+  headquartersAddress String?
+  foundingYear        Int?
+  isActive            Boolean                       @default(true)
+  order               Int                           @default(0)
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
 
+  parentInstitution    Institution?          @relation("InstitutionParent", fields: [parentInstitutionId], references: [id], onDelete: SetNull)
+  childInstitutions    Institution[]         @relation("InstitutionParent")
   speakers             Speaker[]
   events               EventInstitution[]
   activityInstitutions ActivityInstitution[]
+  personAffiliations   PersonAffiliation[]
+  personRoleProfiles   PersonRoleProfile[]
 
+  @@index([parentInstitutionId])
+  @@index([verificationStatus])
   @@map("institutions")
 }
 
 model Event {
-  id                       String            @id @default(uuid())
+  id                       String         @id @default(uuid())
   title                    String
   titleEn                  String?
-  description              String            @db.Text
-  descriptionEn            String?           @db.Text
+  description              String         @db.Text
+  descriptionEn            String?        @db.Text
   shortDesc                String?
   shortDescEn              String?
   highlights               Json?
@@ -503,32 +911,33 @@ model Event {
   hostType                 EventHostType?
   trackId                  String?
   managerUserId            String?
-  venueCheckinSecret       String?           @unique
-  invitationContentHtml_zh String?           @db.Text
-  invitationContentHtml_en String?           @db.Text
+  venueCheckinSecret       String?        @unique
+  invitationContentHtml_zh String?        @db.Text
+  invitationContentHtml_en String?        @db.Text
   maxAttendees             Int?
-  requireApproval          Boolean           @default(false)
-  isClosed                 Boolean           @default(false)
-  isPublished              Boolean           @default(false)
-  isFeatured               Boolean           @default(false)
-  isPinned                 Boolean           @default(false)
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
+  requireApproval          Boolean        @default(false)
+  isClosed                 Boolean        @default(false)
+  isPublished              Boolean        @default(false)
+  isFeatured               Boolean        @default(false)
+  isPinned                 Boolean        @default(false)
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
 
-  track                    Track?            @relation(fields: [trackId], references: [id])
-  manager                  User?             @relation("EventManager", fields: [managerUserId], references: [id])
-  registrations            Registration[]
-  eventDateSlots           EventDateSlot[]
-  agendaItems              AgendaItem[]
-  checkins                 CheckIn[]
-  wishlist                 Wishlist[]
-  pointTransactions        PointTransaction[]
-  invitationRequests       InvitationRequest[]
-  verifiers                EventVerifier[]
-  qrTokens                 QrToken[]
-  institutions             EventInstitution[]
-  milestones               PassportMilestone[]
-  learningExperienceLinks  LearningExperienceProgramEventLink[]
+  track                   Track?                               @relation(fields: [trackId], references: [id])
+  manager                 User?                                @relation("EventManager", fields: [managerUserId], references: [id])
+  registrations           Registration[]
+  eventDateSlots          EventDateSlot[]
+  agendaItems             AgendaItem[]
+  checkins                CheckIn[]
+  wishlist                Wishlist[]
+  pointTransactions       PointTransaction[]
+  invitationRequests      InvitationRequest[]
+  verifiers               EventVerifier[]
+  qrTokens                QrToken[]
+  specialPasses           SpecialPass[]
+  institutions            EventInstitution[]
+  milestones              PassportMilestone[]
+  learningExperienceLinks LearningExperienceProgramEventLink[]
 
   @@index([startDate])
   @@index([trackId])
@@ -538,18 +947,18 @@ model Event {
 }
 
 model EventInstitution {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   eventId       String
   institutionId String
   roleLabel     String?
   roleLabelEn   String?
-  showLogo      Boolean     @default(true)
-  order         Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  showLogo      Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, institutionId])
   @@index([eventId, order])
@@ -563,8 +972,8 @@ model EventVerifier {
   eventId   String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([userId])
@@ -581,7 +990,7 @@ model EventDateSlot {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, scheduleDate])
   @@index([eventId, scheduleDate])
@@ -602,8 +1011,8 @@ model Registration {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event         Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event             Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
   pointTransactions PointTransaction[]
 
   @@unique([userId, eventId])
@@ -619,8 +1028,8 @@ model Wishlist {
   eventId   String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([userId])
@@ -629,7 +1038,7 @@ model Wishlist {
 }
 
 model PointTransaction {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   userId         String
   points         Int
   type           String
@@ -638,11 +1047,11 @@ model PointTransaction {
   activityId     String?
   description    String
   createdBy      String?
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event          Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  registration   Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  registration Registration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([type])
@@ -651,48 +1060,183 @@ model PointTransaction {
   @@map("point_transactions")
 }
 
+/// Additive internal double-entry journal; it deliberately does not alter User.points
+/// or PointTransaction semantics.
+model RedemptionIntent {
+  id             String                 @id @default(uuid())
+  userId         String
+  points         Int
+  idempotencyKey String
+  status         RedemptionIntentStatus @default(CREATED)
+  expiresAt      DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  journals PointJournal[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@map("redemption_intents")
+}
+
+model PointJournal {
+  id             String           @id @default(uuid())
+  intentId       String
+  type           PointJournalType
+  idempotencyKey String           @unique
+  createdAt      DateTime         @default(now())
+
+  intent   RedemptionIntent @relation(fields: [intentId], references: [id], onDelete: Restrict)
+  postings PointPosting[]
+
+  @@index([intentId, createdAt])
+  @@map("point_journals")
+}
+
+model PointPosting {
+  id        String                @id @default(uuid())
+  journalId String
+  account   PointPostingAccount
+  direction PointPostingDirection
+  points    Int
+  createdAt DateTime              @default(now())
+
+  journal PointJournal @relation(fields: [journalId], references: [id], onDelete: Restrict)
+
+  @@index([account, direction])
+  @@index([journalId])
+  @@map("point_postings")
+}
+
 model Speaker {
-  id                  String      @id @default(uuid())
-  slug                String?     @unique
-  salutation          String?
-  name                String
-  nameEn              String?
-  avatar              String?
-  title               String
-  titleEn             String?
-  organization        String
-  organizationEn      String?
-  organizationLogo    String?
-  bio                 String?     @db.Text
-  bioEn               String?     @db.Text
-  summary             String?     @db.Text
-  summaryEn           String?     @db.Text
-  countryOrRegion     String?
-  countryOrRegionEn   String?
-  relevanceToShcw     String?     @db.Text
-  relevanceToShcwEn   String?     @db.Text
-  expertiseTags       Json?
-  email               String?
-  linkedin            String?
-  twitter             String?
-  website             String?
-  isKeynote           Boolean     @default(false)
-  isVisible           Boolean     @default(true)
-  agendaRoleDisplayMode String    @default("allCurrent")
-  institutionId       String?
-  order               Int         @default(0)
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  id                    String   @id @default(uuid())
+  slug                  String?  @unique
+  salutation            String?
+  name                  String
+  nameEn                String?
+  avatar                String?
+  title                 String
+  titleEn               String?
+  organization          String
+  organizationEn        String?
+  organizationLogo      String?
+  bio                   String?  @db.Text
+  bioEn                 String?  @db.Text
+  summary               String?  @db.Text
+  summaryEn             String?  @db.Text
+  countryOrRegion       String?
+  countryOrRegionEn     String?
+  relevanceToShcw       String?  @db.Text
+  relevanceToShcwEn     String?  @db.Text
+  expertiseTags         Json?
+  email                 String?
+  linkedin              String?
+  twitter               String?
+  website               String?
+  isKeynote             Boolean  @default(false)
+  isVisible             Boolean  @default(true)
+  agendaRoleDisplayMode String   @default("allCurrent")
+  institutionId         String?
+  personId              String?
+  order                 Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
-  institution         Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  agendaItems         AgendaItem[]
-  moderatedItems      AgendaItem[] @relation("AgendaModerator")
-  roles               SpeakerRole[]
-  activityAgendaItems ActivityAgendaItemSpeaker[]
-  moderatedActivityItems ActivityAgendaItem[] @relation("ActivityAgendaModerator")
-  activityLinks       ActivitySpeaker[]
+  institution            Institution?                @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  person                 Person?                     @relation(fields: [personId], references: [id], onDelete: SetNull)
+  agendaItems            AgendaItem[]
+  moderatedItems         AgendaItem[]                @relation("AgendaModerator")
+  roles                  SpeakerRole[]
+  activityAgendaItems    ActivityAgendaItemSpeaker[]
+  moderatedActivityItems ActivityAgendaItem[]        @relation("ActivityAgendaModerator")
+  activityLinks          ActivitySpeaker[]
 
+  @@index([institutionId])
+  @@index([personId])
   @@map("speakers")
+}
+
+model Person {
+  id                   String                   @id @default(uuid())
+  slug                 String?                  @unique
+  displayName          String
+  displayNameEn        String?
+  salutation           String?
+  title                String?
+  titleEn              String?
+  bio                  String?                  @db.Text
+  bioEn                String?                  @db.Text
+  countryOrRegion      String?
+  countryOrRegionEn    String?
+  avatar               String?
+  website              String?
+  linkedin             String?
+  twitter              String?
+  orcid                String?
+  isPublic             Boolean                  @default(false)
+  verificationStatus   PersonVerificationStatus @default(DRAFT)
+  verificationMetadata Json?
+  userId               String?                  @unique
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+
+  user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  affiliations PersonAffiliation[]
+  roleProfiles PersonRoleProfile[]
+  speakers     Speaker[]
+
+  @@index([verificationStatus])
+  @@index([displayName])
+  @@map("people")
+}
+
+model PersonAffiliation {
+  id                 String                  @id @default(uuid())
+  personId           String
+  institutionId      String?
+  organizationName   String?
+  organizationNameEn String?
+  department         String?
+  title              String?
+  titleEn            String?
+  startYear          Int?
+  endYear            Int?
+  isCurrent          Boolean                 @default(false)
+  status             PersonAffiliationStatus @default(ACTIVE)
+  order              Int                     @default(0)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  person      Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  institution Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([personId])
+  @@index([institutionId])
+  @@map("person_affiliations")
+}
+
+model PersonRoleProfile {
+  id                 String         @id @default(uuid())
+  personId           String
+  roleType           PersonRoleType
+  roleTitle          String?
+  roleTitleEn        String?
+  scopeInstitutionId String?
+  isPrimary          Boolean        @default(false)
+  isVisible          Boolean        @default(true)
+  startYear          Int?
+  endYear            Int?
+  order              Int            @default(0)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  person           Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  scopeInstitution Institution? @relation(fields: [scopeInstitutionId], references: [id], onDelete: SetNull)
+
+  @@index([personId, roleType])
+  @@map("person_role_profiles")
 }
 
 model SpeakerRole {
@@ -709,32 +1253,32 @@ model SpeakerRole {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  speaker        Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
 
   @@map("speaker_roles")
 }
 
 model AgendaItem {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   eventId       String
   agendaDate    DateTime
   startTime     String
   endTime       String
   title         String
   titleEn       String?
-  description   String?   @db.Text
-  descriptionEn String?   @db.Text
+  description   String?  @db.Text
+  descriptionEn String?  @db.Text
   type          String
   venue         String?
   speakerMeta   Json?
   moderatorId   String?
-  order         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  moderator     Speaker?  @relation("AgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
-  speakers      Speaker[]
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  moderator Speaker?  @relation("AgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  speakers  Speaker[]
 
   @@index([eventId])
   @@index([eventId, agendaDate])
@@ -751,8 +1295,8 @@ model CheckIn {
   method    String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([eventId])
@@ -761,30 +1305,30 @@ model CheckIn {
 }
 
 model InvitationRequest {
-  id               String           @id @default(uuid())
-  userId           String
-  salutation       String?
-  guestName        String
-  guestTitle       String?
-  guestOrg         String?
-  guestEmail       String?
-  language         String           @default("zh")
-  eventId          String?
-  purpose          String?          @db.Text
-  notes            String?          @db.Text
-  customMainContent String?         @db.Text
-  aiEnhancedBodyZh String?          @db.Text
-  aiEnhancedBodyEn String?          @db.Text
+  id                String           @id @default(uuid())
+  userId            String
+  salutation        String?
+  guestName         String
+  guestTitle        String?
+  guestOrg          String?
+  guestEmail        String?
+  language          String           @default("zh")
+  eventId           String?
+  purpose           String?          @db.Text
+  notes             String?          @db.Text
+  customMainContent String?          @db.Text
+  aiEnhancedBodyZh  String?          @db.Text
+  aiEnhancedBodyEn  String?          @db.Text
   signaturePresetId String?
-  useStamp         Boolean          @default(false)
-  status           InvitationStatus @default(PENDING)
-  letterFileUrl    String?
-  rejectReason     String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  useStamp          Boolean          @default(false)
+  status            InvitationStatus @default(PENDING)
+  letterFileUrl     String?
+  rejectReason      String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event            Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
@@ -795,6 +1339,7 @@ model InvitationRequest {
 model SpecialPass {
   id            String               @id @default(uuid())
   userId        String
+  eventId       String?
   entryType     SpecialPassEntryType
   status        SpecialPassStatus    @default(PENDING)
   country       String
@@ -821,34 +1366,36 @@ model SpecialPass {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([entryType])
+  @@index([eventId, status])
   @@map("special_passes")
 }
 
 model ContactMessage {
-  id            String               @id @default(uuid())
-  name          String
-  email         String
-  phone         String?
-  organization  String?
-  userId        String?
-  category      ContactCategory      @default(GENERAL)
-  subject       String
-  message       String               @db.Text
-  metadata      Json?
-  status        ContactMessageStatus @default(PENDING)
-  adminReply    String?              @db.Text
-  adminNotes    String?              @db.Text
-  repliedAt     DateTime?
-  repliedBy     String?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id           String               @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  organization String?
+  userId       String?
+  category     ContactCategory      @default(GENERAL)
+  subject      String
+  message      String               @db.Text
+  metadata     Json?
+  status       ContactMessageStatus @default(PENDING)
+  adminReply   String?              @db.Text
+  adminNotes   String?              @db.Text
+  repliedAt    DateTime?
+  repliedBy    String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
-  user          User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([status])
@@ -858,22 +1405,22 @@ model ContactMessage {
 }
 
 model NotificationPreference {
-  id               String    @id @default(uuid())
-  userId           String    @unique
-  emailEnabled     Boolean   @default(true)
-  inAppEnabled     Boolean   @default(true)
-  smsEnabled       Boolean   @default(false)
-  marketingEnabled Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  emailEnabled     Boolean  @default(true)
+  inAppEnabled     Boolean  @default(true)
+  smsEnabled       Boolean  @default(false)
+  marketingEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
 }
 
 model Notification {
-  id          String             @id @default(uuid())
+  id          String              @id @default(uuid())
   userId      String
   channel     NotificationChannel @default(IN_APP)
   status      NotificationStatus  @default(QUEUED)
@@ -889,7 +1436,7 @@ model Notification {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([userId, status])
@@ -898,56 +1445,56 @@ model Notification {
 }
 
 model AchievementDefinition {
-  id            String               @id @default(uuid())
-  key           String               @unique
-  name          String
-  nameEn        String?
-  description   String?              @db.Text
-  descriptionEn String?              @db.Text
+  id             String   @id @default(uuid())
+  key            String   @unique
+  name           String
+  nameEn         String?
+  description    String?  @db.Text
+  descriptionEn  String?  @db.Text
   pointThreshold Int?
-  isActive      Boolean              @default(true)
-  order         Int                  @default(0)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  isActive       Boolean  @default(true)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  userAchievements UserAchievement[]
+  userAchievements       UserAchievement[]
   certificateDefinitions CertificateDefinition[]
 
   @@map("achievement_definitions")
 }
 
 model Achievement {
-  id                    String                       @id @default(uuid())
-  userId                String
-  name                  String
-  description           String?                      @db.Text
-  type                  AchievementType
-  status                AchievementStatus            @default(APPROVED)
-  verificationLevel     AchievementVerificationLevel @default(SYSTEM_RECORDED)
-  sourceType            AchievementSourceType?
-  sourceId              String?
-  relatedCourseId       String?
-  relatedEventId        String?
-  relatedProjectId      String?
-  relatedCertificateId  String?
-  issuerName            String?
-  issuerOrganization    String?
-  validatorUserId       String?
-  validatedAt           DateTime?
-  evidenceUrl           String?
-  evidenceText          String?
-  evidenceJson          Json?
-  points                Int                          @default(0)
-  skillTags             String[]
-  topicTags             String[]
-  sdgTags               String[]
-  isPublic              Boolean                      @default(true)
-  isBadgeEligible       Boolean                      @default(true)
-  completedAt           DateTime?
-  createdAt             DateTime                     @default(now())
-  updatedAt             DateTime                     @updatedAt
+  id                   String                       @id @default(uuid())
+  userId               String
+  name                 String
+  description          String?                      @db.Text
+  type                 AchievementType
+  status               AchievementStatus            @default(APPROVED)
+  verificationLevel    AchievementVerificationLevel @default(SYSTEM_RECORDED)
+  sourceType           AchievementSourceType?
+  sourceId             String?
+  relatedCourseId      String?
+  relatedEventId       String?
+  relatedProjectId     String?
+  relatedCertificateId String?
+  issuerName           String?
+  issuerOrganization   String?
+  validatorUserId      String?
+  validatedAt          DateTime?
+  evidenceUrl          String?
+  evidenceText         String?
+  evidenceJson         Json?
+  points               Int                          @default(0)
+  skillTags            String[]
+  topicTags            String[]
+  sdgTags              String[]
+  isPublic             Boolean                      @default(true)
+  isBadgeEligible      Boolean                      @default(true)
+  completedAt          DateTime?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
 
-  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([type, status])
@@ -957,15 +1504,15 @@ model Achievement {
 }
 
 model BadgeDefinition {
-  id                       String                       @id @default(uuid())
-  code                     String                       @unique
+  id                       String                        @id @default(uuid())
+  code                     String                        @unique
   name                     String
   nameZh                   String?
-  description              String?                      @db.Text
-  descriptionZh            String?                      @db.Text
+  description              String?                       @db.Text
+  descriptionZh            String?                       @db.Text
   category                 BadgeCategory
   level                    BadgeLevel?
-  verificationGrade        BadgeVerificationGrade       @default(BASIC)
+  verificationGrade        BadgeVerificationGrade        @default(BASIC)
   issuerName               String?
   issuerOrganization       String?
   issuerLogoUrl            String?
@@ -981,15 +1528,15 @@ model BadgeDefinition {
   requiredTopicTags        String[]
   minVerificationLevel     AchievementVerificationLevel?
   validityDays             Int?
-  isRenewable              Boolean                      @default(false)
+  isRenewable              Boolean                       @default(false)
   renewalCriteriaJson      Json?
-  isActive                 Boolean                      @default(true)
-  isPublic                 Boolean                      @default(true)
-  displayOrder             Int                          @default(0)
-  createdAt                DateTime                     @default(now())
-  updatedAt                DateTime                     @updatedAt
+  isActive                 Boolean                       @default(true)
+  isPublic                 Boolean                       @default(true)
+  displayOrder             Int                           @default(0)
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
 
-  awards                   BadgeAward[]
+  awards BadgeAward[]
 
   @@index([isActive, displayOrder])
   @@index([category, level])
@@ -997,25 +1544,25 @@ model BadgeDefinition {
 }
 
 model BadgeAward {
-  id                    String          @id @default(uuid())
+  id                    String           @id @default(uuid())
   userId                String
   badgeDefinitionId     String
   status                BadgeAwardStatus @default(ACTIVE)
-  awardedAt             DateTime        @default(now())
+  awardedAt             DateTime         @default(now())
   expiresAt             DateTime?
   revokedAt             DateTime?
   revokeReason          String?
   awardedByUserId       String?
   awardedByOrgName      String?
   verificationUrl       String?
-  verificationToken     String?         @unique
+  verificationToken     String?          @unique
   evidenceSnapshotJson  Json?
   relatedAchievementIds String[]
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
-  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badgeDefinition       BadgeDefinition @relation(fields: [badgeDefinitionId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeDefinition BadgeDefinition @relation(fields: [badgeDefinitionId], references: [id], onDelete: Cascade)
 
   @@index([userId, awardedAt])
   @@index([badgeDefinitionId, status])
@@ -1023,14 +1570,14 @@ model BadgeAward {
 }
 
 model UserAchievement {
-  id                    String                @id @default(uuid())
-  userId                String
+  id                      String   @id @default(uuid())
+  userId                  String
   achievementDefinitionId String
-  sourceType            String?
-  sourceId              String?
-  certificateIssueId    String?
-  unlockedAt            DateTime              @default(now())
-  createdAt             DateTime              @default(now())
+  sourceType              String?
+  sourceId                String?
+  certificateIssueId      String?
+  unlockedAt              DateTime @default(now())
+  createdAt               DateTime @default(now())
 
   user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievementDefinition AchievementDefinition @relation(fields: [achievementDefinitionId], references: [id], onDelete: Cascade)
@@ -1043,23 +1590,23 @@ model UserAchievement {
 }
 
 model PassportMilestone {
-  id                 String            @id @default(uuid())
+  id                 String   @id @default(uuid())
   userId             String
   title              String
   titleEn            String?
-  description        String?           @db.Text
-  descriptionEn      String?           @db.Text
+  description        String?  @db.Text
+  descriptionEn      String?  @db.Text
   sourceType         String?
   sourceId           String?
   eventId            String?
   activityId         String?
   certificateIssueId String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event              Event?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  certificateIssue   CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event            Event?            @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  certificateIssue CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([eventId])
@@ -1068,69 +1615,74 @@ model PassportMilestone {
 }
 
 model CertificateCategory {
-  id            String                 @id @default(uuid())
-  key           String                 @unique
-  name          String
-  nameEn        String?
-  description   String?                @db.Text
-  descriptionEn String?                @db.Text
-  order         Int                    @default(0)
-  autoIssueEnabled   Boolean           @default(true)
-  userRequestEnabled Boolean           @default(false)
-  pdfEnabled         Boolean           @default(true)
-  publicVerifyEnabled Boolean          @default(true)
-  isActive      Boolean                @default(true)
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
+  id                  String   @id @default(uuid())
+  key                 String   @unique
+  name                String
+  nameEn              String?
+  description         String?  @db.Text
+  descriptionEn       String?  @db.Text
+  order               Int      @default(0)
+  autoIssueEnabled    Boolean  @default(true)
+  userRequestEnabled  Boolean  @default(false)
+  pdfEnabled          Boolean  @default(true)
+  publicVerifyEnabled Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  templates     CertificateTemplate[]
-  definitions   CertificateDefinition[]
+  templates   CertificateTemplate[]
+  definitions CertificateDefinition[]
 
   @@map("certificate_categories")
 }
 
 model CertificateTemplate {
-  id                 String                 @id @default(uuid())
+  id                 String                  @id @default(uuid())
   categoryId         String
   name               String
   nameEn             String?
   templateType       CertificateTemplateType
   templateConfigJson Json
   renderConfigJson   Json?
-  isActive           Boolean                @default(true)
-  version            Int                    @default(1)
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  isActive           Boolean                 @default(true)
+  version            Int                     @default(1)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
-  category           CertificateCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  definitions        CertificateDefinition[]
+  category    CertificateCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  definitions CertificateDefinition[]
+  batches     CertificateBatch[]
 
   @@index([categoryId, isActive])
   @@map("certificate_templates")
 }
 
 model CertificateDefinition {
-  id                    String                     @id @default(uuid())
-  categoryId            String
-  templateId            String
-  achievementDefinitionId String?
-  name                  String
-  nameEn                String?
-  issueRule             Json?
-  approvalMode          String                    @default("auto")
-  verificationMode      CertificateVerificationMode @default(PUBLIC_CODE)
-  pointReward           Int?
-  milestoneTitleTemplate String?
+  id                       String                      @id @default(uuid())
+  categoryId               String
+  templateId               String
+  achievementDefinitionId  String?
+  name                     String
+  nameEn                   String?
+  issueRule                Json?
+  approvalMode             String                      @default("auto")
+  verificationMode         CertificateVerificationMode @default(PUBLIC_CODE)
+  pointReward              Int?
+  milestoneTitleTemplate   String?
   milestoneTitleTemplateEn String?
-  isActive              Boolean                   @default(true)
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
+  isActive                 Boolean                     @default(true)
+  createdAt                DateTime                    @default(now())
+  updatedAt                DateTime                    @updatedAt
 
-  category              CertificateCategory       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  template              CertificateTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
-  achievementDefinition AchievementDefinition?    @relation(fields: [achievementDefinitionId], references: [id], onDelete: SetNull)
-  issues                CertificateIssue[]
-  learningExperiencePrograms LearningExperienceProgram[]
+  category                     CertificateCategory           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  template                     CertificateTemplate           @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  achievementDefinition        AchievementDefinition?        @relation(fields: [achievementDefinitionId], references: [id], onDelete: SetNull)
+  issues                       CertificateIssue[]
+  applications                 CertificateApplication[]
+  activityCertificateRules     ActivityCertificateRule[]
+  activityCertificateIssuances ActivityCertificateIssuance[]
+  learningExperiencePrograms   LearningExperienceProgram[]
+  batches                      CertificateBatch[]
 
   @@index([categoryId, isActive])
   @@index([templateId])
@@ -1138,68 +1690,191 @@ model CertificateDefinition {
 }
 
 model CertificateIssue {
-  id                String                @id @default(uuid())
-  definitionId      String
-  userId            String
-  sourceType        String?
-  sourceId          String?
-  status            CertificateIssueStatus @default(DRAFT)
-  generatedFileUrl  String?
-  generatedFileName String?
-  variableValuesJson Json?
-  verificationCode  String?               @unique
-  publicVisible     Boolean               @default(false)
-  approvedBy        String?
-  approvedAt        DateTime?
-  issuedAt          DateTime?
-  downloadCount     Int                   @default(0)
-  pointsAwarded     Int?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  id                    String                   @id @default(uuid())
+  definitionId          String
+  userId                String
+  sourceType            String?
+  sourceId              String?
+  status                CertificateIssueStatus   @default(DRAFT)
+  generatedFileUrl      String?
+  generatedFileName     String?
+  artifactProvider      String?
+  artifactKey           String?
+  artifactVersion       String?
+  artifactContentType   String?
+  artifactByteSize      Int?
+  artifactSha256        String?
+  artifactCreatedAt     DateTime?
+  artifactVerifiedAt    DateTime?
+  artifactState         CertificateArtifactState @default(NONE)
+  artifactFailureReason String?
+  variableValuesJson    Json?
+  renderSnapshotJson    Json?
+  verificationCode      String?                  @unique
+  publicVisible         Boolean                  @default(false)
+  approvedBy            String?
+  approvedAt            DateTime?
+  issuedAt              DateTime?
+  downloadCount         Int                      @default(0)
+  pointsAwarded         Int?
+  revokedAt             DateTime?
+  revokedByUserId       String?
+  revocationReason      String?                  @db.Text
+  restoredAt            DateTime?
+  restoredByUserId      String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
 
-  definition        CertificateDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
-  user              User                  @relation("CertificateOwner", fields: [userId], references: [id], onDelete: Cascade)
-  approver          User?                 @relation("CertificateApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
-  verifications     CertificateVerification[]
-  qrTokens          QrToken[]
-  achievementUnlocks UserAchievement[]
-  linkedMilestones  PassportMilestone[]
+  definition                       CertificateDefinition             @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  user                             User                              @relation("CertificateOwner", fields: [userId], references: [id], onDelete: Cascade)
+  approver                         User?                             @relation("CertificateApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  revoker                          User?                             @relation("CertificateRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+  restorer                         User?                             @relation("CertificateRestorer", fields: [restoredByUserId], references: [id], onDelete: SetNull)
+  verifications                    CertificateVerification[]
+  qrTokens                         QrToken[]
+  achievementUnlocks               UserAchievement[]
+  linkedMilestones                 PassportMilestone[]
   learningExperienceParticipations LearningExperienceParticipation[]
+  application                      CertificateApplication?
+  activityCertificateIssuance      ActivityCertificateIssuance?
+  batchItem                        CertificateBatchItem?
 
   @@index([definitionId])
   @@index([userId])
   @@index([status])
+  @@index([revokedByUserId])
+  @@index([restoredByUserId])
   @@map("certificate_issues")
 }
 
-model CertificateVerification {
-  id                 String             @id @default(uuid())
-  certificateIssueId String
-  verifiedAt         DateTime           @default(now())
-  verifiedBy         String?
-  verificationChannel String
-  result             VerificationResult @default(VALID)
-  metadataJson       Json?
+model CertificateApplication {
+  id                 String                       @id @default(uuid())
+  applicantId        String
+  definitionId       String
+  status             CertificateApplicationStatus @default(DRAFT)
+  statement          String?                      @db.Text
+  sourceType         String?
+  sourceId           String?
+  sourceLabel        String?
+  idempotencyKey     String?
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  reviewerId         String?
+  applicantMessage   String?                      @db.Text
+  certificateIssueId String?                      @unique
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
 
-  certificateIssue   CertificateIssue   @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
-  verifier           User?              @relation("CertificateVerifiedBy", fields: [verifiedBy], references: [id], onDelete: SetNull)
+  applicant        User                          @relation("CertificateApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  definition       CertificateDefinition         @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  reviewer         User?                         @relation("CertificateApplicationReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  certificateIssue CertificateIssue?             @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+  events           CertificateApplicationEvent[]
+
+  @@unique([applicantId, idempotencyKey])
+  @@index([applicantId, createdAt])
+  @@index([definitionId, status])
+  @@index([status, createdAt])
+  @@map("certificate_applications")
+}
+
+model CertificateApplicationEvent {
+  id            String                        @id @default(uuid())
+  applicationId String
+  actorUserId   String?
+  fromStatus    CertificateApplicationStatus?
+  toStatus      CertificateApplicationStatus
+  kind          String
+  createdAt     DateTime                      @default(now())
+
+  application CertificateApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actor       User?                  @relation("CertificateApplicationEventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt])
+  @@map("certificate_application_events")
+}
+
+model CertificateVerification {
+  id                  String             @id @default(uuid())
+  certificateIssueId  String
+  verifiedAt          DateTime           @default(now())
+  verifiedBy          String?
+  verificationChannel String
+  result              VerificationResult @default(VALID)
+  metadataJson        Json?
+
+  certificateIssue CertificateIssue @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
+  verifier         User?            @relation("CertificateVerifiedBy", fields: [verifiedBy], references: [id], onDelete: SetNull)
 
   @@index([certificateIssueId])
   @@index([verifiedAt])
   @@map("certificate_verifications")
 }
 
-model ChannelSessionBridge {
-  id          String    @id @default(cuid())
-  channel     ChannelKey @default(SHCW)
-  tokenHash   String    @unique
-  userId      String
-  targetPath  String?
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  createdAt   DateTime  @default(now())
+model CertificateBatch {
+  id                 String                 @id @default(uuid())
+  idempotencyKey     String                 @unique
+  source             CertificateBatchSource
+  status             CertificateBatchStatus @default(PENDING)
+  templateId         String
+  definitionId       String
+  activityId         String?
+  issueDate          DateTime?
+  variableValuesJson Json?
+  notifyRecipients   Boolean                @default(true)
+  totalCount         Int                    @default(0)
+  succeededCount     Int                    @default(0)
+  failedCount        Int                    @default(0)
+  error              String?                @db.Text
+  completedAt        DateTime?
+  createdByUserId    String
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity   Activity?              @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  createdBy  User                   @relation("CertificateBatchCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  definition CertificateDefinition  @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  template   CertificateTemplate    @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  items      CertificateBatchItem[]
+
+  @@index([status, createdAt])
+  @@index([createdByUserId, createdAt])
+  @@map("certificate_batches")
+}
+
+model CertificateBatchItem {
+  id                 String                     @id @default(uuid())
+  batchId            String
+  rowIndex           Int
+  email              String
+  normalizedEmail    String
+  status             CertificateBatchItemStatus @default(PENDING)
+  attempts           Int                        @default(0)
+  leaseExpiresAt     DateTime?
+  certificateIssueId String?                    @unique
+  error              String?                    @db.Text
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  batch            CertificateBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  certificateIssue CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+
+  @@index([batchId, status])
+  @@index([normalizedEmail])
+  @@map("certificate_batch_items")
+}
+
+model ChannelSessionBridge {
+  id         String     @id @default(cuid())
+  channel    ChannelKey @default(SHCW)
+  tokenHash  String     @unique
+  userId     String
+  targetPath String?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([channel, expiresAt])
   @@index([userId, createdAt])
@@ -1224,12 +1899,12 @@ model QrToken {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
-  activityId         String?
+  activityId String?
 
-  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event              Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  certificateIssue   CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
-  activity           Activity?         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user             User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event            Event?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  certificateIssue CertificateIssue? @relation(fields: [certificateIssueId], references: [id], onDelete: Cascade)
+  activity         Activity?         @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([type, status])
   @@index([userId, type])
@@ -1241,18 +1916,18 @@ model QrToken {
 }
 
 model CoreAuditLog {
-  id          String   @id @default(uuid())
-  actorUserId String?
-  action      String
-  subjectType String
-  subjectId   String?
-  result      String
-  ipAddress   String?
-  userAgent   String?
+  id           String   @id @default(uuid())
+  actorUserId  String?
+  action       String
+  subjectType  String
+  subjectId    String?
+  result       String
+  ipAddress    String?
+  userAgent    String?
   metadataJson Json?
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
-  actor       User?    @relation("CoreAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actor User? @relation("CoreAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([actorUserId, createdAt])
   @@index([action, createdAt])
@@ -1272,47 +1947,48 @@ model LearningExperienceCategory {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  programs      LearningExperienceProgram[]
+  programs LearningExperienceProgram[]
 
   @@index([order])
   @@map("learning_experience_categories")
 }
 
 model LearningExperienceProgram {
-  id                    String                           @id @default(uuid())
-  slug                  String                           @unique
-  categoryId            String
-  managerUserId         String?
+  id                      String                          @id @default(uuid())
+  slug                    String                          @unique
+  categoryId              String
+  managerUserId           String?
   certificateDefinitionId String?
-  title                 String
-  titleEn               String?
-  summary               String?                          @db.Text
-  summaryEn             String?                          @db.Text
-  description           String?                          @db.Text
-  descriptionEn         String?                          @db.Text
-  location              String?
-  locationEn            String?
-  applicationOpenAt     DateTime?
-  applicationCloseAt    DateTime?
-  cohortStartAt         DateTime?
-  cohortEndAt           DateTime?
-  capacity              Int?
-  pointReward           Int?
-  status                LearningExperienceProgramStatus  @default(DRAFT)
-  isPublished           Boolean                          @default(false)
-  applicationSchemaJson Json?
-  programConfigJson     Json?
-  createdAt             DateTime                         @default(now())
-  updatedAt             DateTime                         @updatedAt
+  title                   String
+  titleEn                 String?
+  summary                 String?                         @db.Text
+  summaryEn               String?                         @db.Text
+  description             String?                         @db.Text
+  descriptionEn           String?                         @db.Text
+  location                String?
+  locationEn              String?
+  applicationOpenAt       DateTime?
+  applicationCloseAt      DateTime?
+  cohortStartAt           DateTime?
+  cohortEndAt             DateTime?
+  capacity                Int?
+  pointReward             Int?
+  status                  LearningExperienceProgramStatus @default(DRAFT)
+  isPublished             Boolean                         @default(false)
+  applicationSchemaJson   Json?
+  programConfigJson       Json?
+  createdAt               DateTime                        @default(now())
+  updatedAt               DateTime                        @updatedAt
 
-  category              LearningExperienceCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  manager               User?                            @relation("LearningExperienceManager", fields: [managerUserId], references: [id], onDelete: SetNull)
-  certificateDefinition CertificateDefinition?           @relation(fields: [certificateDefinitionId], references: [id], onDelete: SetNull)
-  stages                LearningExperienceStage[]
-  applications          LearningExperienceApplication[]
-  participations        LearningExperienceParticipation[]
-  eventLinks            LearningExperienceProgramEventLink[]
-  summerSchoolApplications SummerSchoolApplication[]
+  category                      LearningExperienceCategory           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  manager                       User?                                @relation("LearningExperienceManager", fields: [managerUserId], references: [id], onDelete: SetNull)
+  certificateDefinition         CertificateDefinition?               @relation(fields: [certificateDefinitionId], references: [id], onDelete: SetNull)
+  stages                        LearningExperienceStage[]
+  applications                  LearningExperienceApplication[]
+  participations                LearningExperienceParticipation[]
+  eventLinks                    LearningExperienceProgramEventLink[]
+  summerSchoolApplications      SummerSchoolApplication[]
+  ExternalLearningCourseMapping ExternalLearningCourseMapping[]
 
   @@index([categoryId, status])
   @@index([managerUserId])
@@ -1321,20 +1997,20 @@ model LearningExperienceProgram {
 }
 
 model LearningExperienceStage {
-  id             String   @id @default(uuid())
-  programId      String
-  key            String
-  name           String
-  nameEn         String?
-  description    String?  @db.Text
-  descriptionEn  String?  @db.Text
-  order          Int      @default(0)
-  isDecisionStage Boolean @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  programId       String
+  key             String
+  name            String
+  nameEn          String?
+  description     String?  @db.Text
+  descriptionEn   String?  @db.Text
+  order           Int      @default(0)
+  isDecisionStage Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  program        LearningExperienceProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  applications   LearningExperienceApplication[] @relation("LearningExperienceCurrentStage")
+  program      LearningExperienceProgram       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  applications LearningExperienceApplication[] @relation("LearningExperienceCurrentStage")
 
   @@unique([programId, key])
   @@index([programId, order])
@@ -1342,23 +2018,23 @@ model LearningExperienceStage {
 }
 
 model LearningExperienceApplication {
-  id             String                             @id @default(uuid())
+  id             String                              @id @default(uuid())
   programId      String
   userId         String
   currentStageId String?
   status         LearningExperienceApplicationStatus @default(DRAFT)
   answersJson    Json?
-  reviewNotes    String?                            @db.Text
+  reviewNotes    String?                             @db.Text
   submittedAt    DateTime?
   reviewedAt     DateTime?
   decidedAt      DateTime?
-  createdAt      DateTime                           @default(now())
-  updatedAt      DateTime                           @updatedAt
+  createdAt      DateTime                            @default(now())
+  updatedAt      DateTime                            @updatedAt
 
-  program        LearningExperienceProgram          @relation(fields: [programId], references: [id], onDelete: Cascade)
-  user           User                               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currentStage   LearningExperienceStage?           @relation("LearningExperienceCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
-  participation  LearningExperienceParticipation?
+  program                  LearningExperienceProgram        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user                     User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStage             LearningExperienceStage?         @relation("LearningExperienceCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+  participation            LearningExperienceParticipation?
   summerSchoolApplications SummerSchoolApplication[]
 
   @@unique([programId, userId])
@@ -1368,26 +2044,26 @@ model LearningExperienceApplication {
 }
 
 model LearningExperienceParticipation {
-  id                String                                @id @default(uuid())
-  programId         String
-  userId            String
-  applicationId     String?                               @unique
+  id                 String                                @id @default(uuid())
+  programId          String
+  userId             String
+  applicationId      String?                               @unique
   certificateIssueId String?
-  status            LearningExperienceParticipationStatus  @default(ADMITTED)
-  completionPercent Int                                   @default(0)
-  mentorReviewJson  Json?
-  outcomeSummary    String?                               @db.Text
-  outcomeSummaryEn  String?                               @db.Text
-  pointsAwarded     Int?
-  startedAt         DateTime?
-  completedAt       DateTime?
-  createdAt         DateTime                              @default(now())
-  updatedAt         DateTime                              @updatedAt
+  status             LearningExperienceParticipationStatus @default(ADMITTED)
+  completionPercent  Int                                   @default(0)
+  mentorReviewJson   Json?
+  outcomeSummary     String?                               @db.Text
+  outcomeSummaryEn   String?                               @db.Text
+  pointsAwarded      Int?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime                              @default(now())
+  updatedAt          DateTime                              @updatedAt
 
-  program           LearningExperienceProgram             @relation(fields: [programId], references: [id], onDelete: Cascade)
-  user              User                                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  application       LearningExperienceApplication?        @relation(fields: [applicationId], references: [id], onDelete: SetNull)
-  certificateIssue  CertificateIssue?                     @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+  program          LearningExperienceProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user             User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application      LearningExperienceApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  certificateIssue CertificateIssue?              @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
 
   @@unique([programId, userId])
   @@index([userId, status])
@@ -1396,18 +2072,18 @@ model LearningExperienceParticipation {
 }
 
 model LearningExperienceProgramEventLink {
-  id          String   @id @default(uuid())
-  programId   String
-  eventId     String
-  linkType    String
-  title       String?
-  titleEn     String?
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  programId String
+  eventId   String
+  linkType  String
+  title     String?
+  titleEn   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  program     LearningExperienceProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  event       Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  program LearningExperienceProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  event   Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([programId, eventId, linkType])
   @@index([eventId])
@@ -1416,31 +2092,31 @@ model LearningExperienceProgramEventLink {
 }
 
 model SummerSchoolApplication {
-  id                             String  @id @default(uuid())
-  projectSlug                    String
-  projectType                    String?
-  applicationStatus              String?
-  locale                         String   @default("en")
-  email                          String
-  fullName                       String
-  preferredName                  String?
-  phone                          String?
-  guardianName                   String?
-  guardianEmail                  String?
-  guardianPhone                  String?
-  channel                        String?
-  climatePassportId              String
-  userId                         String?
-  learningExperienceProgramId    String?
+  id                              String   @id @default(uuid())
+  projectSlug                     String
+  projectType                     String?
+  applicationStatus               String?
+  locale                          String   @default("en")
+  email                           String
+  fullName                        String
+  preferredName                   String?
+  phone                           String?
+  guardianName                    String?
+  guardianEmail                   String?
+  guardianPhone                   String?
+  channel                         String?
+  climatePassportId               String
+  userId                          String?
+  learningExperienceProgramId     String?
   learningExperienceApplicationId String?
-  answersJson                    Json?
-  submittedAt                    DateTime @default(now())
-  createdAt                      DateTime @default(now())
-  updatedAt                      DateTime @updatedAt
+  answersJson                     Json?
+  submittedAt                     DateTime @default(now())
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
 
-  user                           User?                         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  learningExperienceProgram      LearningExperienceProgram?    @relation(fields: [learningExperienceProgramId], references: [id], onDelete: SetNull)
-  learningExperienceApplication  LearningExperienceApplication? @relation(fields: [learningExperienceApplicationId], references: [id], onDelete: SetNull)
+  user                          User?                          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  learningExperienceProgram     LearningExperienceProgram?     @relation(fields: [learningExperienceProgramId], references: [id], onDelete: SetNull)
+  learningExperienceApplication LearningExperienceApplication? @relation(fields: [learningExperienceApplicationId], references: [id], onDelete: SetNull)
 
   @@unique([projectSlug, email])
   @@index([email])
@@ -1488,8 +2164,8 @@ enum ActivityApplicationStatus {
   DRAFT
   SUBMITTED
   PENDING_REVIEW
-  INTERVIEW      // Learning Experience type: shortlisted for interview
-  OFFERED        // Learning Experience type: offer extended
+  INTERVIEW // Learning Experience type: shortlisted for interview
+  OFFERED // Learning Experience type: offer extended
   APPROVED
   REJECTED
   WAITLISTED
@@ -1617,69 +2293,121 @@ enum ActivityReviewStatus {
   REVISION_REQUIRED
 }
 
-model Activity {
-  id                  String              @id @default(uuid())
-  type                ActivityType
-  title               String
-  titleEn             String?
-  subtitle            String?
-  subtitleEn          String?
-  slug                String              @unique
-  category            String?
-  coverImage          String?
-  posterImage         String?
-  summary             String?             @db.Text
-  summaryEn           String?             @db.Text
-  description         String?             @db.Text
-  descriptionEn       String?             @db.Text
-  highlights          Json?
-  highlightsEn        Json?
-  organizerUserId     String?
-  organizerName       String?
-  partnerIds          String[]
-  trackId             String?
-  eventLayer          EventLayer?
-  hostType            EventHostType?
-  startTime           DateTime?
-  endTime             DateTime?
-  timezone            String              @default("UTC")
-  locationType        ActivityLocationType?
-  locationJson        Json?
-  onlineUrl           String?
-  mapUrl              String?
-  status              ActivityStatus      @default(DRAFT)
-  visibility          ActivityVisibility  @default(PUBLIC)
-  capacity            Int?
-  registrationOpenAt  DateTime?
-  registrationCloseAt DateTime?
-  requiresApproval    Boolean             @default(false)
-  isPrivate           Boolean             @default(false)
-  isFeatured          Boolean             @default(false)
-  isPinned            Boolean             @default(false)
-  language            String              @default("zh")
-  tags                String[]
-  createdByUserId     String
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+enum ActivityCommunityMode {
+  OPEN
+  READ_ONLY
+  CLOSED
+}
 
-  track               Track?              @relation(fields: [trackId], references: [id], onDelete: SetNull)
-  detail              ActivityDetail?
-  roles               ActivityRole[]
-  tasks               ActivityTask[]
-  rewardRules         ActivityRewardRule[]
-  certificateRules    ActivityCertificateRule[]
-  applications        ActivityApplication[]
-  participations      ActivityParticipation[]
-  reviewWorkflows     ActivityReviewWorkflow[]
-  checkinRecords      ActivityCheckinRecord[]
-  submissions         ActivitySubmission[]
-  qrTokens            QrToken[]
-  agendaItems         ActivityAgendaItem[]
-  speakerLinks        ActivitySpeaker[]
-  wishlists           ActivityWishlist[]
-  dateSlots           ActivityDateSlot[]
-  institutions        ActivityInstitution[]
-  verifiers           ActivityVerifier[]
+enum ActivityCommunityMemberRole {
+  MEMBER
+  MODERATOR
+}
+
+enum ActivityCommunityMemberStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ActivityCommunityPostKind {
+  UPDATE
+  DISCUSSION
+}
+
+enum ActivityCommunityContentStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  HIDDEN
+}
+
+enum ActivityAiContentDraftKind {
+  SUMMARY
+  HIGHLIGHTS
+  OVERVIEW_COPY
+}
+
+enum ActivityAiContentDraftStatus {
+  REQUESTED
+  GENERATED
+  FAILED
+  EDITED
+  APPROVED
+  PUBLISHED
+  REJECTED
+  DELETED
+}
+
+model Activity {
+  id                               String                @id @default(uuid())
+  type                             ActivityType
+  title                            String
+  titleEn                          String?
+  subtitle                         String?
+  subtitleEn                       String?
+  slug                             String                @unique
+  category                         String?
+  coverImage                       String?
+  posterImage                      String?
+  summary                          String?               @db.Text
+  summaryEn                        String?               @db.Text
+  description                      String?               @db.Text
+  descriptionEn                    String?               @db.Text
+  highlights                       Json?
+  highlightsEn                     Json?
+  organizerUserId                  String?
+  organizerName                    String?
+  partnerIds                       String[]
+  trackId                          String?
+  eventLayer                       EventLayer?
+  hostType                         EventHostType?
+  startTime                        DateTime?
+  endTime                          DateTime?
+  timezone                         String                @default("UTC")
+  locationType                     ActivityLocationType?
+  locationJson                     Json?
+  onlineUrl                        String?
+  mapUrl                           String?
+  status                           ActivityStatus        @default(DRAFT)
+  visibility                       ActivityVisibility    @default(PUBLIC)
+  capacity                         Int?
+  registrationOpenAt               DateTime?
+  registrationCloseAt              DateTime?
+  requiresApproval                 Boolean               @default(false)
+  applicantListVisibleToApplicants Boolean               @default(false)
+  allowInterestWithoutApplication  Boolean               @default(false)
+  isPrivate                        Boolean               @default(false)
+  isFeatured                       Boolean               @default(false)
+  isPinned                         Boolean               @default(false)
+  language                         String                @default("zh")
+  tags                             String[]
+  createdByUserId                  String
+  createdAt                        DateTime              @default(now())
+  updatedAt                        DateTime              @updatedAt
+
+  track                         Track?                          @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  detail                        ActivityDetail?
+  roles                         ActivityRole[]
+  tasks                         ActivityTask[]
+  rewardRules                   ActivityRewardRule[]
+  certificateRules              ActivityCertificateRule[]
+  certificateIssuances          ActivityCertificateIssuance[]
+  applications                  ActivityApplication[]
+  participations                ActivityParticipation[]
+  reviewWorkflows               ActivityReviewWorkflow[]
+  checkinRecords                ActivityCheckinRecord[]
+  submissions                   ActivitySubmission[]
+  qrTokens                      QrToken[]
+  agendaItems                   ActivityAgendaItem[]
+  speakerLinks                  ActivitySpeaker[]
+  wishlists                     ActivityWishlist[]
+  dateSlots                     ActivityDateSlot[]
+  institutions                  ActivityInstitution[]
+  verifiers                     ActivityVerifier[]
+  community                     ActivityCommunity?
+  ExternalLearningCourseMapping ExternalLearningCourseMapping[]
+  aiContentDrafts               ActivityAiContentDraft[]
+  certificateBatches            CertificateBatch[]
 
   @@index([type, status])
   @@index([status, startTime])
@@ -1690,13 +2418,131 @@ model Activity {
   @@map("activities")
 }
 
+/// Human-reviewed AI copy only. It never changes an Activity until an ADMIN publishes it.
+model ActivityAiContentDraft {
+  id                   String                       @id @default(uuid())
+  activityId           String
+  kind                 ActivityAiContentDraftKind
+  status               ActivityAiContentDraftStatus @default(REQUESTED)
+  locale               String
+  providerAlias        String?
+  modelAlias           String?
+  sourceHash           String
+  sourceFieldCount     Int
+  sourceCharacterCount Int
+  outputJson           Json?
+  failureCode          String?
+  actorUserId          String
+  requestedAt          DateTime                     @default(now())
+  generatedAt          DateTime?
+  editedAt             DateTime?
+  approvedAt           DateTime?
+  publishedAt          DateTime?
+  rejectedAt           DateTime?
+  deletedAt            DateTime?
+  expiresAt            DateTime
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  actor    User     @relation("ActivityAiContentDraftActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([activityId, status, createdAt])
+  @@index([actorUserId, requestedAt])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("activity_ai_content_drafts")
+}
+
+model ActivityCommunity {
+  id           String                    @id @default(uuid())
+  activityId   String                    @unique
+  mode         ActivityCommunityMode     @default(OPEN)
+  premoderated Boolean                   @default(true)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  activity     Activity                  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  members      ActivityCommunityMember[]
+  posts        ActivityCommunityPost[]
+
+  @@map("activity_communities")
+}
+
+model ActivityCommunityMember {
+  id          String                        @id @default(uuid())
+  communityId String
+  userId      String
+  role        ActivityCommunityMemberRole   @default(MEMBER)
+  status      ActivityCommunityMemberStatus @default(ACTIVE)
+  createdAt   DateTime                      @default(now())
+  updatedAt   DateTime                      @updatedAt
+  community   ActivityCommunity             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user        User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([userId, status])
+  @@map("activity_community_members")
+}
+
+model ActivityCommunityPost {
+  id           String                         @id @default(uuid())
+  communityId  String
+  authorUserId String
+  kind         ActivityCommunityPostKind
+  body         String                         @db.Text
+  status       ActivityCommunityContentStatus @default(PENDING)
+  publishedAt  DateTime?
+  createdAt    DateTime                       @default(now())
+  updatedAt    DateTime                       @updatedAt
+  community    ActivityCommunity              @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author       User                           @relation("ActivityCommunityPostAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  comments     ActivityCommunityComment[]
+  reports      ActivityCommunityReport[]
+
+  @@index([communityId, status, createdAt])
+  @@map("activity_community_posts")
+}
+
+model ActivityCommunityComment {
+  id           String                         @id @default(uuid())
+  postId       String
+  authorUserId String
+  body         String                         @db.Text
+  status       ActivityCommunityContentStatus @default(PENDING)
+  publishedAt  DateTime?
+  createdAt    DateTime                       @default(now())
+  updatedAt    DateTime                       @updatedAt
+  post         ActivityCommunityPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       User                           @relation("ActivityCommunityCommentAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  reports      ActivityCommunityReport[]
+
+  @@index([postId, status, createdAt])
+  @@map("activity_community_comments")
+}
+
+model ActivityCommunityReport {
+  id             String                    @id @default(uuid())
+  reporterUserId String
+  postId         String?
+  commentId      String?
+  reason         String
+  createdAt      DateTime                  @default(now())
+  reporter       User                      @relation("ActivityCommunityReportReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  post           ActivityCommunityPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment        ActivityCommunityComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterUserId, postId])
+  @@unique([reporterUserId, commentId])
+  @@map("activity_community_reports")
+}
+
 model ActivityDetail {
   id         String       @id @default(uuid())
   activityId String       @unique
   type       ActivityType
   configJson Json
 
-  activity   Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@map("activity_details")
 }
@@ -1714,7 +2560,7 @@ model ActivityRole {
   badgeRuleJson           Json?
   createdAt               DateTime         @default(now())
 
-  activity                Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@unique([activityId, roleType])
   @@index([activityId])
@@ -1735,13 +2581,37 @@ model ActivityApplication {
   createdAt        DateTime                  @default(now())
   updatedAt        DateTime                  @updatedAt
 
-  activity         Activity                  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity       Activity                   @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectConsent ProjectApplicationConsent?
 
   @@unique([activityId, userId])
   @@index([userId, status])
   @@index([activityId, status])
   @@map("activity_applications")
+}
+
+model ProjectApplicationConsent {
+  id                    String   @id @default(uuid())
+  activityApplicationId String   @unique
+  policyVersion         String   @default("PROJECT_APPLICATION_CONSENT_V1")
+  shareName             Boolean  @default(false)
+  shareEmail            Boolean  @default(false)
+  shareTitle            Boolean  @default(false)
+  shareBio              Boolean  @default(false)
+  shareAffiliations     Boolean  @default(false)
+  sharePortfolioLink    Boolean  @default(false)
+  portfolioShareLinkId  String?
+  purposeSnapshot       String?  @db.Text
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  activityApplication ActivityApplication @relation(fields: [activityApplicationId], references: [id], onDelete: Cascade)
+  portfolioShareLink  PortfolioShareLink? @relation(fields: [portfolioShareLinkId], references: [id], onDelete: SetNull)
+
+  @@index([activityApplicationId])
+  @@index([portfolioShareLinkId])
+  @@map("project_application_consents")
 }
 
 model ActivityParticipation {
@@ -1758,7 +2628,8 @@ model ActivityParticipation {
   createdAt          DateTime                    @default(now())
   updatedAt          DateTime                    @updatedAt
 
-  activity           Activity                    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity             Activity                      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  certificateIssuances ActivityCertificateIssuance[]
 
   @@unique([activityId, userId])
   @@index([userId, status])
@@ -1796,11 +2667,11 @@ model ActivityTask {
   ruleJson                 Json?
   createdAt                DateTime         @default(now())
 
-  activity                 Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  parentTask               ActivityTask?    @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
-  subtasks                 ActivityTask[]   @relation("TaskSubtasks")
-  submissions              ActivitySubmission[]
-  checkinRecords           ActivityCheckinRecord[]
+  activity       Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  parentTask     ActivityTask?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks       ActivityTask[]          @relation("TaskSubtasks")
+  submissions    ActivitySubmission[]
+  checkinRecords ActivityCheckinRecord[]
 
   @@index([activityId, taskType])
   @@index([parentTaskId])
@@ -1824,8 +2695,8 @@ model ActivitySubmission {
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 
-  activity         Activity                 @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  task             ActivityTask?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  activity Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  task     ActivityTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@index([taskId, userId])
   @@index([activityId, status])
@@ -1846,8 +2717,9 @@ model ActivityCheckinRecord {
   checkinAt        DateTime
   createdAt        DateTime              @default(now())
 
-  activity         Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  task             ActivityTask?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  activity             Activity                      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  task                 ActivityTask?                 @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  certificateIssuances ActivityCertificateIssuance[]
 
   @@index([activityId, userId])
   @@index([taskId])
@@ -1864,24 +2736,63 @@ model ActivityRewardRule {
   conditionJson   Json?
   createdAt       DateTime              @default(now())
 
-  activity        Activity              @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([activityId, trigger])
   @@map("activity_reward_rules")
 }
 
 model ActivityCertificateRule {
-  id                      String   @id @default(uuid())
-  activityId              String
-  certificateDefinitionId String
-  conditionJson           Json?
-  autoIssue               Boolean  @default(false)
-  createdAt               DateTime @default(now())
+  id                        String                        @id @default(uuid())
+  name                      String                        @default("Activity check-in certificate")
+  activityId                String
+  certificateDefinitionId   String
+  trigger                   CertificateIssuingRuleTrigger @default(ACTIVITY_CHECKIN)
+  conditionJson             Json?
+  autoIssue                 Boolean                       @default(false)
+  isActive                  Boolean                       @default(false)
+  notifyUser                Boolean                       @default(true)
+  requiresAdminConfirmation Boolean                       @default(false)
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
 
-  activity                Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity              Activity                      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  certificateDefinition CertificateDefinition         @relation(fields: [certificateDefinitionId], references: [id], onDelete: Restrict)
+  issuances             ActivityCertificateIssuance[]
 
-  @@index([activityId])
+  @@index([activityId, isActive])
+  @@index([certificateDefinitionId, trigger])
   @@map("activity_certificate_rules")
+}
+
+model ActivityCertificateIssuance {
+  id                      String                            @id @default(uuid())
+  activityId              String
+  participationId         String
+  checkinRecordId         String
+  ruleId                  String
+  certificateDefinitionId String
+  certificateIssueId      String?                           @unique
+  status                  ActivityCertificateIssuanceStatus @default(PENDING)
+  attemptCount            Int                               @default(0)
+  error                   String?                           @db.Text
+  issuedAt                DateTime?
+  createdAt               DateTime                          @default(now())
+  updatedAt               DateTime                          @updatedAt
+
+  activity              Activity                @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  participation         ActivityParticipation   @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  checkinRecord         ActivityCheckinRecord   @relation(fields: [checkinRecordId], references: [id], onDelete: Cascade)
+  rule                  ActivityCertificateRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  certificateDefinition CertificateDefinition   @relation(fields: [certificateDefinitionId], references: [id], onDelete: Restrict)
+  certificateIssue      CertificateIssue?       @relation(fields: [certificateIssueId], references: [id], onDelete: SetNull)
+
+  @@unique([ruleId, participationId])
+  @@index([activityId, status])
+  @@index([participationId])
+  @@index([checkinRecordId])
+  @@index([certificateDefinitionId])
+  @@map("activity_certificate_issuances")
 }
 
 model ActivityReviewWorkflow {
@@ -1897,7 +2808,7 @@ model ActivityReviewWorkflow {
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
 
-  activity       Activity                 @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@index([activityId, objectType])
   @@index([objectType, objectId])
@@ -1906,13 +2817,13 @@ model ActivityReviewWorkflow {
 }
 
 model ProjectMilestone {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   activityId  String
   title       String
-  description String?  @db.Text
+  description String?   @db.Text
   dueDate     DateTime?
-  status      String   @default("upcoming")
-  orderIndex  Int      @default(0)
+  status      String    @default("upcoming")
+  orderIndex  Int       @default(0)
 
   deliverables ProjectDeliverable[]
 
@@ -1926,7 +2837,7 @@ model ProjectDeliverable {
   submissionId String?
   status       String  @default("pending")
 
-  milestone    ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  milestone ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
   @@index([milestoneId])
   @@map("project_deliverables")
@@ -1935,27 +2846,27 @@ model ProjectDeliverable {
 // ─── Activity Agenda & Speakers ──────────────────────────────────────────────
 
 model ActivityAgendaItem {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   activityId    String
   agendaDate    DateTime
   startTime     String
   endTime       String
   title         String
   titleEn       String?
-  description   String?   @db.Text
-  descriptionEn String?   @db.Text
-  type          String    @default("session")
+  description   String?  @db.Text
+  descriptionEn String?  @db.Text
+  type          String   @default("session")
   venue         String?
   venueEn       String?
   moderatorId   String?
   speakerMeta   Json?
-  order         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  activity      Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  moderator     Speaker?  @relation("ActivityAgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
-  speakers      ActivityAgendaItemSpeaker[]
+  activity  Activity                    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  moderator Speaker?                    @relation("ActivityAgendaModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  speakers  ActivityAgendaItemSpeaker[]
 
   @@index([activityId])
   @@index([activityId, agendaDate])
@@ -1964,14 +2875,14 @@ model ActivityAgendaItem {
 }
 
 model ActivityAgendaItemSpeaker {
-  id           String             @id @default(uuid())
+  id           String   @id @default(uuid())
   agendaItemId String
   speakerId    String
-  order        Int                @default(0)
-  createdAt    DateTime           @default(now())
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
 
-  agendaItem   ActivityAgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
-  speaker      Speaker            @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  agendaItem ActivityAgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  speaker    Speaker            @relation(fields: [speakerId], references: [id], onDelete: Cascade)
 
   @@unique([agendaItemId, speakerId])
   @@index([agendaItemId])
@@ -1980,16 +2891,16 @@ model ActivityAgendaItemSpeaker {
 }
 
 model ActivitySpeaker {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   activityId String
   speakerId  String
   role       String?
   roleEn     String?
-  order      Int       @default(0)
-  createdAt  DateTime  @default(now())
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
 
-  activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  speaker    Speaker   @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  speaker  Speaker  @relation(fields: [speakerId], references: [id], onDelete: Cascade)
 
   @@unique([activityId, speakerId])
   @@index([activityId])
@@ -1998,13 +2909,13 @@ model ActivitySpeaker {
 }
 
 model ActivityWishlist {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   userId     String
   activityId String
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime @default(now())
 
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, activityId])
   @@index([userId])
@@ -2021,7 +2932,7 @@ model ActivityDateSlot {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  activity     Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@unique([activityId, scheduleDate])
   @@index([activityId])
@@ -2029,18 +2940,18 @@ model ActivityDateSlot {
 }
 
 model ActivityInstitution {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   activityId    String
   institutionId String
   role          String?
   roleEn        String?
-  showLogo      Boolean     @default(true)
-  order         Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  showLogo      Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  activity      Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  activity    Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@unique([activityId, institutionId])
   @@index([activityId, order])
@@ -2049,13 +2960,13 @@ model ActivityInstitution {
 }
 
 model ActivityVerifier {
-  id        String   @id @default(uuid())
-  userId    String
+  id         String   @id @default(uuid())
+  userId     String
   activityId String
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity  Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, activityId])
   @@index([userId])
