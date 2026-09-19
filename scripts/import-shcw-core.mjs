@@ -3,6 +3,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { isValidBcryptHash } from "./password-verifier.mjs";
 
 const targetDatabaseUrl = process.env.CLIMATE_PASSPORT_DATABASE_URL ?? process.env.DATABASE_URL;
 
@@ -69,8 +70,19 @@ async function upsertTracks(tracks) {
   }
 }
 
+function formatUserIdentifier(user) {
+  return user.email ? `email=${user.email}` : `id=${user.id ?? "unknown"}`;
+}
+
 async function upsertUsers(users) {
   for (const user of users) {
+    if (!isValidBcryptHash(user.password)) {
+      throw new Error(
+        `Invalid password hash for user ${formatUserIdentifier(user)}. ` +
+          `Source password must be a complete bcrypt $2a$/$2b$/$2y$ verifier.`,
+      );
+    }
+
     await prisma.user.upsert({
       where: { id: user.id },
       update: {
