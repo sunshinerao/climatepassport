@@ -10,7 +10,13 @@
     "dev": "npm run dev --workspace passport-web",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
+    "storybook": "npm run storybook --workspace passport-web",
     "test": "node --test tests/*.test.mjs",
+    "test:e2e": "node scripts/run-with-test-env.mjs npx playwright test",
+    "test:e2e:report": "npx playwright show-report",
+    "test:api": "node scripts/run-api-tests.mjs",
+    "test:api:direct": "node scripts/run-with-test-env.mjs node --test --import=tsx tests/api/*.test.ts",
+    "test:integration": "npm run test:api && npm run test:e2e",
     "db:format": "prisma format --schema prisma/schema.prisma",
     "db:validate": "prisma validate --schema prisma/schema.prisma",
     "db:generate": "prisma generate --schema prisma/schema.prisma",
@@ -18,9 +24,14 @@
     "db:migrate:status": "prisma migrate status --schema prisma/schema.prisma",
     "db:sync": "npm run db:migrate:deploy && npm run db:migrate:status",
     "db:seed": "node prisma/seed.mjs",
+    "migrate:passwords:dry-run": "node scripts/migrate-legacy-password-hashes.mjs",
+    "migrate:passwords:apply": "node scripts/migrate-legacy-password-hashes.mjs --apply",
     "migrate:core:dry-run": "node scripts/migrate-shcw-core.mjs --dry-run",
     "migrate:core:extract": "node scripts/migrate-shcw-core.mjs --extract-only",
-    "migrate:core:import": "node scripts/import-shcw-core.mjs"
+    "migrate:core:import": "node scripts/import-shcw-core.mjs",
+    "backfill:speakers:dry-run": "node scripts/backfill-speaker-persons.mjs",
+    "backfill:speakers:apply": "node scripts/backfill-speaker-persons.mjs --apply",
+    "purge:activity-ai-content-drafts": "node scripts/purge-activity-ai-content-drafts.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -30,7 +41,13 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "prisma": "^5.10.0"
+    "@playwright/test": "1.58.0",
+    "@types/supertest": "^6.0.2",
+    "dotenv": "^16.4.5",
+    "playwright": "1.58.0",
+    "prisma": "^5.10.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.0"
   },
   "engines": {
     "node": ">=20",
