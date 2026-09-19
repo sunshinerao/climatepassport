@@ -2,6 +2,16 @@
 
 Date: 2026-05-23
 
+## Current Review Addendum (2026-09-18)
+
+The page-by-page findings below are historical, not a current inventory of missing routes. Certificate user/detail/verification and eight admin module routes now have implementations; this does not establish exact visual or behavioral acceptance. The issuing-rules page still contains static examples. See [the current gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) and CP-TODO-237 in [the development plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md).
+
+For certificate admin work, the user's strict reference is `docs/ui-prototypes/certificates-admin.html`, excluding hero/footer. Capture the prototype's font family/size/weight/line height, spacing, colors, borders and tables, then compare computed styles and screenshots for every module and template detail. The earlier general wording “as closely as practical” does not relax this requirement.
+
+Acceptance requires 320/390/768/1440px layouts, a collapsible hamburger navigation with keyboard/focus behavior, one shared admin shell, no page-level horizontal overflow, long zh/en text checks, and real links/actions with loading/empty/error states. Prototype data is never production data. Resolve the historical secondary-menu ordering conflict before reordering; keep current navigation in the meantime. Shared UI changes require summer-school compatibility checks without changing its business flows.
+
+No full visual acceptance is claimed by this documentation review.
+
 ## 1. Prototype Reference Rule
 
 `docs/ui-prototypes/` is the reference location for future page prototypes created outside the codebase.
