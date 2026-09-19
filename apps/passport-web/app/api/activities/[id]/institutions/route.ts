@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const prisma = getPrismaClient();
@@ -21,8 +22,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, params.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const institutionId = body.institutionId as string | undefined;
@@ -65,8 +68,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, params.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const institutionId = searchParams.get("institutionId");

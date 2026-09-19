@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useCallback, useEffect } from "react";
 import type { Locale } from "@/lib/site-content";
 
@@ -279,10 +280,13 @@ export function AdminActivitySpeakersClient({
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       {link.speaker.avatar && (
-                        <img
+                        <Image
                           alt=""
                           src={link.speaker.avatar}
-                          style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
+                          width={36}
+                          height={36}
+                          unoptimized
+                          style={{ borderRadius: "50%", objectFit: "cover" }}
                         />
                       )}
                       <div>

@@ -1,46 +1,88 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import {
+  buildInstitutionWhere,
+  institutionCreateSchema,
+  institutionListQuerySchema,
+  normalizeSlug,
+  serializeInstitution,
+} from "@/lib/server/people-master-data";
 
-const createInstitutionSchema = z.object({
-  slug: z.string().trim().min(2).max(80),
-  name: z.string().trim().min(1).max(120),
-  nameEn: z.string().trim().max(160).optional(),
-  website: z.string().trim().url().optional(),
-  orgType: z.string().trim().max(80).optional(),
-  countryOrRegion: z.string().trim().max(80).optional(),
-  countryOrRegionEn: z.string().trim().max(80).optional(),
-});
-
-export async function GET() {
-  await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+export async function GET(req: NextRequest) {
+  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/institutions");
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
-  const institutions = await prisma.institution.findMany({
-    where: { isActive: true },
-    select: { id: true, slug: true, name: true, nameEn: true, website: true, orgType: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
+  const { searchParams } = new URL(req.url);
+  const parsed = institutionListQuerySchema.safeParse({
+    page: searchParams.get("page") ?? undefined,
+    pageSize: searchParams.get("pageSize") ?? undefined,
+    search: searchParams.get("search") ?? undefined,
+    verificationStatus: searchParams.get("verificationStatus") ?? undefined,
+    isActive: searchParams.get("isActive") ?? undefined,
   });
 
-  return NextResponse.json({ institutions });
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid query" }, { status: 400 });
+  }
+
+  const query = parsed.data;
+  const where = buildInstitutionWhere(query);
+  const skip = (query.page - 1) * query.pageSize;
+
+  const [institutions, total] = await Promise.all([
+    prisma.institution.findMany({
+      where,
+      orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+      skip,
+      take: query.pageSize,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        nameEn: true,
+        shortName: true,
+        shortNameEn: true,
+        legalName: true,
+        aliases: true,
+        orgType: true,
+        governanceType: true,
+        countryOrRegion: true,
+        countryOrRegionEn: true,
+        website: true,
+        verificationStatus: true,
+        isActive: true,
+      },
+    }),
+    prisma.institution.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    institutions: institutions.map(serializeInstitution),
+    pagination: {
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
-  await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/institutions");
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
   const body = await req.json().catch(() => ({}));
-  const parsed = createInstitutionSchema.safeParse(body);
+  const parsed = institutionCreateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   }
 
   const data = parsed.data;
-  const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+  const slug = normalizeSlug(data.slug);
   if (!slug) return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
 
   const exists = await prisma.institution.findUnique({ where: { slug } });
@@ -50,15 +92,51 @@ export async function POST(req: NextRequest) {
     data: {
       slug,
       name: data.name,
-      nameEn: data.nameEn || null,
-      website: data.website || null,
-      orgType: data.orgType || null,
-      countryOrRegion: data.countryOrRegion || null,
-      countryOrRegionEn: data.countryOrRegionEn || null,
+      nameEn: data.nameEn ?? null,
+      shortName: data.shortName ?? null,
+      shortNameEn: data.shortNameEn ?? null,
+      legalName: data.legalName ?? null,
+      aliases: data.aliases,
+      orgType: data.orgType ?? null,
+      governanceType: data.governanceType ?? null,
+      countryOrRegion: data.countryOrRegion ?? null,
+      countryOrRegionEn: data.countryOrRegionEn ?? null,
+      website: data.website ?? null,
+      verificationStatus: data.verificationStatus ?? "UNVERIFIED",
+      publicContactEmail: data.publicContactEmail ?? null,
+      publicContactPhone: data.publicContactPhone ?? null,
+      headquartersAddress: data.headquartersAddress ?? null,
+      foundingYear: data.foundingYear ?? null,
       isActive: true,
     },
-    select: { id: true, slug: true, name: true, nameEn: true, website: true, orgType: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      nameEn: true,
+      shortName: true,
+      shortNameEn: true,
+      legalName: true,
+      aliases: true,
+      orgType: true,
+      governanceType: true,
+      countryOrRegion: true,
+      countryOrRegionEn: true,
+      website: true,
+      verificationStatus: true,
+      isActive: true,
+    },
   });
 
-  return NextResponse.json({ ok: true, institution });
+  await writeCoreAuditLog({
+    actorUserId: user.id,
+    action: "INSTITUTION_CREATE",
+    subjectType: "Institution",
+    subjectId: institution.id,
+    result: "SUCCESS",
+    ...getRequestAuditContext(req),
+    metadataJson: { slug, verificationStatus: institution.verificationStatus },
+  }).catch(() => undefined);
+
+  return NextResponse.json({ ok: true, institution: serializeInstitution(institution) }, { status: 201 });
 }
