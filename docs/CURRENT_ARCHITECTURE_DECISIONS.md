@@ -1,14 +1,26 @@
 # Current Architecture Decisions
 
-Last updated: 2026-05-23
+Last updated: 2026-09-18
 
-## 1. Core Platform And Channel Shell
+## Current Execution Note
+
+See [the 2026-09-18 gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) and [execution plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md). Target app separation below remains a direction, not a prerequisite to fix current authorization and certificate lifecycle gaps. Extract stable shared rules before separating deployments; preserve historical data and the frozen summer-school flows.
+
+The repository identifies the product as `climatepass.org`. Historical `*.climatepassport.org` host examples below express logical boundaries, not currently deployed endpoints. Confirm production host, callback, cookie and allowlist configuration before enabling channels or changing domains; do not infer production topology from this diagram.
+
+## 1. Core, Programme Policy And Channel Experience
 
 Climate Passport is the Core Platform and system of record.
 
-SHCW is a Channel Shell.
+This means system of record for Core-owned capabilities, not every fact in every partner's operations. The current execution boundary is defined by [functional requirements V2](CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md) and the [programme synthesis](PROGRAMME_REQUIREMENTS_SYNTHESIS_20260918.md).
 
-The Core/Shell boundary is an architecture decision, not only a branding decision. Core capabilities must be implemented once in Climate Passport and consumed by SHCW or future shells through contracts.
+Use shared Core infrastructure, externally developed programme business systems, and programme-owned experience/content. Each programme independently develops and maintains its business code, state machines, data models and workspaces; these are not CP modules or CP deliverables. CP owns only reusable services and scoped API/SDK/event contracts. Shared hosting infrastructure, if any, does not permit shared business implementation or direct CP database writes. The earlier suggestion to host programme policy modules inside CP is superseded by the user's explicit separation decision.
+
+Tenant, Programme, Edition and Channel identify access/integration scopes, not programme business engines. There is no automatic permission inheritance from branding, programme grouping or Institution affiliation. Reuse Person/Institution and existing generic participation/credential services; add scoped grants, record/asset versions, consent and external decision receipts where needed. A `Programme` scope is not the existing `LearningExperienceProgram` renamed, and access membership is not an annual business seat.
+
+Formal source activities need one versioned mapping to an authoritative Core record, not duplicate Event/Activity transactions. Generic private records must not require fake public activities. CP validates external publication decisions and enforces current rights-holder consent; programme editors/review queues remain external. Programme assessments are externally owned results, not a CP scoring engine, global reputation score or points ledger. CP packages must not import programme-specific business code or execute arbitrary policy plugins.
+
+The detailed schema/field-authority/authorization ADR is a development deliverable (CP-TODO-240), not already implemented by these decisions. Preserve legacy IDs, scoped compatibility and the summer-school freeze; no prerequisite microservice or application split.
 
 ## 2. Current Repository State
 
@@ -18,6 +30,7 @@ The Core/Shell boundary is an architecture decision, not only a branding decisio
 - Current database: PostgreSQL through Prisma.
 - Current auth: custom email/password auth using bcrypt, Prisma `Session`, HTTP-only session cookie.
 - Current packages:
+  - `packages/passport-core` (initial ID/opaque-token/channel rules; most domain services still reside in the web app)
   - `packages/passport-contracts`
   - `packages/passport-sdk`
   - `packages/passport-ui-flows`

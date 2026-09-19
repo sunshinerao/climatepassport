@@ -39,9 +39,15 @@ The migration strategy is:
 
 Read these files first before writing platform code:
 
-- `docs/CONTEXT_CONTINUITY_20260518.md`
-- `docs/MIGRATION_BOOTSTRAP_20260518.md`
-- `docs/CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`
+- [Documentation authority and entry point](docs/README.md)
+- [Current functional requirements V2](docs/CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md)
+- [Future Stewards, SHCW 2027 and Convener requirements synthesis](docs/PROGRAMME_REQUIREMENTS_SYNTHESIS_20260918.md)
+- [Current implementation status](docs/CURRENT_IMPLEMENTATION_STATUS.md)
+- [Requirements/implementation gaps, 2026-09-18](docs/REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md)
+- [Remaining development requirements and plan](docs/DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md)
+- [Platform feature tracker](docs/CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md)
+
+The repository-shape and migration narrative below describe its original bootstrap direction, not current completion. Use the dated implementation review for present capabilities and evidence limits.
 
 ## Suggested Initial Repository Shape
 

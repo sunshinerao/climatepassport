@@ -1,12 +1,20 @@
 # Current Product Requirements
 
-Last updated: 2026-05-23
+Last updated: 2026-09-18
+
+## Execution And Acceptance Addendum (2026-09-18)
+
+Use [the current gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) for implementation evidence and [the development requirements and plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md) for remaining delivery and acceptance requirements. Existing modules must be completed rather than recreated. Summer-school flows remain frozen; changes to shared dependencies require compatibility regression without expanding summer-school scope.
+
+All resource routes, including legacy, export and batch endpoints, must enforce scoped authorization and authoritative state transitions. Certificate delivery requires real PDF generation, immutable issuance data, unique opaque verification codes, minimum public disclosure, Unicode download filenames and reliable lifecycle audit; printable HTML alone does not fulfill the final PDF requirement. Public portfolio access uses consent-based revocable tokens, never enumerable account IDs. Mock regression success and local migrations are not full browser or production acceptance.
+
+The current documented menu order is preserved pending reconciliation with the earlier user-specified ordering; this is not authorization to reorder navigation. Domain examples are architectural targets, not deployed endpoints: production host/callback/cookie/allowlist settings require a verified configuration inventory.
 
 ## 1. Product Definition
 
-Climate Passport is the Core Platform for trusted climate identity, participation, learning, certificates, points, achievements, milestones, verification, and cross-channel records.
+Climate Passport is the shared digital foundation for trusted identity, scoped programme participation and collaboration, versioned evidence, authorized publication, certificates, points, achievements, milestones, verification, and long-term cross-channel records.
 
-SHCW is a Channel Shell for Shanghai Climate Week branded content and presentation.
+The current functional baseline is [V2 with the V2.1 boundary correction](CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md), derived from [three programme inputs](PROGRAMME_REQUIREMENTS_SYNTHESIS_20260918.md). CP develops only reusable digital infrastructure and integration contracts. Each programme independently develops and maintains its business layer and user/operator experience outside CP: FS learning/editorial systems, SHCW annual operations, and Convener membership/activation/support/assessment systems. Business authority alone is not sufficient separation; these implementations are explicitly excluded from CP development.
 
 Climate Passport must be usable across events, institutions, countries, and future partner shells without exposing registration order, channel source, or personal data.
 
@@ -22,13 +30,18 @@ Climate Passport must be usable across events, institutions, countries, and futu
 - learning experience application
 - certificate
 - points
+- internal redemption reservation accounting only: journal `USER_AVAILABLE` is representational while available points remain legacy `User.points` minus outstanding reservations until ledger cutover (no redemption product or fulfillment)
 - achievements
 - milestones
 - QR
 - verifier
 - check-in
 - verification
+- explainable verified portfolio and owner-controlled token sharing (private by default; no public identifier lookup)
 - participation record
+- scoped access grants (not business membership or seats), institution representation and consent enforcement as shared services
+- generic private record/asset versions, object-level sharing, validated external decision receipts and audit
+- authorized publication state/read gates and revocation, distinct from programme editorial judgment
 
 ### SHCW Shell Owns
 
@@ -40,15 +53,29 @@ Climate Passport must be usable across events, institutions, countries, and futu
 - media center
 - partner display
 - SHCW branding
+- private annual event-host submissions, Speaker/Venue/Volunteer applications, reviews, revisions/rejections, candidate invitations/negotiations and venue/volunteer preparation
+- authoritative approved programme content and publication revisions, shared with Core via source mappings rather than a second editable activity record
 
 SHCW must call Climate Passport Core through API, SDK, or embedded flows for Core capabilities.
+
+Application ownership is purpose-specific: SHCW hosting/operational applications are not CP participant registrations, Learning Experience applications or certificate requests. Programmes own their business code, state machines and data models and integrate through scoped APIs/SDK/events; no programme-specific module, table or workflow is added to CP merely by calling it hosted configuration. Generic CP asset storage does not transfer business ownership. Private drafts, rejection reasons and commercial negotiations never become public action history.
+
+### Multi-Programme Requirements
+
+CP-FR-050 through 073 distinguish shared capabilities from external requirements. CP builds scope/delegation, formal source activity mapping, generic participation, private records/assets/versioning, external decision validation, consent/revocation, contributions, notifications/data lifecycle and reliable contracts. CP-FR-063/064/065 are external business requirements, not CP deliverables: no Credit/Standing engine, seats/annual activation, Offer-Need or support-ticket system. FS Inquiry/seven-step learning/editorial workspaces likewise remain external. Intake of approved results is not implementation of the business that produced them.
+
+Programme roles do not confer cross-programme access. Employment is not representation; login is not identity verification, admission or certification; payment is not activation or Credit. A technical platform administrator has no default authority to read all new private workspaces or make business approvals. Break-glass support must be approved, time-limited and audited.
+
+Private/Public author intent, version review, publication state and channel/use consent must remain independent. FS publication is not permission for CP promotion, sponsor access or AI training. Credit/Standing are scoped programme assessments, not User.points or a global reputation score. Operating quantities, response SLAs, age/retention rules and weights from discussion drafts require approval before enablement.
+
+Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the conflicting CP-plus-12-character suggestion in the Convener input is not adopted. Summer school remains frozen. Security gates are shared, but a programme not enabling certificates need not wait for the entire certificate roadmap; any enabled PDF download still requires real PDF acceptance.
 
 ## 3. Core User Roles
 
 - Individual user: owns a Climate Passport identity, applies for learning experiences, registers for events, receives certificates, earns points, and builds a long-term record.
-- Admin: manages Core platform records, users, events, certificates, learning experiences, verifiers, and operational rules.
-- Event manager: manages assigned events, registrations, attendance, and related event operations.
-- Verifier: scans and validates QR payloads, performs check-in or verification actions, and creates audit logs.
+- Admin: manages authorized Core operations; programme business approval and private-content access require explicit scoped grants, not a blanket technical-admin exemption in new modules.
+- Event manager: manages assigned events, registrations, attendance, and related event operations, including the permitted Activity Center operational routes and scanner navigation.
+- Verifier: scans and validates QR payloads, performs check-in or verification actions, and creates audit logs through the `/{locale}/verifier` console; Verifiers do not enter `/{locale}/admin/**`.
 - Channel shell: presents branded content and invokes Core flows without owning Core business state.
 - Partner institution: future issuer, organizer, verifier, or channel integrator.
 
@@ -73,7 +100,7 @@ SHCW must call Climate Passport Core through API, SDK, or embedded flows for Cor
 
 ### QR And Verification
 
-- QR Code must not be a plain URL.
+- A plain URL or identifier must not be treated as a trusted QR credential. An HTTPS verification URL may carry an opaque token/code; trust comes from server-side validation, not from URL structure. See `PASSPORT_ID_AND_QR_SPEC.md`.
 - QR Code must not expose name, email, phone, or other personal data in cleartext.
 - Opaque tokens are the default QR strategy.
 - QR codes must not contain raw JSON payloads, internal database IDs, emails, phone numbers, or personal data.
@@ -177,13 +204,14 @@ Certificate Hub owns its internal secondary menu. The global admin menu should s
 ### 5.4 Role-Based Menu Visibility
 
 - `ADMIN` sees all implemented admin modules and Certificate Hub secondary items.
-- `EVENT_MANAGER` sees dashboard overview, Event management, Learning Experiences, and return to user workspace.
+- `EVENT_MANAGER` sees dashboard overview, Event management, Learning Experiences, permitted Activity Center routes (activity lists/creation, applications, participation, check-in/scanner, tasks, submissions, and reviews), the verifier console, and return to user workspace. Reward rules, certificate rules, form templates, and global organizer management remain `ADMIN` only.
 - Certificate Hub is currently `ADMIN` only.
+- Achievement and badge moderation is `ADMIN` only.
 - Summer School temporary entry is currently `ADMIN` only and appears under Learning Experiences.
 
 ### 5.5 Layout And Active-State Requirements
 
-- All `/zh/admin/**` and `/en/admin/**` pages must use the same shared admin shell.
+- All `/zh/admin/**` and `/en/admin/**` pages use the same shared admin shell supplied by `app/[locale]/admin/layout.tsx`; pages must not add nested shells.
 - The active primary menu item must be highlighted.
 - If the current path belongs to a module, that module's secondary menu must expand and highlight the active secondary item.
 - Existing non-locale `/admin/**` redirects should continue to redirect to `/en/admin/**`.
@@ -219,3 +247,6 @@ The public verification page should verify the credential, not expose the person
 - Climate Passport is not only an LMS.
 - Climate Passport is not only a certificate tool.
 - SHCW must not become a second implementation of Climate Passport Core.
+# Controlled PROJECT application update (2026-09-13)
+
+`Activity.type = PROJECT` has a controlled local-only application workflow. Applicants explicitly choose field-level disclosure under `PROJECT_APPLICATION_CONSENT_V1`; owner/admin reviewers see only consented fields and never raw portfolio tokens, Passport IDs, or applicant identifiers. ADMIN is global; only the exact `organizerUserId` otherwise reviews; EVENT_MANAGER is denied by default. PROJECT supports APPROVED, REJECTED, and WAITLISTED only. The additive migration is local-only. No interest-only behavior, team applications, jobs, recruitment/candidate or institution search, matching, AI, or public applicant directory is in scope. See `PROJECT_INTEREST_APPLICATION_PRIVACY_OPERATIONS.md`.
