@@ -6,7 +6,7 @@ import type { Locale } from "@/lib/site-content";
 
 export default async function AdminAchievementsPage({ params }: { params: { locale: Locale } }) {
   noStore();
-  await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/achievements`);
+  await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/achievements`);
   const prisma = getPrismaClient();
 
   const achievements = prisma

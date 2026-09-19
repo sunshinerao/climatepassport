@@ -1,4 +1,15 @@
 import { sanitizeChannelBridgeTargetPath } from "@climate-passport/passport-core";
+import {
+  ApiErrorSchema,
+  BridgeExchangeRequestSchema,
+  BridgeExchangeResponseSchema,
+  BridgeIssueRequestSchema,
+  BridgeIssueResponseSchema,
+  PublicCertificateVerificationResponseSchema,
+  type BridgeExchangeResponse as V1BridgeExchangeResponse,
+  type BridgeIssueResponse as V1BridgeIssueResponse,
+  type PublicCertificateVerificationResponse,
+} from "@climate-passport/passport-contracts";
 
 export type PassportSdkOptions = {
   baseUrl: string;
@@ -84,6 +95,52 @@ export class ClimatePassportClient {
     }
 
     return response.json();
+  }
+
+  /** Versioned SHCW bridge issue API. This only uses the browser session cookie. */
+  async issueV1ChannelBridge(targetPath?: string): Promise<V1BridgeIssueResponse> {
+    const payload = BridgeIssueRequestSchema.parse({ channel: "SHCW", targetPath: targetPath === undefined ? undefined : this.sanitizeBridgeTargetPath(targetPath) ?? undefined });
+    if (targetPath !== undefined && !payload.targetPath) throw new Error("Invalid bridge target path.");
+    const response = await this.fetcher(joinUrl(this.baseUrl, "/api/v1/channel/session/bridge"), {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(payload),
+    });
+    return this.parseV1Response(response, BridgeIssueResponseSchema, "Bridge token issue");
+  }
+
+  /** Versioned SHCW bridge exchange API. This only uses the browser session cookie. */
+  async exchangeV1ChannelBridge(token: string, locale = "en"): Promise<V1BridgeExchangeResponse> {
+    const payload = BridgeExchangeRequestSchema.parse({ channel: "SHCW", token, locale });
+    const response = await this.fetcher(joinUrl(this.baseUrl, "/api/v1/channel/session/exchange"), {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(payload),
+    });
+    return this.parseV1Response(response, BridgeExchangeResponseSchema, "Bridge token exchange");
+  }
+
+  /** Versioned public minimum-disclosure verification API; business statuses are returned, not thrown. */
+  async verifyV1ChannelCertificate(code: string): Promise<PublicCertificateVerificationResponse> {
+    if (!code.trim()) throw new Error("Certificate code is required.");
+    const response = await this.fetcher(joinUrl(this.baseUrl, `/api/v1/channel/certificates/verify/${encodeURIComponent(code)}`), { method: "GET", credentials: "omit" });
+    let body: unknown;
+    try { body = await response.json(); } catch { throw new Error("Certificate verification returned a malformed response."); }
+    // NOT_FOUND is intentionally HTTP 404 but remains a normal typed verification result.
+    const verification = PublicCertificateVerificationResponseSchema.safeParse(body);
+    if (verification.success) return verification.data;
+    const error = ApiErrorSchema.safeParse(body);
+    if (error.success) throw new Error(`Certificate verification failed: ${error.data.error.code}.`);
+    throw new Error(`Certificate verification returned an invalid response${response.ok ? "." : ` (status ${response.status}).`}`);
+  }
+
+  private async parseV1Response<T>(response: Response, schema: { safeParse(value: unknown): { success: true; data: T } | { success: false } }, operation: string): Promise<T> {
+    let body: unknown;
+    try { body = await response.json(); } catch { throw new Error(`${operation} returned a malformed response.`); }
+    if (!response.ok) {
+      const error = ApiErrorSchema.safeParse(body);
+      if (error.success) throw new Error(`${operation} failed: ${error.data.error.code}.`);
+      throw new Error(`${operation} failed with status ${response.status}.`);
+    }
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) throw new Error(`${operation} returned an invalid response.`);
+    return parsed.data;
   }
 }
 

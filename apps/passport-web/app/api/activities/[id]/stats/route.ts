@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -8,6 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, params.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const activity = await prisma.activity.findUnique({ where: { id: params.id } });
   if (!activity) {
     return NextResponse.json({ error: "Activity not found" }, { status: 404 });

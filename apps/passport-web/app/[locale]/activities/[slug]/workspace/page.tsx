@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
 import type { Locale } from "@/lib/site-content";
+import { ActivityCommunityClient } from "@/components/activity-community-client";
 
 export default async function ActivityWorkspacePage({ params }: { params: { locale: Locale; slug: string } }) {
   noStore();
@@ -15,7 +16,7 @@ export default async function ActivityWorkspacePage({ params }: { params: { loca
 
   const activity = await prisma.activity.findUnique({
     where: { slug: params.slug },
-    select: { id: true, title: true, titleEn: true, type: true, status: true },
+    select: { id: true, title: true, titleEn: true, type: true, status: true, community: { include: { posts: { where: { status: "PUBLISHED" }, include: { author: { select: { name: true } }, comments: { where: { status: "PUBLISHED" }, include: { author: { select: { name: true } } } } }, orderBy: { createdAt: "desc" }, take: 50 } } } },
   });
 
   if (!activity) notFound();
@@ -138,6 +139,7 @@ export default async function ActivityWorkspacePage({ params }: { params: { loca
       </div>
 
       <div className="split">
+        {activity.community && (activity.type === "PROJECT" || activity.type === "CHALLENGE") && <ActivityCommunityClient activityId={activity.id} locale={params.locale} initialPosts={activity.community.posts} />}
         {/* Tasks section */}
         <section className="section">
           <h2>{zh ? "我的任务" : "My Tasks"}</h2>

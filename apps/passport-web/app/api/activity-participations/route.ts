@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -15,10 +16,12 @@ export async function GET(req: NextRequest) {
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (activityId && !(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const where = {
     ...(activityId ? { activityId } : {}),
     ...(status ? { status: status as any } : {}),
     ...(userId ? { userId } : {}),
+    ...(auth.role === "EVENT_MANAGER" ? { activity: { organizerUserId: auth.id } } : {}),
   };
 
   const [total, participations] = await Promise.all([
@@ -50,6 +53,7 @@ export async function POST(req: NextRequest) {
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const existing = await prisma.activityParticipation.findUnique({
     where: { activityId_userId: { activityId, userId } },
   });

@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 /** GET /api/activities/[id]/detail  — fetch type-specific config */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
-
   const detail = await prisma.activityDetail.findUnique({
     where: { activityId: params.id },
   });
@@ -21,6 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, params.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const { configJson } = body as { configJson?: unknown };

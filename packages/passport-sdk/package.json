@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@climate-passport/passport-contracts": "0.1.0",
     "@climate-passport/passport-core": "0.1.0"
   }
 }

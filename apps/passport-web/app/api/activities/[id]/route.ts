@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { tryGenerateHighlightsAfterSave } from "@/lib/server/activity-highlights";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -30,11 +29,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   if (!activity) {
     return NextResponse.json({ error: "Activity not found" }, { status: 404 });
-  }
-
-  // Auto-generate highlights for EVENT type (fire-and-forget)
-  if (activity.type === "EVENT") {
-    void tryGenerateHighlightsAfterSave(activity.id);
   }
 
   return NextResponse.json({ activity });
@@ -66,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     partnerIds, startTime, endTime, timezone, locationType, locationJson, onlineUrl,
     status, visibility, capacity, registrationOpenAt, registrationCloseAt,
     requiresApproval, isFeatured, language, tags,
+    applicantListVisibleToApplicants, allowInterestWithoutApplication,
     // EVENT-specific fields
     eventLayer, hostType, trackId, isPinned, isPrivate, posterImage, mapUrl, highlights, highlightsEn,
   } = body;
@@ -100,6 +95,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(registrationOpenAt !== undefined && { registrationOpenAt: registrationOpenAt ? new Date(registrationOpenAt) : null }),
       ...(registrationCloseAt !== undefined && { registrationCloseAt: registrationCloseAt ? new Date(registrationCloseAt) : null }),
       ...(requiresApproval !== undefined && { requiresApproval }),
+      ...(existing.type === "PROJECT" && applicantListVisibleToApplicants !== undefined && { applicantListVisibleToApplicants }),
+      ...(existing.type === "PROJECT" && allowInterestWithoutApplication !== undefined && { allowInterestWithoutApplication }),
       ...(isFeatured !== undefined && { isFeatured }),
       ...(language !== undefined && { language }),
       ...(tags !== undefined && { tags }),

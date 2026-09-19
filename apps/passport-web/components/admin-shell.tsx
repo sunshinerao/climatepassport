@@ -70,6 +70,24 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
       ],
     },
     {
+      href: `${prefix}/admin/people`,
+      icon: "◇",
+      label: t(locale, "人员与机构", "People & Institutions"),
+      roles: ["ADMIN"],
+      children: [
+        {
+          href: `${prefix}/admin/people`,
+          icon: "·",
+          label: t(locale, "人员", "People"),
+        },
+        {
+          href: `${prefix}/admin/institutions`,
+          icon: "·",
+          label: t(locale, "机构", "Institutions"),
+        },
+      ],
+    },
+    {
       href: `${prefix}/admin/learning-experiences`,
       icon: "◇",
       label: "Learning Experiences",
@@ -210,11 +228,13 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/rewards`,
           icon: "·",
           label: t(locale, "· 奖励规则", "· Reward Rules"),
+          roles: ["ADMIN"],
         },
         {
           href: `${prefix}/admin/activities/certificates`,
           icon: "·",
           label: t(locale, "· 证书规则", "· Certificate Rules"),
+          roles: ["ADMIN"],
         },
         {
           href: `${prefix}/admin/activities/reviews`,

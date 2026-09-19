@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { tryGenerateHighlightsAfterSave } from "@/lib/server/activity-highlights";
 
 export async function GET(req: NextRequest) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -97,6 +96,8 @@ export async function POST(req: NextRequest) {
     registrationOpenAt,
     registrationCloseAt,
     requiresApproval,
+    applicantListVisibleToApplicants,
+    allowInterestWithoutApplication,
     isFeatured,
     language,
     tags,
@@ -144,17 +145,13 @@ export async function POST(req: NextRequest) {
       registrationOpenAt: registrationOpenAt ? new Date(registrationOpenAt) : undefined,
       registrationCloseAt: registrationCloseAt ? new Date(registrationCloseAt) : undefined,
       requiresApproval: requiresApproval ?? false,
+      ...(type === "PROJECT" && { applicantListVisibleToApplicants: applicantListVisibleToApplicants ?? false, allowInterestWithoutApplication: allowInterestWithoutApplication ?? false }),
       isFeatured: isFeatured ?? false,
       language: language ?? "zh",
       tags: tags ?? [],
       createdByUserId,
     },
   });
-
-  // Auto-generate highlights for EVENT type (fire-and-forget)
-  if (type === "EVENT") {
-    void tryGenerateHighlightsAfterSave(activity.id);
-  }
 
   return NextResponse.json({ activity }, { status: 201 });
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { getPrismaClient } from "@/lib/server/prisma";
@@ -112,10 +113,13 @@ export default async function ActivitiesPage({ params }: { params: { locale: Loc
                 style={{ display: "flex", gap: "1rem", alignItems: "center", textDecoration: "none", color: "inherit" }}
               >
                 {(a.posterImage || a.coverImage) && (
-                  <img
+                  <Image
                     alt={a.title}
                     src={a.posterImage ?? a.coverImage}
-                    style={{ width: 80, height: 60, objectFit: "cover", borderRadius: "0.375rem", flexShrink: 0 }}
+                    width={80}
+                    height={60}
+                    unoptimized
+                    style={{ objectFit: "cover", borderRadius: "0.375rem", flexShrink: 0 }}
                   />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -164,6 +168,7 @@ export default async function ActivitiesPage({ params }: { params: { locale: Loc
             <Link className="data-card data-card" href={`/${params.locale}/activities/${a.slug}`} key={a.id}>
               {(a.posterImage || a.coverImage) && (
                 <div >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt={a.title} src={a.posterImage ?? a.coverImage} />
                 </div>
               )}

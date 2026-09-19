@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import type { Locale } from "@/lib/site-content";
 
@@ -158,7 +159,7 @@ export function EventDetailSections({
                     {item.speakers.map((sl) => (
                       <div key={sl.id} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                         {sl.speaker.avatar
-                          ? <img alt={sl.speaker.name} src={sl.speaker.avatar} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} />
+                          ? <Image alt={sl.speaker.name} src={sl.speaker.avatar} width={22} height={22} unoptimized style={{ borderRadius: "50%", objectFit: "cover" }} />
                           : <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#e5e7eb", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "var(--cp-fs-12)" }}>👤</span>
                         }
                         <span style={{ fontSize: "var(--cp-text-small)", color: "#374151" }}>

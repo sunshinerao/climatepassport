@@ -20,16 +20,16 @@ export async function POST(req: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json();
-  const { name, type, fieldsJson, createdByUserId } = body;
+  const { name, type, fieldsJson } = body;
 
-  if (!name || !type || fieldsJson === undefined || !createdByUserId) {
-    return NextResponse.json({ error: "Missing required fields: name, type, fieldsJson, createdByUserId" }, { status: 400 });
+  if (!name || !type || fieldsJson === undefined) {
+    return NextResponse.json({ error: "Missing required fields: name, type, fieldsJson" }, { status: 400 });
   }
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
   const template = await prisma.activityFormTemplate.create({
-    data: { name, type, fieldsJson, createdByUserId },
+    data: { name, type, fieldsJson, createdByUserId: auth.id },
   });
 
   return NextResponse.json({ template }, { status: 201 });

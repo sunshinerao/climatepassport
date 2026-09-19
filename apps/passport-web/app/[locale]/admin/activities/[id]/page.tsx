@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { AdminActivityDetailClient } from "@/components/admin-activity-detail-client";
+import { AdminActivityAiContentDrafts } from "@/components/admin-activity-ai-content-drafts";
 import type { Locale } from "@/lib/site-content";
 
 export default async function AdminActivityDetailPage({ params }: { params: { locale: Locale; id: string } }) {
@@ -110,6 +111,7 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
       <div className="section-header">
         <h1 className="label">{zh ? "活动详情" : "Activity Detail"}</h1>
         <p className="brand-subtitle">{activity.title}</p>
+        {(activity.type === "PROJECT" || activity.type === "CHALLENGE") && <a className="button" href={`/${params.locale}/admin/activities/${activity.id}/community`}>{zh ? "社区管理" : "Community"}</a>}
       </div>
       <AdminActivityDetailClient
         activity={{
@@ -151,6 +153,7 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
           createdAt: item.createdAt.toISOString(),
         }))}
       />
+      <AdminActivityAiContentDrafts activityId={activity.id} locale={params.locale} />
     </div>
   );
 }

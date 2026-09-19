@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { getPrismaClient } from "@/lib/server/prisma";
@@ -141,6 +142,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
         {/* Hero / poster */}
         {(activity as any).posterImage && (
           <div style={{ width: "100%", maxHeight: 400, overflow: "hidden", borderRadius: "0.75rem", marginBottom: "1.5rem" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt={zh ? activity.title : (activity.titleEn ?? activity.title)}
               src={(activity as any).posterImage}
@@ -187,11 +189,11 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
             )}
 
             {/* Highlights */}
-            {Array.isArray((activity as any).highlights) && (activity as any).highlights.length > 0 && (
+            {Array.isArray((zh ? (activity as any).highlights : (activity as any).highlightsEn)) && (zh ? (activity as any).highlights : (activity as any).highlightsEn).length > 0 && (
               <section className="section">
                 <h2>{zh ? "活动亮点" : "Highlights"}</h2>
                 <ul className="list">
-                  {((activity as any).highlights as string[]).map((h, i) => (
+                  {((zh ? (activity as any).highlights : (activity as any).highlightsEn) as string[]).map((h, i) => (
                     <li className="list-item" key={i}>{h}</li>
                   ))}
                 </ul>
@@ -217,7 +219,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
                   {activity.speakerLinks.map((sl) => (
                     <div className="data-card" key={sl.id} style={{ textAlign: "center", padding: "1rem" }}>
                       {sl.speaker.avatar
-                        ? <img alt={sl.speaker.name} src={sl.speaker.avatar} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", margin: "0 auto 0.5rem" }} />
+                        ? <Image alt={sl.speaker.name} src={sl.speaker.avatar} width={72} height={72} unoptimized style={{ borderRadius: "50%", objectFit: "cover", margin: "0 auto 0.5rem" }} />
                         : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#e5e7eb", margin: "0 auto 0.5rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--cp-fs-28)", color: "#6b7280" }}>👤</div>
                       }
                       <div style={{ fontWeight: 600 }}>{zh ? sl.speaker.name : (sl.speaker.nameEn ?? sl.speaker.name)}</div>
@@ -365,6 +367,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
               <p style={{ fontSize: "var(--cp-text-small)", color: "#6b7280", margin: "0 0 0.5rem" }}>
                 {zh ? "扫码分享活动" : "Share this event"}
               </p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt="QR Code"
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${params.locale}/activities/${params.slug}`)}`}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -16,11 +17,13 @@ export async function GET(req: NextRequest) {
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (activityId && !(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const where = {
     ...(activityId ? { activityId } : {}),
     ...(taskId ? { taskId } : {}),
     ...(status ? { status: status as any } : {}),
     ...(userId ? { userId } : {}),
+    ...(auth.role === "EVENT_MANAGER" ? { activity: { organizerUserId: auth.id } } : {}),
   };
 
   const [total, submissions] = await Promise.all([
@@ -37,21 +40,32 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
-  if (auth instanceof NextResponse) return auth;
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
 
-  const body = await req.json();
-  const { userId, activityId, taskId, fileUrls, textContent, linkUrl, mediaType } = body;
+  const body = await req.json().catch(() => ({}));
+  const { activityId, taskId, fileUrls, textContent, linkUrl, mediaType } = body;
 
-  if (!userId || !activityId) {
-    return NextResponse.json({ error: "Missing required fields: userId, activityId" }, { status: 400 });
+  if (!activityId || !taskId) {
+    return NextResponse.json({ error: "activityId and taskId are required" }, { status: 400 });
+  }
+  if (body.userId && body.userId !== user.id) {
+    return NextResponse.json({ error: "Cannot submit work for another user." }, { status: 403 });
   }
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  const [task, participation] = await Promise.all([
+    prisma.activityTask.findFirst({ where: { id: taskId, activityId, requiresSubmission: true }, select: { id: true } }),
+    prisma.activityParticipation.findUnique({ where: { activityId_userId: { activityId, userId: user.id } }, select: { status: true } }),
+  ]);
+  if (!task) return NextResponse.json({ error: "Submission task not found." }, { status: 404 });
+  if (!participation || !["ACCEPTED", "CHECKED_IN", "IN_PROGRESS"].includes(participation.status)) {
+    return NextResponse.json({ error: "Active participation is required." }, { status: 403 });
+  }
   const submission = await prisma.activitySubmission.create({
     data: {
-      userId,
+      userId: user.id,
       activityId,
       taskId,
       fileUrls: fileUrls ?? [],

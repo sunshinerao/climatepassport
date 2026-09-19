@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { syncParticipationToPassport } from "@/lib/server/activity-rewards";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 /** POST /api/activity-participations/[id]/sync-passport */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -11,15 +12,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const participation = await prisma.activityParticipation.findUnique({
     where: { id: params.id },
-    select: { userId: true, status: true, passportSynced: true },
+    select: { userId: true, activityId: true, status: true, passportSynced: true },
   });
 
   if (!participation) {
     return NextResponse.json({ error: "Participation not found" }, { status: 404 });
   }
 
-  // Only the participant or an admin can trigger sync
-  if (participation.userId !== user.id && !["ADMIN", "EVENT_MANAGER"].includes(user.role)) {
+  const isOwner = participation.userId === user.id;
+  const canManage = await canManageActivity(prisma, user, participation.activityId);
+  if (!isOwner && !canManage) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -218,6 +218,8 @@ export function AdminActivityFormClient({
   const [registrationOpenAt, setRegistrationOpenAt] = useState(initial?.registrationOpenAt ? initial.registrationOpenAt.slice(0, 16) : "");
   const [registrationCloseAt, setRegistrationCloseAt] = useState(initial?.registrationCloseAt ? initial.registrationCloseAt.slice(0, 16) : "");
   const [requiresApproval, setRequiresApproval] = useState(initial?.requiresApproval ?? false);
+  const [applicantListVisibleToApplicants, setApplicantListVisibleToApplicants] = useState(initial?.applicantListVisibleToApplicants ?? false);
+  const [allowInterestWithoutApplication, setAllowInterestWithoutApplication] = useState(initial?.allowInterestWithoutApplication ?? false);
   const [applicationForm, setApplicationForm] = useState("default");
 
   const [status, setStatus] = useState(initial?.status ?? "DRAFT");
@@ -281,9 +283,7 @@ export function AdminActivityFormClient({
     return t.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
   }
 
-  function t(zhText: string, enText: string) {
-    return zh ? zhText : enText;
-  }
+  const t = useCallback((zhText: string, enText: string) => zh ? zhText : enText, [zh]);
 
   function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -314,7 +314,7 @@ export function AdminActivityFormClient({
     const doneCount = items.filter((i) => i.done).length;
     const percent = Math.round((doneCount / items.length) * 100);
     return { items, doneCount, total: items.length, percent };
-  }, [title, startTime, endTime, locationType, description, coverImage, agendaItems.length, speakers.length, zh]);
+  }, [title, startTime, endTime, locationType, description, coverImage, agendaItems.length, speakers.length, t]);
 
   /* ── Submit ── */
   async function handleSubmit(e: React.FormEvent, publish = false) {
@@ -349,6 +349,7 @@ export function AdminActivityFormClient({
         registrationOpenAt: registrationOpenAt || undefined,
         registrationCloseAt: registrationCloseAt || undefined,
         requiresApproval,
+        ...(type === "PROJECT" ? { applicantListVisibleToApplicants, allowInterestWithoutApplication } : {}),
         isFeatured,
         isPinned,
         isPrivate,
@@ -420,6 +421,14 @@ export function AdminActivityFormClient({
                 <input className="create-form-input" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="Activity title in English" />
               </Group>
             </Row>
+            {type === "PROJECT" && <Row>
+              <Group label={t("申请人名单披露", "Applicant-list disclosure")}>
+                <Toggle checked={applicantListVisibleToApplicants} onChange={setApplicantListVisibleToApplicants} label={t("申请人之间可见名单（默认关闭）", "Visible to applicants (off by default)")} />
+              </Group>
+              <Group label={t("表达兴趣（预留）", "Interest-only (reserved)")}>
+                <Toggle checked={allowInterestWithoutApplication} onChange={setAllowInterestWithoutApplication} label={t("允许不提交申请的兴趣表达（尚未启用）", "Allow interest without applying (not implemented)")} />
+              </Group>
+            </Row>}
             <Row>
               <Group label={t("副标题", "Subtitle")} optional optionalText={t("可选", "optional")}>
                 <input className="create-form-input" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={t("副标题", "Subtitle")} />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(
   _req: NextRequest,
@@ -21,6 +22,7 @@ export async function GET(
   });
 
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canManageActivity(prisma, auth, task.activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   return NextResponse.json({ task });
 }
@@ -37,6 +39,7 @@ export async function PATCH(
 
   const existing = await prisma.activityTask.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canManageActivity(prisma, auth, existing.activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
   const {
@@ -82,6 +85,7 @@ export async function DELETE(
     include: { _count: { select: { submissions: true, checkinRecords: true } } },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canManageActivity(prisma, auth, existing.activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   if (existing._count.submissions > 0 || existing._count.checkinRecords > 0) {
     return NextResponse.json(

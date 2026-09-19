@@ -4,11 +4,15 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Locale } from "@/lib/site-content";
 
 type ApplicationUser = {
-  id: string;
+  id?: string;
   name: string | null;
-  email: string;
+  email: string | null;
   avatar: string | null;
-  climatePassportId: string | null;
+  climatePassportId?: string | null;
+  title?: string | null;
+  bio?: string | null;
+  affiliations?: string[];
+  portfolioLinkId?: string | null;
 };
 
 type ApplicationRow = {
@@ -21,7 +25,8 @@ type ApplicationRow = {
   reviewedAt: string | null;
   reviewComment: string | null;
   formResponseJson: any;
-  user: ApplicationUser;
+  user: ApplicationUser | null;
+  projectConsent?: { policyVersion: string; shareName: boolean; shareEmail: boolean; shareTitle: boolean; shareBio: boolean; shareAffiliations: boolean; sharePortfolioLink: boolean } | null;
 };
 
 type Stats = {
@@ -131,8 +136,8 @@ export function AdminActivityApplicationsClient({
     if (q) {
       list = list.filter(
         (r) =>
-          (r.user.name ?? "").toLowerCase().includes(q) ||
-          (r.user.email ?? "").toLowerCase().includes(q)
+          (r.user?.name ?? "").toLowerCase().includes(q) ||
+          (r.user?.email ?? "").toLowerCase().includes(q)
       );
     }
     return list;
@@ -184,7 +189,6 @@ export function AdminActivityApplicationsClient({
         body: JSON.stringify({
           status,
           reviewComment: commentMap[id],
-          reviewedByUserId: reviewerUserId,
         }),
       });
       if (res.ok) {
@@ -375,6 +379,7 @@ export function AdminActivityApplicationsClient({
               <th>{zh ? "角色类型" : "Role"}</th>
               <th>{zh ? "状态" : "Status"}</th>
               <th>{zh ? "提交时间" : "Submitted"}</th>
+              <th>{zh ? "同意范围" : "Consent scope"}</th>
               <th>{zh ? "审核意见" : "Comment"}</th>
               <th style={{ minWidth: "200px" }}>{zh ? "操作" : "Actions"}</th>
             </tr>
@@ -382,7 +387,7 @@ export function AdminActivityApplicationsClient({
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: "center", padding: "2rem", color: "var(--color-text-muted)" }}>
+                <td colSpan={9} style={{ textAlign: "center", padding: "2rem", color: "var(--color-text-muted)" }}>
                   {zh ? "暂无申请" : "No applications"}
                 </td>
               </tr>
@@ -400,14 +405,15 @@ export function AdminActivityApplicationsClient({
                       />
                     </td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>{app.user.name ?? "—"}</div>
-                      {app.user.climatePassportId && (
+                      <div style={{ fontWeight: 500 }}>{app.user?.name ?? "—"}</div>
+                      {app.user?.title && <div style={{ fontSize: "var(--cp-text-caption)", color: "#6b7280" }}>{app.user.title}</div>}
+                      {app.user?.climatePassportId && (
                         <div style={{ fontSize: "var(--cp-text-caption)", color: "#9ca3af" }}>
                           {app.user.climatePassportId}
                         </div>
                       )}
                     </td>
-                    <td style={{ fontSize: "var(--cp-text-small)" }}>{app.user.email}</td>
+                    <td style={{ fontSize: "var(--cp-text-small)" }}>{app.user?.email ?? "—"}</td>
                     <td>{app.roleType ?? "—"}</td>
                     <td>
                       <span className={STATUS_BADGE[app.status] ?? "chip"}>
@@ -415,6 +421,7 @@ export function AdminActivityApplicationsClient({
                       </span>
                     </td>
                     <td>{app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "—"}</td>
+                    <td style={{ fontSize: "var(--cp-text-caption)" }}>{app.projectConsent ? `${zh ? "同意字段" : "Consented"}: ${[app.projectConsent.shareName && (zh ? "姓名" : "name"), app.projectConsent.shareEmail && (zh ? "邮箱" : "email"), app.projectConsent.shareTitle && (zh ? "职务" : "title"), app.projectConsent.shareBio && (zh ? "简介" : "bio"), app.projectConsent.shareAffiliations && (zh ? "机构" : "affiliations"), app.projectConsent.sharePortfolioLink && (zh ? "作品集" : "portfolio")].filter(Boolean).join(", ")}` : "—"}</td>
                     <td>
                       {canReview && (
                         <input

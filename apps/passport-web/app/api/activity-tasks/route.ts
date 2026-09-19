@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const tasks = await prisma.activityTask.findMany({
     where: { activityId },
     orderBy: [{ parentTaskId: "asc" }, { orderIndex: "asc" }],
@@ -45,6 +47,11 @@ export async function POST(req: NextRequest) {
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (parentTaskId) {
+    const parent = await prisma.activityTask.findFirst({ where: { id: parentTaskId, activityId }, select: { id: true } });
+    if (!parent) return NextResponse.json({ error: "Parent task does not belong to this activity." }, { status: 400 });
+  }
   const task = await prisma.activityTask.create({
     data: {
       activityId,

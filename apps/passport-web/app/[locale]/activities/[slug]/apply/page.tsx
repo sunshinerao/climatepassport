@@ -65,6 +65,7 @@ export default async function ActivityApplyPage({ params }: { params: { locale: 
           locale={params.locale}
           requiresApproval={activity.requiresApproval}
           userId={user.id}
+          activityType={activity.type}
         />
       </div>
     </main>
