@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { ExternalLearningAdminListQuerySchema } from "@climate-passport/passport-contracts";
+import { getCurrentUser } from "@/lib/server/auth";
+import { getPrismaClient } from "@/lib/server/prisma";
+export async function GET(request: Request) { const user = await getCurrentUser(); if (user?.role !== "ADMIN") return NextResponse.json({ error: { code: "UNAUTHENTICATED" } }, { status: 403 }); const query = ExternalLearningAdminListQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams)); if (!query.success) return NextResponse.json({ error: { code: "INVALID_REQUEST" } }, { status: 400 }); const prisma = getPrismaClient(); if (!prisma) return NextResponse.json({ error: { code: "SERVICE_UNAVAILABLE" } }, { status: 503 }); const rows = await prisma.externalLearningEvidence.findMany({ take: query.data.limit + 1, ...(query.data.cursor ? { cursor: { id: query.data.cursor }, skip: 1 } : {}), orderBy: { id: "asc" } }); return NextResponse.json({ items: rows.slice(0, query.data.limit), nextCursor: rows.length > query.data.limit ? rows[query.data.limit]?.id : null }); }

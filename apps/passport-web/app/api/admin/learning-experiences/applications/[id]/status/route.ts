@@ -5,6 +5,7 @@ import { learningApplicationStatusOptions } from "@/lib/server/admin-learning-ex
 import { requireRoleAccess } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
 import { buildCertificateArtifactWithQr, parseCertificateRenderConfig } from "@/lib/server/certificate-module";
+import { storeBuiltCertificateArtifact } from "@/lib/server/certificate-artifact-storage";
 import {
   buildIssuedCertificateVariableValues,
   extractCapabilityTags,
@@ -279,8 +280,8 @@ export async function PATCH(
             },
           });
 
-          if (!definition) {
-            throw new Error("Certificate definition not found for learning experience completion.");
+          if (!definition || !definition.isActive || !definition.template.isActive || !definition.category.isActive) {
+            throw new Error("Certificate unavailable.");
           }
 
           const verificationCode = await allocateCertificateVerificationCode(async (candidate) => {
@@ -324,7 +325,7 @@ export async function PATCH(
               capabilityTags,
             },
           });
-          const artifact = await buildCertificateArtifactWithQr({
+           const artifact = await buildCertificateArtifactWithQr({
             holderName: updated.user.name,
             certificateName: definition.nameEn ?? definition.name,
             categoryName: definition.category.nameEn ?? definition.category.name,
@@ -333,10 +334,14 @@ export async function PATCH(
             verificationUrl,
             renderConfigJson: definition.template.renderConfigJson,
             variableValues,
-          });
+           });
+          const issueId = crypto.randomUUID();
+          let artifactStorage: Awaited<ReturnType<typeof storeBuiltCertificateArtifact>>;
+          try { artifactStorage = await storeBuiltCertificateArtifact(issueId, artifact); } catch (error) { throw new Error(`Certificate artifact storage failed: ${error instanceof Error ? error.message : "unavailable"}`); }
 
           const issue = await tx.certificateIssue.create({
             data: {
+              id: issueId,
               definitionId: current.program.certificateDefinitionId,
               userId: current.userId,
               sourceType: "LEARNING_EXPERIENCE",
@@ -346,9 +351,9 @@ export async function PATCH(
               approvedAt: now,
               issuedAt: now,
               verificationCode,
-              generatedFileName: artifact.fileName,
-              generatedFileUrl: artifact.dataUrl,
+              ...artifactStorage,
               variableValuesJson: variableValues,
+              renderSnapshotJson: { schemaVersion: 1, templateId: definition.templateId, templateVersion: definition.template.version, renderConfigJson: definition.template.renderConfigJson, holderName: updated.user.name, certificateName: definition.nameEn ?? definition.name, categoryName: definition.category.nameEn ?? definition.category.name, issueDate: now.toISOString(), variableValues },
             },
             select: { id: true },
           });
