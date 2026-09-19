@@ -28,6 +28,9 @@ function loadCertificateModule() {
       if (moduleName === "@/lib/server/prisma") {
         return { getPrismaClient: () => null };
       }
+      if (moduleName === "@/lib/server/certificate-pdf-renderer") {
+        return { renderCertificatePdf: async () => Buffer.from("%PDF-test") };
+      }
       return require(moduleName);
     },
     Intl,
@@ -122,6 +125,36 @@ test("renderCertificateHtml emits printable background image layer", () => {
 
   assert.equal(html.includes('class="cert-background-image"'), true);
   assert.equal(html.includes('src="data:image/png;base64,AAAA"'), true);
+});
+
+test("renderCertificateHtml applies custom physical size and configured seal asset", () => {
+  const html = renderCertificateHtml({
+    holderName: "Alice",
+    certificateName: "Climate Credential",
+    categoryName: "Course",
+    issueDate: "2026-05-23",
+    certificateNumber: "CV-123",
+    renderConfig: {
+      pageWidthMm: 216,
+      pageHeightMm: 140,
+      sealImageUrl: "data:image/png;base64,AAAA",
+      elements: [{
+        id: "seal",
+        kind: "IMAGE",
+        imageKey: "seal",
+        x: 70,
+        y: 65,
+        width: 15,
+        height: 20,
+      }],
+    },
+  });
+
+  assert.match(html, /@page \{ size: 216mm 140mm; margin: 0; \}/);
+  assert.match(html, /width: 216mm; height: 140mm; min-height: 140mm/);
+  assert.match(html, /class="cert-el cert-img"/);
+  assert.match(html, /src="data:image\/png;base64,AAAA"/);
+  assert.match(html, /left:70%;top:65%;width:15%;height:20%/);
 });
 
 test("renderCertificateHtml resolves merged variable values", () => {

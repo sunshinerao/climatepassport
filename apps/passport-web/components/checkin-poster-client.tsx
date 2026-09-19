@@ -87,11 +87,14 @@ export function CheckinPosterClient({
       >
         {/* Banner */}
         {activityData.posterImage ? (
-          <img
-            alt={activityData.title}
-            src={activityData.posterImage}
-            style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt={activityData.title}
+              src={activityData.posterImage}
+              style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }}
+            />
+          </>
         ) : (
           <div
             style={{
@@ -182,6 +185,7 @@ export function CheckinPosterClient({
           >
             {qrDataUrl ? (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   alt="Check-in QR Code"
                   src={qrDataUrl}

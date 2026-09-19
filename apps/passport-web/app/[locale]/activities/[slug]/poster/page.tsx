@@ -63,11 +63,14 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
       >
         {/* Cover image */}
         {activity.posterImage ? (
-          <img
-            alt={title}
-            src={activity.posterImage}
-            style={{ width: "100%", height: 280, objectFit: "cover", display: "block" }}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt={title}
+              src={activity.posterImage}
+              style={{ width: "100%", height: 280, objectFit: "cover", display: "block" }}
+            />
+          </>
         ) : (
           <div style={{ width: "100%", height: 200, background: "linear-gradient(135deg, #16a34a, #0ea5e9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ fontSize: "var(--cp-fs-72)", color: "rgba(255,255,255,0.5)" }}>🌍</span>
@@ -110,6 +113,7 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
 
           {/* QR Code + URL */}
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", padding: "1rem", background: "#f9fafb", borderRadius: "0.75rem" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt="QR"
               src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(detailUrl)}`}

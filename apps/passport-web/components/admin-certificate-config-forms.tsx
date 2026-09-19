@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FormErrorText, FormSuccessText } from "@/components/form-feedback";
 import { FieldLabelWithInfo } from "@/components/info-tooltip";
 import type { Locale } from "@/lib/site-content";
@@ -581,6 +581,7 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     );
     setMessage("");
     setError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTemplate?.id]);
 
   useEffect(() => {
@@ -726,7 +727,7 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     }
   }
 
-  async function refreshTemplatePreview(options?: { showError?: boolean }) {
+  const refreshTemplatePreview = useCallback(async (options?: { showError?: boolean }) => {
     const requestId = previewRequestIdRef.current + 1;
     previewRequestIdRef.current = requestId;
     setPreviewLoading(true);
@@ -799,7 +800,28 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
         setPreviewLoading(false);
       }
     }
-  }
+  }, [
+    locale,
+    templateName,
+    templateNameEn,
+    selectedCategory,
+    issuerName,
+    signerName,
+    pageSize,
+    pageWidthMm,
+    pageHeightMm,
+    accentColor,
+    backgroundColor,
+    backgroundImageUrl,
+    logoImageUrl,
+    signatureImageUrl,
+    sealImageUrl,
+    elementsJson,
+    isZh,
+    setError,
+    setPreviewLoading,
+    setPreviewHtml,
+  ]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -824,6 +846,7 @@ export function CertificateTemplateForm({ locale, categories, initialTemplate, o
     signatureImageUrl,
     sealImageUrl,
     elementsJson,
+    refreshTemplatePreview,
   ]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

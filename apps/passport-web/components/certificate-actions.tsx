@@ -17,29 +17,8 @@ export function CertificateDownloadButton({
     setMessage("");
 
     try {
-      const response = await fetch(`/api/certificates/${certificateId}/download`, { method: "POST" });
-      const payload = await response.json() as {
-        error?: string;
-        download?: { url?: string | null; fileName?: string | null; verificationCode?: string | null };
-      };
-
-      if (!response.ok) {
-        setMessage(payload.error ?? "Download is unavailable.");
-        return;
-      }
-
-      if (payload.download?.url) {
-        const link = document.createElement("a");
-        link.href = payload.download.url;
-        link.download = payload.download.fileName ?? "certificate.html";
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-
-      setMessage(payload.download?.url ? "Download started. Open the file and use Print / Save PDF for PDF output." : "Download counted. Rendered file is not available yet.");
+      window.location.assign(`/api/certificates/${encodeURIComponent(certificateId)}/artifact?disposition=attachment`);
+      setMessage("Certificate HTML download started. Open it and use Print / Save PDF if needed.");
     } catch {
       setMessage("Network error.");
     } finally {

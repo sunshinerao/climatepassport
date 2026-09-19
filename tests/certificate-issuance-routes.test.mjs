@@ -7,6 +7,9 @@ import ts from "typescript";
 import vm from "node:vm";
 
 const require = createRequire(import.meta.url);
+const storageMock = {
+  storeBuiltCertificateArtifact: async (_id, artifact) => ({ generatedFileName: artifact.fileName, artifactProvider: "local", artifactKey: "certificates/test/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.html", artifactVersion: "a".repeat(64), artifactContentType: "text/html", artifactByteSize: 15, artifactSha256: "a".repeat(64), artifactCreatedAt: new Date(), artifactVerifiedAt: new Date(), artifactState: "READY", artifactFailureReason: null }),
+};
 
 function createNextResponseMock() {
   return {
@@ -46,6 +49,7 @@ function loadRouteModule(sourcePath, moduleMocks) {
     setTimeout,
     clearTimeout,
     encodeURIComponent,
+    crypto,
   };
 
   sandbox.module.exports = sandbox.exports;
@@ -57,25 +61,14 @@ test("issue route returns 409 when duplicate issuance exists", async () => {
   const sourcePath = path.resolve("apps/passport-web/app/api/admin/certificates/issue/route.ts");
 
   const prisma = {
-    $transaction: async (callback) => callback(prisma),
-    user: {
-      findUnique: async () => ({ id: "user-1", name: "Alice" }),
-    },
     certificateDefinition: {
       findFirst: async () => ({
         id: "def-1",
         name: "Climate Course",
         nameEn: "Climate Course",
         category: { name: "Course", nameEn: "Course" },
-        template: { renderConfigJson: {} },
+        template: { renderConfigJson: {}, version: 1 },
       }),
-    },
-    certificateIssue: {
-      findFirst: async () => ({ id: "issue-existing", verificationCode: "CV-EXISTING" }),
-      findUnique: async () => null,
-      create: async () => {
-        throw new Error("create should not be called for duplicate issuance");
-      },
     },
   };
 
@@ -88,40 +81,19 @@ test("issue route returns 409 when duplicate issuance exists", async () => {
     "@/lib/server/prisma": {
       getPrismaClient: () => prisma,
     },
-    "@/lib/server/passport-user-provisioning": {
-      ensurePassportUserByEmail: async () => ({
-        id: "user-1",
-        email: "alice@example.com",
-        name: "Alice",
-        role: "ATTENDEE",
-        status: "ACTIVE",
-        climatePassportId: "PASS-1",
-        created: false,
-        normalizedEmail: "alice@example.com",
-      }),
-    },
-    "@/lib/server/certificates": {
-      allocateCertificateVerificationCode: async () => {
-        throw new Error("allocate should not be called for duplicate issuance");
-      },
-    },
-    "@/lib/server/certificate-module": {
-      parseCertificateRenderConfig: () => ({}),
-      buildCertificateArtifactWithQr: async () => {
-        throw new Error("artifact build should not be called for duplicate issuance");
-      },
-    },
-    "@/lib/server/certificate-variables": {
-      buildIssuedCertificateVariableValues: () => ({}),
-    },
-    "@/lib/server/achievement-badge": {
-      createAchievementRecord: async () => ({ id: "achievement-1" }),
-    },
     "@/lib/server/audit": {
-      getRequestAuditContext: () => ({}),
-      writeCoreAuditLog: async () => {
-        throw new Error("audit log should not be called for duplicate issuance");
-      },
+      getRequestAuditContext: () => ({ ipAddress: "127.0.0.1", userAgent: "test-agent" }),
+    },
+    "@/lib/server/certificate-issuance": {
+      issueCertificateToRecipient: async () => ({
+        ok: false,
+        email: "alice@example.com",
+        status: 409,
+        error: "Duplicate issuance is not allowed for this user and certificate definition.",
+        issueId: "issue-existing",
+        verificationCode: "CV-EXISTING",
+      }),
+      normalizeManualVariableValues: (values) => values ?? {},
     },
   });
 
@@ -145,35 +117,22 @@ test("issue route returns 409 when duplicate issuance exists", async () => {
   assert.equal(response.payload.verificationCode, "CV-EXISTING");
 });
 
-test("issue route merges manual variable values into artifact rendering", async () => {
+test("issue route proxies a successful single issuance", async () => {
   const sourcePath = path.resolve("apps/passport-web/app/api/admin/certificates/issue/route.ts");
 
-  let artifactInput = null;
-  let createdIssueData = null;
-
   const prisma = {
-    $transaction: async (callback) => callback(prisma),
-    user: {
-      findUnique: async () => ({ id: "user-1", name: "Alice" }),
-    },
     certificateDefinition: {
       findFirst: async () => ({
         id: "def-1",
         name: "Climate Course",
         nameEn: "Climate Course",
         category: { name: "Course", nameEn: "Course" },
-        template: { renderConfigJson: {} },
+        template: { renderConfigJson: {}, version: 1 },
       }),
     },
-    certificateIssue: {
-      findFirst: async () => null,
-      findUnique: async () => null,
-      create: async ({ data }) => {
-        createdIssueData = data;
-        return { id: "issue-1", verificationCode: data.verificationCode, generatedFileName: data.generatedFileName };
-      },
-    },
   };
+
+  let serviceInput = null;
 
   const route = loadRouteModule(sourcePath, {
     "next/server": { NextResponse: createNextResponseMock() },
@@ -184,48 +143,26 @@ test("issue route merges manual variable values into artifact rendering", async 
     "@/lib/server/prisma": {
       getPrismaClient: () => prisma,
     },
-    "@/lib/server/passport-user-provisioning": {
-      ensurePassportUserByEmail: async () => ({
-        id: "user-1",
-        email: "alice@example.com",
-        name: "Alice",
-        role: "ATTENDEE",
-        status: "ACTIVE",
-        climatePassportId: "PASS-1",
-        created: false,
-        normalizedEmail: "alice@example.com",
-      }),
+    "@/lib/server/audit": {
+      getRequestAuditContext: () => ({ ipAddress: "127.0.0.1", userAgent: "test-agent" }),
     },
-    "@/lib/server/certificates": {
-      allocateCertificateVerificationCode: async () => "CV-MANUAL-1",
-    },
-    "@/lib/server/certificate-module": {
-      parseCertificateRenderConfig: () => ({ issuerName: "Climate Passport" }),
-      buildCertificateArtifactWithQr: async (input) => {
-        artifactInput = input;
+    "@/lib/server/certificate-issuance": {
+      issueCertificateToRecipient: async (_prisma, input) => {
+        serviceInput = input;
         return {
-          fileName: "Course-Manual Title-Alice-CV-MANUAL-1.html",
-          dataUrl: "data:text/html;charset=utf-8,%3Chtml%3Emanual%3C/html%3E",
-          pdfFileName: "Course-Manual Title-Alice-CV-MANUAL-1.pdf",
-          mimeType: "text/html",
+          ok: true,
+          email: input.email,
+          issueId: "issue-1",
+          verificationCode: "CV-MANUAL-1",
+          verificationUrl: `${input.verificationUrlBase}/verify/certificate/CV-MANUAL-1`,
+          fileName: "Course-Climate Course-Alice-CV-MANUAL-1.pdf",
+          reissued: false,
+          recipient: { id: "user-1", name: "Alice", normalizedEmail: input.email, created: false, climatePassportId: "PASS-1" },
+          certificateName: input.manualVariableValues.certificateName ?? "Climate Course",
+          categoryName: "Course",
         };
       },
-    },
-    "@/lib/server/certificate-variables": {
-      buildIssuedCertificateVariableValues: () => ({
-        holderName: "Alice",
-        certificateName: "Climate Course",
-        certificateNameEn: "Climate Course",
-        categoryName: "Course",
-        categoryNameEn: "Course",
-      }),
-    },
-    "@/lib/server/achievement-badge": {
-      createAchievementRecord: async () => ({ id: "achievement-1" }),
-    },
-    "@/lib/server/audit": {
-      getRequestAuditContext: () => ({}),
-      writeCoreAuditLog: async () => null,
+      normalizeManualVariableValues: (values) => values ?? {},
     },
   });
 
@@ -246,51 +183,26 @@ test("issue route merges manual variable values into artifact rendering", async 
   const response = await route.POST(request);
 
   assert.equal(response.status, 200);
-  assert.ok(artifactInput);
-  assert.equal(artifactInput.certificateName, "Manual Title");
-  assert.equal(artifactInput.variableValues.roleName, "Speaker");
-  assert.equal(createdIssueData.status, "ISSUED");
+  assert.equal(response.payload.verificationCode, "CV-MANUAL-1");
+  assert.ok(serviceInput);
+  assert.equal(serviceInput.manualVariableValues.certificateName, "Manual Title");
+  assert.equal(serviceInput.verificationUrlBase, "https://passport.example");
 });
 
 test("issue route supports batch issuance and returns summary", async () => {
   const sourcePath = path.resolve("apps/passport-web/app/api/admin/certificates/issue/route.ts");
 
-  const createdIssues = [];
-
   const prisma = {
-    $transaction: async (callback) => callback(prisma),
-    user: {
-      findUnique: async ({ where }) => {
-        if (where.email === "alice@example.com") {
-          return { id: "user-1", name: "Alice" };
-        }
-        return null;
-      },
-    },
     certificateDefinition: {
       findFirst: async () => ({
         id: "def-1",
         name: "Climate Course",
         nameEn: "Climate Course",
         category: { name: "Course", nameEn: "Course" },
-        template: { renderConfigJson: {} },
+        template: { renderConfigJson: {}, version: 1 },
       }),
     },
-    certificateIssue: {
-      findFirst: async () => null,
-      findUnique: async () => null,
-      create: async ({ data }) => {
-        createdIssues.push(data);
-        return {
-          id: `issue-${createdIssues.length}`,
-          verificationCode: data.verificationCode,
-          generatedFileName: data.generatedFileName,
-        };
-      },
-    },
   };
-
-  let sequence = 0;
 
   const route = loadRouteModule(sourcePath, {
     "next/server": { NextResponse: createNextResponseMock() },
@@ -301,58 +213,33 @@ test("issue route supports batch issuance and returns summary", async () => {
     "@/lib/server/prisma": {
       getPrismaClient: () => prisma,
     },
-    "@/lib/server/passport-user-provisioning": {
-      ensurePassportUserByEmail: async (tx, { email }) => {
-        if (email === "alice@example.com") {
+    "@/lib/server/audit": {
+      getRequestAuditContext: () => ({ ipAddress: "127.0.0.1", userAgent: "test-agent" }),
+    },
+    "@/lib/server/certificate-issuance": {
+      issueCertificateToRecipient: async (_prisma, input) => {
+        if (input.email === "missing@example.com") {
           return {
-            id: "user-1",
-            email,
-            name: "Alice",
-            role: "ATTENDEE",
-            status: "ACTIVE",
-            climatePassportId: "PASS-1",
-            created: false,
-            normalizedEmail: email,
+            ok: false,
+            email: input.email,
+            status: 500,
+            error: "Certificate artifact generation failed: render boom",
           };
         }
-
         return {
-          id: "user-2",
-          email,
-          name: "missing",
-          role: "ATTENDEE",
-          status: "PENDING",
-          climatePassportId: "PASS-2",
-          created: true,
-          normalizedEmail: email,
+          ok: true,
+          email: input.email,
+          issueId: `issue-${input.email}`,
+          verificationCode: "CV-BATCH-1",
+          verificationUrl: `${input.verificationUrlBase}/verify/certificate/CV-BATCH-1`,
+          fileName: "Course-Climate Course-Alice-CV-BATCH-1.pdf",
+          reissued: false,
+          recipient: { id: "user-1", name: "Alice", normalizedEmail: input.email, created: false, climatePassportId: "PASS-1" },
+          certificateName: "Climate Course",
+          categoryName: "Course",
         };
       },
-    },
-    "@/lib/server/certificates": {
-      allocateCertificateVerificationCode: async () => `CV-BATCH-${++sequence}`,
-    },
-    "@/lib/server/certificate-module": {
-      parseCertificateRenderConfig: () => ({ issuerName: "Climate Passport" }),
-      buildCertificateArtifactWithQr: async ({ certificateNumber }) => ({
-        fileName: `Course-Climate Course-Alice-${certificateNumber}.html`,
-        dataUrl: "data:text/html;charset=utf-8,%3Chtml%3Ebatch%3C/html%3E",
-        pdfFileName: `Course-Climate Course-Alice-${certificateNumber}.pdf`,
-        mimeType: "text/html",
-      }),
-    },
-    "@/lib/server/certificate-variables": {
-      buildIssuedCertificateVariableValues: () => ({
-        holderName: "Alice",
-        certificateName: "Climate Course",
-        categoryName: "Course",
-      }),
-    },
-    "@/lib/server/achievement-badge": {
-      createAchievementRecord: async () => ({ id: "achievement-1" }),
-    },
-    "@/lib/server/audit": {
-      getRequestAuditContext: () => ({}),
-      writeCoreAuditLog: async () => null,
+      normalizeManualVariableValues: (values) => values ?? {},
     },
   });
 
@@ -372,11 +259,12 @@ test("issue route supports batch issuance and returns summary", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(response.payload.summary.total, 2);
-  assert.equal(response.payload.summary.succeeded, 2);
-  assert.equal(response.payload.summary.failed, 0);
-  assert.equal(createdIssues.length, 2);
+  assert.equal(response.payload.summary.succeeded, 1);
+  assert.equal(response.payload.summary.failed, 1);
+  assert.equal(response.payload.results[0].email, "alice@example.com");
+  assert.equal(response.payload.results[0].issueId, "issue-alice@example.com");
   assert.equal(response.payload.results[1].email, "missing@example.com");
-  assert.equal(response.payload.results[1].error, undefined);
+  assert.equal(response.payload.results[1].error, "Certificate artifact generation failed: render boom");
 });
 
 test("learning application completion creates issued certificate with rendered file", async () => {
@@ -426,8 +314,9 @@ test("learning application completion creates issued certificate with rendered f
         id: "def-1",
         name: "Climate Completion",
         nameEn: "Climate Completion",
-        category: { name: "Program", nameEn: "Program" },
-        template: { renderConfigJson: {} },
+        isActive: true,
+        category: { name: "Program", nameEn: "Program", isActive: true },
+        template: { renderConfigJson: {}, isActive: true, version: 1 },
       }),
     },
     passportMilestone: {
@@ -500,6 +389,7 @@ test("learning application completion creates issued certificate with rendered f
         mimeType: "text/html",
       }),
     },
+    "@/lib/server/certificate-artifact-storage": storageMock,
     "@/lib/server/certificate-variables": {
       buildIssuedCertificateVariableValues: () => ({}),
       extractCapabilityTags: () => [],
@@ -522,8 +412,6 @@ test("learning application completion creates issued certificate with rendered f
   assert.ok(createdIssueData);
   assert.equal(createdIssueData.status, "ISSUED");
   assert.equal(createdIssueData.generatedFileName, "Program-Climate Completion-Alice-CV-LE-0001.html");
-  assert.equal(
-    createdIssueData.generatedFileUrl,
-    "data:text/html;charset=utf-8,%3Chtml%3Eok%3C/html%3E",
-  );
+  assert.equal(createdIssueData.artifactState, "READY");
+  assert.equal(createdIssueData.generatedFileUrl, undefined);
 });

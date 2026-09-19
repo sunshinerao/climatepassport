@@ -1,10 +1,26 @@
 # Certificate Module Product Requirements
 
-Last updated: 2026-05-23
+Last updated: 2026-09-18
+
+## Multi-programme Compatibility
+
+The current platform baseline is [functional requirements V2](CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md). Certificate issuance/verification stays in Core, while each programme controls approved evidence and award policy within its scope. A publication approval, attendance, payment, annual activation or Convener Credit assessment is not automatically a certificate or globally verified competency. Personal and institutional contribution facts need not issue any credential; institution contributions must not be forced into a synthetic personal account.
+
+Private work/evidence and public certificate verification are separate boundaries. A QR may expose only the certificate whitelist, not source submissions, guardian/coauthor data or raw attachments. Programme operators require scoped record permissions rather than inheriting full-platform certificate authority. Corrections to source evidence must be reconciled with affected claims/awards under an explicit policy, not silently mutate issued snapshots.
+
+A programme not enabling credentials can launch its accepted participation/private-workspace slice without waiting for the complete Certificate Hub roadmap. Any enabled PDF download still requires true PDF and all applicable lifecycle/privacy acceptance. Summer-school behavior remains frozen.
+
+### Bounded Activity QR issuance (code/local migration only)
+
+Phase 1 supports automatic issuance only after a successful authoritative unified `ACTIVITY_CHECKIN` scan through `POST /api/verifier/scan`. It uses an unconditional eligible Activity certificate rule, a durable reservation, and a reproducible issued rendering snapshot. The local migration is `20260913030000_activity_checkin_certificate_issuance`; this is not production deployment evidence. Legacy Event check-ins, direct activity check-in routes, general rule evaluation, jobs, email, PDF generation, and object storage are deferred.
 
 ## 1. Module Positioning
 
 The Certificate module is the Climate Passport capability asset and trusted record system. It is not a simple PDF download page.
+
+## Phase 1 private HTML artifact delivery
+
+Newly issued certificate artifacts are printable HTML, not rendered PDFs. Code persists them through a private provider-neutral local filesystem or generic authenticated HTTP adapter and exposes them only through an authorized application endpoint. Migration `20260913040000_certificate_artifact_storage_phase1` has been applied locally only. Production durable-volume/HTTP-adapter configuration, retention, legacy inline migration, operational recovery, and PDF rendering remain pending; no public object URL is used. If storage fails before a new issue is written, issuance safely fails without creating a pending or failed issue record.
 
 Certificates, badges, points, and capability records can be generated from verified Climate Passport activity, including:
 
@@ -64,6 +80,10 @@ Certificate card fields:
 
 The top area should include a Credential Passport Overview that communicates the user's sustainable capability growth path.
 
+### 3.1a Certificate applications (Phase 1)
+
+Authenticated users can request only active definitions whose active category enables user requests. An application has its own lifecycle (`DRAFT`, `SUBMITTED`, `NEEDS_INFORMATION`, `APPROVED`, `REJECTED`, `WITHDRAWN`); CertificateIssue lifecycle states are never application state. Users may edit drafts or requests needing information, resubmit, withdraw open requests, and view append-only status history plus only messages intended for them. Phase 1 has no attachments, external email, background jobs, issuing rules, or production-deployment claim.
+
 ### 3.2 Certificate Detail
 
 Route: `/dashboard/certificates/[id]`
@@ -95,7 +115,7 @@ The page must present the credential as a digital credential with identity, prov
 
 Route: `/verify/certificate/[code]`
 
-Future domain: `verify.climatepassport.org`
+Future dedicated verification host: subject to the verified deployment-domain inventory. Historical `verify.climatepassport.org` examples are architectural placeholders, not a deployed-host claim; same-app verification routes remain valid until an approved split.
 
 Purpose: public, no-login certificate verification.
 
@@ -134,7 +154,9 @@ Forbidden public fields:
 
 ### 3.4 Public Profile Credentials
 
-Route: `/profile/[userId]/credentials`
+Owner entry: `/{locale}/dashboard/portfolio`.
+
+Public sharing route: `/{locale}/portfolio/[token]`, generated only after explicit owner consent. The historical `/profile/[userId]/credentials` route is superseded and must remain non-enumerable (currently 404). Never restore public lookup by UUID, Passport ID or email.
 
 Purpose: user-controlled public credential display.
 
@@ -153,7 +175,7 @@ Required content:
 - project participation records;
 - verification entry for each public credential.
 
-Only user-approved credentials should be public.
+Only user-approved credentials should be public, within the share link's field scope, expiry, revocation and visit limit. A public certificate verification code does not authorize access to a holder's complete portfolio or private artifact.
 
 ## 4. Admin Pages
 
@@ -573,7 +595,7 @@ Goal: turn certificates into public capability assets and traceable trust record
 
 Deliverables:
 
-1. Implement `/profile/[userId]/credentials`.
+1. Complete acceptance of consent-based `/{locale}/portfolio/[token]` sharing; keep the legacy identifier-based route disabled.
 2. Add user-controlled public visibility settings.
 3. Implement `/admin/certificates/audit-logs`.
 4. Add download event logging.
@@ -581,16 +603,32 @@ Deliverables:
 6. Add restore flow with proper authorization and audit trail.
 7. Add stronger compliance copy and operational dashboards.
 
-## 8. First Implementation Scope
+## 8. Remaining Implementation Scope (2026-09-18)
 
-The next coding batch should focus on Phase 1:
+The four certificate phases above describe target capabilities, not a claim that every item is still absent or already accepted. User list/detail, public verification, category/template configuration, manual issuance, records and independent applications already have implementations. Do not rebuild their skeletons.
 
-- user certificate list;
-- user certificate detail;
-- public verification UI page;
-- admin certificate records list;
-- admin certificate issue UI;
-- admin template management skeleton;
-- tests around certificate issue, verification, download, and revoke states.
+Execute the remaining work using [the current plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md), CP-TODO-224 through 230 and 237, after the platform authorization/test-baseline gate:
 
-Do not build a complex visual certificate editor in the first batch. Use a form-driven template configuration and preview region first.
+- Fix artifact count persistence and Unicode filenames; keep private download authorization separate from public verification.
+- Align public printed name/title with the immutable issuance snapshot; correct all lifecycle entrances, including revocation reason and expiry behavior.
+- Replace static issuing-rule examples with persisted supported rules; enable further triggers only after their source workflows and idempotency contracts are accepted.
+- Complete true PDF rendering from background, variables, typography, positioning, signature/seal, QR and explanatory fields; printable HTML remains a transitional artifact, not PDF completion.
+- Add durable batch/CSV jobs, source-list eligibility, failure recovery and notifications; complete application review detail/history before separately gated attachments.
+- Make audit and dashboard counts truthful and reliable; verify all eight modules against the prototype body and desktop/mobile layouts.
+
+The form-driven configuration plus preview remains the initial editor scope; a complex drag-and-drop editor is not a prerequisite.
+
+### Final Acceptance Refinements
+
+PDFs must use the filename `分类-证书名称-所有者名称-编号.pdf`, with Unicode-safe headers and path/control-character sanitization. Inline previews do not increment downloads; successfully served attachments do. PDF page dimensions and zero margins must match the configured template, and the generated QR must be decoded from the actual artifact during tests. Physical borderless printing remains subject to printer capability.
+
+Template/user edits must not silently mutate issued identities. Regeneration uses the immutable issuance snapshot and existing verification code; explicit corrections need a separately audited replacement/reissue policy. Issued records and audit history must not be hard-deleted. Application states are not CertificateIssue states; restoring an expired certificate cannot make it valid.
+
+Anonymous QR access shows only the public whitelist. Extended details require owner or resource-specific operational authorization, not possession of the link or a broadly named role. Every certificate has its own opaque code. Public verification, private download and consent-based portfolio sharing are separate permission boundaries.
+
+# Phase 1 safety update (local code and migration only)
+
+- Category reads are side-effect free. Keys are immutable after creation; admin activation/deactivation and deletion are dependency-guarded.
+- Active issuance requires an active definition, template, and category. Template disabling disables linked definitions; copied templates and definitions begin inactive for review.
+- Issued records now persist a bounded render snapshot used for regeneration. Legacy records without a valid snapshot must be reissued; their existing downloadable artifact is retained.
+- Migration `20260913010000_certificate_phase1_safety` was applied only to the local database. This does not claim object storage, PDF delivery, notifications, jobs, CSV, or production deployment.

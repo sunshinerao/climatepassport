@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 
 interface CheckinResult {
-  ok: boolean;
   result: string;
   message?: string;
   user?: { id: string; name: string | null; email: string; climatePassportId: string | null };
@@ -29,7 +28,7 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
     setResult(null);
 
     try {
-      const res = await fetch("/api/checkin/activity-verify", {
+      const res = await fetch("/api/verifier/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: rawToken.trim() }),
@@ -37,7 +36,7 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
       const data: CheckinResult = await res.json();
       setResult(data);
     } catch {
-      setResult({ ok: false, result: "ERROR", message: zh ? "网络错误" : "Network error" });
+      setResult({ result: "error", message: zh ? "网络错误" : "Network error" });
     } finally {
       setLoading(false);
       setToken("");
@@ -52,17 +51,20 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
   }
 
   const resultColor =
-    result?.result === "VALID" ? "var(--color-success, #16a34a)"
-    : result?.result === "DUPLICATE" ? "var(--color-warning, #d97706)"
+    result?.result === "checked_in" ? "var(--color-success, #16a34a)"
+    : result?.result === "already_checked_in" ? "var(--color-warning, #d97706)"
     : "var(--color-error, #dc2626)";
 
   const resultLabel: Record<string, { zh: string; en: string }> = {
-    VALID: { zh: "✓ 签到成功", en: "✓ Check-in Successful" },
-    DUPLICATE: { zh: "⚠ 重复签到", en: "⚠ Duplicate Check-in" },
-    EXPIRED: { zh: "✗ 二维码已过期", en: "✗ QR Code Expired" },
-    CONSUMED: { zh: "✗ 二维码已使用", en: "✗ QR Already Used" },
-    INVALID: { zh: "✗ 无效二维码", en: "✗ Invalid QR Code" },
-    ERROR: { zh: "✗ 系统错误", en: "✗ System Error" },
+    checked_in: { zh: "签到成功", en: "Check-in Successful" },
+    already_checked_in: { zh: "重复签到", en: "Already Checked In" },
+    expired: { zh: "二维码已过期", en: "QR Code Expired" },
+    invalid: { zh: "无效二维码", en: "Invalid QR Code" },
+    wrong_event: { zh: "二维码不属于此活动", en: "Wrong Activity" },
+    permission_denied: { zh: "无此活动核验权限", en: "Permission Denied" },
+    not_registered: { zh: "用户未报名", en: "Not Registered" },
+    not_approved: { zh: "报名尚未获准", en: "Not Approved" },
+    error: { zh: "系统错误", en: "System Error" },
   };
 
   return (
@@ -123,7 +125,7 @@ export default function ActivityCheckinScannerClient({ locale }: { locale: strin
             </div>
           )}
 
-          {result.message && result.result !== "VALID" && (
+          {result.message && result.result !== "checked_in" && (
             <div style={{ marginTop: "0.5rem", fontSize: "var(--cp-text-small)", color: resultColor }}>
               {result.message}
             </div>

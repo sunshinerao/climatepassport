@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
-import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { canDownloadCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
@@ -21,6 +20,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       generatedFileUrl: true,
       generatedFileName: true,
       verificationCode: true,
+      downloadCount: true,
     },
   });
 
@@ -36,29 +36,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Certificate is not downloadable." }, { status: 409 });
   }
 
-  const updated = await prisma.certificateIssue.update({
-    where: { id: issue.id },
-    data: { downloadCount: { increment: 1 } },
-    select: { downloadCount: true },
-  });
-
-  await writeCoreAuditLog({
-    actorUserId: user.id,
-    action: "certificate.download",
-    subjectType: "certificate_issue",
-    subjectId: issue.id,
-    result: "download_authorized",
-    metadataJson: { fileName: issue.generatedFileName ?? null },
-    ...getRequestAuditContext(request),
-  });
-
   return NextResponse.json({
     ok: true,
     download: {
-      url: issue.generatedFileUrl,
+      url: `/api/certificates/${encodeURIComponent(issue.id)}/artifact?disposition=attachment`,
       fileName: issue.generatedFileName,
       verificationCode: issue.verificationCode,
-      downloadCount: updated.downloadCount,
+      downloadCount: issue.downloadCount,
     },
   });
 }

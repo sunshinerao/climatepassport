@@ -17,11 +17,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   const issue = await prisma.certificateIssue.findUnique({
     where: { id: params.id },
-    select: { id: true, status: true, verificationCode: true },
+    select: { id: true, status: true, verificationCode: true, artifactState: true },
   });
 
   if (!issue) {
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+  }
+
+  if (issue.status !== "DRAFT" || issue.verificationCode || issue.artifactState !== "NONE") {
+    return NextResponse.json({ error: "Issued or generated credentials are permanent records. Revoke them instead." }, { status: 409 });
   }
 
   await prisma.certificateIssue.delete({ where: { id: issue.id } });

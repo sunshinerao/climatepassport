@@ -43,11 +43,14 @@ export async function POST(request: Request) {
 
     const category = await prisma.certificateCategory.findUnique({
       where: { id: payload.data.categoryId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
 
     if (!category) {
       return NextResponse.json({ error: "Certificate category was not found." }, { status: 404 });
+    }
+    if (payload.data.isActive && !category.isActive) {
+      return NextResponse.json({ error: "Active templates require an active category." }, { status: 409 });
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -69,6 +72,9 @@ export async function POST(request: Request) {
             data: buildCertificateTemplateWriteData(payload.data),
           });
 
+      if (!template.isActive) {
+        await tx.certificateDefinition.updateMany({ where: { templateId: template.id }, data: { isActive: false } });
+      }
       const existingDefinition = await tx.certificateDefinition.findFirst({
         where: { templateId: template.id },
         orderBy: { createdAt: "asc" },
@@ -86,11 +92,11 @@ export async function POST(request: Request) {
               issueRule: definitionData.issueRule,
               approvalMode: definitionData.approvalMode,
               verificationMode: definitionData.verificationMode,
-              isActive: definitionData.isActive,
+              isActive: template.isActive && definitionData.isActive,
             },
           })
         : await tx.certificateDefinition.create({
-            data: definitionData,
+            data: { ...definitionData, isActive: template.isActive && definitionData.isActive },
           });
 
       return { template, definition };
@@ -167,16 +173,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Template was not found." }, { status: 404 });
     }
 
-    const issuedCount = template.definitions.reduce((sum, definition) => sum + definition._count.issues, 0);
-    if (issuedCount > 0) {
+    if (template.definitions.length > 0) {
       return NextResponse.json(
-        { error: "Template has issued certificates and cannot be deleted." },
+        { error: "Templates with certificate definitions cannot be deleted." },
         { status: 409 },
       );
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.certificateDefinition.deleteMany({ where: { templateId: template.id } });
       await tx.certificateTemplate.delete({ where: { id: template.id } });
     });
 

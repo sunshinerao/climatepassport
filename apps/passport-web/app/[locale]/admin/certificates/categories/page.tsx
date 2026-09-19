@@ -1,5 +1,4 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { randomUUID } from "node:crypto";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { CertificateAdminCategoriesClient } from "@/components/certificate-admin-categories-client";
@@ -21,41 +20,10 @@ type LegacyCertificateCategoryRow = {
   isActive: boolean;
 };
 
-const builtInCategoryPresets = [
-  { key: "course-certificate", name: "课程证书", nameEn: "Course Certificate" },
-  { key: "event-attendance", name: "活动出席证明", nameEn: "Event Attendance" },
-  { key: "speaker-certificate", name: "演讲嘉宾证书", nameEn: "Speaker Certificate" },
-  { key: "moderator-certificate", name: "主持人证书", nameEn: "Moderator Certificate" },
-  { key: "volunteer-certificate", name: "志愿服务证书", nameEn: "Volunteer Certificate" },
-  { key: "achievement-badge", name: "成就徽章", nameEn: "Achievement Badge" },
-  { key: "milestone-certificate", name: "里程碑证书", nameEn: "Milestone Certificate" },
-] as const;
-
 export default async function AdminCertificateCategoriesPage({ params }: { params: { locale: Locale } }) {
   noStore();
   await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/certificates/categories`);
   const prisma = getPrismaClient();
-
-  if (prisma) {
-    const maxOrderRows = await prisma.$queryRaw<Array<{ maxOrder: number | null }>>`
-      SELECT MAX("order")::int AS "maxOrder"
-      FROM "certificate_categories"
-    `;
-    const baseOrder = (maxOrderRows[0]?.maxOrder ?? -1) + 1;
-    const now = new Date();
-
-    await prisma.$transaction(
-      builtInCategoryPresets.map((preset, index) => prisma.$executeRaw`
-        INSERT INTO "certificate_categories" (
-          "id", "key", "name", "nameEn", "isActive", "order", "updatedAt"
-        )
-        SELECT ${randomUUID()}, ${preset.key}, ${preset.name}, ${preset.nameEn}, true, ${baseOrder + index}, ${now}
-        WHERE NOT EXISTS (
-          SELECT 1 FROM "certificate_categories" WHERE "key" = ${preset.key}
-        )
-      `),
-    );
-  }
 
   const categories = prisma
     ? await (async () => {

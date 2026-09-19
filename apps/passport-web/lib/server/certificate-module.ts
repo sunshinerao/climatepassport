@@ -2,6 +2,7 @@ import { maskPassportId } from "@climate-passport/passport-core";
 import type { CertificateIssueStatus } from "@prisma/client";
 import QRCode from "qrcode";
 import type { Locale } from "@/lib/site-content";
+import { renderCertificatePdf } from "@/lib/server/certificate-pdf-renderer";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export function formatCertificateDate(locale: Locale, value: Date | string | null | undefined) {
@@ -366,7 +367,7 @@ function renderConfiguredElement(
   const value = getElementValue(element, values);
   const textStyle = [
     ...style,
-    `font-family:${escapeHtml(element.fontFamily ?? "Inter, Arial, sans-serif")}`,
+    `font-family:${escapeHtml(element.fontFamily ?? "'Noto Sans SC Variable', 'Noto Sans SC', Arial, sans-serif")}`,
     `font-size:${element.fontSize ?? 16}px`,
     `font-weight:${element.fontWeight ?? "400"}`,
     `color:${element.color ?? "#12382f"}`,
@@ -394,6 +395,13 @@ export function renderCertificateHtml(input: {
   const issuerName = renderConfig.issuerName ?? "Climate Passport";
   const accentColor = renderConfig.accentColor ?? "#1f5a4e";
   const backgroundColor = renderConfig.backgroundColor ?? "#f6f9f6";
+  const defaultPage = renderConfig.pageSize === "A4_PORTRAIT"
+    ? { widthMm: 210, heightMm: 297 }
+    : renderConfig.pageSize === "DIGITAL_CARD"
+      ? { widthMm: 210, heightMm: 132 }
+      : { widthMm: 297, heightMm: 210 };
+  const pageWidthMm = renderConfig.pageWidthMm ?? defaultPage.widthMm;
+  const pageHeightMm = renderConfig.pageHeightMm ?? defaultPage.heightMm;
   const pageClass = renderConfig.pageSize === "A4_PORTRAIT"
     ? "certificate portrait"
     : renderConfig.pageSize === "DIGITAL_CARD"
@@ -497,8 +505,8 @@ export function renderCertificateHtml(input: {
   <meta charset="utf-8" />
   <title>${safeDocumentTitle}</title>
   <style>
-    @page { size: A4 landscape; margin: 0; }
-    body { margin: 0; min-height: 100vh; font-family: Inter, Arial, sans-serif; color: #12382f; background: ${backgroundColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: ${pageWidthMm}mm ${pageHeightMm}mm; margin: 0; }
+    body { margin: 0; min-height: 100vh; font-family: 'Noto Sans SC Variable', 'Noto Sans SC', Arial, sans-serif; color: #12382f; background: ${backgroundColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .certificate { position: relative; overflow: hidden; width: 1120px; min-height: 780px; margin: 0 auto; padding: 72px; background: #fff; border: 0; box-shadow: none; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .certificate.portrait { width: 780px; min-height: 1120px; }
     .certificate.digital-card { width: 760px; min-height: 480px; padding: 48px; }
@@ -525,9 +533,7 @@ export function renderCertificateHtml(input: {
     @media print {
       body { background: #fff; }
       .certificate { transform: none !important; margin: 0 !important; }
-      .certificate { width: 297mm; height: 210mm; min-height: 210mm; margin: 0; }
-      .certificate.portrait { width: 210mm; height: 297mm; min-height: 297mm; }
-      .certificate.digital-card { width: 210mm; height: 132mm; min-height: 132mm; }
+      .certificate, .certificate.portrait, .certificate.digital-card { width: ${pageWidthMm}mm; height: ${pageHeightMm}mm; min-height: ${pageHeightMm}mm; margin: 0; }
       .print-actions { display: none; }
     }
   </style>
@@ -659,6 +665,26 @@ export async function buildCertificateArtifactWithQr(input: {
     mimeType: "text/html",
     html,
     dataUrl: `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
+  };
+}
+
+export async function buildCertificatePdfArtifactWithQr(input: Parameters<typeof buildCertificateArtifactWithQr>[0]) {
+  const htmlArtifact = await buildCertificateArtifactWithQr(input);
+  const renderConfig = parseCertificateRenderConfig(input.renderConfigJson);
+  const defaultPage = renderConfig.pageSize === "A4_PORTRAIT"
+    ? { widthMm: 210, heightMm: 297 }
+    : renderConfig.pageSize === "DIGITAL_CARD"
+      ? { widthMm: 210, heightMm: 132 }
+      : { widthMm: 297, heightMm: 210 };
+  const bytes = await renderCertificatePdf(htmlArtifact.html, {
+    widthMm: renderConfig.pageWidthMm ?? defaultPage.widthMm,
+    heightMm: renderConfig.pageHeightMm ?? defaultPage.heightMm,
+  });
+  return {
+    ...htmlArtifact,
+    fileName: htmlArtifact.pdfFileName,
+    mimeType: "application/pdf",
+    bytes,
   };
 }
 

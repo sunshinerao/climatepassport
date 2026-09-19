@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { requireRoleAccess } from "@/lib/server/auth";
 import type { Locale } from "@/lib/site-content";
@@ -6,7 +7,7 @@ import ActivityCheckinScannerClient from "@/components/activity-checkin-scanner-
 
 export default async function ActivitiesCheckinPage({ params }: { params: { locale: Locale } }) {
   noStore();
-  await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER", "VERIFIER"], "/admin/activities-checkin");
+  await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities-checkin`);
   const prisma = getPrismaClient();
   if (!prisma) throw new Error("Database unavailable");
 
@@ -26,7 +27,7 @@ export default async function ActivitiesCheckinPage({ params }: { params: { loca
     <main className="page">
       <div className="section-header">
         <div >
-          <a href="/admin">{zh ? "管理中心" : "Admin"}</a>
+          <Link href={`/${params.locale}/admin`}>{zh ? "管理中心" : "Admin"}</Link>
           <span aria-hidden="true"> / </span>
           <span>{zh ? "活动签到核验" : "Activity Checkin Scanner"}</span>
         </div>

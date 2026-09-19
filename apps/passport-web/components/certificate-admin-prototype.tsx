@@ -87,6 +87,90 @@ export type CertificateAdminAuditLog = {
   region?: string;
 };
 
+export type CertificateAdminBatchItem = {
+  id: string;
+  rowIndex: number;
+  email: string;
+  status: string;
+  attempts: number;
+  error?: string | null;
+  certificateIssue?: {
+    id: string;
+    verificationCode?: string | null;
+    status?: string;
+    generatedFileName?: string | null;
+  } | null;
+};
+
+export type CertificateAdminBatch = {
+  id: string;
+  idempotencyKey: string;
+  source: string;
+  status: string;
+  templateId: string;
+  definitionId?: string;
+  activityId?: string | null;
+  issueDate?: string | null;
+  notifyRecipients?: boolean;
+  totalCount: number;
+  succeededCount: number;
+  failedCount: number;
+  error?: string | null;
+  createdAt: string;
+  completedAt?: string | null;
+  definition?: { name: string; nameEn?: string | null } | null;
+  activity?: { id: string; title: string; titleEn?: string | null } | null;
+  createdBy?: { name: string } | null;
+  items?: CertificateAdminBatchItem[];
+};
+
+type CertificateBatchActivityOption = {
+  id: string;
+  title: string;
+  titleEn?: string | null;
+  status: string;
+  participations: number;
+};
+
+type CertificateBatchPreflightRow = {
+  row: number;
+  raw: string;
+  state: "ok" | "malformed" | "duplicate" | "existing_issue";
+  email?: string;
+  userName?: string;
+  issueId?: string;
+  verificationCode?: string;
+};
+
+type CertificateBatchPreflightReport = {
+  definitionName?: string;
+  rows?: CertificateBatchPreflightRow[];
+  recipients?: Array<{ email: string; userName: string }>;
+  activity?: {
+    id: string;
+    title: string;
+    titleEn?: string | null;
+    eligibleCount: number;
+    alreadyIssuedCount: number;
+  };
+  summary?: { total: number; valid: number; malformed: number; duplicates: number; existingIssues: number };
+};
+
+type CertificateIssuingRuleRow = {
+  id: string;
+  name: string;
+  activityId: string;
+  certificateDefinitionId: string;
+  trigger: "ACTIVITY_CHECKIN";
+  isActive: boolean;
+  notifyUser: boolean;
+  effective: boolean;
+  eligible: boolean;
+  activity: { id: string; title: string; titleEn?: string | null };
+  certificateDefinition: { id: string; name: string; nameEn?: string | null };
+  _count?: { issuances: number };
+};
+
 type CertificateTemplateRenderElementInput = {
   kind?: string;
   variable?: string;
@@ -428,10 +512,41 @@ function getTemplateLayoutLabel(locale: Locale, template: CertificateAdminTempla
 
 function statusClass(status: string) {
   const normalized = status.toLowerCase();
-  if (normalized.includes("revoked") || normalized.includes("rejected")) return "cpca-badge cpca-badge-red";
-  if (normalized.includes("pending") || normalized.includes("draft") || normalized.includes("expired")) return "cpca-badge cpca-badge-amber";
+  if (normalized.includes("revoked") || normalized.includes("rejected") || normalized.includes("failed")) return "cpca-badge cpca-badge-red";
+  if (normalized.includes("pending") || normalized.includes("draft") || normalized.includes("expired") || normalized.includes("processing") || normalized.includes("failure")) return "cpca-badge cpca-badge-amber";
   if (normalized.includes("needs")) return "cpca-badge cpca-badge-blue";
   return "cpca-badge cpca-badge-green";
+}
+
+function batchStatusLabel(locale: Locale, status: string) {
+  switch (status) {
+    case "PENDING": return t(locale, "待处理", "Pending");
+    case "PROCESSING": return t(locale, "处理中", "Processing");
+    case "COMPLETED": return t(locale, "已完成", "Completed");
+    case "COMPLETED_WITH_FAILURES": return t(locale, "部分失败", "Completed with failures");
+    case "FAILED": return t(locale, "失败", "Failed");
+    default: return status;
+  }
+}
+
+function batchItemStatusLabel(locale: Locale, status: string) {
+  switch (status) {
+    case "PENDING": return t(locale, "待处理", "Pending");
+    case "PROCESSING": return t(locale, "处理中", "Processing");
+    case "SUCCEEDED": return t(locale, "成功", "Succeeded");
+    case "FAILED": return t(locale, "失败", "Failed");
+    default: return status;
+  }
+}
+
+function batchSourceLabel(locale: Locale, source: string, activity?: { title: string; titleEn?: string | null } | null) {
+  if (source === "ACTIVITY_ELIGIBLE_LIST") {
+    return activity ? localName(locale, { name: activity.title, nameEn: activity.titleEn }) : t(locale, "活动合格名单", "Activity eligible list");
+  }
+  if (source === "CSV") {
+    return t(locale, "CSV 名单", "CSV list");
+  }
+  return t(locale, "手动名单", "Manual list");
 }
 
 function StatusBadge({ children, status }: { children: string; status: string }) {
@@ -559,10 +674,26 @@ export function CertificateAdminCategories({
   categories: CertificateAdminCategory[];
   form: (selectedCategory: CertificateAdminCategory | null, clearSelection: () => void) => ReactNode;
 }) {
+  const router = useRouter();
   const rows = categories;
   const [sortMode, setSortMode] = useState<"latest" | "most-issued">("latest");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CertificateAdminCategory | null>(null);
+  const [categoryActionId, setCategoryActionId] = useState<string | null>(null);
+  const [categoryActionError, setCategoryActionError] = useState("");
+
+  async function changeCategoryState(category: CertificateAdminCategory, isActive: boolean) {
+    const dependencyText = `${category.templateCount ?? 0} ${t(locale, "个模板", "templates")} / ${category.definitionCount ?? 0} ${t(locale, "个定义", "definitions")} / ${category.issuedCount ?? 0} ${t(locale, "份已签发", "issued")}`;
+    if (!window.confirm(isActive ? t(locale, `确认启用此分类？关联项不会自动启用。\n${dependencyText}`, `Activate this category? Dependents will remain unchanged.\n${dependencyText}`) : t(locale, `确认停用此分类？必须先停用活跃模板和定义。\n${dependencyText}`, `Deactivate this category? Active templates and definitions must be disabled first.\n${dependencyText}`))) return;
+    setCategoryActionId(category.id); setCategoryActionError("");
+    try { const response = await fetch("/api/admin/certificates/categories", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: category.id, isActive }) }); const result = await response.json().catch(() => ({})); if (!response.ok) { setCategoryActionError(result.error ?? t(locale, "操作失败。", "Action failed.")); return; } router.refresh(); } catch { setCategoryActionError(t(locale, "网络错误。", "Network error.")); } finally { setCategoryActionId(null); }
+  }
+  async function deleteCategory(category: CertificateAdminCategory) {
+    if ((category.templateCount ?? 0) || (category.definitionCount ?? 0)) { setCategoryActionError(t(locale, "该分类仍有关联模板或定义，不能删除。", "This category still has templates or definitions and cannot be deleted.")); return; }
+    if (!window.confirm(t(locale, "确认删除此空分类？此操作不可恢复。", "Delete this empty category? This cannot be undone."))) return;
+    setCategoryActionId(category.id); setCategoryActionError("");
+    try { const response = await fetch("/api/admin/certificates/categories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: category.id }) }); const result = await response.json().catch(() => ({})); if (!response.ok) { setCategoryActionError(result.error ?? t(locale, "删除失败。", "Delete failed.")); return; } router.refresh(); } catch { setCategoryActionError(t(locale, "网络错误。", "Network error.")); } finally { setCategoryActionId(null); }
+  }
 
   // When the categories list is updated (e.g. after a save), sync selectedCategory
   // so the edit form reflects the latest saved data.
@@ -638,6 +769,7 @@ export function CertificateAdminCategories({
           </select>
         </label>
       </div>
+      {categoryActionError ? <FormErrorText>{categoryActionError}</FormErrorText> : null}
       <Card>
         <div className="cpca-table-wrap">
           <table className="cpca-table">
@@ -652,11 +784,13 @@ export function CertificateAdminCategories({
                   <td><input checked={Boolean(category.userRequestEnabled)} readOnly type="checkbox" /></td>
                   <td><input checked={Boolean(category.pdfEnabled)} readOnly type="checkbox" /></td>
                   <td><input checked={Boolean(category.publicVerifyEnabled)} readOnly type="checkbox" /></td>
-                  <td><StatusBadge status={category.isActive ? "Active" : "Draft"}>{category.isActive ? "Active" : "Draft"}</StatusBadge></td>
+                  <td><StatusBadge status={category.isActive ? "Active" : "Inactive"}>{category.isActive ? "Active" : "Inactive"}</StatusBadge></td>
                   <td>
                     <button className="cpca-btn cpca-btn-ghost" onClick={() => setSelectedCategory(category)} type="button">
                       {t(locale, "编辑", "Edit")}
                     </button>
+                    <button className="cpca-btn cpca-btn-ghost" disabled={categoryActionId === category.id} onClick={() => void changeCategoryState(category, !category.isActive)} type="button">{categoryActionId === category.id ? t(locale, "处理中...", "Working...") : category.isActive ? t(locale, "停用", "Deactivate") : t(locale, "启用", "Activate")}</button>
+                    {(category.templateCount ?? 0) === 0 && (category.definitionCount ?? 0) === 0 ? <button className="cpca-btn cpca-btn-danger" disabled={categoryActionId === category.id} onClick={() => void deleteCategory(category)} type="button">{t(locale, "删除", "Delete")}</button> : null}
                   </td>
                 </tr>
               ))}
@@ -697,7 +831,6 @@ export function CertificateAdminTemplates({
   const [selectedTemplate, setSelectedTemplate] = useState<CertificateAdminTemplate | null>(null);
   const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const [duplicatingTemplateId, setDuplicatingTemplateId] = useState<string | null>(null);
-  const [removedTemplateIds, setRemovedTemplateIds] = useState<Set<string>>(new Set());
   const [listMessage, setListMessage] = useState("");
   const [listError, setListError] = useState("");
   const [previewingTemplate, setPreviewingTemplate] = useState<CertificateAdminTemplate | null>(null);
@@ -742,7 +875,7 @@ export function CertificateAdminTemplates({
     })
     .slice(0, 6);
 
-  const visibleRows = sortedRows.filter((template) => !removedTemplateIds.has(template.id));
+  const visibleRows = sortedRows;
 
   async function handleDeleteTemplate(template: CertificateAdminTemplate) {
     const confirmed = window.confirm(
@@ -778,7 +911,6 @@ export function CertificateAdminTemplates({
         return;
       }
 
-      setRemovedTemplateIds((previous) => new Set(previous).add(template.id));
       router.refresh();
     } catch {
       setListError(t(locale, "网络错误。", "Network error."));
@@ -788,45 +920,13 @@ export function CertificateAdminTemplates({
   }
 
   async function handleDuplicateTemplate(template: CertificateAdminTemplate) {
-    if (!template.categoryId) {
-      setListError(t(locale, "模板缺少分类信息，无法复制。", "Template category is missing and cannot be duplicated."));
-      return;
-    }
-
     setDuplicatingTemplateId(template.id);
     setListMessage("");
     setListError("");
 
-    const zhSuffix = "（副本）";
-    const enSuffix = " (Copy)";
-
-    const payload = {
-      categoryId: template.categoryId,
-      name: `${template.name}${zhSuffix}`,
-      nameEn: template.nameEn ? `${template.nameEn}${enSuffix}` : null,
-      templateType: template.templateType,
-      issuerName: template.renderConfig?.issuerName ?? null,
-      pageSize: template.renderConfig?.pageSize ?? "A4_LANDSCAPE",
-      pageWidthMm: template.renderConfig?.pageWidthMm ?? null,
-      pageHeightMm: template.renderConfig?.pageHeightMm ?? null,
-      accentColor: template.renderConfig?.accentColor ?? null,
-      backgroundColor: template.renderConfig?.backgroundColor ?? null,
-      backgroundImageUrl: template.renderConfig?.backgroundImageUrl ?? null,
-      logoImageUrl: template.renderConfig?.logoImageUrl ?? null,
-      signatureImageUrl: template.renderConfig?.signatureImageUrl ?? null,
-      sealImageUrl: template.renderConfig?.sealImageUrl ?? null,
-      elements: Array.isArray(template.renderConfig?.elements) ? template.renderConfig?.elements : undefined,
-      isActive: template.isActive,
-      definitionName: template.definition?.name ? `${template.definition.name}${zhSuffix}` : `${template.name}${zhSuffix}`,
-      definitionNameEn: template.definition?.nameEn ? `${template.definition.nameEn}${enSuffix}` : null,
-      approvalMode: template.definition?.approvalMode ?? "auto",
-    };
-
     try {
-      const response = await fetch("/api/admin/certificates/templates", {
+      const response = await fetch(`/api/admin/certificates/templates/${template.id}/copy`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
       });
 
       let result: {
@@ -899,7 +999,7 @@ export function CertificateAdminTemplates({
         });
       }
 
-      setListMessage(t(locale, "模板已复制，请在下方编辑器继续调整。", "Template duplicated. Continue editing in the editor below."));
+      setListMessage(t(locale, "模板已复制并已禁用，请在审核后再启用。", "Template copied and disabled; review it before enabling."));
       window.location.hash = "template-editor";
       router.refresh();
     } catch {
@@ -1052,7 +1152,7 @@ export function CertificateAdminTemplates({
             <div className={`cpca-template-thumb tone-${index % 6}`}><div>{template.templateType === "ACHIEVEMENT" ? "Badge" : template.templateType === "CUSTOM" ? "Digital Card" : "A4 Landscape"}</div></div>
             <div className="cpca-template-body">
               <h3>{localName(locale, template)}</h3>
-              <div className="cpca-template-meta"><StatusBadge status={template.isActive ? "Active" : "Draft"}>{template.isActive ? "Active" : "Draft"}</StatusBadge><span>v{template.version}</span><span>{template.nameEn ? "EN/ZH" : "ZH"}</span><span>{getTemplateLayoutLabel(locale, template)}</span></div>
+              <div className="cpca-template-meta"><StatusBadge status={template.isActive ? "Active" : "Inactive"}>{template.isActive ? "Active" : "Inactive"}</StatusBadge><span>v{template.version}</span><span>{template.nameEn ? "EN/ZH" : "ZH"}</span><span>{getTemplateLayoutLabel(locale, template)}</span></div>
               <small>{template.issuedCount ?? 0} {t(locale, "已签发", "issued")}</small>
               <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" onClick={() => setSelectedTemplate(template)} type="button">{t(locale, "编辑", "Edit")}</button><button className="cpca-btn cpca-btn-ghost" onClick={() => void openTemplatePreview(template)} type="button">{t(locale, "预览", "Preview")}</button><button className="cpca-btn cpca-btn-ghost" disabled={duplicatingTemplateId === template.id} onClick={() => void handleDuplicateTemplate(template)} type="button">{duplicatingTemplateId === template.id ? t(locale, "复制中...", "Duplicating...") : t(locale, "复制", "Duplicate")}</button><button className="cpca-btn cpca-btn-danger" disabled={deletingTemplateId === template.id} onClick={() => void handleDeleteTemplate(template)} type="button">{deletingTemplateId === template.id ? t(locale, "删除中...", "Deleting...") : t(locale, "删除", "Delete")}</button></div>
             </div>
@@ -1094,10 +1194,12 @@ export function CertificateAdminIssue({
   locale,
   templates,
   recentIssues,
+  initialBatches = [],
 }: {
   locale: Locale;
   templates: CertificateAdminTemplate[];
   recentIssues: CertificateAdminIssue[];
+  initialBatches?: CertificateAdminBatch[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -1120,6 +1222,19 @@ export function CertificateAdminIssue({
   const templateVariableFields = getVisibleTemplateVariableFields(selectedTemplate, locale);
   const [singleVariableValues, setSingleVariableValues] = useState<Record<string, string>>({});
   const [batchVariableValues, setBatchVariableValues] = useState<Record<string, string>>({});
+  const [batchSource, setBatchSource] = useState<"MANUAL_LIST" | "ACTIVITY_ELIGIBLE_LIST">("MANUAL_LIST");
+  const [batchActivityId, setBatchActivityId] = useState("");
+  const [batchActivityOptions, setBatchActivityOptions] = useState<CertificateBatchActivityOption[]>([]);
+  const [batchActivityLoading, setBatchActivityLoading] = useState(false);
+  const [batchNotify, setBatchNotify] = useState(true);
+  const [batchPreflightReport, setBatchPreflightReport] = useState<CertificateBatchPreflightReport | null>(null);
+  const [batchPreflightLoading, setBatchPreflightLoading] = useState(false);
+  const [batchIdempotencyKey, setBatchIdempotencyKey] = useState(() => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `batch-${Date.now()}`));
+  const [batchList, setBatchList] = useState<CertificateAdminBatch[]>(initialBatches);
+  const [activeBatch, setActiveBatch] = useState<CertificateAdminBatch | null>(null);
+  const [batchDetailItems, setBatchDetailItems] = useState<CertificateAdminBatchItem[]>([]);
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const batchPollTimer = useRef<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [previewError, setPreviewError] = useState("");
@@ -1190,6 +1305,7 @@ export function CertificateAdminIssue({
     const defaults = buildInitialManualVariableValues(selectedTemplate);
     setSingleVariableValues((previous) => ({ ...defaults, ...previous }));
     setBatchVariableValues((previous) => ({ ...defaults, ...previous }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate?.id]);
 
   useEffect(() => {
@@ -1467,71 +1583,258 @@ export function CertificateAdminIssue({
     }
   }
 
-  async function issueBatchCertificates() {
-    setBatchMessage("");
-    const parsedEmails = parseManualIssueEmails(batchEmails);
+  function isBatchTerminal(status: string) {
+    return ["COMPLETED", "COMPLETED_WITH_FAILURES", "FAILED"].includes(status);
+  }
 
-    if (!templateId || parsedEmails.length === 0) {
-      setBatchMessage(t(locale, "请选择模板并填写至少一个邮箱。", "Select a template and enter at least one email."));
+  async function loadBatchActivities() {
+    if (batchActivityOptions.length > 0 || batchActivityLoading) {
+      return;
+    }
+    setBatchActivityLoading(true);
+    try {
+      const response = await fetch("/api/activities?limit=100", { cache: "no-store" });
+      if (!response.ok) {
+        return;
+      }
+      const result = (await response.json()) as {
+        activities?: Array<{ id: string; title: string; titleEn?: string | null; status: string; _count?: { participations?: number } }>;
+      };
+      setBatchActivityOptions((result.activities ?? []).map((activity) => ({
+        id: activity.id,
+        title: activity.title,
+        titleEn: activity.titleEn ?? null,
+        status: activity.status,
+        participations: activity._count?.participations ?? 0,
+      })));
+    } catch {
+      // Keep the activity selector empty; the admin can retry by switching sources.
+    } finally {
+      setBatchActivityLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (mode === "batch" && batchSource === "ACTIVITY_ELIGIBLE_LIST") {
+      void loadBatchActivities();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, batchSource]);
+
+  async function runBatchPreflight() {
+    setBatchMessage("");
+    setBatchPreflightReport(null);
+
+    if (!templateId) {
+      setBatchMessage(t(locale, "请选择证书模板。", "Select a certificate template first."));
+      return;
+    }
+    if (batchSource === "MANUAL_LIST" && parseManualIssueEmails(batchEmails).length === 0) {
+      setBatchMessage(t(locale, "请填写至少一个收件人邮箱。", "Enter at least one recipient email."));
+      return;
+    }
+    if (batchSource === "ACTIVITY_ELIGIBLE_LIST" && !batchActivityId) {
+      setBatchMessage(t(locale, "请选择活动。", "Select an activity."));
       return;
     }
 
-    setBatchLoading(true);
-
+    setBatchPreflightLoading(true);
     try {
-      const response = await fetch("/api/admin/certificates/issue", {
+      const response = await fetch("/api/admin/certificates/batches/preflight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           templateId,
-          emails: parsedEmails,
-          issueDate: batchIssueDate,
-          variableValues: normalizeManualVariablePayload(batchVariableValues),
+          source: batchSource,
+          ...(batchSource === "MANUAL_LIST" ? { recipients: batchEmails } : {}),
+          ...(batchSource === "ACTIVITY_ELIGIBLE_LIST" ? { activityId: batchActivityId } : {}),
         }),
       });
-
-      let result: {
-        error?: string;
-        summary?: { total: number; succeeded: number; failed: number };
-        results?: Array<{ email: string; error?: string }>;
-      } = {};
-      const responseType = response.headers.get("content-type") ?? "";
-
-      if (responseType.includes("application/json")) {
-        result = (await response.json()) as {
-          error?: string;
-          summary?: { total: number; succeeded: number; failed: number };
-          results?: Array<{ email: string; error?: string }>;
-        };
-      } else if (!response.ok) {
-        const rawError = await response.text();
-        if (rawError.trim()) {
-          result.error = rawError;
-        }
-      }
-
+      const result = (await response.json().catch(() => ({}))) as { error?: string; report?: CertificateBatchPreflightReport };
       if (!response.ok) {
-        setBatchMessage(result.error ?? t(locale, "批量签发失败", "Batch issue failed"));
+        setBatchMessage(result.error ?? t(locale, "预检失败。", "Preflight failed."));
+        return;
+      }
+      setBatchPreflightReport(result.report ?? null);
+    } catch {
+      setBatchMessage(t(locale, "网络错误。", "Network error."));
+    } finally {
+      setBatchPreflightLoading(false);
+    }
+  }
+
+  async function refreshBatchList() {
+    try {
+      const response = await fetch("/api/admin/certificates/batches?limit=8", { cache: "no-store" });
+      if (!response.ok) {
+        return;
+      }
+      const result = (await response.json()) as { batches?: CertificateAdminBatch[] };
+      setBatchList(result.batches ?? []);
+    } catch {
+      // Keep the existing list on transient failures.
+    }
+  }
+
+  async function pollBatchProcess(targetBatchId: string) {
+    try {
+      const response = await fetch(`/api/admin/certificates/batches/${encodeURIComponent(targetBatchId)}/process`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        batch?: CertificateAdminBatch;
+        items?: CertificateAdminBatchItem[];
+      };
+      if (!response.ok || !result.batch) {
+        setBatchProcessing(false);
+        setBatchMessage(result.error ?? t(locale, "批次处理失败。", "Batch processing failed."));
+        return;
+      }
+      setActiveBatch(result.batch);
+      setBatchDetailItems(result.items ?? []);
+      setBatchList((previous) => previous.map((entry) => (entry.id === result.batch!.id ? { ...entry, ...result.batch! } : entry)));
+      if (isBatchTerminal(result.batch.status)) {
+        setBatchProcessing(false);
+        await refreshBatchList();
+        router.refresh();
+      }
+    } catch {
+      setBatchProcessing(false);
+      setBatchMessage(t(locale, "网络错误。", "Network error."));
+    }
+  }
+
+  useEffect(() => {
+    if (!activeBatch || !batchProcessing || isBatchTerminal(activeBatch.status)) {
+      return;
+    }
+
+    batchPollTimer.current = window.setTimeout(() => {
+      void pollBatchProcess(activeBatch.id);
+    }, 1500);
+
+    return () => {
+      if (batchPollTimer.current !== null) {
+        window.clearTimeout(batchPollTimer.current);
+        batchPollTimer.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBatch?.id, activeBatch?.status, batchProcessing]);
+
+  async function createBatch() {
+    setBatchMessage("");
+
+    if (!templateId) {
+      setBatchMessage(t(locale, "请选择证书模板。", "Select a certificate template first."));
+      return;
+    }
+    if (batchSource === "MANUAL_LIST" && parseManualIssueEmails(batchEmails).length === 0) {
+      setBatchMessage(t(locale, "请填写至少一个收件人邮箱。", "Enter at least one recipient email."));
+      return;
+    }
+    if (batchSource === "ACTIVITY_ELIGIBLE_LIST" && !batchActivityId) {
+      setBatchMessage(t(locale, "请选择活动。", "Select an activity."));
+      return;
+    }
+
+    setBatchLoading(true);
+    try {
+      const response = await fetch("/api/admin/certificates/batches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: batchIdempotencyKey,
+          templateId,
+          source: batchSource,
+          issueDate: batchIssueDate,
+          notify: batchNotify,
+          variableValues: normalizeManualVariablePayload(batchVariableValues),
+          ...(batchSource === "MANUAL_LIST" ? { recipients: batchEmails } : {}),
+          ...(batchSource === "ACTIVITY_ELIGIBLE_LIST" ? { activityId: batchActivityId } : {}),
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        replayed?: boolean;
+        batch?: CertificateAdminBatch;
+        items?: CertificateAdminBatchItem[];
+      };
+      if (!response.ok || !result.batch) {
+        setBatchMessage(result.error ?? t(locale, "创建批次失败。", "Failed to create the batch."));
         return;
       }
 
-      const summaryText = result.summary
-        ? `${t(locale, "批量签发完成", "Batch issue completed")}: ${result.summary.succeeded}/${result.summary.total}`
-        : t(locale, "批量签发完成", "Batch issue completed");
-      const failedRows = (result.results ?? []).filter((item) => item.error).slice(0, 3);
-      const failedText = failedRows.length
-        ? ` ${t(locale, "失败", "Failed")}: ${failedRows.map((item) => `${item.email} (${item.error})`).join("; ")}`
-        : "";
-      setBatchMessage(`${summaryText}${failedText}`);
-
-      if (result.summary?.failed === 0) {
-        setBatchEmails("");
+      setActiveBatch(result.batch);
+      setBatchDetailItems(result.items ?? []);
+      setBatchProcessing(true);
+      setBatchPreflightReport(null);
+      if (!result.replayed) {
+        setBatchIdempotencyKey(typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `batch-${Date.now()}`);
       }
-      router.refresh();
+      await refreshBatchList();
     } catch {
-      setBatchMessage(t(locale, "网络错误", "Network error"));
+      setBatchMessage(t(locale, "网络错误。", "Network error."));
     } finally {
       setBatchLoading(false);
+    }
+  }
+
+  async function retryFailedBatch() {
+    if (!activeBatch) {
+      return;
+    }
+    setBatchProcessing(true);
+    setBatchMessage("");
+    try {
+      const response = await fetch(`/api/admin/certificates/batches/${encodeURIComponent(activeBatch.id)}/retry-failed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        batch?: CertificateAdminBatch;
+        items?: CertificateAdminBatchItem[];
+      };
+      if (!response.ok || !result.batch) {
+        setBatchProcessing(false);
+        setBatchMessage(result.error ?? t(locale, "重试失败。", "Retry failed."));
+        return;
+      }
+      setActiveBatch(result.batch);
+      setBatchDetailItems(result.items ?? []);
+      if (isBatchTerminal(result.batch.status)) {
+        setBatchProcessing(false);
+        await refreshBatchList();
+      }
+    } catch {
+      setBatchProcessing(false);
+      setBatchMessage(t(locale, "网络错误。", "Network error."));
+    }
+  }
+
+  async function viewBatch(batch: CertificateAdminBatch) {
+    setBatchMessage("");
+    try {
+      const response = await fetch(`/api/admin/certificates/batches/${encodeURIComponent(batch.id)}`, { cache: "no-store" });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        batch?: CertificateAdminBatch;
+        items?: CertificateAdminBatchItem[];
+      };
+      if (!response.ok || !result.batch) {
+        setBatchMessage(result.error ?? t(locale, "加载批次失败。", "Failed to load the batch."));
+        return;
+      }
+      setActiveBatch(result.batch);
+      setBatchDetailItems(result.items ?? []);
+      setBatchProcessing(!isBatchTerminal(result.batch.status));
+    } catch {
+      setBatchMessage(t(locale, "网络错误。", "Network error."));
     }
   }
 
@@ -1599,47 +1902,7 @@ export function CertificateAdminIssue({
     setMessage("");
     setRecordActionLoadingId(issue.id);
     try {
-      if (issue.generatedFileUrl) {
-        const html = decodeHtmlDataUrl(issue.generatedFileUrl);
-        if (html) {
-          setPreviewOpen(true);
-          setPreviewLoading(false);
-          setPreviewError("");
-          setPreviewHtml(html);
-          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
-          setPreviewDialogSubtitle(issue.certificateNumber || "");
-        } else {
-          window.open(issue.generatedFileUrl, "_blank", "noopener,noreferrer");
-        }
-        return;
-      }
-
-      const response = await fetch(`/api/certificates/${encodeURIComponent(issue.id)}/download`, {
-        method: "POST",
-      });
-      const result = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        download?: { url?: string | null; verificationCode?: string | null };
-      };
-
-      if (!response.ok) {
-        setMessage(result.error ?? t(locale, "下载失败。", "Download failed."));
-        return;
-      }
-
-      if (result.download?.url) {
-        const html = decodeHtmlDataUrl(result.download.url);
-        if (html) {
-          setPreviewOpen(true);
-          setPreviewLoading(false);
-          setPreviewError("");
-          setPreviewHtml(html);
-          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
-          setPreviewDialogSubtitle(issue.certificateNumber || result.download.verificationCode || "");
-        } else {
-          window.open(result.download.url, "_blank", "noopener,noreferrer");
-        }
-      }
+      window.open(`/api/certificates/${encodeURIComponent(issue.id)}/artifact?disposition=attachment`, "_blank", "noopener,noreferrer");
       router.refresh();
     } catch {
       setMessage(t(locale, "网络错误。", "Network error."));
@@ -1650,12 +1913,17 @@ export function CertificateAdminIssue({
 
   async function revokeIssuedCertificate(issue: CertificateAdminIssue) {
     setMessage("");
+    const reason = window.prompt(t(locale, "请输入撤销原因（至少 3 个字符）：", "Enter a revocation reason (at least 3 characters):"))?.trim();
+    if (!reason) {
+      setMessage(t(locale, "撤销原因不能为空。", "A revocation reason is required."));
+      return;
+    }
     setRecordActionLoadingId(issue.id);
     try {
       const response = await fetch(`/api/admin/certificates/${encodeURIComponent(issue.id)}/revoke`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ reason }),
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
 
@@ -1665,34 +1933,6 @@ export function CertificateAdminIssue({
       }
 
       setMessage(t(locale, "证书已撤回。", "Certificate revoked."));
-      router.refresh();
-    } catch {
-      setMessage(t(locale, "网络错误。", "Network error."));
-    } finally {
-      setRecordActionLoadingId(null);
-    }
-  }
-
-  async function deleteIssuedCertificate(issue: CertificateAdminIssue) {
-    const confirmed = window.confirm(t(locale, "确认删除该证书记录？", "Delete this certificate record?"));
-    if (!confirmed) {
-      return;
-    }
-
-    setMessage("");
-    setRecordActionLoadingId(issue.id);
-    try {
-      const response = await fetch(`/api/admin/certificates/${encodeURIComponent(issue.id)}`, {
-        method: "DELETE",
-      });
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
-
-      if (!response.ok) {
-        setMessage(result.error ?? t(locale, "删除失败。", "Delete failed."));
-        return;
-      }
-
-      setMessage(t(locale, "证书已删除。", "Certificate deleted."));
       router.refresh();
     } catch {
       setMessage(t(locale, "网络错误。", "Network error."));
@@ -1821,16 +2061,122 @@ export function CertificateAdminIssue({
       ) : (
         <Card>
           <div className="cpca-form-grid">
-            <label><span>{t(locale, "证书模板", "Certificate Template")}</span><select onChange={(event) => setTemplateId(event.target.value)} value={templateId}><option value="">{t(locale, "选择模板", "Select template...")}</option>{activeTemplates.map((template) => <option key={template.id} value={template.id}>{localName(locale, template)}</option>)}</select></label>
+            <label><span>{t(locale, "证书模板", "Certificate Template")}</span><select onChange={(event) => { setTemplateId(event.target.value); setBatchPreflightReport(null); }} value={templateId}><option value="">{t(locale, "选择模板", "Select template...")}</option>{activeTemplates.map((template) => <option key={template.id} value={template.id}>{localName(locale, template)}</option>)}</select></label>
             <label><span>{t(locale, "分类", "Category")}</span><input readOnly value={selectedTemplate ? (localName(locale, { name: selectedTemplate.categoryName ?? "", nameEn: selectedTemplate.categoryNameEn ?? null })) : t(locale, "从模板自动匹配", "Auto-filled from template")} /></label>
             <label><span>{t(locale, "签发日期", "Issue Date")}</span><input onChange={(event) => setBatchIssueDate(event.target.value)} type="date" value={batchIssueDate} /></label>
-            <label className="wide"><span>{t(locale, "收件人邮箱（每行一个，或用逗号分隔）", "Recipient emails (one per line or comma-separated)")}</span><textarea onChange={(event) => setBatchEmails(event.target.value)} rows={6} value={batchEmails} /></label>
+            <label><span>{t(locale, "名单来源", "Recipient Source")}</span><select onChange={(event) => { const nextSource = event.target.value as "MANUAL_LIST" | "ACTIVITY_ELIGIBLE_LIST"; setBatchSource(nextSource); setBatchPreflightReport(null); }} value={batchSource}><option value="MANUAL_LIST">{t(locale, "手动/CSV 邮箱列表", "Manual/CSV email list")}</option><option value="ACTIVITY_ELIGIBLE_LIST">{t(locale, "活动合格名单", "Activity eligible list")}</option></select></label>
+            {batchSource === "ACTIVITY_ELIGIBLE_LIST" ? (
+              <label className="wide"><span>{t(locale, "选择活动", "Select activity")}</span><select onChange={(event) => { setBatchActivityId(event.target.value); setBatchPreflightReport(null); }} value={batchActivityId}><option value="">{batchActivityLoading ? t(locale, "加载活动中...", "Loading activities...") : t(locale, "选择活动", "Select activity...")}</option>{batchActivityOptions.map((activity) => <option key={activity.id} value={activity.id}>{localName(locale, { name: activity.title, nameEn: activity.titleEn })}（{activity.participations} {t(locale, "参与", "participants")}）</option>)}</select></label>
+            ) : (
+              <label className="wide"><span>{t(locale, "收件人邮箱（每行一个，或用逗号分隔）", "Recipient emails (one per line or comma-separated)")}</span><textarea onChange={(event) => { setBatchEmails(event.target.value); setBatchPreflightReport(null); }} rows={6} value={batchEmails} /></label>
+            )}
+            <label><span>{t(locale, "站内通知", "In-app notification")}</span><select onChange={(event) => setBatchNotify(event.target.value === "on")} value={batchNotify ? "on" : "off"}><option value="on">{t(locale, "每人签发后发送", "Notify each recipient")}</option><option value="off">{t(locale, "不发送", "Do not notify")}</option></select></label>
           </div>
           {renderVariableInputs(batchVariableValues, setBatchVariableValues)}
           {batchMessage ? <FormMessageText>{batchMessage}</FormMessageText> : null}
-          <div className="cpca-actions"><button className="cpca-btn cpca-btn-amber" disabled={batchLoading} onClick={issueBatchCertificates} type="button">{batchLoading ? t(locale, "批量签发中...", "Issuing batch...") : t(locale, "确认批量签发", "Confirm Batch Issue")}</button></div>
+          {batchPreflightReport?.summary ? (
+            <FormHelpText>
+              {t(locale, "预检结果", "Preflight")}: {t(locale, "总计", "total")} {batchPreflightReport.summary.total} · {t(locale, "有效", "valid")} {batchPreflightReport.summary.valid}
+              {batchPreflightReport.summary.malformed ? ` · ${t(locale, "格式错误", "malformed")} ${batchPreflightReport.summary.malformed}` : ""}
+              {batchPreflightReport.summary.duplicates ? ` · ${t(locale, "重复", "duplicates")} ${batchPreflightReport.summary.duplicates}` : ""}
+              {batchPreflightReport.summary.existingIssues ? ` · ${t(locale, "已签发", "already issued")} ${batchPreflightReport.summary.existingIssues}` : ""}
+              {batchPreflightReport.activity ? ` · ${batchPreflightReport.activity.title}: ${batchPreflightReport.activity.eligibleCount - batchPreflightReport.activity.alreadyIssuedCount}/${batchPreflightReport.activity.eligibleCount}` : ""}
+            </FormHelpText>
+          ) : null}
+          {batchPreflightReport?.rows?.some((row) => row.state === "malformed" || row.state === "duplicate") ? (
+            <div className="cpca-table-wrap">
+              <table className="cpca-table">
+                <thead>
+                  <tr>
+                    <th>{t(locale, "行", "Row")}</th>
+                    <th>{t(locale, "内容", "Content")}</th>
+                    <th>{t(locale, "问题", "Issue")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchPreflightReport.rows.filter((row) => row.state === "malformed" || row.state === "duplicate").slice(0, 10).map((row) => (
+                    <tr key={row.row}>
+                      <td className="cpca-mono">{row.row}</td>
+                      <td>{row.raw}</td>
+                      <td>{row.state === "malformed" ? t(locale, "邮箱格式错误", "Malformed email") : t(locale, "列表内重复", "Duplicate in list")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          <div className="cpca-actions">
+            <button className="cpca-btn cpca-btn-outline" disabled={batchPreflightLoading} onClick={runBatchPreflight} type="button">{batchPreflightLoading ? t(locale, "预检中...", "Checking...") : t(locale, "预检名单", "Preflight List")}</button>
+            <button className="cpca-btn cpca-btn-amber" disabled={batchLoading || batchProcessing} onClick={createBatch} type="button">{batchLoading ? t(locale, "创建批次中...", "Creating batch...") : batchProcessing ? t(locale, "批次处理中...", "Processing batch...") : t(locale, "创建并处理批次", "Create & Process Batch")}</button>
+          </div>
+          {activeBatch ? (
+            <div className="cpca-batch-panel">
+              <FormHelpText>
+                {t(locale, "批次", "Batch")} {activeBatch.id.slice(0, 8)} · {batchStatusLabel(locale, activeBatch.status)} · {t(locale, "成功", "succeeded")} {activeBatch.succeededCount}/{activeBatch.totalCount}{activeBatch.failedCount ? ` · ${t(locale, "失败", "failed")} ${activeBatch.failedCount}` : ""}
+              </FormHelpText>
+              {batchDetailItems.length ? (
+                <div className="cpca-table-wrap">
+                  <table className="cpca-table">
+                    <thead>
+                      <tr>
+                        <th>{t(locale, "邮箱", "Email")}</th>
+                        <th>{t(locale, "状态", "Status")}</th>
+                        <th>{t(locale, "证书编号", "Certificate Number")}</th>
+                        <th>{t(locale, "次数", "Attempts")}</th>
+                        <th>{t(locale, "错误", "Error")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batchDetailItems.slice(0, 20).map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.email}</td>
+                          <td><StatusBadge status={item.status}>{batchItemStatusLabel(locale, item.status)}</StatusBadge></td>
+                          <td className="cpca-mono">{item.certificateIssue?.verificationCode ?? "—"}</td>
+                          <td className="cpca-mono">{item.attempts}</td>
+                          <td>{item.error ?? ""}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              {activeBatch.failedCount > 0 && !batchProcessing ? (
+                <div className="cpca-actions"><button className="cpca-btn cpca-btn-outline" onClick={retryFailedBatch} type="button">{t(locale, "重试失败项", "Retry Failed Items")}</button></div>
+              ) : null}
+            </div>
+          ) : null}
         </Card>
       )}
+      {batchList.length ? (
+        <Card title={t(locale, "最近批次", "Recent Batches")}>
+          <div className="cpca-table-wrap">
+            <table className="cpca-table">
+              <thead>
+                <tr>
+                  <th>{t(locale, "创建时间", "Created")}</th>
+                  <th>{t(locale, "来源", "Source")}</th>
+                  <th>{t(locale, "证书", "Certificate")}</th>
+                  <th>{t(locale, "进度", "Progress")}</th>
+                  <th>{t(locale, "状态", "Status")}</th>
+                  <th>{t(locale, "操作", "Actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {batchList.slice(0, 8).map((batch) => (
+                  <tr key={batch.id}>
+                    <td>{new Date(batch.createdAt).toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}</td>
+                    <td>{batchSourceLabel(locale, batch.source, batch.activity)}</td>
+                    <td>{batch.definition ? localName(locale, { name: batch.definition.name, nameEn: batch.definition.nameEn }) : "—"}</td>
+                    <td className="cpca-mono">{batch.succeededCount + batch.failedCount}/{batch.totalCount}{batch.failedCount ? ` (${t(locale, "失败", "failed")} ${batch.failedCount})` : ""}</td>
+                    <td><StatusBadge status={batch.status}>{batchStatusLabel(locale, batch.status)}</StatusBadge></td>
+                    <td><button className="cpca-btn cpca-btn-ghost" onClick={() => void viewBatch(batch)} type="button">{t(locale, "查看", "View")}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : null}
       <Card title={t(locale, "最近签发记录", "Recent Issuances")}>
         <div className="cpca-table-wrap">
           <table className="cpca-table">
@@ -1856,6 +2202,7 @@ export function CertificateAdminIssue({
                     <div className="cpca-actions compact">
                       <button
                         className="cpca-btn cpca-btn-ghost"
+                        disabled={issue.status === "REVOKED"}
                         onClick={() => editIssuedCertificate(issue)}
                         type="button"
                       >
@@ -1877,14 +2224,6 @@ export function CertificateAdminIssue({
                       >
                         {t(locale, "撤回", "Revoke")}
                       </button>
-                      <button
-                        className="cpca-btn cpca-btn-danger"
-                        disabled={recordActionLoadingId === issue.id}
-                        onClick={() => void deleteIssuedCertificate(issue)}
-                        type="button"
-                      >
-                        {t(locale, "删除", "Delete")}
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1897,45 +2236,101 @@ export function CertificateAdminIssue({
   );
 }
 
-export function CertificateAdminApplications({ locale, issues }: { locale: Locale; issues: CertificateAdminIssue[] }) {
-  const rows = issues;
+export function CertificateAdminApplications({ locale }: { locale: Locale }) {
+  const router = useRouter();
+  const [rows, setRows] = useState<Array<any>>([]);
+  const [error, setError] = useState("");
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  useEffect(() => { void fetch("/api/admin/certificate-applications?limit=100").then(async (response) => { const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Request failed."); setRows(data.applications ?? []); }).catch((cause) => setError(cause instanceof Error ? cause.message : "Request failed.")); }, []);
+  async function review(id: string, action: "REQUEST_INFORMATION" | "APPROVE_AND_ISSUE" | "REJECT") { const message = action === "APPROVE_AND_ISSUE" ? undefined : window.prompt(action === "REJECT" ? t(locale, "请输入拒绝原因：", "Enter rejection reason:") : t(locale, "请输入需要补充的信息：", "Enter requested information:"))?.trim(); if (action !== "APPROVE_AND_ISSUE" && !message) return; setLoadingId(id); setError(""); try { const response = await fetch(`/api/admin/certificate-applications/${id}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, message }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Review failed."); setRows((current) => current.map((item) => item.id === id ? { ...item, ...(data.application ?? {}), status: data.application?.status ?? (action === "APPROVE_AND_ISSUE" ? "APPROVED" : action === "REJECT" ? "REJECTED" : "NEEDS_INFORMATION") } : item)); router.refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Review failed."); } finally { setLoadingId(null); } }
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书申请审核", "Certificate Applications")} description={t(locale, "审核用户主动提交的证书、志愿服务、项目完成和活动参与证明申请。", "Review user-initiated certificate requests.")} />
-      <div className="cpca-tab-row"><button className="cpca-btn" type="button">All ({rows.length})</button><button className="cpca-btn" type="button">Pending</button><button className="cpca-btn" type="button">Approved</button><button className="cpca-btn" type="button">Rejected</button><button className="cpca-btn" type="button">Needs Info</button></div>
-      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "申请人", "Applicant")}</th><th>{t(locale, "证书类型", "Certificate Type")}</th><th>{t(locale, "项目 / 活动", "Program / Event")}</th><th>{t(locale, "提交时间", "Submitted")}</th><th>{t(locale, "附件", "Attachments")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.slice(0, 8).map((issue, index) => <tr key={issue.id}><td><span className="cpca-strong">{issue.holderName}</span><small>{issue.holderEmail ?? "applicant@example.com"}</small></td><td>{issue.categoryName}</td><td>{issue.source ?? "Climate Passport"}</td><td>{issue.issueDate}</td><td>{index % 2 ? "1 file" : "—"}</td><td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-success" type="button">{t(locale, "通过", "Approve")}</button><button className="cpca-btn cpca-btn-danger" type="button">{t(locale, "拒绝", "Reject")}</button></div></td></tr>)}</tbody></table></div></Card>
+      {error ? <FormErrorText>{error}</FormErrorText> : null}
+      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "申请人", "Applicant")}</th><th>{t(locale, "证书类型", "Certificate Type")}</th><th>{t(locale, "项目 / 活动", "Program / Event")}</th><th>{t(locale, "提交时间", "Submitted")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.map((application) => <tr key={application.id}><td><span className="cpca-strong">{application.applicant?.name}</span><small>{application.applicant?.email}</small></td><td>{localName(locale, application.definition)}</td><td>{application.sourceLabel ?? "—"}</td><td>{application.submittedAt ? new Date(application.submittedAt).toLocaleDateString() : "—"}</td><td><StatusBadge status={application.status}>{application.status}</StatusBadge></td><td>{application.status === "SUBMITTED" ? <div className="cpca-actions compact"><button className="cpca-btn cpca-btn-success" disabled={loadingId === application.id} onClick={() => void review(application.id, "APPROVE_AND_ISSUE")} type="button">{t(locale, "通过并签发", "Approve & issue")}</button><button className="cpca-btn" disabled={loadingId === application.id} onClick={() => void review(application.id, "REQUEST_INFORMATION")} type="button">{t(locale, "补充信息", "Request info")}</button><button className="cpca-btn cpca-btn-danger" disabled={loadingId === application.id} onClick={() => void review(application.id, "REJECT")} type="button">{t(locale, "拒绝", "Reject")}</button></div> : "—"}</td></tr>)}{rows.length === 0 ? <tr><td className="cpca-muted" colSpan={6}>{t(locale, "暂无证书申请。", "No certificate applications.")}</td></tr> : null}</tbody></table></div></Card>
     </CertificateAdminFrame>
   );
 }
 
-export function CertificateAdminRules({ locale, templates }: { locale: Locale; templates: CertificateAdminTemplate[] }) {
-  const rules = [
-    ["Course Completion Auto-Issue", "Course", "All modules complete", "Course Standard", "Yes", "No", "Active"],
-    ["Event Check-in Certificate", "Event", "Successful check-in", "SHCW Official", "Yes", "No", "Active"],
-    ["Speaker Auto-Certificate", "Event", "Role=Speaker + complete", "Speaker Premium", "Yes", "Yes", "Active"],
-    ["LE Program Milestone", "Learning Exp.", "All stages complete", "Milestone Cred.", "Yes", "Yes", "Active"],
-    ["1000 Points Level Badge", "Points", "Points >= 1000", "Achievement Badge", "Yes", "No", "Active"],
-    ["Volunteer 50hrs Badge", "Volunteer", "Hours >= 50", "Volunteer Service", "Yes", "No", "Draft"],
-  ];
+export function CertificateAdminRules({ locale, initialRules, activities, definitions }: {
+  locale: Locale;
+  initialRules: CertificateIssuingRuleRow[];
+  activities: Array<{ id: string; title: string; titleEn?: string | null }>;
+  definitions: Array<{ id: string; name: string; nameEn?: string | null }>;
+}) {
+  const [rules, setRules] = useState(initialRules);
+  const [name, setName] = useState("");
+  const [activityId, setActivityId] = useState(activities[0]?.id ?? "");
+  const [definitionId, setDefinitionId] = useState(definitions[0]?.id ?? "");
+  const [isActive, setIsActive] = useState(false);
+  const [notifyUser, setNotifyUser] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function createRule() {
+    setLoading(true); setError(""); setMessage("");
+    try {
+      const response = await fetch("/api/admin/certificates/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, activityId, certificateDefinitionId: definitionId, trigger: "ACTIVITY_CHECKIN", isActive, notifyUser, requiresAdminConfirmation: false, conditionJson: null }),
+      });
+      const result = await response.json().catch(() => ({})) as { error?: string; rule?: CertificateIssuingRuleRow };
+      if (!response.ok || !result.rule) throw new Error(result.error ?? t(locale, "创建规则失败。", "Failed to create rule."));
+      setRules((current) => [result.rule!, ...current]);
+      setName(""); setIsActive(false);
+      setMessage(t(locale, "规则已保存。", "Rule saved."));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t(locale, "创建规则失败。", "Failed to create rule."));
+    } finally { setLoading(false); }
+  }
+
+  async function updateRule(rule: CertificateIssuingRuleRow, values: { name?: string; isActive?: boolean; notifyUser?: boolean }) {
+    setLoading(true); setError(""); setMessage("");
+    try {
+      const response = await fetch("/api/admin/certificates/rules", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: rule.id, ...values }) });
+      const result = await response.json().catch(() => ({})) as { error?: string; rule?: CertificateIssuingRuleRow };
+      if (!response.ok || !result.rule) throw new Error(result.error ?? t(locale, "更新规则失败。", "Failed to update rule."));
+      setRules((current) => current.map((item) => item.id === rule.id ? result.rule! : item));
+      setMessage(t(locale, "规则已更新。", "Rule updated."));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t(locale, "更新规则失败。", "Failed to update rule."));
+    } finally { setLoading(false); }
+  }
+
+  function renameRule(rule: CertificateIssuingRuleRow) {
+    const nextName = window.prompt(t(locale, "规则名称", "Rule name"), rule.name)?.trim();
+    if (nextName && nextName !== rule.name) void updateRule(rule, { name: nextName });
+  }
+
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
-      <PageHead title={t(locale, "自动签发规则", "Automatic Issuing Rules")} description={t(locale, "配置课程、活动、Learning Experience、积分和人工审核触发条件。", "Configure trigger conditions for auto-issuing certificates.")} action={<button className="cpca-btn cpca-btn-amber" type="button">+ {t(locale, "创建规则", "Create Rule")}</button>} />
-      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "规则名称", "Rule Name")}</th><th>{t(locale, "触发", "Trigger")}</th><th>{t(locale, "条件", "Condition")}</th><th>{t(locale, "模板", "Template")}</th><th>{t(locale, "通知", "Notify")}</th><th>{t(locale, "确认", "Confirm")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rules.map((rule) => <tr key={rule[0]}><td className="cpca-strong">{rule[0]}</td><td>{rule[1]}</td><td>{rule[2]}</td><td>{templates[0] ? localName(locale, templates[0]) : rule[3]}</td><td><span className="cpca-badge cpca-badge-green">{rule[4]}</span></td><td><span className="cpca-badge cpca-badge-gray">{rule[5]}</span></td><td><StatusBadge status={rule[6]}>{rule[6]}</StatusBadge></td><td><button className="cpca-btn cpca-btn-ghost" type="button">{t(locale, "编辑", "Edit")}</button></td></tr>)}</tbody></table></div></Card>
-      <Card title={t(locale, "创建签发规则", "Create Issuing Rule")}><div className="cpca-form-grid"><label><span>{t(locale, "规则名称", "Rule Name")}</span><input placeholder="Course Completion Auto-Issue" /></label><label><span>{t(locale, "触发来源", "Trigger Source")}</span><select><option>Course</option><option>Event</option><option>Learning Experience</option><option>Points</option><option>Manual Review</option></select></label><label className="wide"><span>{t(locale, "触发条件", "Trigger Condition")}</span><input placeholder="All modules complete, Points >= 1000" /></label><label><span>{t(locale, "证书模板", "Certificate Template")}</span><select>{templates.map((template) => <option key={template.id}>{localName(locale, template)}</option>)}</select></label><label><span>{t(locale, "签发时间", "Issue Timing")}</span><select><option>Immediate</option><option>Next Business Day</option><option>Manual Review</option></select></label></div><div className="cpca-toggle-row"><label><input defaultChecked type="checkbox" /> Admin Confirmation Required</label><label><input defaultChecked type="checkbox" /> Auto-notify User</label><label><input defaultChecked type="checkbox" /> Allow PDF Download</label><label><input type="checkbox" /> Public Display</label></div></Card>
+      <PageHead title={t(locale, "自动签发规则", "Automatic Issuing Rules")} description={t(locale, "当前仅支持活动签到成功后立即签发；其他触发来源尚未开放。", "Only immediate issuance after a successful Activity check-in is currently supported.")} />
+      {message ? <FormSuccessText>{message}</FormSuccessText> : null}{error ? <FormErrorText>{error}</FormErrorText> : null}
+      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "规则名称", "Rule Name")}</th><th>{t(locale, "活动", "Activity")}</th><th>{t(locale, "触发", "Trigger")}</th><th>{t(locale, "证书", "Certificate")}</th><th>{t(locale, "通知", "Notify")}</th><th>{t(locale, "签发数", "Issued")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rules.map((rule) => <tr key={rule.id}><td className="cpca-strong">{rule.name}</td><td>{locale === "zh" ? rule.activity.title : rule.activity.titleEn ?? rule.activity.title}</td><td>{t(locale, "活动签到成功", "Activity check-in")}</td><td>{localName(locale, rule.certificateDefinition)}</td><td><input aria-label={t(locale, "通知用户", "Notify user")} checked={rule.notifyUser} disabled={loading} onChange={(event) => void updateRule(rule, { notifyUser: event.target.checked })} type="checkbox" /></td><td>{rule._count?.issuances ?? 0}</td><td><StatusBadge status={rule.effective ? "ACTIVE" : rule.isActive ? "BLOCKED" : "INACTIVE"}>{rule.effective ? t(locale, "已启用", "Active") : rule.isActive ? t(locale, "配置无效", "Blocked") : t(locale, "未启用", "Inactive")}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-ghost" disabled={loading} onClick={() => renameRule(rule)} type="button">{t(locale, "重命名", "Rename")}</button><button className="cpca-btn cpca-btn-outline" disabled={loading || (!rule.eligible && !rule.isActive)} onClick={() => void updateRule(rule, { isActive: !rule.isActive })} type="button">{rule.isActive ? t(locale, "停用", "Disable") : t(locale, "启用", "Enable")}</button></div></td></tr>)}{rules.length === 0 ? <tr><td className="cpca-muted" colSpan={8}>{t(locale, "暂无持久化规则。", "No persisted rules.")}</td></tr> : null}</tbody></table></div></Card>
+      <Card title={t(locale, "创建签发规则", "Create Issuing Rule")}><div className="cpca-form-grid"><label><span>{t(locale, "规则名称", "Rule Name")}</span><input onChange={(event) => setName(event.target.value)} placeholder={t(locale, "活动签到证书", "Activity check-in certificate")} value={name} /></label><label><span>{t(locale, "触发来源", "Trigger Source")}</span><select value="ACTIVITY_CHECKIN"><option value="ACTIVITY_CHECKIN">{t(locale, "活动签到", "Activity check-in")}</option><option disabled>{t(locale, "课程完成（暂不可用）", "Course completion (unavailable)")}</option><option disabled>{t(locale, "Learning Experience 完成（暂不可用）", "Learning Experience completion (unavailable)")}</option><option disabled>{t(locale, "积分门槛（暂不可用）", "Points threshold (unavailable)")}</option></select></label><label><span>{t(locale, "活动", "Activity")}</span><select onChange={(event) => setActivityId(event.target.value)} value={activityId}>{activities.map((activity) => <option key={activity.id} value={activity.id}>{locale === "zh" ? activity.title : activity.titleEn ?? activity.title}</option>)}</select></label><label><span>{t(locale, "触发条件", "Trigger Condition")}</span><input readOnly value={t(locale, "签到成功（固定）", "Successful check-in (fixed)")} /></label><label><span>{t(locale, "证书", "Certificate")}</span><select onChange={(event) => setDefinitionId(event.target.value)} value={definitionId}>{definitions.map((definition) => <option key={definition.id} value={definition.id}>{localName(locale, definition)}</option>)}</select></label><label><span>{t(locale, "签发时间", "Issue Timing")}</span><input readOnly value={t(locale, "立即", "Immediate")} /></label></div><div className="cpca-toggle-row"><label><input checked={notifyUser} onChange={(event) => setNotifyUser(event.target.checked)} type="checkbox" /> {t(locale, "站内通知用户", "Notify user in app")}</label><label><input checked={isActive} onChange={(event) => setIsActive(event.target.checked)} type="checkbox" /> {t(locale, "保存后立即启用", "Enable after saving")}</label></div><div className="cpca-actions"><button className="cpca-btn cpca-btn-amber" disabled={loading || name.trim().length < 3 || !activityId || !definitionId} onClick={() => void createRule()} type="button">{loading ? t(locale, "保存中...", "Saving...") : t(locale, "保存规则", "Save Rule")}</button></div></Card>
     </CertificateAdminFrame>
   );
 }
 
-export function CertificateAdminRecords({ locale, issues }: { locale: Locale; issues: CertificateAdminIssue[] }) {
+export function CertificateAdminRecords({ locale, issues, pagination, summary, query, categories }: {
+  locale: Locale; issues: CertificateAdminIssue[];
+  pagination: { page: number; pageSize: number; total: number };
+  summary: { active: number; revoked: number };
+  query: { page: number; pageSize: number; search: string; status?: string; category?: string; issuedFrom?: string; issuedTo?: string };
+  categories: Array<{ id: string; name: string }>;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
   const rows = issues;
-  const active = rows.filter((issue) => !issue.status.toLowerCase().includes("revoked")).length;
-  const revoked = rows.filter((issue) => issue.status.toLowerCase().includes("revoked")).length;
 
-  // Pagination
-  const PAGE_SIZE = 20;
-  const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const pagedRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
+  const [search, setSearch] = useState(query.search);
+  const [status, setStatus] = useState(query.status ?? "");
+  const [category, setCategory] = useState(query.category ?? "");
+  const [issuedFrom, setIssuedFrom] = useState(query.issuedFrom ?? "");
+  const [issuedTo, setIssuedTo] = useState(query.issuedTo ?? "");
 
   // Preview modal
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -1945,6 +2340,40 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
   const [previewDialogTitle, setPreviewDialogTitle] = useState("");
   const [previewDialogSubtitle, setPreviewDialogSubtitle] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  function updateQuery(nextPage = 1) {
+    const params = new URLSearchParams();
+    params.set("page", String(nextPage)); params.set("pageSize", String(pagination.pageSize));
+    if (search.trim()) params.set("search", search.trim());
+    if (status) params.set("status", status); if (category) params.set("category", category);
+    if (issuedFrom) params.set("issuedFrom", issuedFrom); if (issuedTo) params.set("issuedTo", issuedTo);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  async function handleLifecycle(issue: CertificateAdminIssue, action: "revoke" | "restore" | "regenerate") {
+    let body: Record<string, string> | undefined;
+    if (action === "revoke") {
+      const reason = window.prompt(t(locale, "请输入撤销原因（至少 3 个字符）：", "Enter a revocation reason (at least 3 characters):"))?.trim();
+      if (!reason) { setActionError(t(locale, "撤销原因不能为空。", "A revocation reason is required.")); return; }
+      body = { reason };
+    } else if (!window.confirm(action === "restore" ? t(locale, "确认恢复该证书？", "Restore this certificate?") : t(locale, "确认重新生成该证书？", "Regenerate this certificate?"))) return;
+    setActionLoadingId(issue.id); setActionError(""); setActionMessage("");
+    try {
+      const response = await fetch(`/api/admin/certificates/${encodeURIComponent(issue.id)}/${action}`, { method: "POST", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+      const result = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) { setActionError(result.error ?? t(locale, "操作失败。", "Action failed.")); return; }
+      setActionMessage(action === "revoke" ? t(locale, "证书已撤销。", "Certificate revoked.") : action === "restore" ? t(locale, "证书已恢复。", "Certificate restored.") : t(locale, "证书已重新生成。", "Certificate regenerated."));
+      router.refresh();
+    } catch { setActionError(t(locale, "网络错误。", "Network error.")); } finally { setActionLoadingId(null); }
+  }
+
+  async function copyVerificationLink(issue: CertificateAdminIssue) {
+    const url = `${window.location.origin}/${locale}/verify/certificate/${encodeURIComponent(issue.certificateNumber)}`;
+    try { await navigator.clipboard.writeText(url); setActionMessage(t(locale, "验证链接已复制。", "Verification link copied.")); }
+    catch { setActionError(t(locale, "无法复制验证链接。", "Unable to copy verification link.")); }
+  }
 
   function closePreviewModal() {
     setPreviewOpen(false);
@@ -1964,47 +2393,7 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
   async function handleDownloadPrint(issue: CertificateAdminIssue) {
     setActionLoadingId(issue.id);
     try {
-      if (issue.generatedFileUrl) {
-        const html = decodeHtmlDataUrl(issue.generatedFileUrl);
-        if (html) {
-          setPreviewHtml(html);
-          setPreviewError("");
-          setPreviewLoading(false);
-          setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
-          setPreviewDialogSubtitle(issue.certificateNumber || "");
-          setPreviewOpen(true);
-        } else {
-          window.open(issue.generatedFileUrl, "_blank", "noopener,noreferrer");
-        }
-        return;
-      }
-      // Fetch from API if no local URL
-      setPreviewLoading(true);
-      setPreviewHtml("");
-      setPreviewError("");
-      setPreviewDialogTitle(issue.certificateName || t(locale, "证书预览", "Certificate preview"));
-      setPreviewDialogSubtitle(issue.certificateNumber || "");
-      setPreviewOpen(true);
-      const response = await fetch(`/api/certificates/${encodeURIComponent(issue.id)}/download`, { method: "POST" });
-      const result = (await response.json().catch(() => ({}))) as { error?: string; download?: { url?: string | null; verificationCode?: string | null } };
-      if (!response.ok) {
-        setPreviewError(result.error ?? t(locale, "下载失败。", "Download failed."));
-        setPreviewLoading(false);
-        return;
-      }
-      if (result.download?.url) {
-        const html = decodeHtmlDataUrl(result.download.url);
-        if (html) {
-          setPreviewHtml(html);
-          setPreviewDialogSubtitle(issue.certificateNumber || result.download.verificationCode || "");
-        } else {
-          setPreviewOpen(false);
-          window.open(result.download.url, "_blank", "noopener,noreferrer");
-        }
-      } else {
-        setPreviewError(t(locale, "暂无可预览的证书文件。", "No certificate file available for preview."));
-      }
-      setPreviewLoading(false);
+      window.open(`/api/certificates/${encodeURIComponent(issue.id)}/artifact?disposition=attachment`, "_blank", "noopener,noreferrer");
     } catch {
       setPreviewError(t(locale, "网络错误。", "Network error."));
       setPreviewLoading(false);
@@ -2013,20 +2402,27 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
     }
   }
 
-  const startIndex = (page - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(page * PAGE_SIZE, rows.length);
+  const startIndex = (pagination.page - 1) * pagination.pageSize + 1;
+  const endIndex = Math.min(pagination.page * pagination.pageSize, pagination.total);
 
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书记录管理", "Certificate Records")} description={t(locale, "查看所有已生成证书、下载、重新生成、撤销、恢复和复制验证链接。", "Complete history of all issued credentials.")} />
-      <div className="cpca-stats compact"><Metric label="Total" value={rows.length} /><Metric label="Active" value={active} /><Metric label="Expired" value="0" /><Metric label="Revoked" value={revoked} /></div>
-      <div className="cpca-filter-row"><input placeholder={t(locale, "搜索证书编号...", "Search certificate number...")} /><select><option>All Status</option><option>Active</option><option>Revoked</option></select><select><option>All Categories</option></select><input type="date" /><button className="cpca-btn cpca-btn-outline" type="button">Export CSV</button></div>
+      <div className="cpca-stats compact"><Metric label="Total" value={pagination.total} /><Metric label="Active" value={summary.active} /><Metric label="Revoked" value={summary.revoked} /></div>
+      <form className="cpca-filter-row" onSubmit={(event) => { event.preventDefault(); updateQuery(); }}>
+        <input aria-label={t(locale, "搜索证书", "Search certificates")} onChange={(event) => setSearch(event.target.value)} placeholder={t(locale, "编号、持有人或邮箱", "Number, holder, or email")} type="search" value={search} />
+        <select aria-label={t(locale, "状态", "Status")} onChange={(event) => setStatus(event.target.value)} value={status}><option value="">{t(locale, "全部状态", "All statuses")}</option>{["DRAFT", "PENDING_APPROVAL", "APPROVED", "GENERATED", "ISSUED", "REVOKED"].map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select aria-label={t(locale, "分类", "Category")} onChange={(event) => setCategory(event.target.value)} value={category}><option value="">{t(locale, "全部分类", "All categories")}</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+        <input aria-label={t(locale, "起始签发日期", "Issue date from")} onChange={(event) => setIssuedFrom(event.target.value)} type="date" value={issuedFrom} /><input aria-label={t(locale, "结束签发日期", "Issue date to")} onChange={(event) => setIssuedTo(event.target.value)} type="date" value={issuedTo} />
+        <button className="cpca-btn cpca-btn-outline" type="submit">{t(locale, "筛选", "Filter")}</button>
+      </form>
+      {actionMessage ? <FormSuccessText>{actionMessage}</FormSuccessText> : null}{actionError ? <FormErrorText>{actionError}</FormErrorText> : null}
       <Card>
         <div className="cpca-table-wrap">
           <table className="cpca-table">
             <thead><tr><th>{t(locale, "证书编号", "Cert Number")}</th><th>{t(locale, "证书名称", "Certificate Name")}</th><th>{t(locale, "持有人", "Holder")}</th><th>{t(locale, "签发日期", "Issue Date")}</th><th>{t(locale, "来源", "Source")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "验证次数", "Verifications")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead>
             <tbody>
-              {pagedRows.map((issue) => (
+              {rows.map((issue) => (
                 <tr key={issue.id}>
                   <td className="cpca-mono">{issue.certificateNumber}</td>
                   <td>{issue.certificateName}</td>
@@ -2036,7 +2432,7 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
                   <td><StatusBadge status={issue.status}>{issue.status}</StatusBadge></td>
                   <td>{issue.verificationCount ?? 0}</td>
                   <td>
-                    <button
+                    <div className="cpca-actions compact"><button
                       className="cpca-btn cpca-btn-ghost"
                       disabled={actionLoadingId === issue.id}
                       onClick={() => void handleDownloadPrint(issue)}
@@ -2045,7 +2441,8 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
                       {actionLoadingId === issue.id
                         ? t(locale, "加载中...", "Loading...")
                         : t(locale, "下载/打印", "Download/Print")}
-                    </button>
+                    </button><button className="cpca-btn cpca-btn-ghost" onClick={() => void copyVerificationLink(issue)} type="button">{t(locale, "复制链接", "Copy link")}</button>
+                    {issue.status === "REVOKED" ? <button className="cpca-btn cpca-btn-outline" disabled={actionLoadingId === issue.id} onClick={() => void handleLifecycle(issue, "restore")} type="button">{t(locale, "恢复", "Restore")}</button> : <><button className="cpca-btn cpca-btn-danger" disabled={actionLoadingId === issue.id} onClick={() => void handleLifecycle(issue, "revoke")} type="button">{t(locale, "撤销", "Revoke")}</button><button className="cpca-btn cpca-btn-ghost" disabled={actionLoadingId === issue.id} onClick={() => void handleLifecycle(issue, "regenerate")} type="button">{t(locale, "重新生成", "Regenerate")}</button></>}</div>
                   </td>
                 </tr>
               ))}
@@ -2058,19 +2455,19 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
         <span>
           {rows.length === 0
             ? t(locale, "暂无记录", "No records")
-            : t(locale, `显示 ${startIndex}–${endIndex}，共 ${rows.length} 条`, `Showing ${startIndex}–${endIndex} of ${rows.length}`)}
+            : t(locale, `显示 ${startIndex}–${endIndex}，共 ${pagination.total} 条`, `Showing ${startIndex}–${endIndex} of ${pagination.total}`)}
         </span>
         <div>
           <button
-            className={page === 1 ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className={pagination.page === 1 ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
+            disabled={pagination.page === 1}
+            onClick={() => updateQuery(Math.max(1, pagination.page - 1))}
             type="button"
           >
             {t(locale, "上一页", "Prev")}
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - pagination.page) <= 2)
             .reduce<Array<number | "…">>((acc, p, idx, arr) => {
               if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
               acc.push(p);
@@ -2079,12 +2476,12 @@ export function CertificateAdminRecords({ locale, issues }: { locale: Locale; is
             .map((item, idx) =>
               item === "…"
                 ? <span key={`ellipsis-${idx}`} style={{ padding: "0 4px", color: "var(--cp-text-muted)" }}>…</span>
-                : <button key={item} className={`cpca-btn ${page === item ? "cpca-btn-amber" : "cpca-btn-ghost"}`} onClick={() => setPage(item as number)} type="button">{item}</button>
+                : <button key={item} className={`cpca-btn ${pagination.page === item ? "cpca-btn-amber" : "cpca-btn-ghost"}`} onClick={() => updateQuery(item as number)} type="button">{item}</button>
             )}
           <button
-            className={page === totalPages ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className={pagination.page === totalPages ? "cpca-btn cpca-btn-ghost" : "cpca-btn cpca-btn-outline"}
+            disabled={pagination.page === totalPages}
+            onClick={() => updateQuery(Math.min(totalPages, pagination.page + 1))}
             type="button"
           >
             {t(locale, "下一页", "Next")}

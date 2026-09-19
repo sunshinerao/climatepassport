@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Locale } from "@/lib/site-content";
 
 function t(locale: Locale, zh: string, en: string) {
@@ -40,6 +40,30 @@ export function CertificatePortfolioPage({
   const [selectedCard, setSelectedCard] = useState<UserCertificateCard | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [applications, setApplications] = useState<Array<{ id: string; status: string; statement?: string | null; sourceType?: string | null; sourceId?: string | null; sourceLabel?: string | null; applicantMessage?: string | null; definition?: { name: string; nameEn?: string | null }; events?: Array<{ id: string; toStatus: string; kind: string; createdAt: string }> }>>([]);
+  const [definitions, setDefinitions] = useState<Array<{ id: string; name: string; nameEn?: string | null }>>([]);
+  const [requestError, setRequestError] = useState("");
+  const [requesting, setRequesting] = useState(false);
+  const [definitionId, setDefinitionId] = useState("");
+  const [statement, setStatement] = useState("");
+  const [sourceLabel, setSourceLabel] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/certificate-applications").then(async (response) => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Request failed.");
+      setApplications(data.applications ?? []); setDefinitions(data.definitions ?? []);
+    }).catch((cause) => setRequestError(cause instanceof Error ? cause.message : "Request failed."));
+  }, []);
+  async function submitRequest() {
+    if (!definitionId) { setRequestError(t(locale, "请选择证书类型。", "Select a certificate type.")); return; }
+    setRequesting(true); setRequestError("");
+    try { const response = await fetch("/api/certificate-applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ definitionId, statement, sourceLabel, submit: true, idempotencyKey: crypto.randomUUID() }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Request failed."); setApplications((current) => [data.application, ...current]); setStatement(""); setSourceLabel(""); } catch (cause) { setRequestError(cause instanceof Error ? cause.message : "Request failed."); } finally { setRequesting(false); }
+  }
+  async function withdraw(id: string) { const response = await fetch(`/api/certificate-applications/${id}/withdraw`, { method: "POST" }); const data = await response.json().catch(() => ({})); if (!response.ok) { setRequestError(data.error ?? "Request failed."); return; } setApplications((current) => current.map((item) => item.id === id ? data.application : item)); }
+  function editApplication(application: typeof applications[number]) { setEditingId(application.id); setDefinitionId(""); setStatement(application.statement ?? ""); setSourceLabel(application.sourceLabel ?? ""); }
+  async function saveApplication(submit: boolean) { if (!editingId) return; setRequesting(true); setRequestError(""); try { const response = await fetch(`/api/certificate-applications/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statement, sourceLabel, submit }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Request failed."); setApplications((current) => current.map((item) => item.id === editingId ? { ...item, ...data.application, events: item.events } : item)); setEditingId(null); setStatement(""); setSourceLabel(""); } catch (cause) { setRequestError(cause instanceof Error ? cause.message : "Request failed."); } finally { setRequesting(false); } }
 
   const issuedCount = cards.filter((c) => c.status === "ISSUED").length;
   const verifiedCount = cards.filter((c) => c.verificationCount > 0).length;
@@ -175,7 +199,7 @@ export function CertificatePortfolioPage({
               <h3>{t(locale, "操作", "Actions")}</h3>
               <div className="cpu-action-buttons">
                 <button className="cpu-btn cpu-btn-primary" type="button">
-                  {t(locale, "下载 PDF", "Download PDF")}
+                  {t(locale, "下载证书 HTML", "Download certificate HTML")}
                 </button>
                 <button className="cpu-btn cpu-btn-outline" type="button">
                   {t(locale, "复制验证链接", "Copy Verification Link")}
@@ -249,6 +273,12 @@ export function CertificatePortfolioPage({
           </div>
         </div>
       </div>
+
+      <section className="cpca-card cpca-form-card">
+        <div className="cpca-card-head"><h2>{editingId ? t(locale, "编辑申请", "Edit request") : t(locale, "申请证书", "Request a Certificate")}</h2></div>
+        <div className="cpca-card-body"><div className="cpca-form-grid">{!editingId ? <label><span>{t(locale, "证书类型", "Certificate type")}</span><select onChange={(event) => setDefinitionId(event.target.value)} value={definitionId}><option value="">{t(locale, "请选择", "Select")}</option>{definitions.map((definition) => <option key={definition.id} value={definition.id}>{locale === "zh" ? definition.name : definition.nameEn ?? definition.name}</option>)}</select></label> : null}<label><span>{t(locale, "相关来源（可选）", "Related source (optional)")}</span><input maxLength={240} onChange={(event) => setSourceLabel(event.target.value)} value={sourceLabel} /></label><label className="wide"><span>{t(locale, "申请说明", "Statement")}</span><textarea maxLength={4000} onChange={(event) => setStatement(event.target.value)} value={statement} /></label></div><p className="cpca-muted">{t(locale, "我确认所提交信息准确无误。", "I confirm that the submitted information is accurate.")}</p>{requestError ? <p className="form-error-text">{requestError}</p> : null}{editingId ? <div className="cpca-actions"><button className="cpca-btn" disabled={requesting} onClick={() => void saveApplication(false)} type="button">{t(locale, "保存草稿", "Save draft")}</button><button className="cpca-btn cpca-btn-amber" disabled={requesting} onClick={() => void saveApplication(true)} type="button">{requesting ? t(locale, "提交中...", "Submitting...") : t(locale, "重新提交", "Resubmit")}</button><button className="cpca-btn cpca-btn-ghost" onClick={() => setEditingId(null)} type="button">{t(locale, "取消", "Cancel")}</button></div> : <button className="cpca-btn cpca-btn-amber" disabled={requesting} onClick={() => void submitRequest()} type="button">{requesting ? t(locale, "提交中...", "Submitting...") : t(locale, "提交申请", "Submit request")}</button>}</div>
+      </section>
+      {applications.length ? <section className="cpca-card"><div className="cpca-card-head"><h2>{t(locale, "我的申请", "My requests")}</h2></div><div className="cpca-card-body"><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "证书", "Certificate")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "消息及历史", "Message & history")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{applications.map((application) => <tr key={application.id}><td>{locale === "zh" ? application.definition?.name : application.definition?.nameEn ?? application.definition?.name}</td><td>{application.status}</td><td>{application.applicantMessage ? <p>{application.applicantMessage}</p> : null}<small>{application.events?.map((event) => `${event.toStatus} · ${new Date(event.createdAt).toLocaleDateString()}`).join(" → ")}</small></td><td><div className="cpca-actions compact">{["DRAFT", "NEEDS_INFORMATION"].includes(application.status) ? <button className="cpca-btn" onClick={() => editApplication(application)} type="button">{t(locale, "编辑", "Edit")}</button> : null}{["DRAFT", "SUBMITTED", "NEEDS_INFORMATION"].includes(application.status) ? <button className="cpca-btn cpca-btn-danger" onClick={() => void withdraw(application.id)} type="button">{t(locale, "撤回", "Withdraw")}</button> : null}</div></td></tr>)}</tbody></table></div></div></section> : null}
 
       {/* Filter Bar */}
       <div className="cpu-filter-bar">

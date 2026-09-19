@@ -30,7 +30,7 @@ export function canRestoreCertificateStatus(status: string) {
 }
 
 export function canRevokeCertificateStatus(status: string) {
-  return status !== "REVOKED";
+  return status === "ISSUED";
 }
 
 export function getCertificateStatusAfterRegeneration(status: CertificateIssueStatus): CertificateIssueStatus {

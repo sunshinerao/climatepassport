@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { formatCertificateDate, getCertificateName } from "@/lib/server/certificate-module";
+import { listCertificateBatches } from "@/lib/server/certificate-batch-issuance";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { CertificateAdminIssue } from "@/components/certificate-admin-prototype";
 import type { Locale } from "@/lib/site-content";
@@ -10,7 +11,7 @@ export default async function AdminCertificateIssuePage({ params }: { params: { 
   await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/certificates/issue`);
   const prisma = getPrismaClient();
 
-  const [templates, issues] = prisma
+  const [templates, issues, batchList] = prisma
     ? await Promise.all([
         prisma.certificateTemplate.findMany({
           where: { isActive: true },
@@ -44,8 +45,9 @@ export default async function AdminCertificateIssuePage({ params }: { params: { 
             verifications: { select: { id: true } },
           },
         }),
+        listCertificateBatches(prisma, 8),
       ])
-    : [[], []];
+    : [[], [], { batches: [] }];
 
   return (
     <CertificateAdminIssue
@@ -89,6 +91,26 @@ export default async function AdminCertificateIssuePage({ params }: { params: { 
         issueVariableValues: issue.variableValuesJson && typeof issue.variableValuesJson === "object" && !Array.isArray(issue.variableValuesJson)
           ? (issue.variableValuesJson as Record<string, unknown>)
           : null,
+      }))}
+      initialBatches={batchList.batches.map((batch) => ({
+        id: batch.id,
+        idempotencyKey: batch.idempotencyKey,
+        source: batch.source,
+        status: batch.status,
+        templateId: batch.templateId,
+        definitionId: batch.definitionId,
+        activityId: batch.activityId,
+        issueDate: batch.issueDate?.toISOString() ?? null,
+        notifyRecipients: batch.notifyRecipients,
+        totalCount: batch.totalCount,
+        succeededCount: batch.succeededCount,
+        failedCount: batch.failedCount,
+        error: batch.error,
+        createdAt: batch.createdAt.toISOString(),
+        completedAt: batch.completedAt?.toISOString() ?? null,
+        definition: batch.definition ? { name: batch.definition.name, nameEn: batch.definition.nameEn } : null,
+        activity: batch.activity ? { id: batch.activity.id, title: batch.activity.title, titleEn: batch.activity.titleEn } : null,
+        createdBy: batch.createdBy ? { name: batch.createdBy.name } : null,
       }))}
     />
   );

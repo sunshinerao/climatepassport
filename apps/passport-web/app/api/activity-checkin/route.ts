@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
-import { getPrismaClient } from "@/lib/server/prisma";
+import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
 import { triggerActivityRewards } from "@/lib/server/activity-rewards";
+import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity, canVerifyActivity } from "@/lib/server/verifier-activity";
+
+const directCheckinMethods = new Set(["MANUAL", "GEO", "NFC", "FACIAL"]);
 
 export async function GET(req: NextRequest) {
   const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
@@ -12,16 +16,21 @@ export async function GET(req: NextRequest) {
   const taskId = searchParams.get("taskId") ?? undefined;
   const userId = searchParams.get("userId") ?? undefined;
   const status = searchParams.get("status") ?? undefined;
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10)));
+  const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10));
+  const limit = Math.min(200, Math.max(1, Number.parseInt(searchParams.get("limit") ?? "50", 10)));
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (activityId && !(await canManageActivity(prisma, auth, activityId))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const where = {
     ...(activityId ? { activityId } : {}),
     ...(taskId ? { taskId } : {}),
     ...(userId ? { userId } : {}),
     ...(status ? { status: status as any } : {}),
+    ...(auth.role === "EVENT_MANAGER" ? { activity: { organizerUserId: auth.id } } : {}),
   };
 
   const [total, records] = await Promise.all([
@@ -38,111 +47,111 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER", "VERIFIER"]);
-  if (auth instanceof NextResponse) return auth;
+  const auth = await getCurrentUser();
+  if (!auth) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
 
-  const body = await req.json();
-  const { activityId, taskId, userId, method, locationLat, locationLng, locationJson, verifiedByUserId } = body;
-
-  if (!activityId || !userId || !method) {
-    return NextResponse.json({ error: "Missing required fields: activityId, userId, method" }, { status: 400 });
+  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  const activityId = typeof body?.activityId === "string" ? body.activityId : null;
+  const userId = typeof body?.userId === "string" ? body.userId : null;
+  const taskId = typeof body?.taskId === "string" && body.taskId ? body.taskId : null;
+  const method = typeof body?.method === "string" ? body.method : null;
+  if (!activityId || !userId || !method || !directCheckinMethods.has(method)) {
+    return NextResponse.json({ error: "activityId, userId and a valid direct check-in method are required." }, { status: 400 });
   }
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
-
-  // Check for duplicate within 5 minutes for same task
-  const recentDuplicate = await prisma.activityCheckinRecord.findFirst({
-    where: {
-      activityId,
-      userId,
-      ...(taskId ? { taskId } : {}),
-      checkinAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
-      status: "VALID",
-    },
-  });
-
-  const status = recentDuplicate ? "DUPLICATE" : "VALID";
-
-  const record = await prisma.activityCheckinRecord.create({
-    data: {
-      activityId,
-      taskId,
-      userId,
-      method,
-      status,
-      locationLat,
-      locationLng,
-      locationJson,
-      verifiedByUserId,
-      checkinAt: new Date(),
-    },
-  });
-
-  // Update participation status to CHECKED_IN if valid
-  if (status === "VALID") {
-    await prisma.activityParticipation.updateMany({
-      where: { activityId, userId, status: { in: ["REGISTERED", "ACCEPTED"] } },
-      data: { status: "CHECKED_IN" },
-    });
-    void triggerActivityRewards({ activityId, userId, trigger: "CHECKIN_COMPLETED" });
-
-    // Consecutive check-in streak reward
-    void (async () => {
-      try {
-        // Fetch all valid checkin timestamps for this user+activity, sorted desc
-        const allCheckins = await prisma.activityCheckinRecord.findMany({
-          where: { activityId, userId, status: "VALID" },
-          orderBy: { checkinAt: "desc" },
-          select: { checkinAt: true },
-        });
-
-        // Compute streak: count consecutive distinct UTC days ending today
-        const uniqueDays = Array.from(
-          new Set(
-            allCheckins.map((c) =>
-              new Date(c.checkinAt).toISOString().slice(0, 10)
-            )
-          )
-        ).sort().reverse(); // desc: most recent first
-
-        let streak = 0;
-        const today = new Date().toISOString().slice(0, 10);
-        let expected = today;
-        for (const day of uniqueDays) {
-          if (day === expected) {
-            streak++;
-            // Compute the previous day
-            const d = new Date(expected + "T00:00:00Z");
-            d.setUTCDate(d.getUTCDate() - 1);
-            expected = d.toISOString().slice(0, 10);
-          } else {
-            break;
-          }
-        }
-
-        if (streak < 2) return; // No streak reward below 2-day streak
-
-        // Check if any CONSECUTIVE_CHECKIN rules match this streak
-        const streakRules = await prisma.activityRewardRule.findMany({
-          where: { activityId, trigger: "CONSECUTIVE_CHECKIN" },
-          select: { id: true, conditionJson: true },
-        });
-
-        for (const rule of streakRules) {
-          const condition = (rule.conditionJson ?? {}) as Record<string, unknown>;
-          const required = typeof condition.streakRequired === "number" ? condition.streakRequired : null;
-          if (required === null || streak !== required) continue;
-
-          // Fire the reward for exactly this streak day (idempotency via streak milestone)
-          await triggerActivityRewards({ activityId, userId, trigger: "CONSECUTIVE_CHECKIN" });
-          break; // avoid double-firing if multiple rules match same streak
-        }
-      } catch (err) {
-        console.error("[activity-checkin] streak reward error", err);
-      }
-    })();
+  const selfTaskCheckin = Boolean(taskId && auth.id === userId);
+  if (!selfTaskCheckin && !["ADMIN", "EVENT_MANAGER", "VERIFIER"].includes(auth.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (!selfTaskCheckin && !(await canVerifyActivity(prisma, auth, activityId))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json({ record, status }, { status: 201 });
+  if (taskId) {
+    const task = await prisma.activityTask.findFirst({ where: { id: taskId, activityId, requiresCheckin: true }, select: { id: true } });
+    if (!task) return NextResponse.json({ error: "Activity task not found." }, { status: 404 });
+  }
+
+  const participation = await prisma.activityParticipation.findUnique({
+    where: { activityId_userId: { activityId, userId } },
+    select: { id: true, status: true },
+  });
+  if (!participation) {
+    return NextResponse.json({ error: "Participant is not registered for this activity." }, { status: 404 });
+  }
+  const eligible = taskId
+    ? ["REGISTERED", "ACCEPTED", "CHECKED_IN", "IN_PROGRESS"]
+    : ["REGISTERED", "ACCEPTED"];
+  if (!eligible.includes(participation.status)) {
+    const duplicate = !taskId && participation.status === "CHECKED_IN";
+    return NextResponse.json(
+      { status: duplicate ? "DUPLICATE" : "NOT_ELIGIBLE" },
+      { status: duplicate ? 200 : 409 }
+    );
+  }
+
+  const now = new Date();
+  const outcome = await prisma.$transaction(async (tx) => {
+    if (taskId) {
+      const recent = await tx.activityCheckinRecord.findFirst({
+        where: {
+          activityId,
+          userId,
+          taskId,
+          status: "VALID",
+          checkinAt: { gte: new Date(now.getTime() - 5 * 60 * 1000) },
+        },
+        select: { id: true, checkinAt: true },
+      });
+      if (recent) return { status: "DUPLICATE" as const, record: recent, participationChanged: false };
+    }
+
+    let participationChanged = false;
+    if (["REGISTERED", "ACCEPTED"].includes(participation.status)) {
+      const updated = await tx.activityParticipation.updateMany({
+        where: { id: participation.id, status: { in: ["REGISTERED", "ACCEPTED"] } },
+        data: { status: "CHECKED_IN" },
+      });
+      if (updated.count !== 1) return null;
+      participationChanged = true;
+    }
+
+    const record = await tx.activityCheckinRecord.create({
+      data: {
+        activityId,
+        taskId,
+        userId,
+        method: method as any,
+        status: "VALID",
+        locationLat: typeof body?.locationLat === "number" ? body.locationLat : null,
+        locationLng: typeof body?.locationLng === "number" ? body.locationLng : null,
+        locationJson: body?.locationJson && typeof body.locationJson === "object" ? body.locationJson as any : undefined,
+        verifiedByUserId: auth.id,
+        checkinAt: now,
+      },
+    });
+    return { status: "VALID" as const, record, participationChanged };
+  }, { isolationLevel: "Serializable" });
+
+  if (!outcome) {
+    return NextResponse.json({ status: "DUPLICATE" });
+  }
+
+  if (outcome.status === "VALID" && outcome.participationChanged) {
+    await triggerActivityRewards({ activityId, userId, trigger: "CHECKIN_COMPLETED" });
+  }
+
+  await writeCoreAuditLog({
+    actorUserId: auth.id,
+    action: "ACTIVITY_DIRECT_CHECKIN",
+    subjectType: "ActivityParticipation",
+    subjectId: participation.id,
+    result: outcome.status,
+    metadataJson: { activityId, taskId, method },
+    ...getRequestAuditContext(req),
+  });
+
+  return NextResponse.json({ record: outcome.record, status: outcome.status }, { status: outcome.status === "VALID" ? 201 : 200 });
 }

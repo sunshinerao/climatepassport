@@ -45,7 +45,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     select: { id: true, publicVisible: true },
   });
 
-  await writeCoreAuditLog({
+  void writeCoreAuditLog({
     actorUserId: user.id,
     action: "certificate.visibility.update",
     subjectType: "certificate_issue",
@@ -53,7 +53,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     result: updated.publicVisible ? "public" : "private",
     metadataJson: { publicVisible: updated.publicVisible },
     ...getRequestAuditContext(request),
-  });
+  }).catch(() => console.error("certificate audit write failed", { action: "visibility", certificateIssueId: issue.id }));
 
   return NextResponse.json({ ok: true, certificate: updated });
 }
