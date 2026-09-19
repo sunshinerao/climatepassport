@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { getRequestAuditContext } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
 import { canRestoreCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
@@ -29,20 +29,35 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Only revoked certificates can be restored." }, { status: 409 });
   }
 
-  await prisma.certificateIssue.update({
-    where: { id: issue.id },
-    data: { status: "ISSUED" },
-  });
-
-  await writeCoreAuditLog({
-    actorUserId: admin.id,
-    action: "certificate.restore",
-    subjectType: "certificate_issue",
-    subjectId: issue.id,
-    result: "restored",
-    metadataJson: { previousStatus: issue.status },
-    ...getRequestAuditContext(request),
-  });
+  const restoredAt = new Date();
+  try {
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.certificateIssue.updateMany({
+        where: { id: issue.id, status: "REVOKED" },
+        data: { status: "ISSUED", restoredAt, restoredByUserId: admin.id },
+      });
+      if (updated.count !== 1) throw new CertificateStatusConflict();
+      await tx.coreAuditLog.create({
+        data: {
+          actorUserId: admin.id,
+          action: "certificate.restore",
+          subjectType: "certificate_issue",
+          subjectId: issue.id,
+          result: "restored",
+          metadataJson: { previousStatus: issue.status, restoredAt: restoredAt.toISOString() },
+          ...getRequestAuditContext(request),
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof CertificateStatusConflict) {
+      return NextResponse.json({ error: "Certificate status changed. Refresh and try again." }, { status: 409 });
+    }
+    console.error("certificate restore failed:", error);
+    return NextResponse.json({ error: "Restore failed. No state was changed." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
+
+class CertificateStatusConflict extends Error {}

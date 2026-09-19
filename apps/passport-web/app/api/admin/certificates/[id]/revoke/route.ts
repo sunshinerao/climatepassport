@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { getRequestAuditContext } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
 import { canRevokeCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const revokeSchema = z.object({
-  reason: z.string().trim().max(1000).optional(),
+  reason: z.string().trim().min(3).max(1000),
 });
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -38,23 +38,45 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   if (!canRevokeCertificateStatus(issue.status)) {
-    return NextResponse.json({ error: "Certificate is already revoked." }, { status: 409 });
+    return NextResponse.json({ error: "Only issued certificates can be revoked." }, { status: 409 });
   }
 
-  await prisma.certificateIssue.update({
-    where: { id: issue.id },
-    data: { status: "REVOKED" },
-  });
-
-  await writeCoreAuditLog({
-    actorUserId: admin.id,
-    action: "certificate.revoke",
-    subjectType: "certificate_issue",
-    subjectId: issue.id,
-    result: "revoked",
-    metadataJson: { reason: payload.data.reason ?? null },
-    ...getRequestAuditContext(request),
-  });
+  const revokedAt = new Date();
+  try {
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.certificateIssue.updateMany({
+        where: { id: issue.id, status: issue.status },
+        data: {
+          status: "REVOKED",
+          revokedAt,
+          revokedByUserId: admin.id,
+          revocationReason: payload.data.reason,
+          restoredAt: null,
+          restoredByUserId: null,
+        },
+      });
+      if (updated.count !== 1) throw new CertificateStatusConflict();
+      await tx.coreAuditLog.create({
+        data: {
+          actorUserId: admin.id,
+          action: "certificate.revoke",
+          subjectType: "certificate_issue",
+          subjectId: issue.id,
+          result: "revoked",
+          metadataJson: { previousStatus: issue.status, reason: payload.data.reason, revokedAt: revokedAt.toISOString() },
+          ...getRequestAuditContext(request),
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof CertificateStatusConflict) {
+      return NextResponse.json({ error: "Certificate status changed. Refresh and try again." }, { status: 409 });
+    }
+    console.error("certificate revoke failed:", error);
+    return NextResponse.json({ error: "Revoke failed. No state was changed." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
+
+class CertificateStatusConflict extends Error {}

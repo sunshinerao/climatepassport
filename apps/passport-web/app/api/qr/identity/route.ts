@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/server/auth";
 import { resolveIdentityQrVerification } from "@/lib/server/identity-qr-verification";
 import { getIdentityQrExpiry, issueQrToken } from "@/lib/server/qr";
+import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token");
@@ -14,7 +15,10 @@ export async function GET(request: Request) {
   return NextResponse.json({ ok: true, status: result.status, verification: result.verification }, { status: result.httpStatus });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const rateLimit = await checkRateLimitAsync(getRequestRateLimitKey(request, "qr-identity-issue"), { limit: 20, windowMs: 60_000, sensitive: true });
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   const user = await getCurrentUser();
 
   if (!user) {

@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { appendFile, mkdir } from "node:fs/promises";
+import path from "node:path";
 
 type SendMailOptions = {
   to: string;
@@ -19,6 +21,15 @@ function getMailerConfig() {
 }
 
 export async function sendTransactionalMail(options: SendMailOptions) {
+  if (process.env.CP_TEST_ENV_ID === "climate-passport-isolated-test" && process.env.MAIL_TRANSPORT === "test-outbox") {
+    const configuredPath = process.env.MAIL_TEST_OUTBOX_PATH;
+    if (!configuredPath) throw new Error("MAIL_TEST_OUTBOX_PATH is required for the test outbox transport.");
+    const outboxPath = path.resolve(configuredPath);
+    await mkdir(path.dirname(outboxPath), { recursive: true });
+    await appendFile(outboxPath, `${JSON.stringify({ sentAt: new Date().toISOString(), ...options })}\n`, { encoding: "utf8", mode: 0o600 });
+    return;
+  }
+
   const { apiKey, from } = getMailerConfig();
   const resend = new Resend(apiKey);
 

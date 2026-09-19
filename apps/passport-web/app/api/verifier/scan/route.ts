@@ -5,8 +5,10 @@ import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { canVerifyActivity } from "@/lib/server/verifier-activity";
+import { scanInvitationSpecialPassQr } from "@/lib/server/verifier-invitation-special-pass";
+import { canVerifyActivity, isEmptyCertificateCondition } from "@/lib/server/verifier-activity";
 import { triggerActivityRewards } from "@/lib/server/activity-rewards";
+import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const scanSchema = z.object({
   token: z.string().trim().min(8),
@@ -40,6 +42,9 @@ async function canVerifyEvent(prisma: NonNullable<ReturnType<typeof getPrismaCli
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await checkRateLimitAsync(getRequestRateLimitKey(request, "verifier-scan"), { limit: 60, windowMs: 60_000, sensitive: true });
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   const verifier = await getCurrentUser();
   if (!verifier) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -71,6 +76,41 @@ export async function POST(request: Request) {
     },
   });
 
+  // Invitation/special-pass tokens have their own lifecycle semantics. Dispatch
+  // before the generic ACTIVE/expiry guards so consumed and revoked passes retain
+  // their specific verifier outcomes.
+  if (qr?.type === "INVITATION_SPECIAL_PASS") {
+    const outcome = await scanInvitationSpecialPassQr({
+      token: payload.data.token,
+      eventId: payload.data.eventId,
+      verifier,
+      auditContext,
+    });
+
+    const statusMap: Record<string, number> = {
+      invalid: 404,
+      expired: 410,
+      revoked: 410,
+      wrong_event: 409,
+      permission_denied: 403,
+      not_approved: 409,
+      already_used: 409,
+      unsupported_context: 400,
+      admitted: 200,
+    };
+
+    if (outcome.result === "admitted") {
+      return NextResponse.json({
+        result: outcome.result,
+        credentialKind: outcome.credentialKind,
+        event: outcome.event,
+        holderName: outcome.holderName,
+      });
+    }
+
+    return NextResponse.json({ result: outcome.result }, { status: statusMap[outcome.result] ?? 400 });
+  }
+
   if (!qr || qr.status !== "ACTIVE") {
     await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.scan", subjectType: "qr_token", result: "invalid", ...auditContext });
     return NextResponse.json({ result: "invalid" }, { status: 404 });
@@ -97,6 +137,8 @@ export async function POST(request: Request) {
 
   // Handle ACTIVITY_CHECKIN (unified Activity framework)
   if (qr.type === "ACTIVITY_CHECKIN" && qr.activityId && qr.userId) {
+    const activityId = qr.activityId;
+    const attendeeId = qr.userId;
     if (payload.data.eventId && payload.data.eventId !== qr.activityId) {
       await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity", subjectId: qr.activityId, result: "wrong_activity", ...auditContext });
       return NextResponse.json({ result: "wrong_event" }, { status: 409 });
@@ -110,8 +152,8 @@ export async function POST(request: Request) {
     const participation = await prisma.activityParticipation.findUnique({
       where: {
         activityId_userId: {
-          activityId: qr.activityId,
-          userId: qr.userId,
+          activityId,
+          userId: attendeeId,
         },
       },
       select: { id: true, status: true },
@@ -138,31 +180,43 @@ export async function POST(request: Request) {
     });
 
     const now = new Date();
-    await prisma.$transaction([
-      prisma.activityParticipation.update({
-        where: { id: participation.id },
-        data: {
-          status: "CHECKED_IN",
+    const checkin = await prisma.$transaction(async (tx) => {
+      // Recheck inside the serializable transaction: the preflight above is only
+      // for a useful response and cannot protect concurrent scanners.
+      const updated = await tx.activityParticipation.updateMany({
+        where: { id: participation.id, status: { in: ["REGISTERED", "ACCEPTED"] } },
+        data: { status: "CHECKED_IN" },
+      });
+      if (updated.count !== 1) return null;
+      const record = await tx.activityCheckinRecord.create({ data: { activityId, userId: attendeeId, method: "QR_CODE", status: "VALID", verifiedByUserId: verifier.id, checkinAt: now } });
+      await tx.qrToken.updateMany({ where: { id: qr.id, status: "ACTIVE" }, data: { status: "CONSUMED", consumedAt: now } });
+      const rules = await tx.activityCertificateRule.findMany({
+        where: {
+          activityId,
+          autoIssue: true,
+          isActive: true,
+          trigger: "ACTIVITY_CHECKIN",
+          requiresAdminConfirmation: false,
+          certificateDefinition: { isActive: true, approvalMode: "auto", template: { isActive: true }, category: { isActive: true, autoIssueEnabled: true } },
         },
-      }),
-      prisma.activityCheckinRecord.create({
-        data: {
-          activityId: qr.activityId,
-          userId: qr.userId,
-          method: "QR_CODE",
-          status: "VALID",
-          verifiedByUserId: verifier.id,
-          checkinAt: now,
-        },
-      }),
-      prisma.qrToken.update({
-        where: { id: qr.id },
-        data: {
-          status: "CONSUMED",
-          consumedAt: now,
-        },
-      }),
-    ]);
+        select: { id: true, certificateDefinitionId: true, conditionJson: true },
+      });
+      const issuances = [];
+      for (const rule of rules.filter((rule) => isEmptyCertificateCondition(rule.conditionJson))) {
+        const reservation = await tx.activityCertificateIssuance.upsert({
+          where: { ruleId_participationId: { ruleId: rule.id, participationId: participation.id } },
+          create: { activityId, participationId: participation.id, checkinRecordId: record.id, ruleId: rule.id, certificateDefinitionId: rule.certificateDefinitionId },
+          update: {}, select: { id: true },
+        });
+        issuances.push(reservation.id);
+      }
+      return { issuances };
+    }, { isolationLevel: "Serializable" });
+    if (!checkin) return NextResponse.json({ result: "already_checked_in" });
+    // Dynamic loading preserves legacy scan test dispatch without loading the
+    // Phase 1 helper for non-Activity credentials.
+    const { finalizeActivityCheckinCertificateIssuance } = await import("@/lib/server/activity-checkin-certificate-issuance");
+    const issuanceResults = await Promise.all(checkin.issuances.map(finalizeActivityCheckinCertificateIssuance));
 
     await writeCoreAuditLog({ actorUserId: verifier.id, action: "verifier.activity_checkin", subjectType: "activity_participation", subjectId: participation.id, result: "checked_in", ...auditContext });
 
@@ -196,6 +250,11 @@ export async function POST(request: Request) {
         climatePassportId: qr.user?.climatePassportId ?? null,
       },
       event: activity,
+      certificateIssuance: {
+        reserved: checkin.issuances.length,
+        issued: issuanceResults.filter((item) => item.status === "issued").length,
+        failed: issuanceResults.filter((item) => item.status === "failed").length,
+      },
     });
   }
 

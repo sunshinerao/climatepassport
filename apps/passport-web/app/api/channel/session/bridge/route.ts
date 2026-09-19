@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { issueChannelBridgeToken, requireAuthenticatedUser, sanitizeChannelBridgeTargetPath } from "@/lib/server/auth";
-import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const requestSchema = z.object({
   channel: z.literal("shcw").default("shcw"),
@@ -9,13 +9,15 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(getRequestRateLimitKey(request, "channel-bridge-issue"), {
+  const rateLimit = await checkRateLimitAsync(getRequestRateLimitKey(request, "channel-bridge-issue"), {
     limit: 20,
     windowMs: 60_000,
+    sensitive: true,
   });
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many bridge token requests." }, { status: 429 });
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   }
 
   const user = await requireAuthenticatedUser("en", "/en/dashboard");

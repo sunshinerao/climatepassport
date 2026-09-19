@@ -226,10 +226,10 @@ Event check-in QR should use short-lived opaque tokens. Signature is recommended
 
 ### Invitation / Special Pass QR
 
-- Confirms invitation or pass exists.
-- Confirms status and validity window.
-- Confirms verifier permission and entry rules.
-- Writes verification or entry log.
+- Event-only implementation confirms an approved invitation or pass, event binding, validity window, event verifier permission, and single-use entry rules.
+- Event-only tokens support server-side revocation and return only a display-safe holder name when admitted.
+- Audit correlations use deterministic opaque references; QR token, event, and subject IDs are not exposed in audit metadata or scan responses.
+- Activity verifier authorization is resolved in code through explicit `ActivityVerifier` assignments and Activity manager ownership checks. Activity invitation/pass QR issuance and scanning remain unimplemented, pending production deployment and E2E validation.
 
 ## 11. Public Certificate Verification Disclosure
 
@@ -293,6 +293,7 @@ Invitation / Special Pass QR:
 - Must have explicit validity window.
 - Must support single-use or limited-use modes when required.
 - Must support revocation.
+- The current Event-only implementation is single-use; Activity issuance and scanning are not implemented. The authorization prerequisite is resolved in code, while production deployment and E2E validation remain pending.
 
 ## 13. Privacy And Security Requirements
 

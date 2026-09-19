@@ -5,7 +5,7 @@ import { createUserSession, getDashboardPathForRole, normalizeUserEmail } from "
 import { consumeEmailTokenByCode, consumeEmailTokenByToken } from "@/lib/server/auth-email";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const confirmSchema = z
   .object({
@@ -38,13 +38,15 @@ export async function POST(request: Request) {
 
   const { locale, next, email, token, code } = payload.data;
 
-  const rateLimit = checkRateLimit(getRequestRateLimitKey(request, "auth-verify-confirm"), {
+  const rateLimit = await checkRateLimitAsync(getRequestRateLimitKey(request, "auth-verify-confirm"), {
     limit: 10,
     windowMs: 10 * 60_000,
+    sensitive: true,
   });
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   }
 
   const record = token

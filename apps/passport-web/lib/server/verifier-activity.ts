@@ -7,6 +7,31 @@ import { getPrismaClient } from "./prisma";
 
 type UserRole = string;
 
+export async function canManageActivity(
+  prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
+  actor: { id: string; role: UserRole },
+  activityId: string
+): Promise<boolean> {
+  if (actor.role === "ADMIN") {
+    return true;
+  }
+
+  if (actor.role !== "EVENT_MANAGER") {
+    return false;
+  }
+
+  const managed = await prisma.activity.findFirst({
+    where: { id: activityId, organizerUserId: actor.id },
+    select: { id: true },
+  });
+  return Boolean(managed);
+}
+
+/** Phase 1 deliberately supports unconditional rules only. */
+export function isEmptyCertificateCondition(value: unknown) {
+  return value == null || (typeof value === "string" && value.trim() === "");
+}
+
 export async function canVerifyActivity(
   prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
   verifier: { id: string; role: UserRole },
@@ -17,40 +42,20 @@ export async function canVerifyActivity(
   }
 
   if (verifier.role === "EVENT_MANAGER") {
-    const managed = await prisma.activity.findFirst({
-      where: { id: activityId, organizerUserId: verifier.id },
-      select: { id: true },
-    });
-    return Boolean(managed);
+    return canManageActivity(prisma, verifier, activityId);
   }
 
   if (verifier.role === "VERIFIER") {
-    // Check if verifier is assigned to this activity via ActivityRole
-    const role = await prisma.activityRole.findUnique({
+    const assignment = await prisma.activityVerifier.findUnique({
       where: {
-        activityId_roleType: {
+        userId_activityId: {
+          userId: verifier.id,
           activityId,
-          roleType: "VERIFIER" as any,
         },
       },
       select: { id: true },
     });
-
-    if (!role) {
-      return false;
-    }
-
-    // Check if the verifier has an active participation with this role
-    const participation = await prisma.activityParticipation.findFirst({
-      where: {
-        activityId,
-        userId: verifier.id,
-        status: { in: ["REGISTERED", "ACCEPTED", "CHECKED_IN"] },
-      },
-      select: { id: true },
-    });
-
-    return Boolean(participation);
+    return Boolean(assignment);
   }
 
   return false;
@@ -90,10 +95,10 @@ export async function loadVerifiableActivities(
   }
 
   if (actor.role === "VERIFIER") {
-    const participations = await prisma.activityParticipation.findMany({
+    const assignments = await prisma.activityVerifier.findMany({
       where: {
         userId: actor.id,
-        status: { in: ["REGISTERED", "ACCEPTED", "CHECKED_IN"] },
+        activity: { status: { in: ["PUBLISHED", "ONGOING"] } },
       },
       include: {
         activity: {
@@ -104,39 +109,7 @@ export async function loadVerifiableActivities(
       orderBy: { createdAt: "desc" },
     });
 
-    return participations
-      .map((p) => ({
-        id: p.activityId,
-        title: "", // Will be fetched separately if needed
-        titleEn: null,
-        startTime: null,
-        slug: "",
-      }))
-      .filter(Boolean) as Array<{
-      id: string;
-      title: string;
-      titleEn: string | null;
-      startTime: Date | null;
-      slug: string;
-    }>;
-
-    // Fetch activity details
-    const activityIds = participations.map((p) => p.activityId);
-    const activities = await (prisma as NonNullable<typeof prisma>).activity.findMany({
-      where: { id: { in: activityIds } },
-      select: { id: true, title: true, titleEn: true, startTime: true, slug: true },
-    });
-    const activityMap = new Map(activities.map((a) => [a.id, a]));
-    return participations.map((p) => {
-      const a = activityMap.get(p.activityId);
-      return {
-        id: p.activityId,
-        title: a?.title ?? "",
-        titleEn: a?.titleEn ?? null,
-        startTime: a?.startTime ?? null,
-        slug: a?.slug ?? "",
-      };
-    });
+    return assignments.map(({ activity }) => activity);
   }
 
   return [];

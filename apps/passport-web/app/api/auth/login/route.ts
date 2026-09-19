@@ -10,7 +10,7 @@ import {
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
 import { createEmailToken, sendVerificationEmail } from "@/lib/server/auth-email";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { checkRateLimitAsync, getRateLimitHeaders, getRateLimitSubjectReference, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const loginSchema = z.object({
   locale: z.enum(locales).default("en"),
@@ -38,13 +38,16 @@ export async function POST(request: Request) {
   const { locale, next, email, password } = payload.data;
   const normalizedEmail = normalizeUserEmail(email);
 
-  const rateLimit = checkRateLimit(`${getRequestRateLimitKey(request, "auth-login")}:${normalizedEmail}`, {
+  const rateLimit = await checkRateLimitAsync(`${getRequestRateLimitKey(request, "auth-login")}:${getRateLimitSubjectReference(normalizedEmail)}`, {
     limit: 8,
     windowMs: 5 * 60_000,
+    sensitive: true,
   });
 
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
+
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many login attempts. Please try again later." }, { status: 429 });
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   }
 
   const user = await prisma.user.findUnique({

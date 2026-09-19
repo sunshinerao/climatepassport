@@ -5,10 +5,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Locale } from "@/lib/site-content";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { writeCoreAuditLog } from "@/lib/server/audit";
 
 const SESSION_COOKIE_NAME = "climate-passport-session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-const PASSWORD_HASH_PREFIX = /^\$2[aby]\$/;
+// Full bcrypt verifier only: $2a$/$2b$/$2y$, two-digit cost, 22-char salt, 31-char hash.
+const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
 const DEFAULT_CHANNEL_BRIDGE_TARGET_PREFIXES = ["/en", "/zh", "/fr", "/de"];
 
 export type AuthenticatedUser = {
@@ -52,11 +54,15 @@ export async function hashUserPassword(password: string) {
 export async function verifyUserPassword(storedPassword: string, inputPassword: string) {
   const { compare } = await import("bcryptjs");
 
-  if (PASSWORD_HASH_PREFIX.test(storedPassword)) {
-    return compare(inputPassword, storedPassword);
+  if (!BCRYPT_HASH_REGEX.test(storedPassword)) {
+    return false;
   }
 
-  return storedPassword === inputPassword;
+  try {
+    return await compare(inputPassword, storedPassword);
+  } catch {
+    return false;
+  }
 }
 
 function hashBridgeToken(token: string) {
@@ -257,7 +263,13 @@ export async function issueChannelBridgeToken(options: {
   return payload;
 }
 
-export async function exchangeChannelBridgeToken(token: string) {
+export async function exchangeChannelBridgeToken(
+  token: string,
+  auditContext?: {
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  },
+) {
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -287,15 +299,53 @@ export async function exchangeChannelBridgeToken(token: string) {
   }
 
   if (bridge.consumedAt || bridge.expiresAt <= new Date()) {
+    await writeCoreAuditLog({
+      action: "CHANNEL_BRIDGE_EXCHANGE",
+      subjectType: "ChannelSessionBridge",
+      subjectId: bridge.id,
+      result: bridge.consumedAt ? "REPLAY_REJECTED" : "EXPIRED_REJECTED",
+      ipAddress: auditContext?.ipAddress,
+      userAgent: auditContext?.userAgent,
+      metadataJson: { channel: bridge.channel },
+    }).catch(() => undefined);
     return null;
   }
 
-  await prisma.channelSessionBridge.update({
-    where: { id: bridge.id },
+  // Claim the one-time token at the database layer so concurrent exchanges cannot both create sessions.
+  const consumed = await prisma.channelSessionBridge.updateMany({
+    where: {
+      id: bridge.id,
+      consumedAt: null,
+      expiresAt: { gt: new Date() },
+    },
     data: { consumedAt: new Date() },
   });
 
+  if (consumed.count !== 1) {
+    await writeCoreAuditLog({
+      action: "CHANNEL_BRIDGE_EXCHANGE",
+      subjectType: "ChannelSessionBridge",
+      subjectId: bridge.id,
+      result: "REPLAY_REJECTED",
+      ipAddress: auditContext?.ipAddress,
+      userAgent: auditContext?.userAgent,
+      metadataJson: { channel: bridge.channel },
+    }).catch(() => undefined);
+    return null;
+  }
+
   await createUserSession(bridge.userId);
+
+  await writeCoreAuditLog({
+    actorUserId: bridge.userId,
+    action: "CHANNEL_BRIDGE_EXCHANGE",
+    subjectType: "ChannelSessionBridge",
+    subjectId: bridge.id,
+    result: "SUCCESS",
+    ipAddress: auditContext?.ipAddress,
+    userAgent: auditContext?.userAgent,
+    metadataJson: { channel: bridge.channel },
+  }).catch(() => undefined);
 
   return {
     userId: bridge.userId,

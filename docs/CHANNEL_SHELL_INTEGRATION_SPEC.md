@@ -1,186 +1,37 @@
 # Channel Shell Integration Specification
 
-Last updated: 2026-05-23
+## Multi-programme target boundary (2026-09-18)
 
-## 1. Purpose
+The implemented contract below remains bounded and backward compatible. Target extensions follow [functional requirements V2](CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md), CP-FR-050 through 073, based on [FS, SHCW 2027 and Convener requirements](PROGRAMME_REQUIREMENTS_SYNTHESIS_20260918.md). These are planned capabilities, not currently callable endpoints.
 
-This spec defines how SHCW and future partner channel shells integrate with Climate Passport Core without duplicating Core platform capabilities.
+Core owns shared identity, consent and CP-managed participation/evidence/credential truth. Programme business systems are independently developed and maintained outside CP, including business workflows, data models and workspaces. CP does not implement or host FS learning/editorial modules, SHCW private annual operations, or Convener membership/Credit/support modules. CP supplies reusable scoped interfaces, not bespoke business development. Shared asset storage only holds authorized resources; it is not a second editable programme database.
 
-Climate Passport is the Core Platform.
+Required new contract families: scope/representation and authorized master data; unique source activity mapping; generic participation; private records/assets/versions and external decision receipts; consent/controlled publication access/withdrawal; personal/institutional contribution; scoped statistics/export and reliable receipts/reconciliation. Do not add programme-specific ActivateSeat, ComputeCredit, ManageLab or SupportRequest endpoints. V2 section 6 defines logical operations, not assumed URLs.
 
-SHCW is a Channel Shell.
+Each client must be registered with explicit programme/edition/object scopes, user versus service credentials, allowed origins/callbacks and revocation. Existing `SHCW` literal support does not automatically enable FS/CV clients, arbitrary tenants or OIDC. Real authentication/cookie/CSRF/logout behavior requires a reviewed design and dual-origin integration tests.
 
-## 2. Channel Shell Responsibilities
+Use source uniqueness, expected revisions, idempotency, signed outbox/inbox delivery, separate receipt/application/publication states and failure reconciliation. Source-owned content cannot overwrite Core attendance/credential state. Withdrawal blocks protected publication reads before async cache/index cleanup; inability to establish current permission must not expose youth work. Retain current Passport ID and opaque QR semantics regardless of differing examples in partner drafts.
 
-SHCW owns:
+## V1 bounded SHCW journey
 
-- CMS content
-- news
-- agenda display
-- event pages
-- speakers presentation
-- media center
-- partner display
-- SHCW branding
+Climate Passport remains the system of record for Core-owned facts. The currently implemented versioned SHCW contract exposes only the endpoints below; it must not persist bridge tokens or duplicate Core identity or certificate state. This implementation inventory does not restrict the separately planned scoped contract extensions above.
 
-Future partner shells may own equivalent channel-specific content, layout, navigation, and branding.
+* `POST /api/v1/channel/session/bridge` issues a short-lived, single-use token for an authenticated Core browser session.
+* `POST /api/v1/channel/session/exchange` consumes it atomically and establishes the Core session.
+* `GET /api/v1/channel/certificates/verify/{code}` is always public/minimum-disclosure.
 
-## 3. Climate Passport Core Responsibilities
+Requests use JSON and `channel: "SHCW"`. Stable errors are `{ "error": { "code": "..." } }`. The SDK wrappers are `issueV1ChannelBridge`, `exchangeV1ChannelBridge`, and `verifyV1ChannelCertificate`. Bridge calls include credentials; verification omits credentials.
 
-Climate Passport Core owns:
+## Enablement and safety
 
-- identity
-- account
-- login/register
-- Climate Passport ID
-- event registration
-- learning experience application
-- certificate
-- points
-- achievements
-- milestones
-- QR
-- verifier
-- check-in
-- verification
-- participation record
+The v1 endpoints are disabled by default. Set `CHANNEL_SHCW_ENABLED="true"` and only locale-root values in `CHANNEL_SHCW_TARGET_PATH_PREFIXES` (for example `/en,/zh`). Missing, malformed, or unsupported configuration fails closed. This is separate from legacy `CHANNEL_BRIDGE_TARGET_PATH_PREFIXES`; legacy unversioned endpoints retain their existing behavior.
 
-## 4. Integration Modes
+Public verification returns only status, validity, verification code, optional message, and minimum certificate facts (title, holder name, masked Passport ID, issuer, dates, credential type, certificate number, and verification timestamp). It never exposes email, phone, internal IDs, extended fields, or audit/query counts.
 
-### API Mode
+## Current status and deferrals
 
-The shell calls Core APIs for authenticated or public operations.
+This is a code-level Phase 1 contract and bridge foundation, not a production claim. No SHCW UI, external partner credentials, CORS/domain configuration, deployment, migration, or external end-to-end partner validation is included. Future channels require a new versioned contract/configuration review; `SHCW` is the only current key.
 
-Use for:
+## Takeover baseline
 
-- event registration
-- check-in validation
-- certificate verification
-- learning experience application
-- profile/passport data
-- participation status
-
-### SDK Mode
-
-The shell uses `packages/passport-sdk` helpers for API calls, session bridge, target path validation, and embedded flow setup.
-
-Use for:
-
-- SHCW front-end integration
-- future partner channel websites
-- reducing duplicated request signing and response handling
-
-### Embedded Flow Mode
-
-The shell embeds Core-owned flows with channel theming or redirects into Core-hosted flows.
-
-Use for:
-
-- login/register
-- event registration
-- learning experience application
-- verifier scanner
-- certificate verification
-- dashboard/passport views when deep integration is not required
-
-## 5. Session Bridge
-
-The current implementation includes one-time channel session bridge tokens:
-
-- Core issues a short-lived token for an authenticated Passport session.
-- Token is stored hashed at rest in `ChannelSessionBridge`.
-- Shell exchanges the token once.
-- Core consumes the token and creates the target session.
-
-Required next rules:
-
-- Token TTL must remain short.
-- Tokens must be consume-once.
-- Tokens must be stored hashed.
-- `targetPath` must be allowlisted.
-- Replay attempts must be logged.
-- Rate limiting must be added to issue/exchange endpoints.
-- Shell must not persist bridge tokens as long-lived credentials.
-
-## 6. Channel API Contract Principles
-
-- Core APIs return only data the channel is authorized to display.
-- Channel shell must pass channel identity where relevant.
-- Channel shell must not decode trusted QR payloads locally.
-- Channel shell must not rely on client-side QR contents as source of truth.
-- Channel shell must not decide verifier permissions locally.
-- Channel shell must not issue Passport IDs.
-- Channel shell must not issue certificates outside Core rules.
-- Channel shell must not write points, achievements, milestones, or participation records directly.
-
-## 7. Verifier Integration
-
-Verifier is integrated into Climate Passport Core, but exposed as API capability.
-
-SHCW or partner shells can provide a branded scanner UI, but must send the QR payload to Core for:
-
-- decode
-- permission check
-- event rule check
-- registration status check
-- attendance confirmation
-- verification logging
-
-The shell receives a scoped result such as:
-
-- valid
-- invalid
-- expired
-- revoked
-- wrong event
-- not registered
-- not approved
-- already checked in
-- permission denied
-
-## 8. Event And Agenda Integration
-
-SHCW may present agenda, event pages, speaker pages, and branded event content.
-
-Registration, approval, attendance, check-in, participation records, points, and certificates must be Core-owned.
-
-Recommended pattern:
-
-- SHCW renders event content.
-- Register/apply buttons call or embed Core flows.
-- User status widgets read from Core.
-- Check-in and participation states read from Core.
-
-## 9. Learning Experience Integration
-
-SHCW may promote a learning experience or show a branded landing page.
-
-Application, review, admission, participation, completion, certificate, points, milestones, and achievements are Core-owned.
-
-## 10. Certificate Integration
-
-SHCW may display certificate-related content and calls to action.
-
-Certificate issue, revocation, verification, download authorization, and verification logs are Core-owned.
-
-Public verification should resolve through `verify.climatepassport.org` or Core verification APIs.
-
-The verification page follows minimum necessary disclosure and verifies the credential, not the person.
-
-## 11. Security Requirements
-
-- Use HTTPS only.
-- Use short-lived bridge tokens.
-- Hash bridge tokens at rest.
-- Add rate limits to bridge and verifier APIs.
-- Use target path allowlists.
-- Use signed requests or channel credentials for server-to-server calls where needed.
-- Never expose Core signing/encryption keys to shell code.
-- Never place personal data in QR cleartext.
-
-## 12. Open Questions
-
-1. Final SDK package API shape.
-2. Whether SHCW first integrates through redirects, embedded flows, or direct API forms.
-3. Channel credential model for server-to-server operations.
-4. Target path allowlist ownership and deployment config format.
+The pre-existing atomic token service remains in `apps/passport-web/lib/server/auth.ts`; legacy routes remain under `/api/channel/...`. Contracts are in `packages/passport-contracts/src/index.ts`; the pure v1 resolver is `packages/passport-core/src/channel-config.ts`; v1 routes are under `apps/passport-web/app/api/v1/channel/`; and SDK v1 wrappers are in `packages/passport-sdk/src/index.ts`. The v1 verification adapter calls the existing public resolver with `SHCW_PUBLIC_API` and strips all non-minimum fields before response validation.

@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
+import { getRequestAuditContext } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
-import { buildCertificateArtifactWithQr, parseCertificateRenderConfig } from "@/lib/server/certificate-module";
-import {
-  buildIssuedCertificateVariableValues,
-  extractCapabilityTags,
-  extractLearningHoursFromProgramConfig,
-} from "@/lib/server/certificate-variables";
+import { buildCertificatePdfArtifactWithQr } from "@/lib/server/certificate-module";
+import { storeBuiltCertificateArtifact } from "@/lib/server/certificate-artifact-storage";
+import { parseCertificateRenderSnapshot } from "@/lib/server/certificate-snapshot";
 import {
   canRegenerateCertificateStatus,
   getCertificateStatusAfterRegeneration,
@@ -27,10 +24,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const issue = await prisma.certificateIssue.findUnique({
     where: { id: params.id },
-    include: {
-      user: { select: { name: true } },
-      definition: { include: { category: true, template: true } },
-    },
+    select: { id: true, status: true, verificationCode: true, issuedAt: true, createdAt: true, variableValuesJson: true, renderSnapshotJson: true },
   });
 
   if (!issue) {
@@ -41,111 +35,63 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: "Revoked certificates cannot be regenerated." }, { status: 409 });
   }
 
+  const snapshot = parseCertificateRenderSnapshot(issue.renderSnapshotJson);
+  if (!snapshot) {
+    return NextResponse.json({ error: "This legacy certificate has no valid rendering snapshot. Reissue it instead." }, { status: 409 });
+  }
   const certificateNumber = issue.verificationCode ?? issue.id;
   const verificationUrl = new URL(`/verify/certificate/${encodeURIComponent(certificateNumber)}`, request.url).toString();
-  const renderConfig = parseCertificateRenderConfig(issue.definition.template.renderConfigJson);
-
-  let source: Parameters<typeof buildIssuedCertificateVariableValues>[0]["source"] | undefined;
-  if (issue.sourceType === "LEARNING_EXPERIENCE" && issue.sourceId) {
-    const participation = await prisma.learningExperienceParticipation.findUnique({
-      where: { id: issue.sourceId },
-      include: {
-        program: {
-          select: {
-            title: true,
-            titleEn: true,
-            location: true,
-            locationEn: true,
-            programConfigJson: true,
-            eventLinks: {
-              orderBy: { order: "asc" },
-              take: 1,
-              select: {
-                event: {
-                  select: {
-                    title: true,
-                    titleEn: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (participation) {
-      const primaryEvent = participation.program.eventLinks[0]?.event;
-      const learningHours = extractLearningHoursFromProgramConfig(participation.program.programConfigJson);
-      const capabilityTags = extractCapabilityTags(
-        participation.program.programConfigJson,
-        participation.mentorReviewJson,
-      );
-
-      source = {
-        programName: participation.program.title,
-        programNameEn: participation.program.titleEn,
-        courseName: participation.program.title,
-        courseNameEn: participation.program.titleEn,
-        projectName: participation.program.title,
-        projectNameEn: participation.program.titleEn,
-        eventName: primaryEvent?.title,
-        eventNameEn: primaryEvent?.titleEn,
-        locationName: participation.program.location,
-        locationNameEn: participation.program.locationEn,
-        roleName: participation.status,
-        roleNameEn: participation.status,
-        completionDate: participation.completedAt,
-        learningHours,
-        capabilityTags,
-      };
-    }
-  }
-
-  const variableValues = buildIssuedCertificateVariableValues({
-    holderName: issue.user.name,
-    certificateName: issue.definition.nameEn ?? issue.definition.name,
-    certificateNameZh: issue.definition.name,
-    certificateNameEn: issue.definition.nameEn,
-    categoryName: issue.definition.category.nameEn ?? issue.definition.category.name,
-    categoryNameZh: issue.definition.category.name,
-    categoryNameEn: issue.definition.category.nameEn,
+  const variableValues = {
+    ...snapshot.variableValues,
+    certificateNumber,
+    verificationUrl,
+  };
+  const artifact = await buildCertificatePdfArtifactWithQr({
+    holderName: snapshot.holderName,
+    certificateName: snapshot.certificateName,
+    categoryName: snapshot.categoryName,
     issueDate: issue.issuedAt ?? issue.createdAt,
     certificateNumber,
     verificationUrl,
-    issuerName: renderConfig.issuerName,
-    signer: admin.name,
-    source,
-  });
-  const artifact = await buildCertificateArtifactWithQr({
-    holderName: issue.user.name,
-    certificateName: issue.definition.nameEn ?? issue.definition.name,
-    categoryName: issue.definition.category.nameEn ?? issue.definition.category.name,
-    issueDate: issue.issuedAt ?? issue.createdAt,
-    certificateNumber,
-    verificationUrl,
-    renderConfigJson: issue.definition.template.renderConfigJson,
+    renderConfigJson: snapshot.renderConfigJson,
     variableValues,
   });
 
-  await prisma.certificateIssue.update({
-    where: { id: issue.id },
-    data: {
-      generatedFileName: artifact.fileName,
-      generatedFileUrl: artifact.dataUrl,
-      status: getCertificateStatusAfterRegeneration(issue.status),
-    },
-  });
-
-  await writeCoreAuditLog({
-    actorUserId: admin.id,
-    action: "certificate.regenerate",
-    subjectType: "certificate_issue",
-    subjectId: issue.id,
-    result: "generated",
-    metadataJson: { fileName: artifact.fileName, pdfFileName: artifact.pdfFileName, mimeType: artifact.mimeType },
-    ...getRequestAuditContext(request),
-  });
+  let artifactStorage: Awaited<ReturnType<typeof storeBuiltCertificateArtifact>>;
+  try { artifactStorage = await storeBuiltCertificateArtifact(issue.id, artifact); } catch (error) { return NextResponse.json({ error: `Certificate artifact storage failed: ${error instanceof Error ? error.message : "unavailable"}` }, { status: 503 }); }
+  const nextStatus = getCertificateStatusAfterRegeneration(issue.status);
+  try {
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.certificateIssue.updateMany({
+        where: { id: issue.id, status: issue.status },
+        data: {
+          ...artifactStorage,
+          variableValuesJson: variableValues,
+          status: nextStatus,
+        },
+      });
+      if (updated.count !== 1) throw new CertificateStatusConflict();
+      await tx.coreAuditLog.create({
+        data: {
+          actorUserId: admin.id,
+          action: "certificate.regenerate",
+          subjectType: "certificate_issue",
+          subjectId: issue.id,
+          result: "generated",
+          metadataJson: { previousStatus: issue.status, fileName: artifact.fileName, pdfFileName: artifact.pdfFileName, mimeType: artifact.mimeType },
+          ...getRequestAuditContext(request),
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof CertificateStatusConflict) {
+      return NextResponse.json({ error: "Certificate status changed. Refresh and try again." }, { status: 409 });
+    }
+    console.error("certificate regenerate failed:", error);
+    return NextResponse.json({ error: "Regenerate failed. No state was changed." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true, fileName: artifact.fileName });
 }
+
+class CertificateStatusConflict extends Error {}

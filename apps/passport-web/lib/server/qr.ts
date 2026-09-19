@@ -55,3 +55,20 @@ export function getEventCheckinQrExpiry() {
 export function getIdentityQrExpiry() {
   return new Date(Date.now() + 1000 * 60 * 2);
 }
+
+export function getInvitationSpecialPassQrExpiry(event?: { endDate: Date } | null) {
+  const ttlMinutes = Math.min(
+    Math.max(Number(process.env.INVITATION_SPECIAL_PASS_QR_TTL_MINUTES) || 60, 5),
+    1440,
+  );
+  let expiry = new Date(Date.now() + 1000 * 60 * ttlMinutes);
+
+  if (event?.endDate) {
+    const eventEnd = event.endDate instanceof Date ? event.endDate : new Date(event.endDate);
+    if (eventEnd < expiry) {
+      expiry = eventEnd;
+    }
+  }
+
+  return expiry;
+}

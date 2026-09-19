@@ -79,6 +79,7 @@ test("certificate lifecycle status guards enforce issued and revoked boundaries"
   assert.equal(canMakeCertificatePublicStatus("REVOKED"), false);
 
   assert.equal(canRevokeCertificateStatus("ISSUED"), true);
+  assert.equal(canRevokeCertificateStatus("GENERATED"), false);
   assert.equal(canRevokeCertificateStatus("REVOKED"), false);
   assert.equal(canRestoreCertificateStatus("REVOKED"), true);
   assert.equal(canRestoreCertificateStatus("ISSUED"), false);

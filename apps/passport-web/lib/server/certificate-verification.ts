@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto";
 import type { UserRole } from "@prisma/client";
 import { maskPassportId } from "@climate-passport/passport-core";
 import { writeCoreAuditLog } from "@/lib/server/audit";
+import { parseCertificateRenderSnapshot, snapshotText } from "@/lib/server/certificate-snapshot";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { canManageActivity } from "@/lib/server/verifier-activity";
 
-export type CertificateVerificationChannel = "PUBLIC_API" | "PUBLIC_PAGE";
+export type CertificateVerificationChannel = "PUBLIC_API" | "PUBLIC_PAGE" | "SHCW_PUBLIC_API";
 export type CertificateVerificationQuerySource = "WEB_QUERY" | "QR_SCAN" | "UNKNOWN";
 export type CertificateVerificationAccessLevel = "PUBLIC" | "HOLDER" | "STAFF";
 export type CertificateVerificationResult = "PREVIEW" | "NOT_FOUND" | "VALID" | "REVOKED" | "EXPIRED" | "INVALID";
@@ -75,25 +78,59 @@ function normalizeVerificationCode(input: string) {
   return input.trim().toUpperCase();
 }
 
-function isPrivilegedRole(role: UserRole | null | undefined) {
-  return role === "ADMIN"
-    || role === "EVENT_MANAGER"
-    || role === "VERIFIER"
-    || role === "STAFF"
-    || role === "SPECIAL_PASS_MANAGER";
+function verificationCodeFingerprint(code: string) {
+  return `fp:${createHash("sha256").update(code, "utf8").digest("hex").slice(0, 16)}`;
 }
 
-function resolveAccessLevel(input: {
-  requesterUserId?: string | null;
-  requesterRole?: UserRole | null;
-  holderUserId: string;
-}): CertificateVerificationAccessLevel {
-  if (input.requesterUserId && input.requesterUserId === input.holderUserId) {
+const ACTIVITY_CHECKIN_SOURCE_ID_PREFIX = "activity-checkin-issuance:";
+const CERTIFICATE_BATCH_ITEM_SOURCE_ID_PREFIX = "certificate-batch-item:";
+
+async function resolveSourceActivityId(
+  prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
+  issue: { sourceType: string | null; sourceId: string | null },
+): Promise<string | null> {
+  if (issue.sourceType === "ACTIVITY_CHECKIN" && issue.sourceId?.startsWith(ACTIVITY_CHECKIN_SOURCE_ID_PREFIX)) {
+    const issuanceId = issue.sourceId.slice(ACTIVITY_CHECKIN_SOURCE_ID_PREFIX.length);
+    const issuance = await prisma.activityCertificateIssuance.findUnique({
+      where: { id: issuanceId },
+      select: { activityId: true },
+    });
+    return issuance?.activityId ?? null;
+  }
+
+  if (issue.sourceType === "CERTIFICATE_BATCH" && issue.sourceId?.startsWith(CERTIFICATE_BATCH_ITEM_SOURCE_ID_PREFIX)) {
+    const itemId = issue.sourceId.slice(CERTIFICATE_BATCH_ITEM_SOURCE_ID_PREFIX.length);
+    const item = await prisma.certificateBatchItem.findUnique({
+      where: { id: itemId },
+      select: { batch: { select: { activityId: true } } },
+    });
+    return item?.batch.activityId ?? null;
+  }
+
+  return null;
+}
+
+async function resolveAccessLevel(
+  prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
+  input: {
+    requesterUserId?: string | null;
+    requesterRole?: UserRole | null;
+    issue: { userId: string; sourceType: string | null; sourceId: string | null };
+  },
+): Promise<CertificateVerificationAccessLevel> {
+  if (input.requesterUserId && input.requesterUserId === input.issue.userId) {
     return "HOLDER";
   }
 
-  if (isPrivilegedRole(input.requesterRole)) {
-    return "STAFF";
+  // Role names alone never grant extended access on this endpoint (CP-FR-051):
+  // ADMIN technical ops has no routine body browsing here, and VERIFIER/STAFF/
+  // SPECIAL_PASS_MANAGER only receive the public whitelist fields. Only an
+  // EVENT_MANAGER whose managed activity is the certificate source qualifies.
+  if (input.requesterRole === "EVENT_MANAGER" && input.requesterUserId) {
+    const activityId = await resolveSourceActivityId(prisma, input.issue);
+    if (activityId && await canManageActivity(prisma, { id: input.requesterUserId, role: input.requesterRole }, activityId)) {
+      return "STAFF";
+    }
   }
 
   return "PUBLIC";
@@ -292,7 +329,7 @@ export async function resolvePublicCertificateVerification(
       actorUserId: requesterUserId,
       action: "certificate.verify.query",
       subjectType: "certificate_verification_code",
-      subjectId: code,
+      subjectId: verificationCodeFingerprint(code),
       result: "preview",
       ipAddress: input.auditContext?.ipAddress ?? null,
       userAgent: input.auditContext?.userAgent ?? null,
@@ -341,7 +378,7 @@ export async function resolvePublicCertificateVerification(
       actorUserId: requesterUserId,
       action: "certificate.verify.query",
       subjectType: "certificate_verification_code",
-      subjectId: code,
+      subjectId: verificationCodeFingerprint(code),
       result: "not_found",
       ipAddress: input.auditContext?.ipAddress ?? null,
       userAgent: input.auditContext?.userAgent ?? null,
@@ -362,16 +399,18 @@ export async function resolvePublicCertificateVerification(
     };
   }
 
-  const accessLevel = resolveAccessLevel({
+  const accessLevel = await resolveAccessLevel(prisma, {
     requesterUserId,
     requesterRole,
-    holderUserId: issue.userId,
+    issue,
   });
+  const renderSnapshot = parseCertificateRenderSnapshot(issue.renderSnapshotJson);
+  const issuedVariableValues = renderSnapshot?.variableValues ?? issue.variableValuesJson;
   const publicAllowed = canPubliclyVerify(issue);
   const canView = publicAllowed || accessLevel !== "PUBLIC";
-  const expiryDate = getCertificateExpiryDate(issue.variableValuesJson);
-  const relatedSource = getCertificateRelatedSource(issue.variableValuesJson, issue.sourceType);
-  const competencies = getCertificateCompetencies(issue.variableValuesJson);
+  const expiryDate = getCertificateExpiryDate(issuedVariableValues);
+  const relatedSource = getCertificateRelatedSource(issuedVariableValues, issue.sourceType);
+  const competencies = getCertificateCompetencies(issuedVariableValues);
   const result = canView ? getIssueVerificationResult(issue.status, expiryDate) : "INVALID";
   const valid = result === "VALID";
 
@@ -420,7 +459,6 @@ export async function resolvePublicCertificateVerification(
       accessLevel,
       publicAllowed,
       requesterRole,
-      verificationCode: code,
     },
   });
 
@@ -429,15 +467,19 @@ export async function resolvePublicCertificateVerification(
 
   const certificate = canView
     ? {
-        title: issue.definition.name,
-        titleEn: issue.definition.nameEn,
-        holderName: issue.user.name,
+        title: renderSnapshot?.certificateName ?? issue.definition.name,
+        titleEn: renderSnapshot
+          ? snapshotText(renderSnapshot, "certificateNameEn")
+          : issue.definition.nameEn,
+        holderName: renderSnapshot?.holderName ?? issue.user.name,
         maskedPassportId: maskPassportId(issue.user.climatePassportId),
-        issuingOrganization: getCertificateIssuingOrganization(issue.variableValuesJson),
+        issuingOrganization: getCertificateIssuingOrganization(issuedVariableValues),
         issuedAt: issue.issuedAt?.toISOString() ?? null,
         expiryDate,
-        credentialType: issue.definition.category.name,
-        credentialTypeEn: issue.definition.category.nameEn,
+        credentialType: renderSnapshot?.categoryName ?? issue.definition.category.name,
+        credentialTypeEn: renderSnapshot
+          ? snapshotText(renderSnapshot, "categoryNameEn")
+          : issue.definition.category.nameEn,
         relatedSource,
         certificateNumber: issue.verificationCode,
         fileName: issue.generatedFileName,

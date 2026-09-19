@@ -2,6 +2,7 @@ export {
   DEFAULT_CHANNEL_BRIDGE_TARGET_PREFIXES,
   sanitizeChannelBridgeTargetPath,
 } from "./channel-bridge";
+export { CHANNEL_SHCW, DEFAULT_CHANNEL_TARGET_PATH_PREFIXES, resolveChannelConfig, type ChannelConfig } from "./channel-config";
 
 export {
   CERTIFICATE_VERIFICATION_CODE_BYTES,

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { normalizeUserEmail, hashUserPassword } from "@/lib/server/auth";
 import { consumeEmailTokenByCode, consumeEmailTokenByToken } from "@/lib/server/auth-email";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { checkRateLimit, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { checkRateLimitAsync, getRateLimitHeaders, getRateLimitSubjectReference, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const resetPasswordSchema = z
   .object({
@@ -36,13 +36,15 @@ export async function POST(request: Request) {
   const { email, token, code, password } = payload.data;
   const normalizedEmail = normalizeUserEmail(email);
 
-  const rateLimit = checkRateLimit(`${getRequestRateLimitKey(request, "auth-reset-password")}:${normalizedEmail}`, {
+  const rateLimit = await checkRateLimitAsync(`${getRequestRateLimitKey(request, "auth-reset-password")}:${getRateLimitSubjectReference(normalizedEmail)}`, {
     limit: 10,
     windowMs: 10 * 60_000,
+    sensitive: true,
   });
+  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   }
 
   const record = token
