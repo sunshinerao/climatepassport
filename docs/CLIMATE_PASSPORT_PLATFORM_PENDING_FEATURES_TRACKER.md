@@ -1,6 +1,8 @@
 # Climate Passport Platform Pending Features Tracker
 
-Last updated: 2026-05-26
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). Task scope and priorities must follow the master directive; tracker entries do not override product decisions or substitute for acceptance evidence.
+
+Last updated: 2026-09-22 (new partner identity/trust requirements only; older completion claims not re-audited)
 
 ## Status Legend
 
@@ -8,6 +10,21 @@ Last updated: 2026-05-26
 - `doing`: in progress
 - `done`: completed
 - `blocked`: blocked by dependency or decision
+
+## Partner Identity And Trust Priorities: 2026-09-22
+
+Authority: [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md). These are pending implementation tasks, not completion claims. P0 gates come before external partner rollout; P1 trust/reward delivery follows, without displacing existing security fixes.
+
+- [ ] CP-TODO-193 `todo` P0: define and implement consent-based private Passport provisioning, independent partner passwords, idempotent external-person mapping, and safe existing-account linkage. Accept only necessary fields and auditable affirmative consent; no password/hash sync or automatic email-based merge.
+- [ ] CP-TODO-194 `todo` P0: implement CP-controlled first claim/password setup and safe reset integration with purpose-bound single-use credentials, state/MFA checks, anti-enumeration, and race-safe consumption. Existing reset support alone does not satisfy this task.
+- [ ] CP-TODO-195 `todo` P0: implement scoped partner authentication, source isolation, durable receipts, retry/idempotency and correction/version handling for confirmed participation and evidence APIs; never require partner internal approvals to move into CP.
+- [ ] CP-TODO-196 `todo` P1: define institution and activity trust criteria independently, then implement scoped/versioned assessments, evidence, review/expiry, suspension, authorized assessors, and appeals. Tier names require product approval.
+- [ ] CP-TODO-197 `todo` P1: define and implement versioned reward policies combining trust, evidence, linkage, and issuer authority for certificate categories, badges and capped points; include simulation, publication controls, snapshots, and duplicate-award prevention. Numerical mappings require product approval.
+- [ ] CP-TODO-198 `todo` P1: implement source correction/revocation impact review, credential/badge revocation, and compensating point entries; historical rewards must not silently change after a policy update.
+- [ ] CP-TODO-199 `todo` P1: deliver partner opt-in and CP activation/linkage UX, user source/reward explanations, consent withdrawal, admin trust registers/policy tools, and authorized API/webhook result views. Define unclaimed-data retention before release.
+- [ ] CP-TODO-200 `todo` release gate: verify no-consent/no-account, existing-user takeover prevention, concurrent claim/retry safety, tenant isolation, independent trust gates, duplicate rewards, and correction propagation using the acceptance scenarios in the requirements document.
+
+Long-term only, outside this development plan: blockchain anchoring. No chain selection, smart-contract, blockchain-wallet, or anchoring implementation task is scheduled here, and no current release depends on it. The off-chain CP points wallet is not deferred by this decision.
 
 ## 1. Documentation And Governance
 

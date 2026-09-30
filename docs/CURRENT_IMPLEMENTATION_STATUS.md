@@ -1,6 +1,18 @@
 # Current Implementation Status
 
+Product baseline: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This file records implementation evidence and gaps; it does not override the master directive or establish completion by restating requirements.
+
 Last updated: 2026-05-23
+
+## Decision Addendum: 2026-09-22
+
+This dated addendum does not revalidate the older implementation inventory below. [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md) adds requirements, not shipped functionality:
+
+- Pending: partner opt-in provisioning, verified account claim/first password setup, consent evidence, safe existing-account linkage, and independent password ownership.
+- Pending: independent institution/activity trust assessments, versioned reward eligibility, admin policy operations, scoped partner APIs, and correction/revocation impact handling.
+- Existing email/reset primitives are only a starting point. The current reset endpoint requires `ACTIVE`; ordinary registration's `PENDING` handling is not an accepted secure partner claim flow. Partner lifecycle and concurrency acceptance tests are required before reuse.
+- Blockchain anchoring: retained long-term, explicitly excluded from the current development plan, not an implementation blocker or current backlog task.
+- No business code, database schema, API, or page changed as part of this requirements update.
 
 ## 1. Implemented
 

@@ -1,6 +1,8 @@
 # Channel Shell Integration Specification
 
-Last updated: 2026-05-23
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate detail; the master directive prevails in any conflict.
+
+Last updated: 2026-09-22 (independent-partner scope and identity clarification)
 
 ## 1. Purpose
 
@@ -9,6 +11,8 @@ This spec defines how SHCW and future partner channel shells integrate with Clim
 Climate Passport is the Core Platform.
 
 SHCW is a Channel Shell.
+
+Scope clarification: this document's full Core-owned workflows and optional embedded/redirect modes describe thin shells. Independent partner systems are not automatically shells; they keep their UI, passwords, business data, and approval workflows and send authorized confirmed outcomes to CP through APIs. They do not have to redirect business operations into CP. See [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md) for the governing independent-partner requirements.
 
 ## 2. Channel Shell Responsibilities
 
@@ -142,7 +146,7 @@ The shell receives a scoped result such as:
 
 SHCW may present agenda, event pages, speaker pages, and branded event content.
 
-Registration, approval, attendance, check-in, participation records, points, and certificates must be Core-owned.
+For SHCW and other thin shells, registration, approval, attendance, check-in, participation records, points, and certificates must be Core-owned. Independent partners retain approval decisions and submit confirmed participation plus later corrections/cancellations; CP remains authoritative for its check-in service and CP-issued rewards.
 
 Recommended pattern:
 
@@ -155,7 +159,15 @@ Recommended pattern:
 
 SHCW may promote a learning experience or show a branded landing page.
 
-Application, review, admission, participation, completion, certificate, points, milestones, and achievements are Core-owned.
+For CP-native programs and thin shells, application, review, admission, participation, completion, certificate, points, milestones, and achievements are Core-owned. Independent learning providers retain their internal review/teaching workflows and submit relevant confirmed outcomes and evidence for CP assessment.
+
+## 9.1 Independent Partner Identity And Trust
+
+- An explicit, optional simultaneous-CP-registration choice may provision a private Passport without transferring the partner password or hash. It does not authenticate the person to CP.
+- First CP password setup and existing-account linkage require CP-controlled ownership verification. Do not merge or expose records solely because an email matches.
+- Partner API access does not grant password-reset, self-assigned trust, direct points-write, or unrestricted issuer authority.
+- Institution trust, activity trust, evidence sufficiency, and versioned reward policies govern eligible certificates, badges, and points; a confirmed registration is not completion evidence.
+- Blockchain anchoring is retained long-term but is not part of the current integration development plan.
 
 ## 10. Certificate Integration
 

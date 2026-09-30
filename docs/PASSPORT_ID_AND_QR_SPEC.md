@@ -1,5 +1,7 @@
 # Passport ID And QR Code Specification
 
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate detail; the master directive prevails in any conflict.
+
 Last updated: 2026-05-23
 
 Status: Current product decision plus implementation design draft.

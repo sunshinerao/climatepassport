@@ -1,6 +1,8 @@
 # Current Architecture Decisions
 
-Last updated: 2026-05-23
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate detail; the master directive prevails in any conflict.
+
+Last updated: 2026-09-22 (partner identity and trust-policy decisions)
 
 ## 1. Core Platform And Channel Shell
 
@@ -9,6 +11,8 @@ Climate Passport is the Core Platform and system of record.
 SHCW is a Channel Shell.
 
 The Core/Shell boundary is an architecture decision, not only a branding decision. Core capabilities must be implemented once in Climate Passport and consumed by SHCW or future shells through contracts.
+
+Independent partner systems are a separate integration class, not automatically thin shells. They own their UI, business database responsibilities, passwords, and approval workflows. CP is the system of record for accepted CP identity associations, source facts, and CP-issued rewards, not for all partner operational state. Partner business flows use APIs without mandatory redirects into CP; SHCW's existing shell boundary is unchanged.
 
 ## 2. Current Repository State
 
@@ -88,6 +92,8 @@ packages/
 - Replaces the older `passport-ui-flows` direction over time.
 
 ## 4. Domain Ownership
+
+Full Core-owned application/registration workflows apply to CP-native projects and thin shells. Independent partners submit confirmed outcomes and subsequent corrections; CP controls acceptance, evidence assessment, check-in services, and CP reward decisions, not the partner's internal approvals.
 
 ### Climate Passport Core Owns
 
@@ -223,3 +229,12 @@ The following old open decisions are now closed:
 - QR offline authentication is not needed for now.
 - Public verification disclosure is minimum necessary.
 - Speaker and Institution are Core Master Data.
+
+## 13. Partner Identity, Trust, And Reward Decisions
+
+- Separate partner credentials from CP credentials. Optional user consent permits private Passport provisioning; CP-controlled ownership verification precedes first password setup, account claim, or association with an existing identity.
+- Keep provisioning/claim, verified identity linkage, account login status, and institutional trust as distinct concepts. Do not treat a supplied email, consent flag, public Passport ID, or partner API credential as user authentication.
+- Institution trust, activity trust, and individual evidence quality independently constrain versioned reward policies. API permission and issuer permission are separate from trust level.
+- Preserve source facts, assessment versions, reward decision snapshots, and compensating/revocation history. Partners cannot directly overwrite CP trust decisions or wallet balances.
+- Blockchain anchoring is long-term only, excluded from the current development plan; current features must not depend on chains, blockchain wallets, or smart contracts. The off-chain points wallet remains in scope.
+- Detailed requirements and open configuration decisions: [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md). These decisions do not assert that the corresponding schema or partner APIs already exist.

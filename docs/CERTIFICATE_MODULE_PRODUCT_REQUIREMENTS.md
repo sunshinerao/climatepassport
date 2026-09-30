@@ -1,5 +1,7 @@
 # Certificate Module Product Requirements
 
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate detail; the master directive prevails in any conflict.
+
 Last updated: 2026-05-23
 
 ## 1. Module Positioning
@@ -27,6 +29,9 @@ The module must present certificates as verifiable digital credentials and long-
 - User-facing pages should feel trusted, international, and institutional.
 - Admin pages should be dense, operational, clear, and efficient for batch management.
 - Blockchain wording must not appear unless an implemented blockchain verification mechanism exists.
+- 2026-09-22 scope decision: blockchain anchoring remains a long-term requirement but is excluded from the current development plan and certificate release prerequisites.
+- Certificate eligibility must evaluate institution trust, activity trust, individual participation/completion evidence, and issuer permission separately. A high-trust organizer does not automatically qualify all its activities or registrants for completion/competence credentials.
+- Versioned reward policies select eligible certificate categories alongside points/badges, preserve assessment/evidence/rule snapshots, and support audited reassessment and downstream revocation. Exact trust levels and reward mappings remain open; see [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md).
 
 ## 3. User-Facing Pages
 
