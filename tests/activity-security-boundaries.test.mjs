@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import ts from "typescript";
 import vm from "node:vm";
-import { loadRouteModule } from "./_route-loader.mjs";
+import { createNextResponseMock, loadRouteModule } from "./_route-loader.mjs";
 
 function loadParticipationRules() {
   const source = fs.readFileSync("apps/passport-web/lib/server/activity-participation.ts", "utf8");
@@ -22,6 +22,182 @@ test("Activity participation rules reject arbitrary values and terminal rewrites
   assert.equal(rules.canTransitionActivityParticipation("CHECKED_IN", "COMPLETED"), true);
   assert.equal(rules.canTransitionActivityParticipation("CERTIFIED", "REGISTERED"), false);
   assert.equal(rules.canTransitionActivityParticipation("ARCHIVED", "COMPLETED"), false);
+});
+
+test("Activity API scopes managers to owned rows and reserves creation for ADMIN", async () => {
+  const routePath = path.resolve("apps/passport-web/app/api/activities/route.ts");
+  let listWhere = null;
+  let createdData = null;
+  let actor = { id: "manager-1", role: "EVENT_MANAGER" };
+  const NextResponse = createNextResponseMock();
+  const prisma = {
+    activity: {
+      count: async ({ where }) => { listWhere = where; return 1; },
+      findMany: async ({ where }) => { listWhere = where; return []; },
+      findUnique: async () => null,
+      create: async ({ data }) => { createdData = data; return { id: "created-1", ...data }; },
+    },
+  };
+  const mocks = {
+    "next/server": { NextResponse },
+    "@/lib/server/prisma": { getPrismaClient: () => prisma },
+    "@/lib/server/api-auth": {
+      requireApiRole: async (roles) => roles.includes(actor.role)
+        ? actor
+        : NextResponse.json({ error: "Forbidden." }, { status: 403 }),
+    },
+  };
+  const route = loadRouteModule(routePath, mocks);
+
+  const listed = await route.GET(new Request("https://example.test/api/activities"));
+  assert.equal(listed.status, 200);
+  assert.equal(listWhere.organizerUserId, "manager-1");
+
+  const deniedCreate = await route.POST(new Request("https://example.test/api/activities", {
+    method: "POST",
+    body: JSON.stringify({ type: "EVENT", title: "No", slug: "no", createdByUserId: "manager-1" }),
+  }));
+  assert.equal(deniedCreate.status, 403);
+  assert.equal(createdData, null);
+
+  actor = { id: "admin-1", role: "ADMIN" };
+  const adminRoute = loadRouteModule(routePath, {
+    ...mocks,
+  });
+  const acceptedCreate = await adminRoute.POST(new Request("https://example.test/api/activities", {
+    method: "POST",
+    body: JSON.stringify({ type: "EVENT", title: "Allowed", slug: "allowed", createdByUserId: "spoofed-user" }),
+  }));
+  assert.equal(acceptedCreate.status, 201);
+  assert.equal(createdData.createdByUserId, "admin-1");
+});
+
+test("Activity detail and PATCH enforce assignment, Programme scope, and manager field boundaries", async () => {
+  const routePath = path.resolve("apps/passport-web/app/api/activities/[id]/route.ts");
+  const NextResponse = createNextResponseMock();
+  const activity = { id: "activity-1", organizerUserId: "manager-1", type: "EVENT", title: "Before" };
+  let actor = { id: "manager-other", role: "EVENT_MANAGER" };
+  let scopeAllowed = true;
+  let updateData = null;
+  const prisma = {
+    activity: {
+      findUnique: async () => activity,
+      update: async ({ data }) => { updateData = data; return { ...activity, ...data }; },
+      findFirst: async () => ({ id: activity.id, organizerUserId: activity.organizerUserId }),
+    },
+  };
+  const mocks = {
+    "next/server": { NextResponse },
+    "@/lib/server/api-auth": { requireApiRole: async () => actor },
+    "@/lib/server/prisma": { getPrismaClient: () => prisma },
+    "@/lib/server/verifier-activity": {
+      canManageActivity: async (_prisma, user) => user.role === "ADMIN" || activity.organizerUserId === user.id,
+    },
+    "@/lib/server/programme-scope": {
+      assertActivityScopeAccess: async () => scopeAllowed ? { ok: true } : { ok: false, status: 403, error: "Forbidden" },
+    },
+    "@/lib/server/source-activity-mapping": { listSourceOwnedFieldConflicts: async () => [] },
+  };
+  const route = loadRouteModule(routePath, mocks);
+
+  const deniedRead = await route.GET(new Request("https://example.test/api/activities/activity-1"), { params: { id: activity.id } });
+  assert.equal(deniedRead.status, 403);
+
+  actor = { id: "manager-1", role: "EVENT_MANAGER" };
+  scopeAllowed = false;
+  const deniedScope = await route.GET(new Request("https://example.test/api/activities/activity-1"), { params: { id: activity.id } });
+  assert.equal(deniedScope.status, 403);
+
+  scopeAllowed = true;
+  const allowedRead = await route.GET(new Request("https://example.test/api/activities/activity-1"), { params: { id: activity.id } });
+  assert.equal(allowedRead.status, 200);
+
+  const deniedOwnerChange = await route.PATCH(new Request("https://example.test/api/activities/activity-1", {
+    method: "PATCH", body: JSON.stringify({ organizerUserId: "manager-other" }),
+  }), { params: { id: activity.id } });
+  assert.equal(deniedOwnerChange.status, 403);
+  assert.equal(updateData, null);
+
+  const allowedContentEdit = await route.PATCH(new Request("https://example.test/api/activities/activity-1", {
+    method: "PATCH", body: JSON.stringify({ title: "Updated title" }),
+  }), { params: { id: activity.id } });
+  assert.equal(allowedContentEdit.status, 200);
+  assert.equal(updateData.title, "Updated title");
+});
+
+test("only ADMIN can manage verifier assignments from the Activity detail surface", async () => {
+  const routePath = path.resolve("apps/passport-web/app/api/activities/[id]/verifiers/route.ts");
+  const NextResponse = createNextResponseMock();
+  let actor = { id: "manager-1", role: "EVENT_MANAGER" };
+  let created = false;
+  let deleted = false;
+  const prisma = {
+    activity: { findFirst: async () => ({ id: "activity-1" }) },
+    user: { findUnique: async () => ({ id: "verifier-1", role: "VERIFIER" }) },
+    activityVerifier: {
+      findMany: async () => [],
+      findUnique: async () => null,
+      create: async ({ data }) => { created = true; return { id: "assignment-1", ...data, user: { id: data.userId } }; },
+      delete: async () => { deleted = true; },
+    },
+  };
+  const route = loadRouteModule(routePath, {
+    "next/server": { NextResponse },
+    "@/lib/server/api-auth": {
+      requireApiRole: async (roles) => roles.includes(actor.role)
+        ? actor
+        : NextResponse.json({ error: "Forbidden." }, { status: 403 }),
+    },
+    "@/lib/server/prisma": { getPrismaClient: () => prisma },
+  });
+
+  assert.equal((await route.GET(new Request("https://example.test/api/activities/activity-1/verifiers"), { params: { id: "activity-1" } })).status, 403);
+  assert.equal((await route.POST(new Request("https://example.test/api/activities/activity-1/verifiers", { method: "POST", body: JSON.stringify({ userId: "verifier-1" }) }), { params: { id: "activity-1" } })).status, 403);
+  assert.equal((await route.DELETE(new Request("https://example.test/api/activities/activity-1/verifiers?userId=verifier-1", { method: "DELETE" }), { params: { id: "activity-1" } })).status, 403);
+  assert.equal(created, false);
+  assert.equal(deleted, false);
+
+  actor = { id: "admin-1", role: "ADMIN" };
+  const assigned = await route.POST(new Request("https://example.test/api/activities/activity-1/verifiers", { method: "POST", body: JSON.stringify({ userId: "verifier-1" }) }), { params: { id: "activity-1" } });
+  assert.equal(assigned.status, 200);
+  assert.equal(created, true);
+});
+
+test("EVENT_MANAGER cannot transition Activity lifecycle status", async () => {
+  const routePath = path.resolve("apps/passport-web/app/api/activities/[id]/status/route.ts");
+  const NextResponse = createNextResponseMock();
+  let actor = { id: "manager-1", role: "EVENT_MANAGER" };
+  let updated = false;
+  const prisma = {
+    activity: {
+      findFirst: async () => ({ id: "activity-1", organizerUserId: "manager-1" }),
+      findUnique: async () => ({ id: "activity-1", status: "DRAFT" }),
+      update: async ({ data }) => { updated = true; return { id: "activity-1", ...data }; },
+    },
+  };
+  const route = loadRouteModule(routePath, {
+    "next/server": { NextResponse },
+    "@/lib/server/api-auth": {
+      requireApiRole: async (roles) => roles.includes(actor.role)
+        ? actor
+        : NextResponse.json({ error: "Forbidden." }, { status: 403 }),
+    },
+    "@/lib/server/prisma": { getPrismaClient: () => prisma },
+    "@/lib/server/verifier-activity": { canManageActivity: async () => true },
+  });
+
+  const managerAttempt = await route.PATCH(new Request("https://example.test/api/activities/activity-1/status", {
+    method: "PATCH", body: JSON.stringify({ status: "PUBLISHED" }),
+  }), { params: { id: "activity-1" } });
+  assert.equal(managerAttempt.status, 403);
+  assert.equal(updated, false);
+
+  actor = { id: "admin-1", role: "ADMIN" };
+  const adminAttempt = await route.PATCH(new Request("https://example.test/api/activities/activity-1/status", {
+    method: "PATCH", body: JSON.stringify({ status: "PUBLISHED" }),
+  }), { params: { id: "activity-1" } });
+  assert.equal(adminAttempt.status, 200);
+  assert.equal(updated, true);
 });
 
 test("participation PATCH is activity-scoped and rejects server-owned asset fields", async () => {

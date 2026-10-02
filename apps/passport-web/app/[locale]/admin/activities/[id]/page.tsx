@@ -2,16 +2,26 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { assertActivityScopeAccess } from "@/lib/server/programme-scope";
 import { AdminActivityDetailClient } from "@/components/admin-activity-detail-client";
 import { AdminActivityAiContentDrafts } from "@/components/admin-activity-ai-content-drafts";
 import type { Locale } from "@/lib/site-content";
 
 export default async function AdminActivityDetailPage({ params }: { params: { locale: Locale; id: string } }) {
   noStore();
-  await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities/${params.id}`);
+  const actor = await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities/${params.id}`);
 
   const prisma = getPrismaClient();
   if (!prisma) throw new Error("Database unavailable");
+  const accessTarget = await prisma.activity.findUnique({
+    where: { id: params.id },
+    select: { id: true, organizerUserId: true },
+  });
+  if (!accessTarget) notFound();
+  if (actor.role === "EVENT_MANAGER" && accessTarget.organizerUserId !== actor.id) notFound();
+  const scopeAccess = await assertActivityScopeAccess(prisma, actor, params.id, "read");
+  if (!scopeAccess.ok) notFound();
+
   const [activity, activityDetail, agendaItems, speakerLinks, allSpeakers, verifiers, availableVerifiers, institutions, availableInstitutions] = await Promise.all([
     prisma.activity.findUnique({
       where: { id: params.id },
@@ -71,15 +81,17 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.user.findMany({
-      where: {
-        role: { in: ["VERIFIER", "ADMIN", "EVENT_MANAGER"] },
-        status: "ACTIVE",
-      },
-      select: { id: true, name: true, email: true, role: true },
-      orderBy: { name: "asc" },
-      take: 200,
-    }),
+    actor.role === "ADMIN"
+      ? prisma.user.findMany({
+          where: {
+            role: { in: ["VERIFIER", "ADMIN", "EVENT_MANAGER"] },
+            status: "ACTIVE",
+          },
+          select: { id: true, name: true, email: true, role: true },
+          orderBy: { name: "asc" },
+          take: 200,
+        })
+      : Promise.resolve([]),
     prisma.activityInstitution.findMany({
       where: { activityId: params.id },
       include: {
@@ -147,13 +159,15 @@ export default async function AdminActivityDetailPage({ params }: { params: { lo
           createdAt: item.createdAt.toISOString(),
         }))}
         locale={params.locale}
+        canManageLifecycle={actor.role === "ADMIN"}
+        canManageVerifiers={actor.role === "ADMIN"}
         speakerLinks={speakerLinks}
         verifiers={verifiers.map((item) => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
         }))}
       />
-      <AdminActivityAiContentDrafts activityId={activity.id} locale={params.locale} />
+      {actor.role === "ADMIN" ? <AdminActivityAiContentDrafts activityId={activity.id} locale={params.locale} /> : null}
     </div>
   );
 }

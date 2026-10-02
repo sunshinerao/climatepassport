@@ -4,6 +4,7 @@ Last organized: 2026-10-02 (remote master directive and partner requirements mer
 
 ## Current Development Entry Point
 
+- [2026-10-02 Activity A/P role boundaries](BUGFIX_ACTIVITY_ROLE_BOUNDARIES_20261002.md): local P0 implementation and source-level evidence; certificate approval/auto-issuance and verifier scan acceptance remain open.
 - [2026-09-19 requirements and implementation audit](REQUIREMENTS_IMPLEMENTATION_AUDIT_20260919.md): current code-versus-requirements findings, release blockers, verified test evidence, multi-programme foundation gaps, and ordered remediation criteria. This is the latest read-only audit and does not change Summer School scope.
 - [Certificate Phase 1 agent handoff](AGENT_HANDOFF_20260918_CERTIFICATE_PHASE1.md): exact repository state, verified CP-TODO-218~227 boundary, current stop point and CP-TODO-228 implementation/acceptance instructions for the next agent.
 - [Functional development requirements V2](CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V2.md): current baseline with V2.1 strict separation; shared CP capabilities and independently developed programme business layers. CP-FR-063/064/065 and CP-TODO-254/255/256 are external requirements, excluded from CP delivery.

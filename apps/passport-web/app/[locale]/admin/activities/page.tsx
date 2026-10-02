@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { assertActivityScopeAccess } from "@/lib/server/programme-scope";
 import { AdminActivitiesClient } from "@/components/admin-activities-client";
 import type { Locale } from "@/lib/site-content";
 
@@ -23,12 +24,13 @@ export default async function AdminActivitiesPage({
   params: { locale: Locale };
 }) {
   noStore();
-  await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities`);
+  const actor = await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities`);
 
   const prisma = getPrismaClient();
   if (!prisma) throw new Error("Database unavailable");
 
-  const activities = await prisma.activity.findMany({
+  const activityRows = await prisma.activity.findMany({
+    where: actor.role === "EVENT_MANAGER" ? { organizerUserId: actor.id } : undefined,
     orderBy: [{ isPinned: "desc" as const }, { isFeatured: "desc" as const }, { createdAt: "desc" as const }],
     take: 500,
     select: {
@@ -60,6 +62,11 @@ export default async function AdminActivitiesPage({
       },
     } as any,
   });
+  const activities = actor.role === "EVENT_MANAGER"
+    ? (await Promise.all(activityRows.map(async (activity: any) =>
+        (await assertActivityScopeAccess(prisma, actor, activity.id, "read")).ok ? activity : null
+      ))).filter((activity: any): activity is NonNullable<typeof activity> => activity !== null)
+    : activityRows;
 
   // Build stats
   const stats = {
@@ -102,6 +109,7 @@ export default async function AdminActivitiesPage({
       stats={stats}
       typeMeta={TYPE_META}
       typeOrder={TYPE_ORDER as unknown as string[]}
+      canCreate={actor.role === "ADMIN"}
     />
   );
 }

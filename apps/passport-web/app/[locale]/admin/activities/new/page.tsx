@@ -17,7 +17,7 @@ export default async function AdminActivityNewPage({
   searchParams: { type?: string };
 }) {
   noStore();
-  const user = await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities/new`);
+  const user = await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/activities/new`);
 
   const typeDefault = searchParams.type && VALID_TYPES.includes(searchParams.type)
     ? searchParams.type

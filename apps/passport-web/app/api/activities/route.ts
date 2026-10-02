@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = new URL(req.url);
@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
   const where = {
+    ...(auth.role === "EVENT_MANAGER" ? { organizerUserId: auth.id } : {}),
     ...(status ? { status: status as any } : {}),
     ...(type ? { type: type as any } : {}),
     ...(search
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN"], req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json();
@@ -101,11 +102,10 @@ export async function POST(req: NextRequest) {
     isFeatured,
     language,
     tags,
-    createdByUserId,
   } = body;
 
-  if (!type || !title || !slug || !createdByUserId) {
-    return NextResponse.json({ error: "Missing required fields: type, title, slug, createdByUserId" }, { status: 400 });
+  if (!type || !title || !slug) {
+    return NextResponse.json({ error: "Missing required fields: type, title, slug" }, { status: 400 });
   }
 
   const prisma = getPrismaClient();
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
       isFeatured: isFeatured ?? false,
       language: language ?? "zh",
       tags: tags ?? [],
-      createdByUserId,
+      createdByUserId: auth.id,
     },
   });
 

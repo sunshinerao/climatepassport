@@ -304,6 +304,7 @@ export function AdminActivitiesClient({
   stats,
   typeMeta,
   typeOrder,
+  canCreate,
 }: {
   locale: Locale;
   activities: ActivityRow[];
@@ -311,6 +312,7 @@ export function AdminActivitiesClient({
   stats: Stats;
   typeMeta: Record<string, { zhLabel: string; enLabel: string }>;
   typeOrder: string[];
+  canCreate: boolean;
 }) {
   const router = useRouter();
   const zh = locale === "zh";
@@ -408,10 +410,12 @@ export function AdminActivitiesClient({
           <button className="button button-outline" onClick={() => exportCSV(activities, zh)}>
             {zh ? "导出 CSV" : "Export CSV"}
           </button>
-          <Link className="button" href={`/${locale}/admin/activities/new`}>
-            <IconPlus />
-            {zh ? "创建活动" : "Create Activity"}
-          </Link>
+          {canCreate ? (
+            <Link className="button" href={`/${locale}/admin/activities/new`}>
+              <IconPlus />
+              {zh ? "创建活动" : "Create Activity"}
+            </Link>
+          ) : null}
         </div>
       </div>
 

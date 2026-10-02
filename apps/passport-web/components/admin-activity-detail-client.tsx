@@ -173,6 +173,8 @@ export function AdminActivityDetailClient({
   availableVerifiers,
   institutions,
   availableInstitutions,
+  canManageLifecycle,
+  canManageVerifiers,
 }: {
   locale: Locale;
   activity: ActivityDetailData;
@@ -184,6 +186,8 @@ export function AdminActivityDetailClient({
   availableVerifiers?: UserOption[];
   institutions?: ActivityInstitutionLink[];
   availableInstitutions?: InstitutionOption[];
+  canManageLifecycle: boolean;
+  canManageVerifiers: boolean;
 }) {
   const [currentStatus, setCurrentStatus] = useState(activity.status);
   const [transitioning, setTransitioning] = useState(false);
@@ -212,7 +216,7 @@ export function AdminActivityDetailClient({
     { href: `/${locale}/admin/activities/${activity.id}/applications`, label: zh ? "报名审核" : "Applications", meta: `${activity._count.applications}` },
     { href: `/${locale}/admin/activities/${activity.id}/checkin`, label: zh ? "签到记录" : "Check-ins", meta: `${activity._count.checkinRecords}` },
     { href: `/${locale}/admin/activities/${activity.id}/participations`, label: zh ? "参与记录" : "Participations", meta: `${activity._count.participations}` },
-    { href: `/${locale}/admin/activities/${activity.id}/rewards`, label: zh ? "奖励规则" : "Reward rules", meta: zh ? "积分 / 证书" : "Points / certificates" },
+    ...(canManageLifecycle ? [{ href: `/${locale}/admin/activities/${activity.id}/rewards`, label: zh ? "奖励规则" : "Reward rules", meta: zh ? "积分 / 证书" : "Points / certificates" }] : []),
     { href: `/${locale}/admin/activities/${activity.id}/analytics`, label: zh ? "数据分析" : "Analytics", meta: zh ? "漏斗 / 趋势" : "Funnels / trends" },
   ];
 
@@ -239,7 +243,7 @@ export function AdminActivityDetailClient({
           <Link className="button button-secondary button" href={`/${locale}/admin/activities/${activity.id}/edit`}>
             {zh ? "编辑基础信息" : "Edit details"}
           </Link>
-          {nextActions.map((action) => (
+          {canManageLifecycle ? nextActions.map((action) => (
             <button
               className="button button button-outline"
               disabled={transitioning}
@@ -249,7 +253,7 @@ export function AdminActivityDetailClient({
             >
               {zh ? action.label : action.labelEn}
             </button>
-          ))}
+          )) : null}
           {activity.type === "EVENT" ? (
             <>
               <Link className="button button-outline" href={`/${locale}/activities/${activity.slug}/checkin-poster`}>
@@ -395,7 +399,7 @@ export function AdminActivityDetailClient({
 
       {activity.type === "EVENT" ? (
         <section className="activity-console-inline-grid">
-          <article className="panel activity-console-panel">
+          {canManageVerifiers ? <article className="panel activity-console-panel">
             <div className="activity-console-panel-head">
               <div>
                 <span className="label">{zh ? "议程" : "Agenda"}</span>
@@ -404,7 +408,7 @@ export function AdminActivityDetailClient({
               <Link href={`/${locale}/admin/activities/${activity.id}/agenda`}>{zh ? "全屏管理" : "Full page"}</Link>
             </div>
             <AdminActivityAgendaClient activityId={activity.id} initialAgendaItems={agendaItems ?? []} locale={locale} speakers={allSpeakers ?? []} />
-          </article>
+          </article> : null}
 
           <article className="panel activity-console-panel">
             <div className="activity-console-panel-head">

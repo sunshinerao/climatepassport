@@ -1,6 +1,6 @@
 # Activity Admin Module Pending Features Tracker
 
-Last updated: 2026-05-30
+Last updated: 2026-10-02
 
 ## Status Legend
 
@@ -25,3 +25,4 @@ Last updated: 2026-05-30
 - [x] AACT-TODO-012 `done` establish global typography system file and migrate non-home font-family declarations to global variables, with module-level class boundary documentation.
 - [x] AACT-TODO-013 `done` complete second-round activities/admin hardcoded size tokenization and add global typography governance rule doc for future modules.
 - [x] AACT-TODO-014 `done` finish third-round non-home font-size literal migration, add extended global size tokens, and publish non-home typography audit checklist.
+- [x] AACT-TODO-015 `done` implement the first FigJam Activity A/P permission slice: EVENT_MANAGER list/detail Programme scope, ADMIN-only creation/lifecycle/verifier assignment, and role-aware detail controls. Source evidence and remaining acceptance gaps: [2026-10-02 implementation note](BUGFIX_ACTIVITY_ROLE_BOUNDARIES_20261002.md).

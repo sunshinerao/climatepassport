@@ -7,7 +7,7 @@ import type { Locale } from "@/lib/site-content";
 
 export default async function AdminActivityVerifiersPage({ params }: { params: { locale: Locale; id: string } }) {
   noStore();
-  await requireRoleAccess(params.locale, ["ADMIN", "EVENT_MANAGER"], `/${params.locale}/admin/activities/${params.id}/verifiers`);
+  await requireRoleAccess(params.locale, ["ADMIN"], `/${params.locale}/admin/activities/${params.id}/verifiers`);
 
   const prisma = getPrismaClient();
   if (!prisma) throw new Error("Database unavailable");

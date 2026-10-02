@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import ts from "typescript";
 import vm from "node:vm";
+import { createDefaultMocks, loadRouteModule } from "./_route-loader.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -82,12 +83,11 @@ test("Activity verifier lists select only authorized activities and retain activ
   assert.equal(calls[2].include.activity.select.titleEn, true);
 });
 
-test("Activity verifier assignment routes enforce manager ownership while admins remain global", async () => {
+test("Activity verifier assignment routes require ADMIN while admins remain global", async () => {
   const sourcePath = path.resolve("apps/passport-web/app/api/activities/[id]/verifiers/route.ts");
   let actor = { id: "manager-1", role: "EVENT_MANAGER" };
   let assigned = false;
   const prisma = {
-    activity: { findFirst: async ({ where }) => where.organizerUserId === actor.id && where.id === "owned" ? { id: "owned" } : null },
     activityVerifier: {
       findMany: async () => [{ id: "assignment-1" }],
       findUnique: async () => assigned ? { id: "assignment-1" } : null,
@@ -99,24 +99,23 @@ test("Activity verifier assignment routes enforce manager ownership while admins
     },
     user: { findUnique: async () => ({ id: "verifier-1", role: "VERIFIER" }) },
   };
-  const route = loadTypeScriptModule(sourcePath, {
-    "next/server": { NextResponse: { json: (payload, init) => ({ status: init?.status ?? 200, payload }) }, NextRequest: class {} },
-    "@/lib/server/auth": { requireRoleAccess: async () => actor },
+  const route = loadRouteModule(sourcePath, createDefaultMocks({
+    "@/lib/server/auth": { getCurrentUser: async () => actor },
     "@/lib/server/prisma": { getPrismaClient: () => prisma },
-  });
+  }));
 
   const denied = await route.GET(new Request("https://example.test/api/activities/other/verifiers"), { params: { id: "other" } });
-  assert.equal(denied.status, 404);
+  assert.equal(denied.status, 403);
   const deniedAdd = await route.POST(new Request("https://example.test/api/activities/other/verifiers", { method: "POST", body: JSON.stringify({ userId: "verifier-1" }) }), { params: { id: "other" } });
-  assert.equal(deniedAdd.status, 404);
+  assert.equal(deniedAdd.status, 403);
   const deniedRemove = await route.DELETE(new Request("https://example.test/api/activities/other/verifiers?userId=verifier-1", { method: "DELETE" }), { params: { id: "other" } });
-  assert.equal(deniedRemove.status, 404);
+  assert.equal(deniedRemove.status, 403);
   const listed = await route.GET(new Request("https://example.test/api/activities/owned/verifiers"), { params: { id: "owned" } });
-  assert.equal(listed.status, 200);
+  assert.equal(listed.status, 403);
   const added = await route.POST(new Request("https://example.test/api/activities/owned/verifiers", { method: "POST", body: JSON.stringify({ userId: "verifier-1" }) }), { params: { id: "owned" } });
-  assert.equal(added.status, 200);
+  assert.equal(added.status, 403);
   const removed = await route.DELETE(new Request("https://example.test/api/activities/owned/verifiers?userId=verifier-1", { method: "DELETE" }), { params: { id: "owned" } });
-  assert.equal(removed.status, 200);
+  assert.equal(removed.status, 403);
 
   actor = { id: "admin-1", role: "ADMIN" };
   const adminListed = await route.GET(new Request("https://example.test/api/activities/other/verifiers"), { params: { id: "other" } });

@@ -1,27 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
-
-async function canManageActivityVerifiers(
-  prisma: NonNullable<ReturnType<typeof getPrismaClient>>,
-  actor: { id: string; role: string },
-  activityId: string,
-) {
-  if (actor.role === "ADMIN") return true;
-  const activity = await prisma.activity.findFirst({
-    where: { id: activityId, organizerUserId: actor.id },
-    select: { id: true },
-  });
-  return Boolean(activity);
-}
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
-  if (!(await canManageActivityVerifiers(prisma, auth, params.id))) {
-    return NextResponse.json({ error: "Activity not found" }, { status: 404 });
-  }
 
   const verifiers = await prisma.activityVerifier.findMany({
     where: { activityId: params.id },
@@ -37,12 +22,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
-  if (!(await canManageActivityVerifiers(prisma, auth, params.id))) {
-    return NextResponse.json({ error: "Activity not found" }, { status: 404 });
-  }
 
   const body = await req.json().catch(() => ({}));
   const userId = body.userId as string | undefined;
@@ -93,12 +76,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
-  if (!(await canManageActivityVerifiers(prisma, auth, params.id))) {
-    return NextResponse.json({ error: "Activity not found" }, { status: 404 });
-  }
 
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");

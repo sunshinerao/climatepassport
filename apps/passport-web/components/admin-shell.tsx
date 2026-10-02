@@ -128,7 +128,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/new?type=EVENT`,
           icon: "·",
           label: t(locale, "· 创建活动", "· New Event"),
-          roles: ["ADMIN", "EVENT_MANAGER"],
+          roles: ["ADMIN"],
         },
         {
           href: `${prefix}/admin/activities/applications?type=EVENT`,
@@ -157,7 +157,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/new?type=LEARNING`,
           icon: "·",
           label: t(locale, "· 创建学习项目", "· New Learning"),
-          roles: ["ADMIN", "EVENT_MANAGER"],
+          roles: ["ADMIN"],
         },
         {
           href: `${prefix}/admin/activities/applications?type=LEARNING`,
@@ -180,7 +180,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/new?type=CHALLENGE`,
           icon: "·",
           label: t(locale, "· 创建挑战", "· New Challenge"),
-          roles: ["ADMIN", "EVENT_MANAGER"],
+          roles: ["ADMIN"],
         },
         {
           href: `${prefix}/admin/activities/participations?type=CHALLENGE`,
@@ -198,7 +198,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/new?type=PROJECT`,
           icon: "·",
           label: t(locale, "· 创建项目", "· New Project"),
-          roles: ["ADMIN", "EVENT_MANAGER"],
+          roles: ["ADMIN"],
         },
         // ── COURSE 课程 ─────────────────────────────────────────
         {
@@ -211,7 +211,7 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           href: `${prefix}/admin/activities/new?type=COURSE`,
           icon: "·",
           label: t(locale, "· 创建课程", "· New Course"),
-          roles: ["ADMIN", "EVENT_MANAGER"],
+          roles: ["ADMIN"],
         },
         // ── 跨类型管理 ──────────────────────────────────────────
         {
@@ -342,7 +342,18 @@ function buildAdminMenu(locale: Locale): AdminNavItem[] {
           icon: "·",
           label: t(locale, "性能诊断", "Performance diagnostics"),
         },
+        {
+          href: `${prefix}/admin/channel-clients`,
+          icon: "·",
+          label: t(locale, "渠道客户端与密钥", "Channel clients and keys"),
+        },
       ],
+    },
+    {
+      href: `${prefix}/admin/messages`,
+      icon: "◇",
+      label: t(locale, "支持工单", "Support tickets"),
+      roles: ["ADMIN"],
     },
     {
       href: `${prefix}/verifier`,

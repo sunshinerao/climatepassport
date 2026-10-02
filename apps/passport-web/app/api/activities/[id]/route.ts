@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { listSourceOwnedFieldConflicts } from "@/lib/server/source-activity-mapping";
+import { requireApiRole } from "@/lib/server/api-auth";
+import { canManageActivity } from "@/lib/server/verifier-activity";
+import { assertActivityScopeAccess } from "@/lib/server/programme-scope";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+  if (!(await canManageActivity(prisma, auth, params.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const scopeCheck = await assertActivityScopeAccess(prisma, auth, params.id, "read");
+  if (!scopeCheck.ok) return NextResponse.json({ error: scopeCheck.error }, { status: scopeCheck.status });
+
   const activity = await prisma.activity.findUnique({
     where: { id: params.id },
     include: {
@@ -35,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json();
@@ -47,11 +56,43 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Activity not found" }, { status: 404 });
   }
 
+  if (!(await canManageActivity(prisma, auth, params.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const scopeCheck = await assertActivityScopeAccess(prisma, auth, params.id, "write");
+  if (!scopeCheck.ok) return NextResponse.json({ error: scopeCheck.error }, { status: scopeCheck.status });
+
+  if (auth.role === "EVENT_MANAGER") {
+    const managerEditableFields = new Set([
+      "title", "titleEn", "subtitle", "subtitleEn", "category", "coverImage",
+      "summary", "summaryEn", "description", "descriptionEn", "startTime", "endTime",
+      "timezone", "locationType", "locationJson", "onlineUrl", "language", "tags",
+      "posterImage", "mapUrl", "highlights", "highlightsEn",
+    ]);
+    const forbiddenFields = Object.keys(body ?? {}).filter((field) => !managerEditableFields.has(field));
+    if (forbiddenFields.length > 0) {
+      return NextResponse.json(
+        { error: "Event managers may only edit assigned activity content.", code: "ACTIVITY_MANAGER_FIELD_DENIED", fields: forbiddenFields },
+        { status: 403 },
+      );
+    }
+  }
+
   if (body.slug && body.slug !== existing.slug) {
     const slugTaken = await prisma.activity.findUnique({ where: { slug: body.slug } });
     if (slugTaken) {
       return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
     }
+  }
+
+  // CP-TODO-245：已接入来源的活动，其来源权威字段不可由 CP 编辑覆盖（CP-FR-053）；
+  // 未映射活动不受影响。
+  const sourceConflicts = await listSourceOwnedFieldConflicts(prisma, params.id, Object.keys(body ?? {}));
+  if (sourceConflicts.length > 0) {
+    return NextResponse.json(
+      { error: `Fields are owned by the source programme and cannot be edited in CP: ${sourceConflicts.join(", ")}.`, code: "ACTIVITY_SOURCE_FIELD_CONFLICT" },
+      { status: 409 },
+    );
   }
 
   const {
@@ -117,7 +158,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN"]);
+  const auth = await requireApiRole(["ADMIN"], req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();
