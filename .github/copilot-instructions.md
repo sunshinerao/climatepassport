@@ -1,7 +1,7 @@
 # Climate Passport workspace instructions
 
-- This repository is the standalone platform repo for the `climatepass.org` product.
-- Prefer `climatepass.org` as the canonical public domain in explanations, metadata, links, and examples.
+- This repository is the standalone platform repo for the `climatepassport.org` product.
+- Use `https://www.climatepassport.org` as the approved public website URL in metadata, links, and examples; deployment DNS must be verified separately.
 - Treat Climate Passport as the product name; keep terminology consistent across docs and code.
 - Core areas include identity and authentication, passport profiles and IDs, speakers and organizations, events and registration, QR/check-in, verifier workflows, points, milestones, certificates, and partner/channel delivery.
 - Preserve the existing SHCW/Climate Passport user flows as the baseline unless a change is explicitly required.

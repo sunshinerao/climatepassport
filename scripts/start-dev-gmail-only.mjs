@@ -1,7 +1,7 @@
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {spawn} from 'node:child_process';import {randomUUID} from 'node:crypto';
 import {startAutomaticAuthMailConsumer} from './dev-auth-mail-consumer.mjs';
 export function validateDevelopmentMailEnvironment(env,port){
- if(env.NODE_ENV==='production'||env.CP_DEV_GMAIL_ONLY!=='1'||env.MAIL_RECIPIENT_ALLOWLIST!=='sunshine.rao@gmail.com'||env.MAIL_PROVIDER!=='zoho'||env.MAIL_FROM!=='no-reply@climatepassport.org'||env.ZOHO_MAIL_ENDPOINT!=='https://cpaas.zoho.com/v1.1/email'||env.MAIL_TRANSPORT==='test-outbox')throw Error('DEV_MAIL_CONFIG_INVALID');
+ if(env.NODE_ENV==='production'||env.CP_DEV_GMAIL_ONLY!=='1'||env.MAIL_RECIPIENT_ALLOWLIST!=='sunshine.rao@gmail.com'||env.MAIL_PROVIDER!=='zoho'||env.MAIL_FROM!=='no-reply@notice.climatepassport.org'||env.ZOHO_MAIL_ENDPOINT!=='https://cpaas.zoho.com/v1.1/email'||env.MAIL_TRANSPORT==='test-outbox')throw Error('DEV_MAIL_CONFIG_INVALID');
  if(!env.ZOHO_MAIL_TOKEN?.trim()||/\s/.test(env.ZOHO_MAIL_TOKEN)||!env.AUTH_EMAIL_CODE_SECRET||env.AUTH_EMAIL_CODE_SECRET.length<32||!env.AUTH_MAIL_WORKER_SECRET||env.AUTH_MAIL_WORKER_SECRET.length<32||env.AUTH_MAIL_WORKER_SECRET.length>512||/\s/.test(env.AUTH_MAIL_WORKER_SECRET)||!env.AUTH_EMAIL_CREDENTIAL_VERSION||env.AUTH_EMAIL_CREDENTIAL_VERSION==='legacy'||!/^[A-Za-z0-9_-]{1,64}$/.test(env.AUTH_EMAIL_CREDENTIAL_VERSION))throw Error('DEV_AUTH_CONFIG_INVALID');
  const budget=Number(env.CP_DEV_MAIL_MAX_SENDS_PER_24H??10);if(!Number.isInteger(budget)||budget<1||budget>10)throw Error('DEV_MAIL_BUDGET_INVALID');
  if(!Number.isInteger(port)||port<1024||port>65535)throw Error('DEV_PORT_INVALID');

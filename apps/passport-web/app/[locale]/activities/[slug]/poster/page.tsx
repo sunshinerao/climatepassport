@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { PosterPrintButton } from "@/components/poster-print-button";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { absoluteUrl } from "@/lib/seo";
 import type { Locale } from "@/lib/site-content";
 
 export default async function ActivityPosterPage({ params }: { params: { locale: Locale; slug: string } }) {
@@ -31,7 +32,7 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
   const venue = zh
     ? (locationJson?.name ?? locationJson?.venue ?? "")
     : (locationJson?.nameEn ?? locationJson?.venueEn ?? locationJson?.name ?? locationJson?.venue ?? "");
-  const detailUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${params.locale}/activities/${params.slug}`;
+  const detailUrl = absoluteUrl(`/${params.locale}/activities/${params.slug}`);
 
   function formatDate(date: Date) {
     return new Date(date).toLocaleDateString(zh ? "zh-CN" : "en-US", {

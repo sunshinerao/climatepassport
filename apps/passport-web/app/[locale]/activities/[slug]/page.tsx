@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { requireAuthenticatedUser } from "@/lib/server/auth";
 import type { Locale } from "@/lib/site-content";
-import { activityEventJsonLd } from "@/lib/seo";
+import { absoluteUrl, activityEventJsonLd } from "@/lib/seo";
 import { EventDetailSections } from "@/components/event-detail-sections";
 import { isActivityRegistrationUnavailable } from "@/lib/server/activity-event-utils";
 import { ActivityPosterButtons } from "@/components/activity-poster-buttons";
@@ -370,7 +370,7 @@ export default async function ActivityDetailPage({ params }: { params: { locale:
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt="QR Code"
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${params.locale}/activities/${params.slug}`)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(absoluteUrl(`/${params.locale}/activities/${params.slug}`))}`}
                 style={{ display: "block", margin: "0 auto", borderRadius: "0.25rem" }}
               />
               <a

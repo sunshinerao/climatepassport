@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path');
 class DevMailPreSendError extends Error { constructor(code){super(code);this.name='DevMailPreSendError';this.code=code;this.outcome='not-attempted'} }
-const recipient='sunshine.rao@gmail.com',sender='no-reply@climatepassport.org',endpoint='https://cpaas.zoho.com/v1.1/email';
+const recipient='sunshine.rao@gmail.com',sender='no-reply@notice.climatepassport.org',endpoint='https://cpaas.zoho.com/v1.1/email';
 function validEnv(env){return env.CP_DEV_GMAIL_ONLY==='1'&&env.MAIL_RECIPIENT_ALLOWLIST===recipient&&env.MAIL_PROVIDER==='zoho'&&env.MAIL_FROM===sender&&env.ZOHO_MAIL_ENDPOINT===endpoint}
 function urlOf(input){return new URL(typeof input==='string'||input instanceof URL?input:input.url)}
 function local(url){return ['localhost','127.0.0.1','[::1]','::1'].includes(url.hostname)}

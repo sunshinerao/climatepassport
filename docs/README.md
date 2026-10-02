@@ -4,6 +4,7 @@ Last organized: 2026-10-02 (master directive, partner requirements, and cross-si
 
 ## Current Development Entry Point
 
+- [2026-10-02 public site and mail sender domain alignment](CHANGE_PUBLIC_SITE_AND_SENDER_DOMAIN_20261002.md): code/config defaults target `www.climatepassport.org` and `notice.climatepassport.org`; DNS, provider-domain verification, deployment variables and worker scheduling remain acceptance gates.
 - [2026-10-02 Activity A/P role boundaries](BUGFIX_ACTIVITY_ROLE_BOUNDARIES_20261002.md): local P0 implementation and source-level evidence; certificate approval/auto-issuance and verifier scan acceptance remain open.
 - [2026-09-19 requirements and implementation audit](REQUIREMENTS_IMPLEMENTATION_AUDIT_20260919.md): current code-versus-requirements findings, release blockers, verified test evidence, multi-programme foundation gaps, and ordered remediation criteria. This is the latest read-only audit and does not change Summer School scope.
 - [Certificate Phase 1 agent handoff](AGENT_HANDOFF_20260918_CERTIFICATE_PHASE1.md): exact repository state, verified CP-TODO-218~227 boundary, current stop point and CP-TODO-228 implementation/acceptance instructions for the next agent.

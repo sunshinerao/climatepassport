@@ -1,6 +1,6 @@
 # Climate Passport
 
-Climate Passport is the new standalone platform repository for the `climatepass.org` product.
+Climate Passport is the standalone platform repository for the `climatepassport.org` product.
 
 ## Purpose
 
@@ -53,7 +53,7 @@ The repository-shape and migration narrative below describe its original bootstr
 
 Planned top-level areas:
 
-- `apps/passport-web` for the climatepass.org web experience
+- `apps/passport-web` for the climatepassport.org web experience
 - `apps/passport-admin` for operations and admin surfaces if split later
 - `packages/passport-contracts` for API contracts and shared types
 - `packages/passport-ui-flows` for themed transaction flows reused by channel shells

@@ -2,13 +2,13 @@
 
 Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate detail; the master directive prevails in any conflict.
 
-Last updated: 2026-10-02 (master directive reference merged; architecture claims not re-audited)
+Last updated: 2026-10-02 (public website target aligned to current product requirements; production DNS remains unverified)
 
 ## Current Execution Note
 
 See [the 2026-09-18 gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) and [execution plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md). Target app separation below remains a direction, not a prerequisite to fix current authorization and certificate lifecycle gaps. Extract stable shared rules before separating deployments; preserve historical data and the frozen summer-school flows.
 
-The repository identifies the product as `climatepass.org`. Historical `*.climatepassport.org` host examples below express logical boundaries, not currently deployed endpoints. Confirm production host, callback, cookie and allowlist configuration before enabling channels or changing domains; do not infer production topology from this diagram.
+The approved public website target is `https://www.climatepassport.org`, consistent with [current product requirements](CURRENT_PRODUCT_REQUIREMENTS.md). Historical host examples below express logical boundaries, not proof of deployed endpoints. Confirm production DNS, callback, cookie and allowlist configuration before enabling channels; do not infer production topology from this document.
 
 ## 1. Core, Programme Policy And Channel Experience
 

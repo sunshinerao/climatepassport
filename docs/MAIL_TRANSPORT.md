@@ -11,7 +11,9 @@ Current implementation: `apps/passport-web/lib/server/mailer.ts`.
 
 The current verified hostname allowlist contains **only `cpaas.zoho.com`**, sourced from the official CPaaS Send Email reference. This is not a default endpoint. Other regions are intentionally blocked until the actual account endpoint is confirmed from official documentation and added through code review. URL credentials, queries, fragments, custom ports and redirects are rejected. A Zoho Mail mailbox/SMTP credential is not interchangeable with the CPaaS send-mail token.
 
-The newly requested temporary sender is `no-reply@climatepassport.org`; future intended sending subdomain is `notice.climatepassport.org`. These are planning/configuration targets, not claims of verified DNS, provider enrollment or deliverability. Domain verification and explicit operator configuration are needed before use. No sender is silently rewritten, and the repository's unrelated existing public domain is unchanged.
+The configured sender target is `no-reply@notice.climatepassport.org`. As checked on 2026-10-02, the parent `climatepassport.org` publishes Zoho MX and SPF records, but `notice.climatepassport.org` has no visible A/CNAME/TXT response. This does not establish sender-domain verification, DKIM/SPF alignment or deliverability; confirm the exact records in the selected provider before sending. Set `MAIL_PROVIDER` explicitly in each deployment because local environment files may select different providers.
+
+The authentication mail outbox requires an external approved scheduler to call the controlled worker endpoint. No scheduler is configured in this repository, so provider credentials alone do not complete the delivery chain. See [AUTH_MAIL_OUTBOX.md](AUTH_MAIL_OUTBOX.md).
 
 Never commit credentials. No secrets or production configuration were read or written for implementation/testing.
 
