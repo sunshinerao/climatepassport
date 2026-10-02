@@ -4,7 +4,7 @@
 
 /* ── Two-column layout (was missing base definition) ── */
 .two-col {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 /* ── Tag system ── */
@@ -691,7 +691,7 @@
 }
 
 .proto-admin-shell {
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .proto-admin-sidebar {
@@ -792,6 +792,63 @@
   max-width: 70ch;
 }
 
+/* ── Narrow-viewport fluidity (shared layout layer) ──
+   `1fr` means `minmax(auto, 1fr)`, and `auto` is the item's min-content, so a single
+   wide <select>, one unbreakable UUID or one data table inflated the whole admin page
+   past a 360px viewport. Tracks and grid/flex items are pinned to `min-width: 0` here so
+   content either wraps, shrinks, or scrolls inside its own container. */
+.proto-admin-main,
+.proto-admin-page,
+.section,
+.panel,
+.list,
+.tableish,
+.table-row,
+.form-grid,
+.field,
+.split {
+  min-width: 0;
+}
+
+.section > *,
+.panel > *,
+.list > *,
+.form-grid > *,
+.field > *,
+.split > * {
+  min-width: 0;
+}
+
+.section-header {
+  flex-wrap: wrap;
+}
+
+/* Controls report an intrinsic width (a ~20ch input box, or the widest <option> of a
+   <select>, which cannot wrap), and that intrinsic width is what the track measured. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Data tables stay readable by scrolling inside their own box instead of widening the page. */
+.table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* IDs, slugs and e-mail addresses are long unbreakable tokens; `anywhere` lets them
+   participate in the min-content calculation, `break-word` does not. */
+.tableish td,
+.tableish th,
+.table-row,
+.list-item,
+.footer-note {
+  overflow-wrap: anywhere;
+}
+
 .proto-admin-main-head {
   margin-bottom: 20px;
 }
@@ -854,7 +911,7 @@
 @media (max-width: 980px) {
   .proto-dashboard-shell,
   .proto-admin-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .proto-admin-sidebar {
@@ -872,7 +929,7 @@
   .auth-grid,
   .table-row,
   .two-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .card-grid,

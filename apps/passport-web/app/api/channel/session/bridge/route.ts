@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { issueChannelBridgeToken, requireAuthenticatedUser, sanitizeChannelBridgeTargetPath } from "@/lib/server/auth";
+import { issueChannelBridgeToken, sanitizeChannelBridgeTargetPath } from "@/lib/server/auth";
+import { requireApiUser } from "@/lib/server/api-auth";
 import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const requestSchema = z.object({
@@ -20,7 +21,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
   }
 
-  const user = await requireAuthenticatedUser("en", "/en/dashboard");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const payload = requestSchema.safeParse(await request.json());
 
   if (!payload.success) {

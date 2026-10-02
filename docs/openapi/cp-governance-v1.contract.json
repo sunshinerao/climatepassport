@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "cp-governance/1",
+  "status": "approved_implementation_in_progress_isolated_only",
+  "canonicalBusinessRules": "docs/CP_BUSINESS_RULES.md",
+  "archiveContractUnchanged": "app-outcome/1",
+  "registration": {
+    "programmeId": "existing verified scope",
+    "activityId": "optional existing CP activity",
+    "kind": "learning_unit|conference|activity|challenge|action",
+    "sources": "approved per-source exact mapping; one canonical unit may have many websites",
+    "participation": "CP canonical (project,user) participation, frozen ruleVersionId at binding before first fact; one award per participation/reward type across source websites"
+  },
+  "qualification": {
+    "ruleVersionId": "pinned at participation entry; retiring a version only closes new participation, historical enrolled corrections/revokes remain possible",
+    "sourceRecord": "id+monotonic version+prior event ID",
+    "mapping": "verified RP issuer/audience/subject per record",
+    "consentPurpose": "reward_qualification; distinct from private_archive/public_display",
+    "facts": "source-verified allowlisted fields + evidence reference IDs; never arbitrary script or auto CP endorsement"
+  },
+  "firstMilestoneRewards": [
+    "points"
+  ],
+  "futureAdaptersExplicitlyBlocked": [],
+  "gca": "learning_completion, completed",
+  "fs": "approved_private_evidence, accepted",
+  "permissions": "existing scoped Programme authorization; no new machine scopes or credentials enabled",
+  "actualLiveBoundary": "FS previous live command remains blocked; isolated synthetic tests only",
+  "contractRevision": "1.2",
+  "rewards": [
+    "POINTS",
+    "BADGE",
+    "CERTIFICATE"
+  ],
+  "credentialIssuer": "explicit approved Institution; authorized representation, issuer/class and rule/template snapshot frozen; true PDF required before certificate success",
+  "publicDisplay": "owner-controlled independent grant visibility; private by default; withdrawal never invalidates underlying fact",
+  "currentAdapters": "POINTS/BADGE/CERTIFICATE isolated actual PostgreSQL + real PDF tests passed; not live machine onboarding",
+  "crossSourceRevocation": "one invalid source never revokes award if another accepted valid basis remains",
+  "canonicalUnit": "projectId is one separately approved rewardable unit/edition, never a whole multi-edition Programme"
+}

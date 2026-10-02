@@ -12,3 +12,11 @@ coverage
 artifacts/**/*.dump
 playwright-report/
 test-results/
+**/storybook-static/
+
+# Disposable synthetic-only journey test runtime
+.cp-journey-test/
+
+.env.zoho-test.local
+
+.cp-dev-private/

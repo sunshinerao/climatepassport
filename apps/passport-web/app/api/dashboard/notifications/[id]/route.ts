@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const actionSchema = z.object({
   action: z.enum(["mark_read", "archive"]),
@@ -11,7 +11,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } },
 ) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/notifications");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

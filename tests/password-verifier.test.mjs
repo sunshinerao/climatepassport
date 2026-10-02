@@ -26,6 +26,7 @@ function loadAuthModule() {
     module: { exports: {} },
     require,
     console,
+    Buffer,
   };
 
   const baseRequire = sandbox.require;

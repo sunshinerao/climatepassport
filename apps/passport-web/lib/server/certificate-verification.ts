@@ -6,7 +6,7 @@ import { parseCertificateRenderSnapshot, snapshotText } from "@/lib/server/certi
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity } from "@/lib/server/verifier-activity";
 
-export type CertificateVerificationChannel = "PUBLIC_API" | "PUBLIC_PAGE" | "SHCW_PUBLIC_API";
+export type CertificateVerificationChannel = "PUBLIC_API" | "PUBLIC_PAGE" | "SHCW_PUBLIC_API" | "CLIENT_API";
 export type CertificateVerificationQuerySource = "WEB_QUERY" | "QR_SCAN" | "UNKNOWN";
 export type CertificateVerificationAccessLevel = "PUBLIC" | "HOLDER" | "STAFF";
 export type CertificateVerificationResult = "PREVIEW" | "NOT_FOUND" | "VALID" | "REVOKED" | "EXPIRED" | "INVALID";

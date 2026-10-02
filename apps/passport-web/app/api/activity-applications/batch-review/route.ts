@@ -72,9 +72,11 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  // Update all applications
+  // Update all applications — scoped to the ids actually fetched and authorized above,
+  // never the raw request array, so an unknown/mismatched id can never be written.
+  const authorizedIds = applications.map((application) => application.id);
   const updated = await prisma.activityApplication.updateMany({
-    where: { id: { in: ids } },
+    where: { id: { in: authorizedIds } },
     data: {
       status,
       reviewComment: reviewComment || null,
@@ -99,7 +101,7 @@ export async function PATCH(req: NextRequest) {
           },
         });
       }
-      void triggerActivityRewards({
+      await triggerActivityRewards({
         activityId: app.activityId,
         userId: app.userId,
         trigger: "REGISTRATION_APPROVED",
@@ -128,7 +130,7 @@ export async function PATCH(req: NextRequest) {
     subjectId: null,
     result: "SUCCESS",
     ...getRequestAuditContext(req),
-    metadataJson: { applicationIds: ids, toStatus: status, count: updated.count },
+    metadataJson: { applicationIds: authorizedIds, toStatus: status, count: updated.count },
   }).catch(() => undefined);
 
   return NextResponse.json({ ok: true, count: updated.count });

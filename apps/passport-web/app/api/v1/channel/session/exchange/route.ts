@@ -18,6 +18,8 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch { return error("INVALID_REQUEST", 400); }
   const payload = BridgeExchangeRequestSchema.safeParse(body);
   if (!payload.success) return error("INVALID_REQUEST", 400);
+  // CP-TODO-241: the v1 bridge only serves the registered SHCW channel; fail closed otherwise.
+  if (payload.data.channel !== "SHCW") return error("CHANNEL_DISABLED", 403);
   try {
     const exchanged = await exchangeChannelBridgeToken(payload.data.token, getRequestAuditContext(request));
     if (!exchanged) return error("INVALID_BRIDGE_TOKEN", 401);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   activityId: string;
+  activitySlug: string;
   activityTitle: string;
   requiresApproval: boolean;
   formTemplate: { fieldsJson: unknown } | null;
@@ -13,7 +14,7 @@ interface Props {
   activityType: string;
 }
 
-export default function ActivityApplyClient({ activityId, activityTitle, requiresApproval, formTemplate, locale, userId, activityType }: Props) {
+export default function ActivityApplyClient({ activityId, activitySlug, activityTitle, requiresApproval, formTemplate, locale, userId, activityType }: Props) {
   const zh = locale === "zh";
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -55,8 +56,8 @@ export default function ActivityApplyClient({ activityId, activityTitle, require
         setError(data.error ?? (zh ? "提交失败，请稍后重试" : "Submission failed. Please try again."));
         return;
       }
-      // Success — redirect to activity detail page
-      router.push(`/${locale}/activities/${encodeURIComponent(data.application?.activityId ?? activityId)}`);
+      // Success — redirect to activity detail page (routed by slug, not id)
+      router.push(`/${locale}/activities/${encodeURIComponent(activitySlug)}`);
       router.refresh();
     } catch {
       setError(zh ? "网络错误，请稍后重试" : "Network error. Please try again.");

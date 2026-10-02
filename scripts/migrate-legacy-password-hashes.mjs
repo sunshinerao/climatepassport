@@ -67,8 +67,7 @@ export function getTargetDatabaseUrl() {
   return process.env.CLIMATE_PASSPORT_DATABASE_URL ?? process.env.DATABASE_URL;
 }
 
-export function configureMigrationEnvironment() {
-  const repoRoot = resolveRepoRoot();
+export function configureMigrationEnvironment(repoRoot = resolveRepoRoot()) {
   const envPath = path.join(repoRoot, ".env");
   loadMissingEnvFromFile(envPath, ["CLIMATE_PASSPORT_DATABASE_URL", "DATABASE_URL"]);
 }

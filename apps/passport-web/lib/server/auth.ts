@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "crypto";
 import { allocateClimatePassportId, sanitizeChannelBridgeTargetPath as sanitizeCoreChannelBridgeTargetPath } from "@climate-passport/passport-core";
-import type { UserRole } from "@prisma/client";
+import type { Prisma, UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Locale } from "@/lib/site-content";
@@ -9,8 +9,9 @@ import { writeCoreAuditLog } from "@/lib/server/audit";
 
 const SESSION_COOKIE_NAME = "climate-passport-session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-// Full bcrypt verifier only: $2a$/$2b$/$2y$, two-digit cost, 22-char salt, 31-char hash.
 const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+// Public dummy bcrypt value, not an account password or secret.
+const DUMMY_PASSWORD_HASH = "$2b$10$abcdefghijklmnopqrstuulMFkaJFXXDLWUHAKFRq7fKcs9HB/LdW";
 const DEFAULT_CHANNEL_BRIDGE_TARGET_PREFIXES = ["/en", "/zh", "/fr", "/de"];
 
 export type AuthenticatedUser = {
@@ -23,6 +24,7 @@ export type AuthenticatedUser = {
   climatePassportId: string | null;
   passCode: string;
   status: string;
+  emailVerified: Date | null;
 };
 
 type BridgeTokenPayload = {
@@ -47,22 +49,18 @@ export function normalizeUserEmail(email: string) {
 }
 
 export async function hashUserPassword(password: string) {
+  if (Buffer.byteLength(password, "utf8") > 72) throw new Error("PASSWORD_TOO_LONG");
   const { hash } = await import("bcryptjs");
   return hash(password, 10);
 }
 
 export async function verifyUserPassword(storedPassword: string, inputPassword: string) {
+  if (Buffer.byteLength(inputPassword, "utf8") > 72) return false;
   const { compare } = await import("bcryptjs");
-
-  if (!BCRYPT_HASH_REGEX.test(storedPassword)) {
-    return false;
-  }
-
-  try {
-    return await compare(inputPassword, storedPassword);
-  } catch {
-    return false;
-  }
+  const usableHash = BCRYPT_HASH_REGEX.test(storedPassword);
+  // Missing/legacy credentials still perform one bcrypt check, but can never authenticate.
+  const matches = await compare(inputPassword, usableHash ? storedPassword : DUMMY_PASSWORD_HASH);
+  return usableHash && matches;
 }
 
 function hashBridgeToken(token: string) {
@@ -126,6 +124,7 @@ export async function getCurrentSession(): Promise<{
           climatePassportId: true,
           passCode: true,
           status: true,
+          emailVerified: true,
         },
       },
     },
@@ -140,7 +139,7 @@ export async function getCurrentSession(): Promise<{
     return null;
   }
 
-  if (session.user.status !== "ACTIVE") {
+  if (session.user.status !== "ACTIVE" || !session.user.emailVerified) {
     await prisma.session.delete({ where: { sessionToken } }).catch(() => undefined);
     return null;
   }
@@ -193,27 +192,28 @@ export async function requireRoleAccess(locale: Locale, roles: UserRole[], nextP
   return user;
 }
 
-export async function createUserSession(userId: string) {
-  const prisma = getPrismaClient();
-
-  if (!prisma) {
-    throw new Error("Prisma client is unavailable.");
+async function sessionForLockedUser(tx: Prisma.TransactionClient, userId: string, expectedPasswordHash?: string) {
+  const user = await tx.user.findUnique({ where: { id: userId }, select: { status: true, emailVerified: true, password: true } });
+  if (!user || user.status !== "ACTIVE" || !user.emailVerified ||
+      (expectedPasswordHash !== undefined && user.password !== expectedPasswordHash)) {
+    throw new Error("SESSION_AUTH_CHANGED");
   }
-
   const sessionToken = randomBytes(32).toString("hex");
   const expires = new Date(Date.now() + SESSION_TTL_MS);
-
-  await prisma.session.create({
-    data: {
-      sessionToken,
-      userId,
-      expires,
-    },
-  });
-
-  cookies().set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions(expires));
-
+  await tx.session.create({ data: { sessionToken, userId, expires } });
   return { sessionToken, expires };
+}
+
+export async function createUserSession(userId: string, expectedPasswordHash?: string) {
+  const prisma = getPrismaClient();
+  if (!prisma) throw new Error("Prisma client is unavailable.");
+  const session = await prisma.$transaction(async (tx) => {
+    // Reset uses the same account lock. A password checked before reset cannot issue a new session after it.
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
+    return sessionForLockedUser(tx, userId, expectedPasswordHash);
+  });
+  cookies().set(SESSION_COOKIE_NAME, session.sessionToken, sessionCookieOptions(session.expires));
+  return session;
 }
 
 export async function destroyCurrentSession() {
@@ -243,14 +243,17 @@ export async function issueChannelBridgeToken(options: {
   const tokenHash = hashBridgeToken(rawToken);
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
-  await prisma.channelSessionBridge.create({
-    data: {
-      channel: "SHCW",
-      tokenHash,
-      userId: options.userId,
-      targetPath: sanitizeChannelBridgeTargetPath(options.targetPath) ?? null,
-      expiresAt,
-    },
+  const sessionToken = cookies().get(SESSION_COOKIE_NAME)?.value;
+  if (!sessionToken) throw new Error("SESSION_AUTH_CHANGED");
+  await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${options.userId} FOR UPDATE`;
+    const source = await tx.session.findUnique({ where: { sessionToken }, include: { user: true } });
+    if (!source || source.userId !== options.userId || source.expires <= new Date() ||
+        source.user.status !== "ACTIVE" || !source.user.emailVerified) throw new Error("SESSION_AUTH_CHANGED");
+    await tx.channelSessionBridge.create({ data: {
+      channel: "SHCW", tokenHash, userId: options.userId,
+      targetPath: sanitizeChannelBridgeTargetPath(options.targetPath) ?? null, expiresAt,
+    } });
   });
 
   const payload: BridgeTokenPayload = {
@@ -271,85 +274,37 @@ export async function exchangeChannelBridgeToken(
   },
 ) {
   const prisma = getPrismaClient();
-
-  if (!prisma) {
-    throw new Error("Prisma client is unavailable.");
-  }
-
+  if (!prisma) throw new Error("Prisma client is unavailable.");
   const tokenHash = hashBridgeToken(token);
-  const bridge = await prisma.channelSessionBridge.findUnique({
-    where: { tokenHash },
-    include: {
-      user: {
-        select: {
-          id: true,
-          role: true,
-          status: true,
-        },
-      },
-    },
+  const candidate = await prisma.channelSessionBridge.findUnique({ where: { tokenHash }, select: { id: true, userId: true } });
+  if (!candidate) return null;
+  let auditResult = "REJECTED";
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${candidate.userId} FOR UPDATE`;
+    const bridge = await tx.channelSessionBridge.findUnique({ where: { tokenHash }, include: { user: { select: { id: true, role: true, status: true, emailVerified: true } } } });
+    const now = new Date();
+    if (bridge?.consumedAt) auditResult = "REPLAY_REJECTED";
+    else if (bridge && bridge.expiresAt <= now) auditResult = "EXPIRED_REJECTED";
+    if (!bridge || bridge.channel !== "SHCW" || bridge.consumedAt || bridge.expiresAt <= now ||
+        bridge.user.status !== "ACTIVE" || !bridge.user.emailVerified) return null;
+    const used = await tx.channelSessionBridge.updateMany({
+      where: { id: bridge.id, consumedAt: null, expiresAt: { gt: now } }, data: { consumedAt: now },
+    });
+    if (used.count !== 1) { auditResult = "REPLAY_REJECTED"; return null; }
+    const session = await sessionForLockedUser(tx, bridge.userId);
+    return { session, userId: bridge.userId, role: bridge.user.role, targetPath: bridge.targetPath };
   });
-
-  if (!bridge || bridge.channel !== "SHCW") {
-    return null;
-  }
-
-  if (bridge.user.status !== "ACTIVE") {
-    return null;
-  }
-
-  if (bridge.consumedAt || bridge.expiresAt <= new Date()) {
-    await writeCoreAuditLog({
-      action: "CHANNEL_BRIDGE_EXCHANGE",
-      subjectType: "ChannelSessionBridge",
-      subjectId: bridge.id,
-      result: bridge.consumedAt ? "REPLAY_REJECTED" : "EXPIRED_REJECTED",
-      ipAddress: auditContext?.ipAddress,
-      userAgent: auditContext?.userAgent,
-      metadataJson: { channel: bridge.channel },
-    }).catch(() => undefined);
-    return null;
-  }
-
-  // Claim the one-time token at the database layer so concurrent exchanges cannot both create sessions.
-  const consumed = await prisma.channelSessionBridge.updateMany({
-    where: {
-      id: bridge.id,
-      consumedAt: null,
-      expiresAt: { gt: new Date() },
-    },
-    data: { consumedAt: new Date() },
-  });
-
-  if (consumed.count !== 1) {
-    await writeCoreAuditLog({
-      action: "CHANNEL_BRIDGE_EXCHANGE",
-      subjectType: "ChannelSessionBridge",
-      subjectId: bridge.id,
-      result: "REPLAY_REJECTED",
-      ipAddress: auditContext?.ipAddress,
-      userAgent: auditContext?.userAgent,
-      metadataJson: { channel: bridge.channel },
-    }).catch(() => undefined);
-    return null;
-  }
-
-  await createUserSession(bridge.userId);
-
   await writeCoreAuditLog({
-    actorUserId: bridge.userId,
+    actorUserId: result?.userId,
     action: "CHANNEL_BRIDGE_EXCHANGE",
     subjectType: "ChannelSessionBridge",
-    subjectId: bridge.id,
-    result: "SUCCESS",
+    subjectId: candidate.id,
+    result: result ? "SUCCESS" : auditResult,
     ipAddress: auditContext?.ipAddress,
     userAgent: auditContext?.userAgent,
-    metadataJson: { channel: bridge.channel },
+    metadataJson: { channel: "SHCW" },
   }).catch(() => undefined);
-
-  return {
-    userId: bridge.userId,
-    role: bridge.user.role,
-    targetPath: bridge.targetPath,
-  };
+  if (!result) return null;
+  cookies().set(SESSION_COOKIE_NAME, result.session.sessionToken, sessionCookieOptions(result.session.expires));
+  return { userId: result.userId, role: result.role, targetPath: result.targetPath };
 }

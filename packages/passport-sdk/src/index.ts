@@ -6,10 +6,35 @@ import {
   BridgeIssueRequestSchema,
   BridgeIssueResponseSchema,
   PublicCertificateVerificationResponseSchema,
+  OpenApiSourceRefRequestSchema,
+  SourceRefResolveResponseSchema,
   type BridgeExchangeResponse as V1BridgeExchangeResponse,
   type BridgeIssueResponse as V1BridgeIssueResponse,
   type PublicCertificateVerificationResponse,
+  type SourceRefResolveResponse,
 } from "@climate-passport/passport-contracts";
+
+export type ChannelMachineCredentials = {
+  clientKey: string;
+  machineKey: string;
+};
+
+/** CP-TODO-243: machine-client auth headers for registered channel clients. Never log or persist the machine key. */
+export function channelMachineAuthHeaders(credentials: ChannelMachineCredentials): Record<string, string> {
+  return {
+    "X-Channel-Client-Key": credentials.clientKey,
+    "X-Channel-Machine-Key": credentials.machineKey,
+  };
+}
+
+/**
+ * Open API bearer credential: the same registered key as the dual-header form, presented
+ * as `<clientKey>.<machineKey>`. Storage is salted bcrypt, so a secret cannot be looked up
+ * by digest — the key has to identify its own client.
+ */
+export function openApiAuthHeaders(credentials: ChannelMachineCredentials): Record<string, string> {
+  return { Authorization: `Bearer ${credentials.clientKey}.${credentials.machineKey}` };
+}
 
 export type PassportSdkOptions = {
   baseUrl: string;
@@ -116,10 +141,17 @@ export class ClimatePassportClient {
     return this.parseV1Response(response, BridgeExchangeResponseSchema, "Bridge token exchange");
   }
 
-  /** Versioned public minimum-disclosure verification API; business statuses are returned, not thrown. */
-  async verifyV1ChannelCertificate(code: string): Promise<PublicCertificateVerificationResponse> {
+  /**
+   * Versioned public minimum-disclosure verification API; business statuses are returned, not thrown.
+   * Pass `machine` credentials only from server-side code registered as a MACHINE channel client.
+   */
+  async verifyV1ChannelCertificate(code: string, options?: { machine?: ChannelMachineCredentials }): Promise<PublicCertificateVerificationResponse> {
     if (!code.trim()) throw new Error("Certificate code is required.");
-    const response = await this.fetcher(joinUrl(this.baseUrl, `/api/v1/channel/certificates/verify/${encodeURIComponent(code)}`), { method: "GET", credentials: "omit" });
+    const response = await this.fetcher(joinUrl(this.baseUrl, `/api/v1/channel/certificates/verify/${encodeURIComponent(code)}`), {
+      method: "GET",
+      credentials: "omit",
+      headers: options?.machine ? channelMachineAuthHeaders(options.machine) : undefined,
+    });
     let body: unknown;
     try { body = await response.json(); } catch { throw new Error("Certificate verification returned a malformed response."); }
     // NOT_FOUND is intentionally HTTP 404 but remains a normal typed verification result.
@@ -141,6 +173,21 @@ export class ClimatePassportClient {
     const parsed = schema.safeParse(body);
     if (!parsed.success) throw new Error(`${operation} returned an invalid response.`);
     return parsed.data;
+  }
+
+  /**
+   * CP-TODO-252: resolve a generic sourceRef against the CP schema catalog.
+   * Open API endpoint: the calling key *is* the source system, so the request body
+   * carries no `system` field and the resolution is scoped to that key's programme.
+   */
+  async resolveSourceRef(machine: ChannelMachineCredentials, ref: { objectType: string; objectId: string }): Promise<SourceRefResolveResponse> {
+    const payload = OpenApiSourceRefRequestSchema.parse(ref);
+    const response = await this.fetcher(joinUrl(this.baseUrl, "/api/v1/open/source-refs/resolve"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...openApiAuthHeaders(machine) },
+      body: JSON.stringify(payload),
+    });
+    return this.parseV1Response(response, SourceRefResolveResponseSchema, "Source reference resolution");
   }
 }
 

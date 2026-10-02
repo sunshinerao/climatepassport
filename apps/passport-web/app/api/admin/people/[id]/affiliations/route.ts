@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { affiliationCreateSchema } from "@/lib/server/people-master-data";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/people");
+  const apiAuth = await requireApiRole(["ADMIN"], req);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/people");
+  const user = await requireApiRole(["ADMIN"], req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

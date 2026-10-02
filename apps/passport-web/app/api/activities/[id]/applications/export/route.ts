@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const applicationStatuses = new Set([
   "DRAFT", "SUBMITTED", "UNDER_REVIEW", "INTERVIEW", "APPROVED", "REJECTED", "OFFERED", "WAITLISTED", "CANCELLED", "WITHDRAWN",
@@ -15,7 +15,7 @@ function escapeCsv(value: unknown): string {
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();

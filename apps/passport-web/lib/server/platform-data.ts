@@ -249,8 +249,7 @@ export async function getPassportPageData(locale: Locale) {
 
       const [user, achievementDefinitions] = await Promise.all([
         prisma.user.findFirst({
-          where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
-          orderBy: currentUser ? undefined : { createdAt: "asc" },
+          where: { id: currentUser?.id ?? "" },
           include: {
             unlockedAchievements: {
               include: {
@@ -633,8 +632,7 @@ export async function getProfileMaintenancePageData(locale: Locale) {
   return withPrismaFallback(
     async (prisma) => {
       const user = await prisma.user.findFirst({
-        where: currentUser ? { id: currentUser.id } : { status: "ACTIVE" },
-        orderBy: currentUser ? undefined : { createdAt: "asc" },
+        where: { id: currentUser?.id ?? "" },
         include: {
           organization: {
             select: {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAchievementRecord } from "@/lib/server/achievement-badge";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 function isValidOrganizationWebsite(value: string) {
   try {
@@ -54,7 +54,8 @@ function normalizeOptionalText(value: string | null | undefined) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/profile");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

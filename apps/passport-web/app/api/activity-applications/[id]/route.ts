@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { buildProjectApplicantDisclosure, canReviewProjectApplication } from "@/lib/server/project-application";
@@ -88,7 +89,7 @@ export async function PATCH(
       if (isProject) {
         return NextResponse.json({ error: "Only the applicant can withdraw a project application" }, { status: 403 });
       } else {
-        const adminCheck = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+        const adminCheck = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
         if (adminCheck instanceof NextResponse) {
           return NextResponse.json({ error: "Not authorized to withdraw this application" }, { status: 403 });
         }
@@ -163,7 +164,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   } else {
-    const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+    const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
     if (auth instanceof NextResponse) return auth;
     if (!(await canManageActivity(prisma, auth, existing.activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

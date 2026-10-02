@@ -173,6 +173,17 @@ Prisma Schema 中未发现以下目标模型或等价通用能力：
 
 按 CP-TODO-240～245 顺序完成字段所有权 ADR、scope 模型、授权服务、机构代表权、客户端登记、可靠同步和正式活动来源映射；使用至少三个虚构 Programme 和两个 Edition 进行真实数据库越权矩阵测试。
 
+#### 整改状态（2026-09-19，更新：第六批 CP-TODO-245 交付后关闭）
+
+已关闭（本地，未部署生产）。CP-TODO-240~245 全部交付，P0 基座条件已满足。
+
+- CP-TODO-240 已交付：字段所有权、scoped contract 与复用原则 ADR 见 `docs/FIELD_OWNERSHIP_AND_SCOPE_ADR_V21_20260919.md`；明确不含 programme 业务规则包，CP 技术运维无常态正文浏览（CP-FR-051）。
+- CP-TODO-241 已交付本地基座：additive 迁移 `20260919060000_multi_programme_scope_foundation`（已应用于本地开发与隔离测试库，未部署生产）新增 Tenant / Programme / Edition（1..n）/ AccessMembership（user × programme × edition × scoped role）/ ObjectAuthorization（对象级授权：purpose/有效期/撤销）/ InstitutionRepresentation（显式机构代表权，任职/雇佣不自动代表）/ ChannelClient（machine identity + scoped contract + 双 origin，secret 仅存引用）/ SourceObjectMapping（sourceSystem+sourceEditionRef+sourceObjectId 唯一 + 来源版本 + 来源方权威字段白名单）。全部可空 additive，不破坏现有数据；夏校行为不变。
+- 授权服务 `apps/passport-web/lib/server/programme-scope.ts`：`resolveScopedAccess(actor, scope, action, object)` 默认拒绝；未知/停用 scope、edition 与 programme 不一致、归档 Edition 拒绝；跨 Programme、跨 Edition 读写拒绝；有效期窗口与撤权即时生效；全局 UserRole（含 ADMIN）不自动跨 Programme。最小真实接入点：`/api/activities/[id]/institutions` 的 GET（读）与 POST（写，位于 canManageActivity 之后）对绑定 scope 的活动执行断言；无映射遗留对象行为不变。其余活动/管理/证书面尚未接入（剩余面在实现报告中列明）。
+- contracts 兼容改造：`ChannelKeySchema` 由固定 `"SHCW"` 字面量扩展为可登记 key 模式（SHCW 仍有效）；v1 bridge/exchange 对非 SHCW key 保持 fail-closed（CHANNEL_DISABLED）。
+- 测试：`tests/programme-scope-service.test.mjs` 14 项源码级断言（默认拒绝/未知 scope/跨 Programme/跨 Edition/角色层级/有效期/对象级授权/机构代表权/遗留对象放行）；`tests/api/programme-scope-authorization.test.ts` 真实数据库越权矩阵 15 项（3 虚构 Programme、2 Edition：同范围读写正路径含 ObjectAuthorization、跨 Programme/跨 Edition/停用 scope/匿名/全局 ADMIN/VIEWER 写/撤权即时失效负路径、遗留无映射对象含匿名访问行为不变）。当日全量门禁：398/398 node、API 46 通过+6 显式 skip、lint/build/db:validate 通过。
+- 剩余：CP-TODO-242（Person 认领 + InstitutionRepresentation 服务化）已于当日第二批交付：迁移 `20260919070000_person_institution_governance`（Person/Institution `mergedIntoId` 合并链），治理服务 `lib/server/person-institution-governance.ts`（认领仅 VERIFIED+未关联且不开户不发邀请；代表权授予/撤销 CAS + 有效期窗口 + MANAGE 委托；合并在同事务迁移全部引用并保留源记录可解析；institution_context/person_identity 白名单投影），消费端 `GET /api/institutions/[id]` 与管理端治理路由、管理端详情读取合并链解析；真实数据库矩阵验证"任职-only 403、READ 不能授权、撤权即时 403、过期窗口 403、合并旧 id 双端可解析"（`tests/api/person-institution-governance-api.test.ts` + 9 项源码级断言）。243（渠道用户/机器认证、scope 契约/SDK）已于当日第三批本地交付：contracts 增加 scope 目录与三个认证错误码，迁移 `20260919080000_channel_client_machine_auth` 以 sha256 摘要校验机器密钥（明文绝不入库），`lib/server/channel-client-auth.ts` 默认拒绝（未知/停用/USER_FACING 401、密钥不匹配 401、scope 403、origin allowlist 403），v1 证书验证路由新增向后兼容机器认证分支（无头 legacy 行为不变、携带但无效 fail-closed），管理端登记/更新/撤销路由与 SDK 机器凭据辅助落地；真实数据库矩阵覆盖撤销即时失效、scope 收紧、origin 矩阵与 legacy 不变（`tests/api/channel-client-auth-api.test.ts` + 4 项源码级断言）。真实渠道环境验收（双 origin、真实域名 cookie/CSRF/回调/退出）随 235 真实验收另行进行。244（outbox/inbox、幂等/receipt/对账）已于当日第四批本地交付：迁移 `20260919090000_reliable_outbox_dispatch`（`OutboundDispatch` 幂等键+内容哈希、租约 CAS、退避、死信、回执、revision 护栏；`channel_clients.callbackUrl`），证书撤销/恢复在同一事务入队（取消/撤权优先，payload 不含验证码等敏感字段），默认 HTTP 传输携带幂等/版本头，管理端处理/重投/对账路由与审计齐备；端到端证据含进程内真实 HTTP 接收器（`tests/api/reliable-dispatch-api.test.ts` + 7 项源码级断言）。接收侧 inbox 校验（签名/时间窗/去重）为接收 Programme 契约责任。当日第五批 Wave 1 已交付 CP-TODO-247/248/249/250/251（通用私密记录/受控 Asset/同意/外部决定回执/Publication 网关，详见 CP-AUD-004 整改状态），进一步加厚多 Programme 协作与发布底座。第六批已交付 CP-TODO-245（来源映射执行层，CP-FR-053）：迁移 `20260919140000_source_activity_execution`（contentHash + 每活动一条 ACTIVE 映射的部分唯一索引）；服务 `lib/server/source-activity-mapping.ts`（bind 三元组唯一 + 幂等键内容哈希去重/冲突 + 并发首接入 winner 重读；apply 数字段感知版本序，v3 后 v2 一律 409 SOURCE_MAPPING_STALE，同版同内容幂等/异内容 409，事务内 CAS；publish 不可变版本投影 + 撤回版本禁止复活 + 旧来源版本拒绝；cancel 取消优先——活动 CANCELLED + 撤回全部已发布版本 + 扇出，幂等；关键写入与审计同事务）；CP 侧守卫（PATCH 来源权威字段 409 ACTIVITY_SOURCE_FIELD_CONFLICT、报名门 ACTIVITY_SOURCE_NOT_PUBLISHED/CANCELLED，未映射活动行为不变）；机器门面 `/api/external/activity-mappings`（scope channel:activities:source）+ 管理端列表；contracts schema 与六个错误码；跨 Programme 寻址以 clientKey 隔离。证据：`tests/source-activity-mapping.test.mjs` 25 项源码级 + `tests/api/source-activity-mapping-api.test.ts` 13 项真实数据库矩阵；当日全量门禁 507/507 node、API 121 通过+7 显式 skip、lint/build/db:validate 通过。至此本条关闭；真实渠道环境与生产部署仍随 235/238 另行验收。
+
 ### CP-AUD-004：通用私密记录与受控证据资产缺失
 
 严重级别：**P1 / 新 Programme 接入阻断**  
@@ -205,6 +216,17 @@ Prisma Schema 中未发现以下目标模型或等价通用能力：
 #### 完成标准
 
 新增通用 `ScopedRecord / Asset / EvidenceVersion / CollaborationGrant` 能力，并通过恶意文件、错误 MIME、扫描失败、版本竞争、撤权、衍生文件和跨 Programme 访问测试。不得把 Programme 的 Inquiry、导师流程或编辑工作台搬入 CP。
+
+#### 整改状态（2026-09-19，Wave 1：CP-TODO-247/248/249/250/251）
+
+已关闭（本地）。迁移 `20260919100000_private_records_consents_publications`（Wave 1 表结构，当日上午已预建并应用）+ `20260919120000_object_authorization_personal_scope`（ObjectAuthorization.programmeId 可空 = 个人记录对象授权）+ `20260919130000_external_receipt_content_hash`（回执内容哈希与有效期），已应用于本地开发与隔离测试库，未部署生产。
+
+- **私密记录**：`lib/server/private-records.ts` 通用 ScopedRecord + 不可变 RecordRevision；默认 Private，所有者 > ObjectAuthorization 对象授权（用途 + 有效期，多条取最高权限）> Programme 成员（resolveScopedAccess）；更新 compare-and-set（409 不覆盖）；撤回后非所有者 404。不含 Inquiry/ActionPlan 业务模型与页面。
+- **受控 Asset**：`controlled-asset-storage.ts`（local/http 内容寻址存储、回读完整性）+ `controlled-assets.ts`：magic-bytes 嗅探拒绝错误/恶意 MIME、大小+sha256 完整性校验、JPEG EXIF/PNG eXIf 定位元数据剥离、finalize 扫描门禁（PENDING 不可用/INFECTED 隔离/管理端检疫）、不可变 EvidenceVersion、衍生文件继承原始资产权限（仅原始→衍生方向）。
+- **同意**：`consents.ts` 多目的（账户条款/项目运行/影像/署名/联系/推荐宣传，互不复用）、监护代授须 guardianUserId==grantor + 验证依据 evidenceJson（联系邮箱不构成授权）、版本化取代、撤回即时阻断依赖发布、频道与对象匹配规则（null=通用）。真实未成年人启用仍需获批政策。
+- **外部决定回执**：`external-decision-receipts.ts` 机器认证最小回执（issuer=登记客户端），内容哈希仅覆盖 7 个内容字段（幂等键不参与）——同键同内容去重、同键异内容 409、旧 revision 409 RECEIPT_STALE；最新决定须 APPROVED 且未过期（反馈/撤销不构成批准）。
+- **Publication 网关**：`publication-gateway.ts` 不可变版本投影（同版本同内容幂等/异内容 409）、已撤回版本禁止复活（409，必须发新版）、发新版不下架有效旧版、fail-closed 公开读门（no-store）、同意门（缺失/撤回分码）与可选 approvalReceipt 批准回执门（路由已透传）、发布/撤回同事务向 dispatch:publications 订阅者扇出定位级 payload（无正文）。
+- **测试证据**：源码级 64 项（private-records 8 / controlled-assets 19 / consents 12 / receipts 11 / publication-gateway 14，含恶意 MIME、完整性失败、扫描失败、版本竞争 CAS、撤权即时、衍生继承、跨 Programme 拒绝）；真实数据库 API 矩阵 5 个文件（private-records/controlled-assets/consents/external-decision-receipts/publication-gateway）。当日全量门禁见计划文档执行进度。
 
 ### CP-AUD-005：关键证书审计仍可能丢失
 

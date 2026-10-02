@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function POST(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
-  await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER"], "/en/admin/achievements");
+  const apiAuth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], _request);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {

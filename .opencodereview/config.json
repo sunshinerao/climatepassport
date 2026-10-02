@@ -1,0 +1,26 @@
+{
+  "review": {
+    "language": "zh-CN",
+    "maxFiles": 200,
+    "excludePatterns": [
+      "*.test.*",
+      "*.spec.*",
+      "*.test.ts",
+      "*.spec.ts",
+      "*.test.mjs",
+      "*.spec.mjs",
+      "node_modules/**",
+      ".next/**",
+      ".next-dev/**",
+      "coverage/**",
+      "dist/**",
+      "build/**"
+    ]
+  },
+  "rules": {
+    "security": true,
+    "performance": true,
+    "best-practices": true,
+    "accessibility": true
+  }
+}

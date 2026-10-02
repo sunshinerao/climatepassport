@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { syncParticipationToPassport } from "@/lib/server/activity-rewards";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 /** POST /api/activity-participations/[id]/sync-passport */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireAuthenticatedUser("en" as any, "/en/dashboard");
+  const user = await requireApiUser(req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

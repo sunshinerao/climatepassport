@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getEventCheckinQrExpiry, issueQrToken } from "@/lib/server/qr";
 import { checkRateLimitAsync, getRateLimitHeaders, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const requestSchema = z.object({
   eventId: z.string().uuid(),
@@ -13,7 +13,8 @@ export async function POST(request: Request) {
   const rateLimit = await checkRateLimitAsync(getRequestRateLimitKey(request, "qr-event-checkin-issue"), { limit: 20, windowMs: 60_000, sensitive: true });
   if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
   if (!rateLimit.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
-  const user = await requireAuthenticatedUser("en", "/en/dashboard");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

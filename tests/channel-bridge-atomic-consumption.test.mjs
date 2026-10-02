@@ -11,12 +11,12 @@ const authSource = fs.readFileSync(
 test("channel bridge exchange conditionally consumes one-time tokens", () => {
   assert.match(authSource, /channelSessionBridge\.updateMany\(/);
   assert.match(authSource, /consumedAt:\s*null/);
-  assert.match(authSource, /expiresAt:\s*\{\s*gt:\s*new Date\(\)\s*\}/);
-  assert.match(authSource, /if \(consumed\.count !== 1\)/);
+  assert.match(authSource, /expiresAt:\s*\{\s*gt:\s*now\s*\}/);
+  assert.match(authSource, /if \(used\.count !== 1\)/);
 });
 
 test("channel bridge exchange audits successful and rejected replay attempts", () => {
-  assert.match(authSource, /result: "REPLAY_REJECTED"/);
-  assert.match(authSource, /result: "SUCCESS"/);
+  assert.match(authSource, /auditResult = "REPLAY_REJECTED"/);
+  assert.match(authSource, /result: result \? "SUCCESS" : auditResult/);
   assert.match(authSource, /action: "CHANNEL_BRIDGE_EXCHANGE"/);
 });

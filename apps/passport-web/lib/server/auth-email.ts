@@ -1,142 +1,106 @@
-import { createHash, randomBytes, randomInt } from "crypto";
+import { randomBytes, randomInt } from "crypto";
 import type { AuthEmailTokenPurpose } from "@prisma/client";
 import type { Locale } from "@/lib/site-content";
 import { sendTransactionalMail } from "@/lib/server/mailer";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { getAuthPublicOrigin, hashEmailToken, hashEmailCode, matchesEmailCode, MAX_EMAIL_CODE_ATTEMPTS, getAuthCredentialVersion } from "@/lib/server/auth-email-security";
 
 const VERIFY_EMAIL_TTL_MINUTES = 30;
 const RESET_PASSWORD_TTL_MINUTES = 30;
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+function resolveLinkLocale(locale: Locale) { return locale === "zh" ? "zh" : "en"; }
 
-function hashToken(rawToken: string) {
-  return createHash("sha256").update(rawToken).digest("hex");
-}
-
-function generateRawToken() {
-  return randomBytes(32).toString("hex");
-}
-
-function generateCode() {
-  return String(randomInt(0, 1_000_000)).padStart(6, "0");
-}
-
-function normalizeOrigin(origin: string) {
-  return origin.replace(/\/$/, "");
-}
-
-function resolveLinkLocale(locale: Locale) {
-  return locale === "zh" ? "zh" : "en";
+// A PostgreSQL serialization conflict aborts the whole transaction. Retry from a
+// fresh snapshot; never retry non-serialization failures or commit partial work.
+async function serializable<T>(work: (tx: import("@prisma/client").Prisma.TransactionClient) => Promise<T>): Promise<T> {
+  const prisma = getPrismaClient();
+  if (!prisma) throw new Error("Database unavailable.");
+  for (let attempt = 0; ; attempt++) {
+    try { return await prisma.$transaction(work, { isolationLevel: "Serializable" }); }
+    catch (error) {
+      if (attempt >= 2 || (error as { code?: string }).code !== "P2034") throw error;
+    }
+  }
 }
 
 export async function createEmailToken(options: {
-  userId: string;
-  email: string;
-  purpose: AuthEmailTokenPurpose;
-  ttlMinutes?: number;
+  userId: string; email: string; purpose: AuthEmailTokenPurpose; ttlMinutes?: number;
 }) {
-  const prisma = getPrismaClient();
-
-  if (!prisma) {
-    throw new Error("Database unavailable.");
-  }
-
-  const rawToken = generateRawToken();
-  const tokenHash = hashToken(rawToken);
-  const code = generateCode();
-  const ttlMinutes = options.ttlMinutes ?? (options.purpose === "VERIFY_EMAIL" ? VERIFY_EMAIL_TTL_MINUTES : RESET_PASSWORD_TTL_MINUTES);
-  const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
-
-  await prisma.authEmailToken.create({
-    data: {
-      userId: options.userId,
-      email: options.email,
-      purpose: options.purpose,
-      tokenHash,
-      code,
-      expiresAt,
-    },
+  // Configuration failures must happen before creating a credential.
+  getAuthPublicOrigin();
+  const credentialVersion = getAuthCredentialVersion();
+  const email = normalizeEmail(options.email);
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = hashEmailToken(token);
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const codeHash = hashEmailCode(code, { ...options, email, tokenHash, credentialVersion });
+  const ttl = options.ttlMinutes ?? 30;
+  if (!Number.isFinite(ttl) || ttl <= 0 || ttl > 30) throw new Error("Invalid email token lifetime.");
+  return serializable(async tx => {
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${options.userId} FOR UPDATE`;
+    const user = await tx.user.findUnique({ where: { id: options.userId } });
+    if (!user || user.email !== email || user.status !== "ACTIVE" ||
+        (options.purpose === "VERIFY_EMAIL" ? user.emailVerified !== null : user.emailVerified === null)) throw new Error("Account is not eligible for this email action.");
+    const now = new Date();
+    // New mail cannot reset the persisted guessing budget while prior challenges
+    // are still valid. Issuance and completion serialize on the same user row.
+    const previous = await tx.authEmailToken.findFirst({
+      where: { userId: user.id, purpose: options.purpose, credentialVersion, expiresAt: { gt: now } },
+      orderBy: { attempts: "desc" },
+    });
+    const attempts = previous?.attempts ?? 0;
+    if (attempts >= MAX_EMAIL_CODE_ATTEMPTS) throw new Error("Email credential attempt limit reached.");
+    await tx.authEmailToken.updateMany({ where: { userId: user.id, purpose: options.purpose, consumedAt: null }, data: { consumedAt: now } });
+    const expiresAt = new Date(now.getTime() + ttl * 60_000);
+    const credential = await tx.authEmailToken.create({ data: { userId: user.id, email, purpose: options.purpose, tokenHash, codeHash, expiresAt, attempts, credentialVersion } });
+    return { token, code, expiresAt, credentialId: credential.id };
   });
-
-  return { token: rawToken, code, expiresAt };
 }
 
-export async function consumeEmailTokenByToken(options: {
-  purpose: AuthEmailTokenPurpose;
-  token: string;
+/** Complete CP self-account actions atomically. PENDING partner claims are not supported. */
+export async function completeAuthEmailAction(options: {
+  purpose: AuthEmailTokenPurpose; email?: string; token?: string; code?: string; passwordHash?: string;
 }) {
-  const prisma = getPrismaClient();
-
-  if (!prisma) {
-    throw new Error("Database unavailable.");
-  }
-
-  const tokenHash = hashToken(options.token);
-  const record = await prisma.authEmailToken.findUnique({
-    where: { tokenHash },
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          status: true,
-        },
-      },
-    },
+  if (!['VERIFY_EMAIL', 'RESET_PASSWORD'].includes(options.purpose)) return null;
+  if (Boolean(options.token) === Boolean(options.code)) return null;
+  if (options.token && !/^[a-f0-9]{64}$/.test(options.token)) return null;
+  if (options.code && (!/^\d{6}$/.test(options.code) || !options.email)) return null;
+  if (!options.passwordHash) return null;
+  const credentialVersion = getAuthCredentialVersion();
+  const email = options.email === undefined ? undefined : normalizeEmail(options.email);
+  return serializable(async tx => {
+    const record = options.token
+      ? await tx.authEmailToken.findUnique({ where: { tokenHash: hashEmailToken(options.token) } })
+      : await tx.authEmailToken.findFirst({ where: { email, purpose: options.purpose, consumedAt: null }, orderBy: { createdAt: "desc" } });
+    if (!record || record.credentialVersion !== credentialVersion || record.purpose !== options.purpose || record.consumedAt || record.expiresAt <= new Date() || record.attempts >= MAX_EMAIL_CODE_ATTEMPTS || (email !== undefined && record.email !== email)) return null;
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${record.userId} FOR UPDATE`;
+    const user = await tx.user.findUnique({ where: { id: record.userId } });
+    if (!user || user.email !== record.email || user.status !== "ACTIVE" ||
+        (options.purpose === "VERIFY_EMAIL" ? user.emailVerified !== null : user.emailVerified === null)) return null;
+    const now = new Date();
+    if (record.expiresAt <= now) return null;
+    if (options.code && !matchesEmailCode(record.codeHash, hashEmailCode(options.code, record))) {
+      // Returning null commits the increment. Throwing here would roll it back.
+      await tx.authEmailToken.updateMany({ where: { id: record.id, consumedAt: null, attempts: { lt: MAX_EMAIL_CODE_ATTEMPTS } }, data: { attempts: { increment: 1 } } });
+      return null;
+    }
+    const consumed = await tx.authEmailToken.updateMany({ where: { id: record.id, consumedAt: null, expiresAt: { gt: now }, attempts: { lt: MAX_EMAIL_CODE_ATTEMPTS } }, data: { consumedAt: now } });
+    if (consumed.count !== 1) return null;
+    const updated = await tx.user.updateMany({
+      where: { id: user.id, email: record.email, status: "ACTIVE", emailVerified: options.purpose === "VERIFY_EMAIL" ? null : { not: null } },
+      data: options.purpose === "VERIFY_EMAIL"
+        ? { emailVerified: now, password: options.passwordHash, resetToken: null, resetTokenExpiry: null }
+        : { password: options.passwordHash, resetToken: null, resetTokenExpiry: null },
+    });
+    if (updated.count !== 1) throw new Error("Account changed during email action.");
+    // The mailbox holder sets a fresh password during verification too: never
+    // activate a password chosen by an unverified preregistration requester.
+    // Revoke every old credential/session in the same transaction for either action.
+    await tx.authEmailToken.updateMany({ where: { userId: user.id, consumedAt: null }, data: { consumedAt: now } });
+    await tx.session.deleteMany({ where: { userId: user.id } });
+    await tx.channelSessionBridge.updateMany({ where: { userId: user.id, consumedAt: null }, data: { consumedAt: now } });
+    return { userId: user.id, email: user.email, role: user.role };
   });
-
-  if (!record) return null;
-  if (record.purpose !== options.purpose) return null;
-  if (record.consumedAt) return null;
-  if (record.expiresAt <= new Date()) return null;
-
-  await prisma.authEmailToken.update({
-    where: { id: record.id },
-    data: { consumedAt: new Date() },
-  });
-
-  return record;
-}
-
-export async function consumeEmailTokenByCode(options: {
-  purpose: AuthEmailTokenPurpose;
-  email: string;
-  code: string;
-}) {
-  const prisma = getPrismaClient();
-
-  if (!prisma) {
-    throw new Error("Database unavailable.");
-  }
-
-  const record = await prisma.authEmailToken.findFirst({
-    where: {
-      purpose: options.purpose,
-      email: options.email,
-      code: options.code,
-      consumedAt: null,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          status: true,
-        },
-      },
-    },
-  });
-
-  if (!record) return null;
-
-  await prisma.authEmailToken.update({
-    where: { id: record.id },
-    data: { consumedAt: new Date() },
-  });
-
-  return record;
 }
 
 export async function sendVerificationEmail(options: {
@@ -144,10 +108,10 @@ export async function sendVerificationEmail(options: {
   email: string;
   token: string;
   code: string;
-  origin: string;
+  origin?: string;
 }) {
   const locale = resolveLinkLocale(options.locale);
-  const origin = normalizeOrigin(options.origin);
+  const origin = getAuthPublicOrigin();
   const link = `${origin}/${locale}/auth/verify-email?token=${encodeURIComponent(options.token)}&email=${encodeURIComponent(options.email)}`;
 
   await sendTransactionalMail({
@@ -172,10 +136,10 @@ export async function sendResetPasswordEmail(options: {
   email: string;
   token: string;
   code: string;
-  origin: string;
+  origin?: string;
 }) {
   const locale = resolveLinkLocale(options.locale);
-  const origin = normalizeOrigin(options.origin);
+  const origin = getAuthPublicOrigin();
   const link = `${origin}/${locale}/auth/reset-password?token=${encodeURIComponent(options.token)}&email=${encodeURIComponent(options.email)}`;
 
   await sendTransactionalMail({

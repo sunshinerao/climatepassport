@@ -1,0 +1,75 @@
+- apps/passport-web/app/[locale]/page.tsx
+  - apps/passport-web/components/platform-screens.tsx
+    - apps/passport-web/components/auth-form.tsx
+      - apps/passport-web/components/country-combobox.tsx
+      - apps/passport-web/lib/site-content.ts
+      - apps/passport-web/lib/country-options.ts
+        - apps/passport-web/lib/site-content.ts (shared)
+    - apps/passport-web/components/contact-message-form.tsx
+    - apps/passport-web/components/notification-preferences-form.tsx
+    - apps/passport-web/components/events-filterable-grid.tsx
+      - apps/passport-web/lib/site-content.ts (shared)
+    - apps/passport-web/components/profile-maintenance-form.tsx
+      - apps/passport-web/lib/site-content.ts (shared)
+      - apps/passport-web/components/country-combobox.tsx (shared)
+      - apps/passport-web/lib/country-options.ts (shared)
+    - apps/passport-web/lib/redirect-path.ts
+    - apps/passport-web/lib/site-content.ts (shared)
+    - apps/passport-web/lib/server/auth.ts
+      - apps/passport-web/lib/site-content.ts (shared)
+      - apps/passport-web/lib/server/prisma.ts
+      - apps/passport-web/lib/server/audit.ts
+        - apps/passport-web/lib/server/prisma.ts (shared)
+    - apps/passport-web/lib/server/qr.ts
+      - apps/passport-web/lib/server/prisma.ts (shared)
+    - apps/passport-web/lib/server/platform-data.ts
+      - apps/passport-web/lib/server/prisma.ts (shared)
+      - apps/passport-web/lib/server/auth.ts (shared)
+      - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/lib/seo.ts
+    - apps/passport-web/lib/site-content.ts (shared)
+
+- apps/passport-web/app/[locale]/activities/[slug]/page.tsx
+  - apps/passport-web/lib/server/prisma.ts
+  - apps/passport-web/lib/server/auth.ts
+    - apps/passport-web/lib/site-content.ts
+    - apps/passport-web/lib/server/prisma.ts (shared)
+    - apps/passport-web/lib/server/audit.ts
+      - apps/passport-web/lib/server/prisma.ts (shared)
+  - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/lib/seo.ts
+    - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/components/event-detail-sections.tsx
+    - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/lib/server/activity-event-utils.ts
+  - apps/passport-web/components/activity-poster-buttons.tsx
+    - apps/passport-web/components/activity-poster-canvas.tsx
+
+- apps/passport-web/components/platform-screens.tsx
+  - apps/passport-web/components/auth-form.tsx
+    - apps/passport-web/components/country-combobox.tsx
+    - apps/passport-web/lib/site-content.ts
+    - apps/passport-web/lib/country-options.ts
+      - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/components/contact-message-form.tsx
+  - apps/passport-web/components/notification-preferences-form.tsx
+  - apps/passport-web/components/events-filterable-grid.tsx
+    - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/components/profile-maintenance-form.tsx
+    - apps/passport-web/lib/site-content.ts (shared)
+    - apps/passport-web/components/country-combobox.tsx (shared)
+    - apps/passport-web/lib/country-options.ts (shared)
+  - apps/passport-web/lib/redirect-path.ts
+  - apps/passport-web/lib/site-content.ts (shared)
+  - apps/passport-web/lib/server/auth.ts
+    - apps/passport-web/lib/site-content.ts (shared)
+    - apps/passport-web/lib/server/prisma.ts
+    - apps/passport-web/lib/server/audit.ts
+      - apps/passport-web/lib/server/prisma.ts (shared)
+  - apps/passport-web/lib/server/qr.ts
+    - apps/passport-web/lib/server/prisma.ts (shared)
+  - apps/passport-web/lib/server/platform-data.ts
+    - apps/passport-web/lib/server/prisma.ts (shared)
+    - apps/passport-web/lib/server/auth.ts (shared)
+    - apps/passport-web/lib/site-content.ts (shared)

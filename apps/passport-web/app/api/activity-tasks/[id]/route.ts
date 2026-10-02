@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { ActivityTaskType } from "@prisma/client";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], _req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();
@@ -31,7 +32,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();
@@ -47,6 +48,10 @@ export async function PATCH(
     points, requiresSubmission, requiresCheckin, requiresReview,
     orderIndex, ruleJson, badgeTriggerDefinitionId,
   } = body;
+
+  if (taskType !== undefined && !(Object.values(ActivityTaskType) as string[]).includes(taskType)) {
+    return NextResponse.json({ error: `Invalid taskType. Expected one of: ${Object.values(ActivityTaskType).join(", ")}` }, { status: 400 });
+  }
 
   const task = await prisma.activityTask.update({
     where: { id: params.id },
@@ -74,7 +79,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], _req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();

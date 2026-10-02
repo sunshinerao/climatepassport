@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { institutionGovernanceUpdateSchema, serializeInstitution } from "@/lib/server/people-master-data";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/institutions");
+  const user = await requireApiRole(["ADMIN"], req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

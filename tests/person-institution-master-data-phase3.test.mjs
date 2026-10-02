@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
-import { exec } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { promisify } from "node:util";
+import vm from "node:vm";
 import test from "node:test";
 
-const execAsync = promisify(exec);
 const root = process.cwd();
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const exists = (relativePath) => fs.existsSync(path.join(root, relativePath));
@@ -72,9 +70,57 @@ test("backfill script defaults to dry-run, reports opaque ids, and performs zero
   assert.equal(/\bfuzzy\b/.test(codeOnly), false);
   assert.equal(/User\s*\.\s*find|Institution\s*\.\s*find|Organization\s*\.\s*find/i.test(codeOnly), false);
 
-  const { stdout, stderr } = await execAsync("node scripts/backfill-speaker-persons.mjs", { cwd: root });
-  assert.equal(stderr, "");
-  const report = JSON.parse(stdout);
+  // Execute the original default CLI branch with a synthetic client. Every write
+  // method throws, so the zero-write assertion checks behavior, not just a report.
+  const rows = [{ id: "speaker-synthetic-private-id" }];
+  let queries = 0;
+  let disconnects = 0;
+  let writes = 0;
+  const logs = [];
+  const errors = [];
+  const forbiddenWrite = () => { writes += 1; throw new Error("dry-run attempted a write"); };
+  class SyntheticPrisma {
+    speaker = {
+      findMany: async (query) => {
+        assert.equal(query.where.personId, null);
+        assert.equal(query.orderBy.createdAt, "asc");
+        queries += 1;
+        return rows;
+      },
+      update: forbiddenWrite,
+    };
+    person = { create: forbiddenWrite };
+    personRoleProfile = { create: forbiddenWrite };
+    $transaction = forbiddenWrite;
+    $disconnect = async () => { disconnects += 1; };
+  }
+  const runnable = script
+    .replace(/^#!.*\n/, "")
+    .replace(/^import .*;\n/gm, "");
+  vm.runInNewContext(runnable, {
+    fs: { existsSync: () => { throw new Error("fixture must not read env files"); } },
+    path,
+    PrismaClient: SyntheticPrisma,
+    process: {
+      argv: ["node", "backfill-speaker-persons.mjs"],
+      env: { DATABASE_URL: "postgresql://fixture@127.0.0.1:55432/synthetic_backfill" },
+      exit: () => { throw new Error("unexpected process exit"); },
+    },
+    console: { log: (line) => logs.push(line), error: (line) => errors.push(line) },
+    setTimeout,
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(errors, []);
+  assert.equal(queries, 1);
+  assert.equal(disconnects, 1);
+  assert.equal(writes, 0);
+  assert.equal(logs.length, 1);
+  const report = JSON.parse(logs[0]);
+  assert.equal(report.unlinkedCount, rows.length);
+  assert.equal(report.wouldCreatePeople, rows.length);
+  assert.equal(report.wouldCreateRoleProfiles, rows.length);
+  assert.equal(report.wouldLinkSpeakers, rows.length);
+  assert.ok(!logs[0].includes(rows[0].id), "report hides complete speaker ids");
   assert.equal(report.mode, "dry-run");
   assert.equal(report.writes, 0);
   assert.ok(typeof report.unlinkedCount === "number");
@@ -99,7 +145,7 @@ test("new people/institution APIs are ADMIN-only and validate relationships", ()
     const source = read(path.join("apps/passport-web/app/api/admin", file));
     assert.match(
       source,
-      /requireRoleAccess\("en", \["ADMIN"\]/,
+      /requireApiRole\(\["ADMIN"\](,\s*\w+)?\)/,
       `${file} enforces ADMIN-only access`,
     );
     assert.match(source, /getPrismaClient\(\)/, `${file} uses Prisma client`);

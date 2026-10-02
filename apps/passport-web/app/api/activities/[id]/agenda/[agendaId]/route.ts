@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { z } from "zod";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const updateAgendaSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
@@ -20,7 +20,8 @@ const updateAgendaSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string; agendaId: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
@@ -98,7 +99,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string; agendaId: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

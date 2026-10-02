@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const ASSIGNABLE_ROLES = ["ATTENDEE", "EVENT_MANAGER", "VERIFIER"] as const;
 
@@ -8,7 +8,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN"]);
+  const auth = await requireApiRole(["ADMIN"], req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json();

@@ -1,5 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
+import { PosterPrintButton } from "@/components/poster-print-button";
 import { getPrismaClient } from "@/lib/server/prisma";
 import type { Locale } from "@/lib/site-content";
 
@@ -131,12 +132,7 @@ export default async function ActivityPosterPage({ params }: { params: { locale:
 
       {/* Print button (non-print) */}
       <div className="no-print" style={{ position: "fixed", bottom: "2rem", right: "2rem" }}>
-        <button
-            style={{ padding: "0.75rem 1.5rem", background: "#16a34a", color: "#fff", border: "none", borderRadius: "0.5rem", cursor: "pointer", fontWeight: 600, fontSize: "var(--cp-text-small)" }}
-          onClick={() => window.print()}
-        >
-          {zh ? "🖨️ 打印 / 保存" : "🖨️ Print / Save"}
-        </button>
+        <PosterPrintButton label={zh ? "🖨️ 打印 / 保存" : "🖨️ Print / Save"} />
       </div>
     </div>
   );

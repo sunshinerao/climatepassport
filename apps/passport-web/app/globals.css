@@ -19,6 +19,7 @@
 @import "./styles/features/activity-admin-console.css";
 @import "./styles/features/admin-activities.css";
 @import "./styles/features/admin-create-activity.css";
+@import "./styles/features/prompt-dialog.css";
 @import "./styles/features/prototype-alignment-overrides.css";
 @import "./styles/features/prototype-alignment-v3.css";
 
@@ -1509,7 +1510,7 @@ textarea:focus-visible {
 
 .split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1602,5 +1603,4 @@ textarea:focus-visible {
     margin-top: 10px;
   }
 }
-
-
+@import "./styles/features/data-governance.css";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const createApplicationSchema = z.object({
   programId: z.string().trim().min(1),
@@ -9,7 +9,8 @@ const createApplicationSchema = z.object({
 });
 
 export async function GET() {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard");
+  const user = await requireApiUser();
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -43,7 +44,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

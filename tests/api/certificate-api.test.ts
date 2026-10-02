@@ -69,7 +69,13 @@ describe("证书申请 API 流程", () => {
       buildCertificateApplicationPayload(definitionId),
     );
     assert.equal(createResponse.status, 201, `创建证书申请失败: ${JSON.stringify(createResponse.data)}`);
-    assert.ok((createResponse.data as { application?: { id: string } }).application?.id, "应返回 application.id");
+    const createdApplicationId = (createResponse.data as { application?: { id: string } }).application?.id;
+    assert.ok(createdApplicationId, "应返回 application.id");
+
+    // 自清理：该定义上每名申请人只允许一条开放申请（部分唯一索引），
+    // 不撤销会让下一次运行的创建命中 409。
+    const withdrawResponse = await client.post(`/api/certificate-applications/${createdApplicationId}/withdraw`, {});
+    assert.equal(withdrawResponse.status, 200, `撤销测试申请失败: ${JSON.stringify(withdrawResponse.data)}`);
   });
 
   test("管理员审批接口需要管理员权限", async (t) => {

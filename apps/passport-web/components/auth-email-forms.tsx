@@ -21,6 +21,7 @@ export function VerifyEmailForm(props: {
   const [email, setEmail] = useState(props.initialEmail ?? "");
   const [token, setToken] = useState(props.initialToken ?? "");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,8 +37,8 @@ export function VerifyEmailForm(props: {
       locale: props.locale,
       next: props.nextPath ?? "",
       email,
-      token: token || undefined,
-      code: code || undefined,
+      password,
+      ...(code.trim() ? { code: code.trim() } : { token: token.trim() || undefined }),
     };
 
     try {
@@ -55,7 +56,7 @@ export function VerifyEmailForm(props: {
         return;
       }
 
-      window.location.assign(result.redirectTo ?? `/${props.locale}/dashboard/climate-passport`);
+      window.location.assign(result.redirectTo ?? `/${props.locale}/auth/login`);
     } catch {
       setError(isZh ? "网络异常，请稍后再试。" : "Network error. Please try again.");
       setIsSubmitting(false);
@@ -87,7 +88,7 @@ export function VerifyEmailForm(props: {
         return;
       }
 
-      setMessage(isZh ? "验证邮件已发送，请查看邮箱。" : "Verification email sent. Please check your inbox.");
+      setMessage(isZh ? "如果该邮箱符合条件，我们会发送验证说明。" : "If eligible, verification instructions will be sent to this email.");
     } catch {
       setError(isZh ? "网络异常，请稍后再试。" : "Network error. Please try again.");
     } finally {
@@ -122,6 +123,8 @@ export function VerifyEmailForm(props: {
         />
       </label>
 
+      <p className="footer-note">{isZh ? "填写验证码时将使用验证码；留空则使用邮件链接中的 Token。" : "An entered code takes priority. Leave it blank to use the email link token."}</p>
+
       <label className="field">
         <span>{isZh ? "验证链接 Token（可选）" : "Verification link token (optional)"}</span>
         <input
@@ -132,6 +135,14 @@ export function VerifyEmailForm(props: {
           value={token}
         />
       </label>
+
+      <label className="field">
+        <span>{isZh ? "设置你的 CP 密码" : "Choose your CP password"}</span>
+        <input autoComplete="new-password" minLength={8} name="password" type="password" value={password}
+          onChange={(event) => setPassword(event.currentTarget.value)}
+          placeholder={isZh ? "至少 8 个字符，最多 72 UTF-8 字节" : "At least 8 characters, at most 72 UTF-8 bytes"} />
+      </label>
+      <p className="footer-note">{isZh ? "确认邮箱时，请由你设置一个新密码。注册时填写的密码将被替换；验证后仍需登录。" : "Choose a new password as you verify ownership of this email. It replaces the registration password; sign in after verification."}</p>
 
       {error ? <p className="form-error">{error}</p> : null}
       {message ? <p className="footer-note">{message}</p> : null}
@@ -181,7 +192,7 @@ export function ForgotPasswordForm(props: { locale: Locale }) {
       }
 
       setMessage(
-        result.message ?? (isZh ? "如果该邮箱存在，我们已发送重置说明。" : "If this email exists, we have sent reset instructions."),
+        result.message ?? (isZh ? "如果该邮箱符合条件，我们会发送重置说明，请稍候并检查收件箱。" : "If eligible, reset instructions will arrive shortly. Please check your inbox."),
       );
     } catch {
       setError(isZh ? "网络异常，请稍后再试。" : "Network error. Please try again.");
@@ -246,8 +257,7 @@ export function ResetPasswordForm(props: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          token: token || undefined,
-          code: code || undefined,
+          ...(code.trim() ? { code: code.trim() } : { token: token.trim() || undefined }),
           password,
         }),
       });
@@ -294,6 +304,8 @@ export function ResetPasswordForm(props: {
           value={code}
         />
       </label>
+
+      <p className="footer-note">{isZh ? "填写重置码时将使用重置码；留空则使用邮件链接中的 Token。" : "An entered code takes priority. Leave it blank to use the email link token."}</p>
 
       <label className="field">
         <span>{isZh ? "重置链接 Token（可选）" : "Reset link token (optional)"}</span>

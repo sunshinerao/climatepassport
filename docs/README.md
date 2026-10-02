@@ -1,6 +1,6 @@
 # Climate Passport Docs
 
-Last organized: 2026-10-02 (remote master directive and partner requirements merged)
+Last organized: 2026-10-02 (master directive, partner requirements, and cross-site governance entrypoints merged)
 
 ## Current Development Entry Point
 
@@ -44,7 +44,10 @@ Supporting current references:
 - `PROJECT_TAKEOVER_BASELINE_20260912.md`: dated project handover baseline; current remaining work is reconciled in the 2026-09-18 audit/plan.
 - `CLIMATE_PASSPORT_FUNCTIONAL_REQUIREMENTS_V1.md`: previous functional baseline and original CP-FR definitions; read together with the current V2 scope and acceptance refinements.
 - `PHASED_EXECUTION_P0_P2_20260523.md`: phase-by-phase execution record with done/pending items and baseline test results.
-- `trackers/`: module-level pending-feature trackers (currently certificate and summer-school modules).
+- `OPEN_API_V1_zh.md`: current contract for the outward machine surface — `/api/v1/open/**` is the only stable API-key entry point (`/api/external/**` was merged into it and deleted). Machine-readable spec: `openapi/v1.yaml`. Decision ledger (what the owner ruled, verbatim): `SPEC_V1_OPENAPI_DECISIONS_20260921.md`.
+- `SPEC_V1_OPENAPI_DECISIONS_20260921.md`: dated decision record for Open API v1 — seven rulings plus four same-day follow-ups; frozen once written, new understanding goes into a new dated entry.
+- `DOCUMENT_CONVENTIONS.md`: how this directory itself is written and checked — layering, naming, date headers, the three evidence layers, and the rule that every number must be re-run or re-grepped before it is written down.
+- `trackers/`: module-level pending-feature trackers (certificate, activities, summer-school and system-management modules).
 - `ui-prototypes/`: static UI prototype artifacts. For future development, ignore prototype hero/footer as binding references; use the rest of each prototype as the preferred layout and UI/UX reference when content is consistent with current product requirements. Data logic remains governed by Core platform docs.
 
 ## Product Direction
@@ -74,4 +77,11 @@ Do not use archived files to override current decisions.
 - New certificate product decisions should update `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`.
 - New implementation progress should update `CURRENT_IMPLEMENTATION_STATUS.md` and `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`.
 - New UI prototype/page alignment decisions should update `UI_PROTOTYPE_ALIGNMENT_AUDIT.md`.
+- New outward Open API work should update `OPEN_API_V1_zh.md` and `openapi/v1.yaml` together, then re-run `node artifacts/check-openapi.mjs`; owner rulings are recorded as a new dated decision doc rather than rewritten into an old one.
+- Before adding or editing any file here, follow `DOCUMENT_CONVENTIONS.md` (naming, date headers, evidence layers, re-verified numbers).
 - Historical notes should go to `docs/archive/` after their useful content has been merged.
+
+## 2026-10-01 Approved 跨站业务治理
+
+- [CP业务规则主册](CP_BUSINESS_RULES.md)：统一规则ID、适用范围、生效版本、用户决定与实现验收状态；五站共同引用。
+- [治理User Guide](CP_GOVERNANCE_USER_GUIDE.md)：仅已验路径，未实现项显式标记。

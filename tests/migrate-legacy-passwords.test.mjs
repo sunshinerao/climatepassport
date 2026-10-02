@@ -279,13 +279,21 @@ WITH_EQUALS=a=b=c
     assert.ok(fs.existsSync(path.join(repoRoot, "package.json")));
   });
 
-  await t.test("configureMigrationEnvironment loads missing database URL variables from repo root .env", () => {
+  await t.test("configureMigrationEnvironment loads only synthetic fixture database variables", () => {
     delete process.env.CLIMATE_PASSPORT_DATABASE_URL;
     delete process.env.DATABASE_URL;
 
-    configureMigrationEnvironment();
-
-    assert.ok(process.env.CLIMATE_PASSPORT_DATABASE_URL);
-    assert.ok(process.env.DATABASE_URL);
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cp-migration-config-"));
+    const syntheticUrl = "postgresql://fixture@127.0.0.1:55432/synthetic_migration";
+    try {
+      fs.writeFileSync(path.join(fixtureRoot, ".env"),
+        `CLIMATE_PASSPORT_DATABASE_URL=${syntheticUrl}\nDATABASE_URL=${syntheticUrl}\nUNRELATED_FIXTURE_KEY=ignored\n`);
+      configureMigrationEnvironment(fixtureRoot);
+      assert.equal(process.env.CLIMATE_PASSPORT_DATABASE_URL, syntheticUrl);
+      assert.equal(process.env.DATABASE_URL, syntheticUrl);
+      assert.equal(process.env.UNRELATED_FIXTURE_KEY, undefined);
+    } finally {
+      fs.rmSync(fixtureRoot, { recursive: true, force: true });
+    }
   });
 });

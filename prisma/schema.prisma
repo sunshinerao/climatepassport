@@ -451,6 +451,10 @@ enum InstitutionVerificationStatus {
 }
 
 model User {
+  governanceBindings GovernanceBinding[]
+  governanceRewardGrants GovernanceRewardGrant[]
+  governanceParticipations GovernanceParticipation[]
+  appOutcomeBindings AppOutcomeBinding[]
   id                String     @id @default(uuid())
   email             String     @unique
   password          String
@@ -470,6 +474,8 @@ model User {
   emailVerified     DateTime?
   resetToken        String?    @unique
   resetTokenExpiry  DateTime?
+  anonymizedAt      DateTime?
+  anonymizedReason  String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
@@ -489,6 +495,15 @@ model User {
   managedEvents                     Event[]                           @relation("EventManager")
   assignedEvents                    EventVerifier[]
   certificateIssues                 CertificateIssue[]                @relation("CertificateOwner")
+  scopedRecordsOwned                ScopedRecord[]                    @relation("ScopedRecordOwner")
+  scopedRecordsCreated              ScopedRecord[]                    @relation("ScopedRecordCreator")
+  controlledAssets                  ControlledAsset[]                 @relation("ControlledAssetOwner")
+  consentSubjects                   ConsentRecord[]                   @relation("ConsentSubject")
+  consentGrantors                   ConsentRecord[]                   @relation("ConsentGrantor")
+  consentGuardianFor                ConsentRecord[]                   @relation("ConsentGuardian")
+  evidenceVersionsCreated           EvidenceVersion[]                 @relation("EvidenceCreator")
+  recordRevisionsCreated            RecordRevision[]                  @relation("RecordRevisionCreator")
+  notificationAttempts              NotificationAttempt[]             @relation("NotificationActor")
   approvedCertificates              CertificateIssue[]                @relation("CertificateApprover")
   revokedCertificates               CertificateIssue[]                @relation("CertificateRevoker")
   restoredCertificates              CertificateIssue[]                @relation("CertificateRestorer")
@@ -521,6 +536,13 @@ model User {
   portfolioShareLinks               PortfolioShareLink[]
   activityAiContentDrafts           ActivityAiContentDraft[]          @relation("ActivityAiContentDraftActor")
   person                            Person?
+  accessMemberships                 AccessMembership[]
+  grantedAccessMemberships          AccessMembership[]                @relation("AccessMembershipGrantor")
+  subjectObjectAuthorizations       ObjectAuthorization[]             @relation("ObjectAuthorizationSubject")
+  grantedObjectAuthorizations       ObjectAuthorization[]             @relation("ObjectAuthorizationGrantor")
+  institutionRepresentations        InstitutionRepresentation[]
+  grantedInstitutionRepresentations InstitutionRepresentation[]       @relation("InstitutionRepresentationGrantor")
+  createdActivityPersonRoles        ActivityPersonRole[]
 
   @@index([email])
   @@index([passCode])
@@ -805,7 +827,8 @@ model AuthEmailToken {
   email      String
   purpose    AuthEmailTokenPurpose
   tokenHash  String                @unique
-  code       String?
+  codeHash   String?               @map("code_hash")
+  credentialVersion String       @default("legacy") @map("credential_version")
   expiresAt  DateTime
   consumedAt DateTime?
   attempts   Int                   @default(0)
@@ -842,6 +865,7 @@ model Track {
 }
 
 model Institution {
+  governanceProjects GovernanceProject[]
   id                  String                        @id @default(uuid())
   slug                String                        @unique
   name                String
@@ -865,20 +889,26 @@ model Institution {
   headquartersAddress String?
   foundingYear        Int?
   isActive            Boolean                       @default(true)
+  mergedIntoId        String?
   order               Int                           @default(0)
   createdAt           DateTime                      @default(now())
   updatedAt           DateTime                      @updatedAt
 
-  parentInstitution    Institution?          @relation("InstitutionParent", fields: [parentInstitutionId], references: [id], onDelete: SetNull)
-  childInstitutions    Institution[]         @relation("InstitutionParent")
+  parentInstitution    Institution?                @relation("InstitutionParent", fields: [parentInstitutionId], references: [id], onDelete: SetNull)
+  childInstitutions    Institution[]               @relation("InstitutionParent")
   speakers             Speaker[]
   events               EventInstitution[]
   activityInstitutions ActivityInstitution[]
   personAffiliations   PersonAffiliation[]
   personRoleProfiles   PersonRoleProfile[]
+  representations      InstitutionRepresentation[]
+  mergedInto           Institution?                @relation("InstitutionMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergeSources         Institution[]               @relation("InstitutionMerge")
+  contributionFacts    ContributionFact[]          @relation("ContributionFactInstitution")
 
   @@index([parentInstitutionId])
   @@index([verificationStatus])
+  @@index([mergedIntoId])
   @@map("institutions")
 }
 
@@ -1179,16 +1209,22 @@ model Person {
   verificationStatus   PersonVerificationStatus @default(DRAFT)
   verificationMetadata Json?
   userId               String?                  @unique
+  mergedIntoId         String?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
 
-  user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
-  affiliations PersonAffiliation[]
-  roleProfiles PersonRoleProfile[]
-  speakers     Speaker[]
+  user              User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  affiliations      PersonAffiliation[]
+  roleProfiles      PersonRoleProfile[]
+  speakers          Speaker[]
+  contributionFacts ContributionFact[]  @relation("ContributionFactPerson")
+  activityPersonRoles ActivityPersonRole[]
+  mergedInto        Person?             @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergeSources      Person[]            @relation("PersonMerge")
 
   @@index([verificationStatus])
   @@index([displayName])
+  @@index([mergedIntoId])
   @@map("people")
 }
 
@@ -1433,15 +1469,36 @@ model Notification {
   metadata    Json?
   deliveredAt DateTime?
   readAt      DateTime?
+  nextRetryAt DateTime?
+  deadLetteredAt DateTime?
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts NotificationAttempt[]
 
   @@index([userId, createdAt])
   @@index([userId, status])
   @@index([kind])
+  @@index([status, nextRetryAt])
   @@map("notifications")
+}
+
+/// CP-TODO-257 append-only privacy markers (withdrawal/deletion). Restores must
+/// replay these markers before opening reads (CP-FR-068).
+model PrivacyMarker {
+  id           String   @id @default(uuid())
+  subjectType  String
+  subjectId    String
+  action       String
+  actorUserId  String?
+  reason       String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  @@index([subjectType, subjectId])
+  @@index([action])
+  @@map("privacy_markers")
 }
 
 model AchievementDefinition {
@@ -2339,6 +2396,7 @@ enum ActivityAiContentDraftStatus {
 }
 
 model Activity {
+  governanceProject GovernanceProject?
   id                               String                @id @default(uuid())
   type                             ActivityType
   title                            String
@@ -2402,12 +2460,16 @@ model Activity {
   speakerLinks                  ActivitySpeaker[]
   wishlists                     ActivityWishlist[]
   dateSlots                     ActivityDateSlot[]
+  occurrences                   ActivityOccurrence[]
+  personRoles                   ActivityPersonRole[]
+  externalClassifications       ActivityExternalClassification[]
   institutions                  ActivityInstitution[]
   verifiers                     ActivityVerifier[]
   community                     ActivityCommunity?
   ExternalLearningCourseMapping ExternalLearningCourseMapping[]
   aiContentDrafts               ActivityAiContentDraft[]
   certificateBatches            CertificateBatch[]
+  sourceMappings                SourceObjectMapping[]
 
   @@index([type, status])
   @@index([status, startTime])
@@ -2571,6 +2633,7 @@ model ActivityApplication {
   id               String                    @id @default(uuid())
   activityId       String
   userId           String
+  occurrenceId     String?
   roleType         ActivityRoleType?
   formResponseJson Json?
   status           ActivityApplicationStatus @default(DRAFT)
@@ -2583,11 +2646,13 @@ model ActivityApplication {
 
   activity       Activity                   @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user           User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occurrence     ActivityOccurrence?        @relation(fields: [occurrenceId], references: [id], onDelete: SetNull)
   projectConsent ProjectApplicationConsent?
 
   @@unique([activityId, userId])
   @@index([userId, status])
   @@index([activityId, status])
+  @@index([occurrenceId])
   @@map("activity_applications")
 }
 
@@ -2715,6 +2780,8 @@ model ActivityCheckinRecord {
   locationJson     Json?
   verifiedByUserId String?
   checkinAt        DateTime
+  isCorrection     Boolean               @default(false)
+  noteJson         Json?
   createdAt        DateTime              @default(now())
 
   activity             Activity                      @relation(fields: [activityId], references: [id], onDelete: Cascade)
@@ -2972,4 +3039,868 @@ model ActivityVerifier {
   @@index([userId])
   @@index([activityId])
   @@map("activity_verifiers")
+}
+
+// ---------------------------------------------------------------------------
+// V2.1 multi-programme scope foundation (CP-TODO-241).
+// Field ownership and boundaries: docs/FIELD_OWNERSHIP_AND_SCOPE_ADR_V21_20260919.md
+
+enum ScopedAccessRole {
+  PROGRAMME_ADMIN
+  PROGRAMME_OPERATOR
+  PROGRAMME_VIEWER
+}
+
+enum ScopedAccessAction {
+  READ
+  WRITE
+  MANAGE
+}
+
+enum RepresentationStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+  EXPIRED
+}
+
+enum ChannelClientType {
+  USER_FACING
+  MACHINE
+}
+
+enum SourceMappingStatus {
+  ACTIVE
+  WITHDRAWN
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  name      String
+  nameEn    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programmes Programme[]
+
+  @@map("tenants")
+}
+
+model Programme {
+  governanceProjects GovernanceProject[]
+  id        String   @id @default(uuid())
+  tenantId  String
+  key       String   @unique
+  name      String
+  nameEn    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant                     Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  editions                   Edition[]
+  accessMemberships          AccessMembership[]
+  objectAuthorizations       ObjectAuthorization[]
+  institutionRepresentations InstitutionRepresentation[]
+  channelClients             ChannelClient[]
+  sourceObjectMappings       SourceObjectMapping[]
+  scopedRecords              ScopedRecord[]
+
+  @@index([tenantId])
+  @@map("programmes")
+}
+
+model Edition {
+  id          String    @id @default(uuid())
+  programmeId String
+  key         String
+  name        String
+  nameEn      String?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean   @default(true)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  programme                  Programme                   @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  accessMemberships          AccessMembership[]
+  objectAuthorizations       ObjectAuthorization[]
+  institutionRepresentations InstitutionRepresentation[]
+  sourceObjectMappings       SourceObjectMapping[]
+
+  @@unique([programmeId, key])
+  @@map("editions")
+}
+
+/// Scoped CP service access only; it never expresses programme business membership or qualification.
+model AccessMembership {
+  id            String           @id @default(uuid())
+  userId        String
+  programmeId   String
+  editionId     String?
+  role          ScopedAccessRole
+  grantorUserId String?
+  basisJson     Json?
+  validFrom     DateTime?
+  validUntil    DateTime?
+  revokedAt     DateTime?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  grantor   User?     @relation("AccessMembershipGrantor", fields: [grantorUserId], references: [id], onDelete: Restrict)
+  programme Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  edition   Edition?  @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, programmeId, editionId, role])
+  @@index([userId, isActive])
+  @@index([programmeId, role])
+  @@map("access_memberships")
+}
+
+/// Object-level grant (subject x object x action x purpose x validity x revocation).
+model ObjectAuthorization {
+  id            String             @id @default(uuid())
+  subjectUserId String
+  objectType    String
+  objectId      String
+  // CP-TODO-247: null = personal object grant (e.g. a private record without a programme);
+  // scoped objects keep a programmeId as before.
+  programmeId   String?
+  editionId     String?
+  action        ScopedAccessAction
+  purpose       String?
+  grantorUserId String
+  basisJson     Json?
+  validFrom     DateTime?
+  validUntil    DateTime?
+  revokedAt     DateTime?
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  subject   User       @relation("ObjectAuthorizationSubject", fields: [subjectUserId], references: [id], onDelete: Restrict)
+  grantor   User       @relation("ObjectAuthorizationGrantor", fields: [grantorUserId], references: [id], onDelete: Restrict)
+  programme Programme? @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  edition   Edition?   @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([subjectUserId, objectType, objectId, isActive])
+  @@index([programmeId, objectType])
+  @@map("object_authorizations")
+}
+
+/// Explicit institutional representation. Employment or affiliation never grants representation.
+model InstitutionRepresentation {
+  id              String               @id @default(uuid())
+  institutionId   String
+  userId          String
+  programmeId     String
+  editionId       String?
+  actionScope     String[]
+  grantorUserId   String?
+  status          RepresentationStatus @default(ACTIVE)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  revokedAt       DateTime?
+  revokedByUserId String?
+  basisJson       Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  programme   Programme   @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  edition     Edition?    @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  grantor     User?       @relation("InstitutionRepresentationGrantor", fields: [grantorUserId], references: [id], onDelete: Restrict)
+
+  @@index([institutionId, status])
+  @@index([userId, status])
+  @@map("institution_representations")
+}
+
+/// Registered channel client (machine identity + scoped contract). Secrets are referenced, never stored inline.
+model ChannelClient {
+  governanceSources GovernanceSource[]
+  appOutcomeSource AppOutcomeSource?
+  id             String            @id @default(uuid())
+  key            String            @unique
+  displayName    String
+  type           ChannelClientType
+  programmeId    String
+  machineKeyRef  String?
+  /// Legacy unsalted sha256 digest. Kept readable during the transition only: it is cleared
+  /// on rotation, and new registrations leave it null in favour of machineKeyBcrypt.
+  machineKeyHash String?           @unique
+  /// bcrypt hash of the machine secret. Unlike the digest this cannot be looked up by, so
+  /// credentials carry `key` alongside the secret and verification is per-row.
+  machineKeyBcrypt     String?
+  machineKeyIssuedAt   DateTime?
+  machineKeyExpiresAt  DateTime?
+  machineKeyRotatedAt  DateTime?
+  machineKeyLastUsedAt DateTime?
+  revokedAt      DateTime?
+  revokeReason   String?
+  callbackUrl    String?
+  allowedOrigins String[]
+  /// IP / CIDR allowlist for server-to-server callers, which send no Origin header.
+  allowedIps     String[]
+  allowedScopes  String[]
+  rateLimitLimit    Int?
+  rateLimitWindowMs Int?
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  programme  Programme          @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  dispatches OutboundDispatch[]
+
+  @@index([machineKeyExpiresAt])
+  @@map("channel_clients")
+}
+
+/// CP-TODO-244 reliable outbox: local business writes and outbound events commit in the
+/// same transaction. Statuses: PENDING / PROCESSING / SUCCEEDED / DEAD (failed attempts
+/// stay PENDING with nextRetryAt until attempts exhaust). Receipts are idempotent and an
+/// older revision can never overwrite a newer state (CP-FR-070).
+model OutboundDispatch {
+  id              String    @id @default(uuid())
+  eventType       String
+  idempotencyKey  String    @unique
+  payloadHash     String
+  revision        Int       @default(1)
+  payloadJson     Json
+  channelClientId String
+  status          String    @default("PENDING")
+  attempts        Int       @default(0)
+  maxAttempts     Int       @default(5)
+  nextRetryAt     DateTime  @default(now())
+  leaseExpiresAt  DateTime?
+  receiptJson     Json?
+  lastError       String?   @db.Text
+  deliveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  channelClient ChannelClient @relation(fields: [channelClientId], references: [id], onDelete: Restrict)
+
+  @@index([status, nextRetryAt])
+  @@index([channelClientId, status])
+  @@map("outbound_dispatches")
+}
+
+/// Unique source-object to CP-object binding per programme edition; carries source version and owned-field allowlist.
+model SourceObjectMapping {
+  id                      String              @id @default(uuid())
+  programmeId             String
+  editionId               String?
+  sourceSystem            String
+  sourceEditionRef        String              @default("")
+  sourceObjectId          String
+  activityId              String?
+  sourceVersion           String?
+  authoritativeFieldsJson Json?
+  applyStatus             SourceMappingStatus @default(ACTIVE)
+  idempotencyKey          String?             @unique
+  contentHash             String?
+  receiptJson             Json?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  programme Programme @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  edition   Edition?  @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  activity  Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceSystem, sourceEditionRef, sourceObjectId])
+  @@index([activityId, applyStatus])
+  @@map("source_object_mappings")
+}
+
+/// CP-TODO-247 generic private record with immutable revisions; object-level access via ObjectAuthorization.
+model ScopedRecord {
+  id              String    @id @default(uuid())
+  ownerUserId     String?
+  programmeId     String?
+  recordType      String
+  title           String
+  payloadJson     Json
+  status          String    @default("ACTIVE")
+  currentRevision Int       @default(1)
+  createdById     String?
+  withdrawnAt     DateTime?
+  withdrawnById   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  owner     User?             @relation("ScopedRecordOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  programme Programme?        @relation(fields: [programmeId], references: [id], onDelete: SetNull)
+  createdBy User?             @relation("ScopedRecordCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  revisions RecordRevision[]
+  evidence  EvidenceVersion[]
+
+  @@index([ownerUserId, recordType])
+  @@index([programmeId, recordType])
+  @@map("scoped_records")
+}
+
+/// Immutable revision of a ScopedRecord; older revisions stay readable for audit.
+model RecordRevision {
+  id          String   @id @default(uuid())
+  recordId    String
+  revision    Int
+  payloadJson Json
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  record    ScopedRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  createdBy User?        @relation("RecordRevisionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([recordId, revision])
+  @@map("record_revisions")
+}
+
+/// CP-TODO-248 controlled asset: finalized only after integrity + scan checks; derivatives inherit access.
+model ControlledAsset {
+  id            String    @id @default(uuid())
+  ownerUserId   String
+  fileName      String
+  contentType   String
+  byteSize      Int
+  sha256        String
+  storageKey    String    @unique
+  purpose       String    @default("evidence")
+  scanStatus    String    @default("PENDING")
+  scanCheckedAt DateTime?
+  status        String    @default("UPLOADED")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  owner            User              @relation("ControlledAssetOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  evidenceVersions EvidenceVersion[]
+  derivatives      EvidenceVersion[] @relation("EvidenceDerivation")
+
+  @@index([ownerUserId, status])
+  @@map("controlled_assets")
+}
+
+/// Immutable evidence/media version; may bind a ScopedRecord revision and/or a controlled asset.
+model EvidenceVersion {
+  id                 String    @id @default(uuid())
+  recordId           String?
+  assetId            String?
+  derivedFromAssetId String?
+  version            Int
+  title              String
+  snapshotJson       Json
+  createdById        String?
+  withdrawnAt        DateTime?
+  createdAt          DateTime  @default(now())
+
+  record      ScopedRecord?    @relation(fields: [recordId], references: [id], onDelete: SetNull)
+  asset       ControlledAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  derivedFrom ControlledAsset? @relation("EvidenceDerivation", fields: [derivedFromAssetId], references: [id], onDelete: SetNull)
+  createdBy   User?            @relation("EvidenceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([recordId, version])
+  @@map("evidence_versions")
+}
+
+/// CP-TODO-249 purpose-scoped consent with guardian linkage and immediate withdrawal.
+model ConsentRecord {
+  id             String    @id @default(uuid())
+  subjectUserId  String
+  grantorUserId  String
+  purpose        String
+  channel        String?
+  programmeId    String?
+  objectType     String?
+  objectId       String?
+  version        Int       @default(1)
+  status         String    @default("ACTIVE")
+  guardianUserId String?
+  validFrom      DateTime  @default(now())
+  validUntil     DateTime?
+  withdrawnAt    DateTime?
+  evidenceJson   Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  subject  User  @relation("ConsentSubject", fields: [subjectUserId], references: [id], onDelete: Cascade)
+  grantor  User  @relation("ConsentGrantor", fields: [grantorUserId], references: [id], onDelete: Cascade)
+  guardian User? @relation("ConsentGuardian", fields: [guardianUserId], references: [id], onDelete: SetNull)
+
+  @@index([subjectUserId, purpose, status])
+  @@map("consent_records")
+}
+
+/// CP-TODO-250 minimal external decision/revocation receipt; idempotent by key, stale revisions rejected.
+model ExternalDecisionReceipt {
+  id             String    @id @default(uuid())
+  issuerKey      String
+  programmeId    String?
+  objectType     String
+  objectId       String
+  objectRevision Int       @default(1)
+  purpose        String
+  decision       String
+  minimalJson    Json
+  signature      String?
+  idempotencyKey String    @unique
+  contentHash    String?
+  validUntil     DateTime?
+  status         String    @default("RECEIVED")
+  receivedAt     DateTime  @default(now())
+
+  @@index([objectType, objectId, objectRevision])
+  @@index([issuerKey, objectType, objectId, purpose])
+  @@map("external_decision_receipts")
+}
+
+/// CP-TODO-251 publication read gate: immutable projections, immediate withdrawal, no stale reads.
+model PublicationProjection {
+  id             String    @id @default(uuid())
+  objectType     String
+  objectId       String
+  version        Int
+  projectionJson Json
+  status         String    @default("PUBLISHED")
+  publishedById  String?
+  publishedAt    DateTime  @default(now())
+  withdrawnAt    DateTime?
+  withdrawnById  String?
+  dispatchId     String?
+
+  @@unique([objectType, objectId, version])
+  @@index([objectType, objectId, status])
+  @@map("publication_projections")
+}
+
+/// CP-TODO-246 generic occurrence with atomic admission capacity (admittedCount mutated via compare-and-set only).
+model ActivityOccurrence {
+  id            String   @id @default(uuid())
+  activityId    String
+  startsAt      DateTime
+  endsAt        DateTime
+  capacity      Int?
+  admittedCount Int      @default(0)
+  status        String   @default("SCHEDULED")
+  locationJson  Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  applications ActivityApplication[]
+
+  @@index([activityId, startsAt])
+  @@map("activity_occurrences")
+}
+
+/// CP-TODO-246 per-person multi-role assignments on an activity; statistics
+/// count a person once no matter how many roles they hold (CP-FR-054).
+model ActivityPersonRole {
+  id            String   @id @default(uuid())
+  activityId    String
+  personId      String
+  roleType      String
+  sourceType    String?
+  sourceId      String?
+  note          String?  @db.Text
+  createdByUserId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([activityId, personId, roleType])
+  @@index([activityId])
+  @@index([personId])
+  @@map("activity_person_roles")
+}
+
+/// CP-TODO-246 external taxonomy classification references owned by the source
+/// programme; CP only stores lawful version projections (CP-FR-054).
+model ActivityExternalClassification {
+  id             String   @id @default(uuid())
+  activityId     String
+  taxonomySystem String
+  taxonomyRef    String
+  labelJson      Json?
+  sourceVersion  Int      @default(1)
+  status         String   @default("ACTIVE")
+  idempotencyKey String?  @unique
+  contentHash    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, taxonomySystem, taxonomyRef])
+  @@index([activityId, status])
+  @@map("activity_external_classifications")
+}
+
+/// CP-TODO-253 person/institution contribution facts with evaluated verification levels and corrections.
+model ContributionFact {
+  id                String   @id @default(uuid())
+  personId          String
+  institutionId     String?
+  programmeId       String?
+  contributionType  String
+  summaryJson       Json
+  verificationLevel String   @default("UNVERIFIED")
+  sourceType        String?
+  sourceId          String?
+  status            String   @default("ACTIVE")
+  correctionOfId    String?
+  createdById       String?
+  occurredAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  person      Person       @relation("ContributionFactPerson", fields: [personId], references: [id], onDelete: Cascade)
+  institution Institution? @relation("ContributionFactInstitution", fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([personId, status])
+  @@index([institutionId, status])
+  @@index([programmeId, status])
+  @@index([correctionOfId])
+  @@map("contribution_facts")
+}
+
+/// CP-TODO-257 notification delivery attempts (retry evidence) linked to the existing Notification model.
+model NotificationAttempt {
+  id             String   @id @default(uuid())
+  notificationId String
+  channel        String
+  attempt        Int
+  result         String
+  error          String?  @db.Text
+  actorUserId    String?
+  createdAt      DateTime @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  actor        User?        @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([notificationId, attempt])
+  @@map("notification_attempts")
+}
+
+// Durable request throttling. Keys are hashes, never raw emails or IP addresses.
+model AuthRequestLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart])
+}
+
+// Durable account-independent email work; never store passwords, raw tokens or codes.
+model AuthMailOutbox {
+  id                String   @id @default(uuid())
+  kind              String
+  email             String
+  payload           Json
+  credentialVersion String
+  status            String   @default("PENDING")
+  dedupeKey         String   @unique
+  attempts          Int      @default(0)
+  nextAttemptAt     DateTime @default(now())
+  leaseId           String?
+  leaseExpiresAt    DateTime?
+  deliveryStartedAt DateTime?
+  credentialId      String?
+  failureCode       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([status, leaseExpiresAt])
+  @@map("auth_mail_outbox")
+}
+
+/// Disabled until separate machine grant, approved subject/record bindings and retention operations exist.
+model AppOutcomeSource {
+  id String @id @default(uuid())
+  channelClientId String @unique
+  sourceApp String
+  sourceAuthority String
+  identityIssuer String
+  identityClientId String
+  allowedKinds String[]
+  isActive Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client ChannelClient @relation(fields: [channelClientId], references: [id], onDelete: Cascade)
+  bindings AppOutcomeBinding[]
+  @@map("app_outcome_sources")
+}
+
+/// Per-record, verified RP subject ownership; no email inference or public provisioning API.
+model AppOutcomeBinding {
+  id String @id @default(uuid())
+  sourceId String
+  userId String
+  subjectHash String
+  sourceRecordId String
+  status String @default("PENDING")
+  verifiedAt DateTime?
+  verificationRef String
+  createdAt DateTime @default(now())
+  source AppOutcomeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stream AppOutcomeStream?
+  @@unique([sourceId, subjectHash, sourceRecordId])
+  @@index([userId])
+  @@map("app_outcome_bindings")
+}
+
+/// Private projection, intentionally independent from editable/public ScopedRecord and certificates.
+model AppOutcomeStream {
+  id String @id @default(uuid())
+  bindingId String @unique
+  currentVersion Int @default(0)
+  headEventId String?
+  kind String?
+  outcomeStatus String?
+  evidenceRefs String[]
+  consentId String?
+  consentVersion Int?
+  terminalRevoked Boolean @default(false)
+  suppressedAt DateTime?
+  tombstoneExpiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  binding AppOutcomeBinding @relation(fields: [bindingId], references: [id], onDelete: Cascade)
+  events AppOutcomeEvent[]
+  @@index([tombstoneExpiresAt])
+  @@map("app_outcome_streams")
+}
+
+/// Immutable event identity/digest; payload is erased on application/withdrawal/revocation.
+model AppOutcomeEvent {
+  id String @id @default(uuid())
+  sourceId String
+  eventId String
+  streamId String
+  sourceVersion Int
+  digest String
+  operation String
+  supersedesEventId String?
+  occurredAt DateTime
+  consentId String?
+  payloadJson Json?
+  state String
+  receivedAt DateTime @default(now())
+  appliedAt DateTime?
+  stream AppOutcomeStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  @@unique([sourceId, eventId])
+  @@unique([streamId, sourceVersion])
+  @@index([streamId, state])
+  @@map("app_outcome_events")
+}
+
+/// CP-GOV-001: canonical unit, distinct from source business stores and private archive.
+model GovernanceProject {
+  id String @id @default(uuid())
+  code String @unique
+  programmeId String
+  institutionId String
+  activityId String? @unique
+  kind String
+  title String
+  status String @default("DRAFT")
+  createdByUserId String
+  approvedByUserId String?
+  approvedAt DateTime?
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  programme Programme @relation(fields:[programmeId], references:[id], onDelete:Restrict)
+  institution Institution @relation(fields:[institutionId], references:[id], onDelete:Restrict)
+  activity Activity? @relation(fields:[activityId], references:[id], onDelete:Restrict)
+  sources GovernanceSource[]
+  rules GovernanceRuleVersion[]
+  participations GovernanceParticipation[]
+  @@index([programmeId,status])
+  @@map("governance_projects")
+}
+
+model GovernanceSource {
+  id String @id @default(uuid())
+  projectId String
+  channelClientId String
+  sourceApp String
+  sourceAuthority String
+  externalUnitId String
+  issuer String
+  rpAudience String
+  verifierUserId String
+  project GovernanceProject @relation(fields:[projectId], references:[id], onDelete:Restrict)
+  client ChannelClient @relation(fields:[channelClientId], references:[id], onDelete:Restrict)
+  bindings GovernanceBinding[]
+  @@unique([channelClientId,externalUnitId])
+  @@map("governance_sources")
+}
+
+/// Independently approved qualification mapping; never inferred from private archive consent.
+model GovernanceBinding {
+  id String @id @default(uuid())
+  sourceId String
+  userId String
+  subjectHash String
+  sourceRecordId String
+  participationId String?
+  verificationRef String
+  currentVersion Int @default(0)
+  headEventId String?
+  terminalRevoked Boolean @default(false)
+  source GovernanceSource @relation(fields:[sourceId], references:[id], onDelete:Restrict)
+  user User @relation(fields:[userId], references:[id], onDelete:Restrict)
+  facts GovernanceFact[]
+  participation GovernanceParticipation? @relation(fields:[participationId], references:[id], onDelete:Restrict)
+  @@unique([sourceId,sourceRecordId])
+  @@map("governance_bindings")
+}
+
+model GovernanceRuleVersion {
+  id String @id @default(uuid())
+  projectId String
+  version Int
+  status String @default("DRAFT")
+  conditionJson Json
+  rewardsJson Json
+  validFrom DateTime
+  validUntil DateTime
+  createdByUserId String
+  approvedByUserId String?
+  approvedAt DateTime?
+  publishedAt DateTime?
+  digest String
+  project GovernanceProject @relation(fields:[projectId], references:[id], onDelete:Restrict)
+  facts GovernanceFact[]
+  participations GovernanceParticipation[]
+  @@unique([projectId,version])
+  @@map("governance_rule_versions")
+}
+
+model GovernanceFact {
+  id String @id @default(uuid())
+  bindingId String
+  ruleVersionId String
+  eventId String
+  sourceVersion Int
+  operation String
+  supersedesEventId String?
+  occurredAt DateTime
+  digest String
+  factsJson Json?
+  consentId String?
+  state String
+  binding GovernanceBinding @relation(fields:[bindingId], references:[id], onDelete:Restrict)
+  rule GovernanceRuleVersion @relation(fields:[ruleVersionId], references:[id], onDelete:Restrict)
+  tasks GovernanceRewardTask[]
+  grants GovernanceRewardGrant[]
+  @@unique([bindingId,eventId])
+  @@unique([bindingId,sourceVersion])
+  @@map("governance_facts")
+}
+
+/// Durable transactional reward outbox; no secret/content payload, replay-safe dependencies.
+model GovernanceRewardTask {
+  id String @id @default(uuid())
+  factId String
+  operation String
+  type String
+  points Int
+  rewardJson Json?
+  dependencyFactId String?
+  state String @default("PENDING")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  failureCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  fact GovernanceFact @relation(fields:[factId], references:[id], onDelete:Restrict)
+  @@unique([factId,operation,type])
+  @@index([state,nextAttemptAt])
+  @@map("governance_reward_tasks")
+}
+
+/// Unique grant with immutable original and compensating ledger references.
+model GovernanceRewardGrant {
+  id String @id @default(uuid())
+  factId String
+  userId String
+  type String
+  points Int
+  state String @default("ACTIVE")
+  pointTransactionId String? @unique
+  publicVisible Boolean @default(false)
+  badgeAwardId String? @unique
+  certificateIssueId String? @unique
+  reversalTransactionId String? @unique
+  createdAt DateTime @default(now())
+  reversedAt DateTime?
+  fact GovernanceFact @relation(fields:[factId], references:[id], onDelete:Restrict)
+  user User @relation(fields:[userId], references:[id], onDelete:Restrict)
+  @@unique([factId,type])
+  @@map("governance_reward_grants")
+}
+
+/// CP-GOV-009 legacy activity rules: immutable dispatch snapshot, durable failures.
+model ActivityRewardDispatch {
+  id String @id @default(uuid())
+  activityId String
+  ruleId String
+  userId String
+  trigger String
+  rewardType String
+  rewardValueJson Json
+  conditionJson Json?
+  factsJson Json
+  state String @default("PENDING")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  failureCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([ruleId,userId])
+  @@index([state,nextAttemptAt])
+  @@map("activity_reward_dispatches")
+}
+
+/// One canonical participation per person/unit, with rule frozen before source facts.
+model GovernanceParticipation {
+  id String @id @default(uuid())
+  projectId String
+  userId String
+  ruleVersionId String
+  createdByUserId String
+  createdAt DateTime @default(now())
+  project GovernanceProject @relation(fields:[projectId],references:[id],onDelete:Restrict)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  rule GovernanceRuleVersion @relation(fields:[ruleVersionId],references:[id],onDelete:Restrict)
+  bindings GovernanceBinding[]
+  decisions GovernanceRewardDecision[]
+  @@unique([projectId,userId])
+  @@map("governance_participations")
+}
+
+/// Canonical award slot; alternative valid source facts support one existing award.
+model GovernanceRewardDecision {
+  id String @id @default(uuid())
+  participationId String
+  type String
+  state String @default("PENDING")
+  activeGrantId String? @unique
+  basisFactId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  participation GovernanceParticipation @relation(fields:[participationId],references:[id],onDelete:Restrict)
+  @@unique([participationId,type])
+  @@map("governance_reward_decisions")
 }

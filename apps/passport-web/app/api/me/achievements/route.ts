@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { createAchievementRecord } from "@/lib/server/achievement-badge";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const querySchema = z.object({
   type: z.string().optional(),
@@ -26,7 +26,8 @@ const createSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/achievements");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -66,7 +67,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/achievements");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
 
   const payload = createSchema.safeParse(await request.json());
 

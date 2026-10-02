@@ -52,6 +52,10 @@ function getUserMenuItems(locale: Locale): MenuItem[] {
     { href: `${prefix}/dashboard/summer-school`, icon: "SS", label: locale === "zh" ? "夏校申请" : "Summer School" },
     { href: `${prefix}/dashboard/messages`, icon: "MS", label: locale === "zh" ? "消息中心" : "Messages" },
     { href: `${prefix}/dashboard/notifications`, icon: "NT", label: locale === "zh" ? "通知设置" : "Notifications" },
+    { href: `${prefix}/dashboard/records`, icon: "RC", label: locale === "zh" ? "我的记录" : "My Records" },
+    { href: `${prefix}/dashboard/consents`, icon: "CN", label: locale === "zh" ? "授权管理" : "Consents" },
+    { href: `${prefix}/dashboard/account-data`, icon: "DA", label: locale === "zh" ? "数据与账户" : "Data & Account" },
+    { href: `${prefix}/dashboard/governance`, icon: "GV", label: locale === "zh" ? "Programme 治理" : "Programme governance" },
     { href: `${prefix}/certificates`, icon: "CT", label: locale === "zh" ? "证书" : "Certificates" },
   ];
 }

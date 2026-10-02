@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
-import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { triggerActivityRewards } from "@/lib/server/activity-rewards";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity, canVerifyActivity } from "@/lib/server/verifier-activity";
@@ -8,7 +9,7 @@ import { canManageActivity, canVerifyActivity } from "@/lib/server/verifier-acti
 const directCheckinMethods = new Set(["MANUAL", "GEO", "NFC", "FACIAL"]);
 
 export async function GET(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = new URL(req.url);

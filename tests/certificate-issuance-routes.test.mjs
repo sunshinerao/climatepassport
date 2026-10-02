@@ -12,14 +12,14 @@ const storageMock = {
 };
 
 function createNextResponseMock() {
-  return {
-    json(payload, init) {
-      return {
-        status: init?.status ?? 200,
-        payload,
-      };
-    },
-  };
+  function NextResponse(payload, init) {
+    this.status = init?.status ?? 200;
+    this.payload = payload;
+    this.headers = init?.headers ?? {};
+  }
+  // Routes branch on `x instanceof NextResponse`, so json() must return an instance.
+  NextResponse.json = (payload, init) => new NextResponse(payload, init);
+  return NextResponse;
 }
 
 function loadRouteModule(sourcePath, moduleMocks) {
@@ -371,8 +371,8 @@ test("learning application completion creates issued certificate with rendered f
         "WITHDRAWN",
       ],
     },
-    "@/lib/server/auth": {
-      requireRoleAccess: async () => ({ id: "manager-1", name: "Manager", role: "EVENT_MANAGER" }),
+    "@/lib/server/api-auth": {
+      requireApiRole: async () => ({ id: "manager-1", name: "Manager", role: "EVENT_MANAGER" }),
     },
     "@/lib/server/prisma": {
       getPrismaClient: () => prisma,

@@ -1,0 +1,218 @@
+{
+  "schemaVersion": "cp-governance/1",
+  "contractRevision": "1.2",
+  "offlineOnly": true,
+  "qualificationAccepted": false,
+  "rewardApplied": false,
+  "cases": [
+    {
+      "id": "source-concrete-unit-valid",
+      "schema": "command",
+      "message": "messages/source-concrete-unit-valid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Positive counterpart for Programme ID versus concrete unit mapping; not a new source-enum test."
+    },
+    {
+      "id": "programme-as-project-invalid",
+      "schema": "command",
+      "message": "messages/programme-as-project-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": "PROJECT_REFERENCE_MISMATCH"
+      },
+      "gap": "Wire UUID shape alone cannot tell Programme from canonical project; registry fixture identifies distinct IDs."
+    },
+    {
+      "id": "entry-without-rule-pin-invalid",
+      "schema": "command",
+      "message": "messages/entry-without-rule-pin-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": false,
+        "issue": "WIRE_SHAPE_INVALID"
+      },
+      "gap": "Required pinned rule omitted before first fact; task3 tests a wrong reply pin, not missing binding pin."
+    },
+    {
+      "id": "gca-first-v1-valid",
+      "schema": "qualification",
+      "message": "messages/gca-first-v1-valid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "First source record clock starts at1; compare with FS own v1, not a global outcome clock."
+    },
+    {
+      "id": "first-fact-switches-rule-invalid",
+      "schema": "qualification",
+      "message": "messages/first-fact-switches-rule-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": "ENTRY_RULE_MISMATCH"
+      },
+      "gap": "A shape-valid latest rule cannot replace entry-pinned rule even while source head is0."
+    },
+    {
+      "id": "retired-historical-correct-valid",
+      "schema": "qualification",
+      "message": "messages/retired-historical-correct-valid.json",
+      "context": "gca-retired",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Transmission after expiry is separate metadata; fact occurred within frozen window after admission."
+    },
+    {
+      "id": "transmission-time-as-fact-invalid",
+      "schema": "qualification",
+      "message": "messages/transmission-time-as-fact-invalid.json",
+      "context": "gca-retired",
+      "expected": {
+        "wireValid": true,
+        "issue": "FACT_TIME_OUTSIDE_PINNED_WINDOW"
+      },
+      "gap": "Mistaking correction submission time for historic fact time fails the existing validity rule."
+    },
+    {
+      "id": "exclusive-window-end-invalid",
+      "schema": "qualification",
+      "message": "messages/exclusive-window-end-invalid.json",
+      "context": "gca-retired",
+      "expected": {
+        "wireValid": true,
+        "issue": "FACT_TIME_OUTSIDE_PINNED_WINDOW"
+      },
+      "gap": "validUntil is exclusive, including on retired historical corrections."
+    },
+    {
+      "id": "fact-before-admission-invalid",
+      "schema": "qualification",
+      "message": "messages/fact-before-admission-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": "FACT_BEFORE_ADMISSION"
+      },
+      "gap": "A published rule does not authorize a fact that precedes entry."
+    },
+    {
+      "id": "fs-independent-v1-valid",
+      "schema": "qualification",
+      "message": "messages/fs-independent-v1-valid.json",
+      "context": "fs-first",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Both sources may report v1 under same participation; record version belongs to binding, not participation."
+    },
+    {
+      "id": "other-source-head-invalid",
+      "schema": "qualification",
+      "message": "messages/other-source-head-invalid.json",
+      "context": "fs-head-1",
+      "expected": {
+        "wireValid": true,
+        "issue": "SOURCE_HEAD_MISMATCH"
+      },
+      "gap": "FS correction cannot supersede GCA head, even with same participant and current version."
+    },
+    {
+      "id": "exact-immutable-replay-valid",
+      "schema": "qualification",
+      "message": "messages/exact-immutable-replay-valid.json",
+      "context": "gca-head-1",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Same event/body is identified before next-version check; insertion order cannot change body identity."
+    },
+    {
+      "id": "same-id-changed-body-invalid",
+      "schema": "qualification",
+      "message": "messages/same-id-changed-body-invalid.json",
+      "context": "gca-head-1",
+      "expected": {
+        "wireValid": true,
+        "issue": "IMMUTABLE_BODY_CONFLICT"
+      },
+      "gap": "Same event ID cannot become a content correction; correct needs new ID/version/prior head."
+    },
+    {
+      "id": "new-id-reuses-version-invalid",
+      "schema": "qualification",
+      "message": "messages/new-id-reuses-version-invalid.json",
+      "context": "gca-head-1",
+      "expected": {
+        "wireValid": true,
+        "issue": "SOURCE_VERSION_MISMATCH"
+      },
+      "gap": "New event ID cannot reoccupy an already accepted source version."
+    },
+    {
+      "id": "gca-with-fs-fact-invalid",
+      "schema": "qualification",
+      "message": "messages/gca-with-fs-fact-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": true,
+        "issue": "SOURCE_FACT_KIND_MISMATCH"
+      },
+      "gap": "Union shape permits both fact kinds; approved source context still restricts GCA versus FS."
+    },
+    {
+      "id": "qualification-sourceapp-extension-invalid",
+      "schema": "qualification",
+      "message": "messages/qualification-sourceapp-extension-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": false,
+        "issue": "WIRE_SHAPE_INVALID"
+      },
+      "gap": "sourceApp is source configuration, not a qualification envelope extension; PENDING_CONTRACT remains pending."
+    },
+    {
+      "id": "condition-field-op-combination-invalid",
+      "schema": "command",
+      "message": "messages/condition-field-op-combination-invalid.json",
+      "context": "gca-first",
+      "expected": {
+        "wireValid": false,
+        "issue": "WIRE_SHAPE_INVALID"
+      },
+      "gap": "Individually known field/operator used in an unsupported combination: score eq string, not score gte number."
+    },
+    {
+      "id": "separate-unit-same-programme-valid",
+      "schema": "qualification",
+      "message": "messages/separate-unit-same-programme-valid.json",
+      "context": "other-unit-same-programme",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Same person in same Programme but different canonical unit has a different participation key."
+    },
+    {
+      "id": "minimal-revoke-after-window-valid",
+      "schema": "qualification",
+      "message": "messages/minimal-revoke-after-window-valid.json",
+      "context": "gca-retired",
+      "expected": {
+        "wireValid": true,
+        "issue": null
+      },
+      "gap": "Known-record minimal revoke is not an upsert/correct and carries no historical consent or data; validity window does not block control revocation."
+    }
+  ]
+}

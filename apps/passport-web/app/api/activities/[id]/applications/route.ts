@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { buildProjectApplicantDisclosure, canReviewProjectApplication } from "@/lib/server/project-application";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (activity.type === "PROJECT") {
     if (!(await canReviewProjectApplication(currentUser, activity))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   } else {
-    const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+    const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
     if (auth instanceof NextResponse) return auth;
     if (!(await canManageActivity(prisma, auth, activity.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

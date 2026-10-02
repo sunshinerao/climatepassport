@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "app-outcome/1"
+        },
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "sourceApp": {
+          "type": "string",
+          "enum": [
+            "gca",
+            "fs",
+            "gpti",
+            "100cc",
+            "shcw2027"
+          ]
+        },
+        "sourceAuthority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "identity": {
+          "type": "object",
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "maxLength": 256,
+              "format": "uri"
+            },
+            "subject": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "issuer",
+            "subject"
+          ],
+          "additionalProperties": false
+        },
+        "sourceRecord": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "operation": {
+          "type": "string",
+          "const": "upsert"
+        },
+        "consent": {
+          "type": "object",
+          "properties": {
+            "receiptId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "scope": {
+              "type": "string",
+              "const": "private_archive"
+            },
+            "grantedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            }
+          },
+          "required": [
+            "receiptId",
+            "version",
+            "scope",
+            "grantedAt"
+          ],
+          "additionalProperties": false
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "course_completion",
+                "approved_private_evidence",
+                "learning_completion",
+                "course_evidence",
+                "portfolio_evidence",
+                "action_completion",
+                "member_contribution",
+                "activity_participation"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "completed",
+                "accepted"
+              ]
+            },
+            "evidenceRefs": {
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9:_-]+$"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "status",
+            "evidenceRefs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "sourceApp",
+        "sourceAuthority",
+        "identity",
+        "sourceRecord",
+        "occurredAt",
+        "operation",
+        "consent",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "app-outcome/1"
+        },
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "sourceApp": {
+          "type": "string",
+          "enum": [
+            "gca",
+            "fs",
+            "gpti",
+            "100cc",
+            "shcw2027"
+          ]
+        },
+        "sourceAuthority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "identity": {
+          "type": "object",
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "maxLength": 256,
+              "format": "uri"
+            },
+            "subject": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "issuer",
+            "subject"
+          ],
+          "additionalProperties": false
+        },
+        "sourceRecord": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "operation": {
+          "type": "string",
+          "const": "correct"
+        },
+        "supersedesEventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "consent": {
+          "type": "object",
+          "properties": {
+            "receiptId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "scope": {
+              "type": "string",
+              "const": "private_archive"
+            },
+            "grantedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            }
+          },
+          "required": [
+            "receiptId",
+            "version",
+            "scope",
+            "grantedAt"
+          ],
+          "additionalProperties": false
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "course_completion",
+                "approved_private_evidence",
+                "learning_completion",
+                "course_evidence",
+                "portfolio_evidence",
+                "action_completion",
+                "member_contribution",
+                "activity_participation"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "completed",
+                "accepted"
+              ]
+            },
+            "evidenceRefs": {
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9:_-]+$"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "status",
+            "evidenceRefs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "sourceApp",
+        "sourceAuthority",
+        "identity",
+        "sourceRecord",
+        "occurredAt",
+        "operation",
+        "supersedesEventId",
+        "consent",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "app-outcome/1"
+        },
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "sourceApp": {
+          "type": "string",
+          "enum": [
+            "gca",
+            "fs",
+            "gpti",
+            "100cc",
+            "shcw2027"
+          ]
+        },
+        "sourceAuthority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "identity": {
+          "type": "object",
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "maxLength": 256,
+              "format": "uri"
+            },
+            "subject": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "issuer",
+            "subject"
+          ],
+          "additionalProperties": false
+        },
+        "sourceRecord": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "operation": {
+          "type": "string",
+          "const": "revoke"
+        },
+        "supersedesEventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "sourceApp",
+        "sourceAuthority",
+        "identity",
+        "sourceRecord",
+        "occurredAt",
+        "operation",
+        "supersedesEventId"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

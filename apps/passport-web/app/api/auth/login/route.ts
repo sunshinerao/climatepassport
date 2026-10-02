@@ -1,3 +1,4 @@
+import { checkAuthRateLimit } from "@/lib/server/auth-rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { locales, type Locale } from "@/lib/site-content";
@@ -8,15 +9,14 @@ import {
   verifyUserPassword,
 } from "@/lib/server/auth";
 import { sanitizeLocalRedirectPath } from "@/lib/redirect-path";
-import { createEmailToken, sendVerificationEmail } from "@/lib/server/auth-email";
 import { getPrismaClient } from "@/lib/server/prisma";
-import { checkRateLimitAsync, getRateLimitHeaders, getRateLimitSubjectReference, getRequestRateLimitKey } from "@/lib/server/rate-limit";
+import { checkRateLimitAsync, getRequestRateLimitKey } from "@/lib/server/rate-limit";
 
 const loginSchema = z.object({
   locale: z.enum(locales).default("en"),
   next: z.string().optional(),
   email: z.string().trim().email(),
-  password: z.string().min(1).max(72),
+  password: z.string().min(1).max(72).refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Password must be at most 72 UTF-8 bytes."),
 });
 
 export async function POST(request: Request) {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
   }
 
-  const payload = loginSchema.safeParse(await request.json());
+  const payload = loginSchema.safeParse(await request.json().catch(() => null));
 
   if (!payload.success) {
     return NextResponse.json(
@@ -38,16 +38,14 @@ export async function POST(request: Request) {
   const { locale, next, email, password } = payload.data;
   const normalizedEmail = normalizeUserEmail(email);
 
-  const rateLimit = await checkRateLimitAsync(`${getRequestRateLimitKey(request, "auth-login")}:${getRateLimitSubjectReference(normalizedEmail)}`, {
-    limit: 8,
-    windowMs: 5 * 60_000,
-    sensitive: true,
-  });
-
-  if (rateLimit.unavailable) return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
-
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: getRateLimitHeaders(rateLimit) });
+  try {
+    const durable = await checkAuthRateLimit(normalizedEmail, "auth-login", { limit: 8, windowMs: 5 * 60_000 });
+    const ip = await checkRateLimitAsync(getRequestRateLimitKey(request, "auth-login"), { limit: 8, windowMs: 5 * 60_000, sensitive: true });
+    if (ip.unavailable) throw new Error("RATE_LIMIT_UNAVAILABLE");
+    if (!durable.allowed || !ip.allowed) return NextResponse.json({ error: "Too many login attempts. Please try again later." }, { status: 429 });
+  } catch {
+    console.error("[auth/login] RATE_LIMIT_UNAVAILABLE");
+    return NextResponse.json({ error: "Service temporarily unavailable." }, { status: 503 });
   }
 
   const user = await prisma.user.findUnique({
@@ -62,40 +60,13 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!user || user.status !== "ACTIVE") {
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
-  }
+  const passwordMatches = await verifyUserPassword(user?.password ?? "", password);
 
-  const passwordMatches = await verifyUserPassword(user.password, password);
-
-  if (!passwordMatches) {
+  if (!user || user.status !== "ACTIVE" || !passwordMatches) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
   if (!user.emailVerified) {
-    const token = await createEmailToken({
-      userId: user.id,
-      email: user.email,
-      purpose: "VERIFY_EMAIL",
-    });
-
-    try {
-      const origin = new URL(request.url).origin;
-      await sendVerificationEmail({
-        locale: locale as Locale,
-        email: user.email,
-        token: token.token,
-        code: token.code,
-        origin,
-      });
-    } catch (error) {
-      console.error("[auth/login] failed to send verification email", error);
-      return NextResponse.json(
-        { error: "Email is not verified and we could not send a verification message. Please try again later." },
-        { status: 502 },
-      );
-    }
-
     const fallbackPath = getDashboardPathForRole(locale as Locale, user.role);
     const safeNext = sanitizeLocalRedirectPath(next, fallbackPath);
     const verifyParams = new URLSearchParams({
@@ -113,7 +84,13 @@ export async function POST(request: Request) {
     );
   }
 
-  await createUserSession(user.id);
+  try {
+    await createUserSession(user.id, user.password);
+  } catch {
+    // Status/password may have changed after the initial credential check.
+    console.error("[auth/login] SESSION_CREATION_REJECTED");
+    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+  }
 
   const fallbackPath = getDashboardPathForRole(locale as Locale, user.role);
 

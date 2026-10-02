@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FormErrorText, FormHelpText, FormMessageText, FormSuccessText } from "@/components/form-feedback";
 import { FieldLabelWithInfo } from "@/components/info-tooltip";
+import { usePromptDialog } from "@/components/prompt-dialog";
 import type { Locale } from "@/lib/site-content";
 
 export type CertificateAdminCategory = {
@@ -1203,6 +1204,7 @@ export function CertificateAdminIssue({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [askPrompt, promptDialog] = usePromptDialog();
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [email, setEmail] = useState("");
   const [batchEmails, setBatchEmails] = useState("");
@@ -1913,7 +1915,15 @@ export function CertificateAdminIssue({
 
   async function revokeIssuedCertificate(issue: CertificateAdminIssue) {
     setMessage("");
-    const reason = window.prompt(t(locale, "请输入撤销原因（至少 3 个字符）：", "Enter a revocation reason (at least 3 characters):"))?.trim();
+    const reason = await askPrompt({
+      locale,
+      title: t(locale, "撤回证书", "Revoke certificate"),
+      description: t(locale, "撤销原因会写入审计日志。", "The reason is recorded in the audit log."),
+      label: t(locale, "撤销原因", "Revocation reason"),
+      minLength: 3,
+      multiline: true,
+      confirmLabel: t(locale, "确认撤回", "Confirm revoke"),
+    });
     if (!reason) {
       setMessage(t(locale, "撤销原因不能为空。", "A revocation reason is required."));
       return;
@@ -2232,22 +2242,25 @@ export function CertificateAdminIssue({
           </table>
         </div>
       </Card>
+      {promptDialog}
     </CertificateAdminFrame>
   );
 }
 
 export function CertificateAdminApplications({ locale }: { locale: Locale }) {
   const router = useRouter();
+  const [askPrompt, promptDialog] = usePromptDialog();
   const [rows, setRows] = useState<Array<any>>([]);
   const [error, setError] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   useEffect(() => { void fetch("/api/admin/certificate-applications?limit=100").then(async (response) => { const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Request failed."); setRows(data.applications ?? []); }).catch((cause) => setError(cause instanceof Error ? cause.message : "Request failed.")); }, []);
-  async function review(id: string, action: "REQUEST_INFORMATION" | "APPROVE_AND_ISSUE" | "REJECT") { const message = action === "APPROVE_AND_ISSUE" ? undefined : window.prompt(action === "REJECT" ? t(locale, "请输入拒绝原因：", "Enter rejection reason:") : t(locale, "请输入需要补充的信息：", "Enter requested information:"))?.trim(); if (action !== "APPROVE_AND_ISSUE" && !message) return; setLoadingId(id); setError(""); try { const response = await fetch(`/api/admin/certificate-applications/${id}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, message }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Review failed."); setRows((current) => current.map((item) => item.id === id ? { ...item, ...(data.application ?? {}), status: data.application?.status ?? (action === "APPROVE_AND_ISSUE" ? "APPROVED" : action === "REJECT" ? "REJECTED" : "NEEDS_INFORMATION") } : item)); router.refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Review failed."); } finally { setLoadingId(null); } }
+  async function review(id: string, action: "REQUEST_INFORMATION" | "APPROVE_AND_ISSUE" | "REJECT") { let message: string | undefined; if (action !== "APPROVE_AND_ISSUE") { const answer = await askPrompt({ locale, title: action === "REJECT" ? t(locale, "拒绝申请", "Reject application") : t(locale, "要求补充信息", "Request more information"), label: action === "REJECT" ? t(locale, "拒绝原因", "Rejection reason") : t(locale, "需要补充的信息", "Requested information"), minLength: 3, multiline: true, confirmLabel: action === "REJECT" ? t(locale, "确认拒绝", "Confirm rejection") : t(locale, "发送请求", "Send request") }); if (!answer) return; message = answer; } setLoadingId(id); setError(""); try { const response = await fetch(`/api/admin/certificate-applications/${id}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, message }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error ?? "Review failed."); setRows((current) => current.map((item) => item.id === id ? { ...item, ...(data.application ?? {}), status: data.application?.status ?? (action === "APPROVE_AND_ISSUE" ? "APPROVED" : action === "REJECT" ? "REJECTED" : "NEEDS_INFORMATION") } : item)); router.refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Review failed."); } finally { setLoadingId(null); } }
   return (
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "证书申请审核", "Certificate Applications")} description={t(locale, "审核用户主动提交的证书、志愿服务、项目完成和活动参与证明申请。", "Review user-initiated certificate requests.")} />
       {error ? <FormErrorText>{error}</FormErrorText> : null}
       <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "申请人", "Applicant")}</th><th>{t(locale, "证书类型", "Certificate Type")}</th><th>{t(locale, "项目 / 活动", "Program / Event")}</th><th>{t(locale, "提交时间", "Submitted")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rows.map((application) => <tr key={application.id}><td><span className="cpca-strong">{application.applicant?.name}</span><small>{application.applicant?.email}</small></td><td>{localName(locale, application.definition)}</td><td>{application.sourceLabel ?? "—"}</td><td>{application.submittedAt ? new Date(application.submittedAt).toLocaleDateString() : "—"}</td><td><StatusBadge status={application.status}>{application.status}</StatusBadge></td><td>{application.status === "SUBMITTED" ? <div className="cpca-actions compact"><button className="cpca-btn cpca-btn-success" disabled={loadingId === application.id} onClick={() => void review(application.id, "APPROVE_AND_ISSUE")} type="button">{t(locale, "通过并签发", "Approve & issue")}</button><button className="cpca-btn" disabled={loadingId === application.id} onClick={() => void review(application.id, "REQUEST_INFORMATION")} type="button">{t(locale, "补充信息", "Request info")}</button><button className="cpca-btn cpca-btn-danger" disabled={loadingId === application.id} onClick={() => void review(application.id, "REJECT")} type="button">{t(locale, "拒绝", "Reject")}</button></div> : "—"}</td></tr>)}{rows.length === 0 ? <tr><td className="cpca-muted" colSpan={6}>{t(locale, "暂无证书申请。", "No certificate applications.")}</td></tr> : null}</tbody></table></div></Card>
+      {promptDialog}
     </CertificateAdminFrame>
   );
 }
@@ -2258,6 +2271,7 @@ export function CertificateAdminRules({ locale, initialRules, activities, defini
   activities: Array<{ id: string; title: string; titleEn?: string | null }>;
   definitions: Array<{ id: string; name: string; nameEn?: string | null }>;
 }) {
+  const [askPrompt, promptDialog] = usePromptDialog();
   const [rules, setRules] = useState(initialRules);
   const [name, setName] = useState("");
   const [activityId, setActivityId] = useState(activities[0]?.id ?? "");
@@ -2299,8 +2313,14 @@ export function CertificateAdminRules({ locale, initialRules, activities, defini
     } finally { setLoading(false); }
   }
 
-  function renameRule(rule: CertificateIssuingRuleRow) {
-    const nextName = window.prompt(t(locale, "规则名称", "Rule name"), rule.name)?.trim();
+  async function renameRule(rule: CertificateIssuingRuleRow) {
+    const nextName = await askPrompt({
+      locale,
+      title: t(locale, "重命名签发规则", "Rename issuing rule"),
+      label: t(locale, "规则名称", "Rule name"),
+      defaultValue: rule.name,
+      minLength: 2,
+    });
     if (nextName && nextName !== rule.name) void updateRule(rule, { name: nextName });
   }
 
@@ -2308,8 +2328,9 @@ export function CertificateAdminRules({ locale, initialRules, activities, defini
     <CertificateAdminFrame locale={locale} hideSectionLinks>
       <PageHead title={t(locale, "自动签发规则", "Automatic Issuing Rules")} description={t(locale, "当前仅支持活动签到成功后立即签发；其他触发来源尚未开放。", "Only immediate issuance after a successful Activity check-in is currently supported.")} />
       {message ? <FormSuccessText>{message}</FormSuccessText> : null}{error ? <FormErrorText>{error}</FormErrorText> : null}
-      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "规则名称", "Rule Name")}</th><th>{t(locale, "活动", "Activity")}</th><th>{t(locale, "触发", "Trigger")}</th><th>{t(locale, "证书", "Certificate")}</th><th>{t(locale, "通知", "Notify")}</th><th>{t(locale, "签发数", "Issued")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rules.map((rule) => <tr key={rule.id}><td className="cpca-strong">{rule.name}</td><td>{locale === "zh" ? rule.activity.title : rule.activity.titleEn ?? rule.activity.title}</td><td>{t(locale, "活动签到成功", "Activity check-in")}</td><td>{localName(locale, rule.certificateDefinition)}</td><td><input aria-label={t(locale, "通知用户", "Notify user")} checked={rule.notifyUser} disabled={loading} onChange={(event) => void updateRule(rule, { notifyUser: event.target.checked })} type="checkbox" /></td><td>{rule._count?.issuances ?? 0}</td><td><StatusBadge status={rule.effective ? "ACTIVE" : rule.isActive ? "BLOCKED" : "INACTIVE"}>{rule.effective ? t(locale, "已启用", "Active") : rule.isActive ? t(locale, "配置无效", "Blocked") : t(locale, "未启用", "Inactive")}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-ghost" disabled={loading} onClick={() => renameRule(rule)} type="button">{t(locale, "重命名", "Rename")}</button><button className="cpca-btn cpca-btn-outline" disabled={loading || (!rule.eligible && !rule.isActive)} onClick={() => void updateRule(rule, { isActive: !rule.isActive })} type="button">{rule.isActive ? t(locale, "停用", "Disable") : t(locale, "启用", "Enable")}</button></div></td></tr>)}{rules.length === 0 ? <tr><td className="cpca-muted" colSpan={8}>{t(locale, "暂无持久化规则。", "No persisted rules.")}</td></tr> : null}</tbody></table></div></Card>
+      <Card><div className="cpca-table-wrap"><table className="cpca-table"><thead><tr><th>{t(locale, "规则名称", "Rule Name")}</th><th>{t(locale, "活动", "Activity")}</th><th>{t(locale, "触发", "Trigger")}</th><th>{t(locale, "证书", "Certificate")}</th><th>{t(locale, "通知", "Notify")}</th><th>{t(locale, "签发数", "Issued")}</th><th>{t(locale, "状态", "Status")}</th><th>{t(locale, "操作", "Actions")}</th></tr></thead><tbody>{rules.map((rule) => <tr key={rule.id}><td className="cpca-strong">{rule.name}</td><td>{locale === "zh" ? rule.activity.title : rule.activity.titleEn ?? rule.activity.title}</td><td>{t(locale, "活动签到成功", "Activity check-in")}</td><td>{localName(locale, rule.certificateDefinition)}</td><td><input aria-label={t(locale, "通知用户", "Notify user")} checked={rule.notifyUser} disabled={loading} onChange={(event) => void updateRule(rule, { notifyUser: event.target.checked })} type="checkbox" /></td><td>{rule._count?.issuances ?? 0}</td><td><StatusBadge status={rule.effective ? "ACTIVE" : rule.isActive ? "BLOCKED" : "INACTIVE"}>{rule.effective ? t(locale, "已启用", "Active") : rule.isActive ? t(locale, "配置无效", "Blocked") : t(locale, "未启用", "Inactive")}</StatusBadge></td><td><div className="cpca-actions compact"><button className="cpca-btn cpca-btn-ghost" disabled={loading} onClick={() => void renameRule(rule)} type="button">{t(locale, "重命名", "Rename")}</button><button className="cpca-btn cpca-btn-outline" disabled={loading || (!rule.eligible && !rule.isActive)} onClick={() => void updateRule(rule, { isActive: !rule.isActive })} type="button">{rule.isActive ? t(locale, "停用", "Disable") : t(locale, "启用", "Enable")}</button></div></td></tr>)}{rules.length === 0 ? <tr><td className="cpca-muted" colSpan={8}>{t(locale, "暂无持久化规则。", "No persisted rules.")}</td></tr> : null}</tbody></table></div></Card>
       <Card title={t(locale, "创建签发规则", "Create Issuing Rule")}><div className="cpca-form-grid"><label><span>{t(locale, "规则名称", "Rule Name")}</span><input onChange={(event) => setName(event.target.value)} placeholder={t(locale, "活动签到证书", "Activity check-in certificate")} value={name} /></label><label><span>{t(locale, "触发来源", "Trigger Source")}</span><select value="ACTIVITY_CHECKIN"><option value="ACTIVITY_CHECKIN">{t(locale, "活动签到", "Activity check-in")}</option><option disabled>{t(locale, "课程完成（暂不可用）", "Course completion (unavailable)")}</option><option disabled>{t(locale, "Learning Experience 完成（暂不可用）", "Learning Experience completion (unavailable)")}</option><option disabled>{t(locale, "积分门槛（暂不可用）", "Points threshold (unavailable)")}</option></select></label><label><span>{t(locale, "活动", "Activity")}</span><select onChange={(event) => setActivityId(event.target.value)} value={activityId}>{activities.map((activity) => <option key={activity.id} value={activity.id}>{locale === "zh" ? activity.title : activity.titleEn ?? activity.title}</option>)}</select></label><label><span>{t(locale, "触发条件", "Trigger Condition")}</span><input readOnly value={t(locale, "签到成功（固定）", "Successful check-in (fixed)")} /></label><label><span>{t(locale, "证书", "Certificate")}</span><select onChange={(event) => setDefinitionId(event.target.value)} value={definitionId}>{definitions.map((definition) => <option key={definition.id} value={definition.id}>{localName(locale, definition)}</option>)}</select></label><label><span>{t(locale, "签发时间", "Issue Timing")}</span><input readOnly value={t(locale, "立即", "Immediate")} /></label></div><div className="cpca-toggle-row"><label><input checked={notifyUser} onChange={(event) => setNotifyUser(event.target.checked)} type="checkbox" /> {t(locale, "站内通知用户", "Notify user in app")}</label><label><input checked={isActive} onChange={(event) => setIsActive(event.target.checked)} type="checkbox" /> {t(locale, "保存后立即启用", "Enable after saving")}</label></div><div className="cpca-actions"><button className="cpca-btn cpca-btn-amber" disabled={loading || name.trim().length < 3 || !activityId || !definitionId} onClick={() => void createRule()} type="button">{loading ? t(locale, "保存中...", "Saving...") : t(locale, "保存规则", "Save Rule")}</button></div></Card>
+      {promptDialog}
     </CertificateAdminFrame>
   );
 }
@@ -2323,6 +2344,7 @@ export function CertificateAdminRecords({ locale, issues, pagination, summary, q
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [askPrompt, promptDialog] = usePromptDialog();
   const rows = issues;
 
   const totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
@@ -2355,8 +2377,16 @@ export function CertificateAdminRecords({ locale, issues, pagination, summary, q
   async function handleLifecycle(issue: CertificateAdminIssue, action: "revoke" | "restore" | "regenerate") {
     let body: Record<string, string> | undefined;
     if (action === "revoke") {
-      const reason = window.prompt(t(locale, "请输入撤销原因（至少 3 个字符）：", "Enter a revocation reason (at least 3 characters):"))?.trim();
-      if (!reason) { setActionError(t(locale, "撤销原因不能为空。", "A revocation reason is required.")); return; }
+      const reason = await askPrompt({
+        locale,
+        title: t(locale, "撤销证书", "Revoke certificate"),
+        description: t(locale, "撤销原因会写入审计日志。", "The reason is recorded in the audit log."),
+        label: t(locale, "撤销原因", "Revocation reason"),
+        minLength: 3,
+        multiline: true,
+        confirmLabel: t(locale, "确认撤销", "Confirm revoke"),
+      });
+      if (!reason) return;
       body = { reason };
     } else if (!window.confirm(action === "restore" ? t(locale, "确认恢复该证书？", "Restore this certificate?") : t(locale, "确认重新生成该证书？", "Regenerate this certificate?"))) return;
     setActionLoadingId(issue.id); setActionError(""); setActionMessage("");
@@ -2525,6 +2555,7 @@ export function CertificateAdminRecords({ locale, issues, pagination, summary, q
           </div>
         </div>
       ) : null}
+      {promptDialog}
     </CertificateAdminFrame>
   );
 }

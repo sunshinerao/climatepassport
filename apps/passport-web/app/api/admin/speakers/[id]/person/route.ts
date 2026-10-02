@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { speakerLinkSchema } from "@/lib/server/people-master-data";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/speakers");
+  const user = await requireApiRole(["ADMIN"], req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
@@ -52,7 +53,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/speakers");
+  const user = await requireApiRole(["ADMIN"], req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

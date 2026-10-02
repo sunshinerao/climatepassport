@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { ActivityTaskType } from "@prisma/client";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const { searchParams } = new URL(req.url);
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json();
@@ -43,6 +44,10 @@ export async function POST(req: NextRequest) {
 
   if (!activityId || !title || !taskType) {
     return NextResponse.json({ error: "Missing required fields: activityId, title, taskType" }, { status: 400 });
+  }
+  const taskTypes = Object.values(ActivityTaskType) as string[];
+  if (!taskTypes.includes(taskType)) {
+    return NextResponse.json({ error: `Invalid taskType. Expected one of: ${taskTypes.join(", ")}` }, { status: 400 });
   }
 
   const prisma = getPrismaClient();

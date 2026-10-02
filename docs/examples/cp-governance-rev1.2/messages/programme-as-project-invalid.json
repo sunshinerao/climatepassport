@@ -1,0 +1,11 @@
+{
+  "action": "source",
+  "projectId": "00000000-0000-4000-8000-000000000009",
+  "channelClientId": "00000000-0000-4000-8000-000000000002",
+  "sourceApp": "gca",
+  "sourceAuthority": "inert-example-gca",
+  "externalUnitId": "example-course-edition-A",
+  "issuer": "https://issuer.example.invalid",
+  "rpAudience": "inert-example-gca",
+  "verifierUserId": "00000000-0000-4000-8000-000000000003"
+}

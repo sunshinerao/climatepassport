@@ -44,6 +44,7 @@ function authEmailMock(overrides = {}) {
     sendResetPasswordEmail: async () => {},
     consumeEmailTokenByToken: async () => null,
     consumeEmailTokenByCode: async () => null,
+    completeAuthEmailAction: async () => null,
     ...overrides,
   };
 }
@@ -58,8 +59,10 @@ function redirectPathMock() {
   };
 }
 
-function baseMocks({ auth = {}, authEmail = {}, prisma = {}, rateLimit = allowRateLimit } = {}) {
+function baseMocks({ auth = {}, authEmail = {}, prisma = {}, rateLimit = allowRateLimit, durable = allowRateLimit, enqueue = async () => {} } = {}) {
   return {
+    "@/lib/server/auth-rate-limit": { checkAuthRateLimit: async () => { if (durable.unavailable) throw Error("quota unavailable"); return durable; } },
+    "@/lib/server/auth-mail-outbox": { enqueueAuthMailRequest: enqueue },
     "@/lib/server/auth": authMock(auth),
     "@/lib/server/auth-email": authEmailMock(authEmail),
     "@/lib/server/prisma": prismaMock(prisma),
@@ -68,526 +71,72 @@ function baseMocks({ auth = {}, authEmail = {}, prisma = {}, rateLimit = allowRa
   };
 }
 
-test("auth login route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/login/route.ts");
-
-  await t.test("invalid payload returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const request = new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "not-an-email", password: "" }),
-    });
-    const response = await route.POST(request);
-    assert.equal(response.status, 400);
+const clean = value => JSON.parse(JSON.stringify(value));
+const active = { id: "u1", email: "alice@example.invalid", status: "ACTIVE", emailVerified: new Date(), password: "stored-hash", role: "ATTENDEE" };
+const registration = { name: "Alice", email: "Alice@example.invalid", password: "password123", phone: "1234567890", country: "CN", organizationName: "Synthetic Org" };
+function post(route, body, options = {}) {
+  const api = loadRouteModule(path.join(apiRoot, "auth", route, "route.ts"), baseMocks(options));
+  return api.POST(new Request(`https://passport.test/api/auth/${route}`, { method: "POST", body: JSON.stringify(body) }));
+}
+const loginBody = { email: active.email, password: "password123" };
+test("auth login route", async t => {
+  await t.test("invalid payload returns 400", async () => assert.equal((await post("login", {email:"bad"})).status,400));
+  for (const [name, options, status] of [
+    ["IP limiter unavailable",{rateLimit:unavailableRateLimit},503],
+    ["durable limiter unavailable",{durable:unavailableRateLimit},503],
+    ["IP limiter denied",{rateLimit:denyRateLimit},429],
+    ["durable limiter denied",{durable:denyRateLimit},429],
+  ]) await t.test(name,async()=>assert.equal((await post("login",loginBody,options)).status,status));
+  for (const user of [null,{...active,status:"PENDING"},{...active,status:"SUSPENDED"}]) await t.test(`missing or inactive ${user?.status ?? "missing"} is generic 401`,async()=>{
+    let checks=0;
+    const r=await post("login",loginBody,{prisma:{user:{findUnique:async()=>user}},auth:{verifyUserPassword:async()=>{checks++;return true;},createUserSession:async()=>assert.fail("no session")}});
+    assert.equal(r.status,401);assert.equal(r.payload.error,"Invalid email or password.");assert.equal(checks,1);
   });
-
-  await t.test("rate-limit unavailable returns 503", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ rateLimit: unavailableRateLimit }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password" }),
-    }));
-    assert.equal(response.status, 503);
+  await t.test("wrong password returns 401",async()=>assert.equal((await post("login",loginBody,{prisma:{user:{findUnique:async()=>active}}})).status,401));
+  await t.test("unverified login redirects without sending or session",async()=>{
+    const r=await post("login",loginBody,{prisma:{user:{findUnique:async()=>({...active,emailVerified:null})}},auth:{verifyUserPassword:async()=>true,createUserSession:async()=>assert.fail("no session")},authEmail:{sendVerificationEmail:async()=>assert.fail("no provider")}});
+    assert.equal(r.status,403);assert.equal(r.payload.requiresVerification,true);assert.match(r.payload.redirectTo,/auth\/verify-email/);
   });
-
-  await t.test("rate-limit denied returns 429", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ rateLimit: denyRateLimit }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password" }),
-    }));
-    assert.equal(response.status, 429);
+  await t.test("session race rejects login",async()=>assert.equal((await post("login",loginBody,{prisma:{user:{findUnique:async()=>active}},auth:{verifyUserPassword:async()=>true,createUserSession:async()=>{throw Error("changed");}}})).status,401));
+  await t.test("verified login passes expected hash to session guard",async()=>{
+    let args;const r=await post("login",{...loginBody,next:"/en/certificates"},{prisma:{user:{findUnique:async()=>active}},auth:{verifyUserPassword:async()=>true,createUserSession:async(...a)=>{args=a;}}});
+    assert.equal(r.status,200);assert.equal(r.payload.redirectTo,"/en/certificates");assert.deepEqual(args,["u1","stored-hash"]);
   });
-
-  await t.test("missing or inactive user returns 401", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => null,
-        },
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password" }),
-    }));
-    assert.equal(response.status, 401);
-    assert.equal(response.payload.error, "Invalid email or password.");
-  });
-
-  await t.test("wrong password returns 401", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      auth: { verifyUserPassword: async () => false },
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", emailVerified: new Date(), password: "hash", role: "ATTENDEE", status: "ACTIVE" }),
-        },
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "wrong" }),
-    }));
-    assert.equal(response.status, 401);
-  });
-
-  await t.test("unverified active user sends email and returns 403 with redirect", async () => {
-    let sent = false;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      auth: { verifyUserPassword: async () => true },
-      authEmail: { sendVerificationEmail: async () => { sent = true; } },
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", emailVerified: null, password: "hash", role: "ATTENDEE", status: "ACTIVE" }),
-        },
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password", next: "/en/dashboard" }),
-    }));
-    assert.equal(response.status, 403);
-    assert.equal(response.payload.requiresVerification, true);
-    assert.match(response.payload.redirectTo, /\/en\/auth\/verify-email/);
-    assert.equal(sent, true);
-  });
-
-  await t.test("email send failure for unverified user returns 502", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      auth: { verifyUserPassword: async () => true },
-      authEmail: { sendVerificationEmail: async () => { throw new Error("resend down"); } },
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", emailVerified: null, password: "hash", role: "ATTENDEE", status: "ACTIVE" }),
-        },
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password" }),
-    }));
-    assert.equal(response.status, 502);
-  });
-
-  await t.test("verified user creates session and returns redirect", async () => {
-    let sessionUserId = null;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      auth: {
-        verifyUserPassword: async () => true,
-        createUserSession: async (userId) => { sessionUserId = userId; return { sessionToken: "token", expires: new Date() }; },
-      },
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", emailVerified: new Date(), password: "hash", role: "ATTENDEE", status: "ACTIVE" }),
-        },
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password", next: "/en/certificates" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(response.payload.ok, true);
-    assert.equal(response.payload.redirectTo, "/en/certificates");
-    assert.equal(sessionUserId, "u1");
-  });
-
-  await t.test("database unavailable returns 503", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ prisma: null }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "password" }),
-    }));
-    assert.equal(response.status, 503);
-  });
+  await t.test("database unavailable returns 503",async()=>assert.equal((await post("login",loginBody,{prisma:null})).status,503));
 });
-
-test("auth register route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/register/route.ts");
-
-  const validBody = {
-    name: "Alice",
-    email: "alice@example.com",
-    password: "password123",
-    phone: "1234567890",
-    country: "CN",
-    organizationName: "Org",
-  };
-
-  await t.test("invalid payload returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email: "alice@example.com" }),
-    }));
-    assert.equal(response.status, 400);
+for (const route of ["register","forgot-password","verify-email/request"]) test(`auth ${route} route`,async t=>{
+  const body=route==="register"?registration:{email:registration.email};
+  await t.test("invalid payload is 400",async()=>assert.equal((await post(route,{email:"bad"})).status,400));
+  const responses=[];
+  for (const state of ["missing","ACTIVE","PENDING","SUSPENDED","verified","unverified"]) await t.test(`${state} account queues identical instructions without account reads or mutations`,async()=>{
+    const queued=[];const forbidden=async()=>assert.fail("route must not inspect or mutate account");
+    const r=await post(route,body,{prisma:{user:{findUnique:forbidden,create:forbidden,update:forbidden},$transaction:forbidden},auth:{hashUserPassword:forbidden,createUserSession:forbidden},authEmail:{createEmailToken:forbidden,sendVerificationEmail:forbidden,sendResetPasswordEmail:forbidden},enqueue:async request=>queued.push(clean(request))});
+    assert.equal(r.status,200);assert.equal(r.payload.ok,true);responses.push(clean(r.payload));assert.deepEqual(clean(r.payload),responses[0]);
+    assert.equal(queued.length,1);assert.equal(queued[0].email,"alice@example.invalid");assert.equal(queued[0].kind,({register:"REGISTER","forgot-password":"RESET","verify-email/request":"VERIFY"})[route]);
+    assert.doesNotMatch(JSON.stringify(queued),/password123|passwordHash/);
+    if(route==="register")assert.deepEqual(queued[0].profile,{name:"Alice",phone:"1234567890",country:"CN",organizationName:"Synthetic Org"});
   });
-
-  await t.test("duplicate active account returns 409", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", status: "ACTIVE", role: "ATTENDEE", climatePassportId: "CP-1", summerSchoolApplications: [], notificationPreference: { id: "np1" } }),
-        },
-        $transaction: async (cb) => cb({}),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(validBody),
-    }));
-    assert.equal(response.status, 409);
-  });
-
-  await t.test("new user creation succeeds and sends verification email", async () => {
-    let created = null;
-    let emailed = false;
-    const prisma = {
-      user: {
-        findUnique: async () => null,
-        create: async ({ data }) => { created = data; return { id: "u-new", role: "ATTENDEE" }; },
-      },
-      $transaction: async (cb) => cb(prisma),
-    };
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma,
-      authEmail: { sendVerificationEmail: async () => { emailed = true; } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(validBody),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(response.payload.ok, true);
-    assert.match(response.payload.redirectTo, /\/en\/auth\/verify-email/);
-    assert.equal(created.email, "alice@example.com");
-    assert.equal(emailed, true);
-  });
-
-  await t.test("pending existing user is upgraded to active", async () => {
-    let updated = null;
-    const prisma = {
-      user: {
-        findUnique: async () => ({ id: "u-pending", status: "PENDING", role: null, climatePassportId: null, summerSchoolApplications: [], notificationPreference: null }),
-        update: async ({ data }) => { updated = data; return { id: "u-pending", role: "ATTENDEE" }; },
-      },
-      summerSchoolApplication: { updateMany: async () => null },
-      $transaction: async (cb) => cb(prisma),
-    };
-    const route = loadRouteModule(sourcePath, baseMocks({ prisma }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(validBody),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(updated.status, "ACTIVE");
-  });
-
-  await t.test("email send failure returns 502", async () => {
-    const prisma = {
-      user: {
-        findUnique: async () => null,
-        create: async () => ({ id: "u-new", role: "ATTENDEE" }),
-      },
-      $transaction: async (cb) => cb(prisma),
-    };
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma,
-      authEmail: { sendVerificationEmail: async () => { throw new Error("down"); } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(validBody),
-    }));
-    assert.equal(response.status, 502);
-  });
-
-  await t.test("database unavailable returns 503", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ prisma: null }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(validBody),
-    }));
-    assert.equal(response.status, 503);
-  });
+  await t.test("provider unavailability cannot affect enqueue response",async()=>assert.equal((await post(route,body,{authEmail:{sendVerificationEmail:async()=>{throw Error("provider down");},sendResetPasswordEmail:async()=>{throw Error("provider down");}}})).status,200));
+  await t.test("enqueue failure returns 503 without acknowledgment",async()=>{const r=await post(route,body,{enqueue:async()=>{throw Error("queue down");}});assert.equal(r.status,503);assert.equal(r.payload.ok,undefined);});
+  await t.test("durable quota denied before enqueue",async()=>assert.equal((await post(route,body,{durable:denyRateLimit,enqueue:async()=>assert.fail("no enqueue")})).status,429));
+  await t.test("IP unavailable fails closed",async()=>assert.equal((await post(route,body,{rateLimit:unavailableRateLimit,enqueue:async()=>assert.fail("no enqueue")})).status,503));
 });
-
-test("auth forgot-password route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/forgot-password/route.ts");
-
-  await t.test("invalid payload returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "bad" }),
-    }));
-    assert.equal(response.status, 400);
+for (const route of ["reset-password","verify-email/confirm"]) test(`auth ${route} route`,async t=>{
+  const body={email:"Alice@example.invalid",code:"123456",password:"newpass123"};
+  const purpose=route==="reset-password"?"RESET_PASSWORD":"VERIFY_EMAIL";
+  for(const [name,input] of [["missing credential",{email:body.email,password:body.password}],["short token",{...body,code:undefined,token:"short"}],["ambiguous credential",{...body,token:"synthetic-token-long-enough"}],["missing chosen password",{email:body.email,code:body.code}]]) await t.test(name,async()=>assert.equal((await post(route,input,{authEmail:{completeAuthEmailAction:async()=>assert.fail("no mutation")}})).status,400));
+  for(const reason of ["expired","unknown","email mismatch","inactive","replayed"]) await t.test(`${reason} atomic guard rejects with generic 400`,async()=>{
+    let input;const r=await post(route,body,{authEmail:{completeAuthEmailAction:async a=>{input=clean(a);return null;}}});assert.equal(r.status,400);assert.match(r.payload.error,/Invalid or expired/);assert.equal(input.email,"alice@example.invalid");assert.equal(input.purpose,purpose);
   });
-
-  await t.test("obfuscated success even when email does not exist", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: { user: { findUnique: async () => null } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "missing@example.com" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(response.payload.ok, true);
+  await t.test("success delegates exact hashed mutation and never performs route writes or autosession",async()=>{
+    let input;const forbidden=async()=>assert.fail("atomic guard owns mutation; login owns session");
+    const r=await post(route,{...body,next:"/en/dashboard"},{prisma:{user:{update:forbidden},session:{deleteMany:forbidden}},auth:{createUserSession:forbidden},authEmail:{completeAuthEmailAction:async a=>{input=clean(a);return {userId:"u1",email:"alice@example.invalid"};}}});
+    assert.equal(r.status,200);assert.equal(r.payload.ok,true);assert.deepEqual(input,{purpose,email:"alice@example.invalid",code:"123456",passwordHash:"hashed:newpass123"});
+    if(route==="verify-email/confirm")assert.match(r.payload.redirectTo,/^\/en\/auth\/login\?/);
   });
-
-  await t.test("sends reset email only when active and verified", async () => {
-    let emailed = false;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: new Date() }),
-        },
-      },
-      authEmail: { sendResetPasswordEmail: async () => { emailed = true; } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(emailed, true);
-  });
-
-  await t.test("does not send for unverified user but still returns 200", async () => {
-    let emailed = false;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: null }),
-        },
-      },
-      authEmail: { sendResetPasswordEmail: async () => { emailed = true; } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(emailed, false);
-  });
-
-  await t.test("email send failure returns 502", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: new Date() }),
-        },
-      },
-      authEmail: { sendResetPasswordEmail: async () => { throw new Error("down"); } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 502);
-  });
+  await t.test("atomic transaction failure is 503",async()=>assert.equal((await post(route,body,{authEmail:{completeAuthEmailAction:async()=>{throw Error("rollback");}}})).status,503));
+  await t.test("denied quota performs no mutation",async()=>assert.equal((await post(route,body,{durable:denyRateLimit,authEmail:{completeAuthEmailAction:async()=>assert.fail("no mutation")}})).status,429));
 });
-
-test("auth reset-password route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/reset-password/route.ts");
-
-  await t.test("validation requires token or code", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("invalid token returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", token: "tooshort", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("expired or unknown credential returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", token: "raw-token-hex-longer", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("email mismatch returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      authEmail: {
-        consumeEmailTokenByToken: async () => ({ userId: "u1", email: "other@example.com", user: { id: "u1", status: "ACTIVE" } }),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", token: "raw-token-hex-longer", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("inactive user returns 403", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      authEmail: {
-        consumeEmailTokenByToken: async () => ({ userId: "u1", email: "a@b.com", user: { id: "u1", status: "SUSPENDED" } }),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", token: "raw-token-hex-longer", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 403);
-  });
-
-  await t.test("valid token updates password and returns 200", async () => {
-    let updated = null;
-    const prisma = {
-      user: {
-        update: async ({ data }) => { updated = data; return { id: "u1" }; },
-      },
-    };
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma,
-      authEmail: {
-        consumeEmailTokenByToken: async () => ({ userId: "u1", email: "a@b.com", user: { id: "u1", status: "ACTIVE" } }),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", token: "raw-token-hex-longer", password: "newpass123" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(response.payload.ok, true);
-    assert.equal(updated.password, "hashed:newpass123");
-    assert.equal(updated.resetToken, null);
-  });
-});
-
-test("auth verify-email request route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/verify-email/request/route.ts");
-
-  await t.test("sends verification email for active unverified user", async () => {
-    let emailed = false;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: null }),
-        },
-      },
-      authEmail: { sendVerificationEmail: async () => { emailed = true; } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(emailed, true);
-  });
-
-  await t.test("does not send for already verified user but still returns 200", async () => {
-    let emailed = false;
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: new Date() }),
-        },
-      },
-      authEmail: { sendVerificationEmail: async () => { emailed = true; } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(emailed, false);
-  });
-
-  await t.test("email send failure returns 502", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma: {
-        user: {
-          findUnique: async () => ({ id: "u1", email: "a@b.com", status: "ACTIVE", emailVerified: null }),
-        },
-      },
-      authEmail: { sendVerificationEmail: async () => { throw new Error("down"); } },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com" }),
-    }));
-    assert.equal(response.status, 502);
-  });
-});
-
-test("auth verify-email confirm route", async (t) => {
-  const sourcePath = path.join(apiRoot, "auth/verify-email/confirm/route.ts");
-
-  await t.test("invalid payload returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/confirm", {
-      method: "POST",
-      body: JSON.stringify({}),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("invalid or expired credential returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks());
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/confirm", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", code: "123456" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("email mismatch returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({
-      authEmail: {
-        consumeEmailTokenByCode: async () => ({ userId: "u1", email: "other@example.com" }),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/confirm", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", code: "123456" }),
-    }));
-    assert.equal(response.status, 400);
-  });
-
-  await t.test("successful confirmation activates user and creates session", async () => {
-    let updated = null;
-    let sessionUserId = null;
-    const prisma = {
-      user: {
-        update: async ({ data }) => { updated = data; return { id: "u1", role: "ATTENDEE" }; },
-      },
-    };
-    const route = loadRouteModule(sourcePath, baseMocks({
-      prisma,
-      auth: {
-        createUserSession: async (userId) => { sessionUserId = userId; return { sessionToken: "token", expires: new Date() }; },
-      },
-      authEmail: {
-        consumeEmailTokenByCode: async () => ({ userId: "u1", email: "a@b.com" }),
-      },
-    }));
-    const response = await route.POST(new Request("https://passport.test/api/auth/verify-email/confirm", {
-      method: "POST",
-      body: JSON.stringify({ email: "a@b.com", code: "123456", next: "/en/dashboard" }),
-    }));
-    assert.equal(response.status, 200);
-    assert.equal(response.payload.ok, true);
-    assert.equal(updated.emailVerified instanceof Date, true);
-    assert.equal(updated.status, "ACTIVE");
-    assert.equal(sessionUserId, "u1");
-  });
-});
-
 test("auth logout route", async () => {
   const sourcePath = path.join(apiRoot, "auth/logout/route.ts");
   let destroyed = false;

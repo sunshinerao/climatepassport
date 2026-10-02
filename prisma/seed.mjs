@@ -74,6 +74,54 @@ async function resetDatabase() {
   await prisma.user.deleteMany();
 }
 
+/// competency_dimensions 与 v1 portfolio_rule_sets 由 migration 静态写入，resetDatabase 会把它们一并清空；
+/// 这里按 migration 原值还原，否则 seeded 环境里 POST /api/admin/portfolio/rules 永远过不了 dimensionKey 校验。
+const STATIC_COMPETENCY_DIMENSIONS = [
+  { id: "00000000-0000-4000-8000-000000000301", key: "LEARNING", name: "学习", nameEn: "Learning", sortOrder: 1 },
+  { id: "00000000-0000-4000-8000-000000000302", key: "ACTION", name: "行动", nameEn: "Action", sortOrder: 2 },
+  { id: "00000000-0000-4000-8000-000000000303", key: "INNOVATION", name: "创新", nameEn: "Innovation", sortOrder: 3 },
+  { id: "00000000-0000-4000-8000-000000000304", key: "ORGANIZATION", name: "组织", nameEn: "Organization", sortOrder: 4 },
+  { id: "00000000-0000-4000-8000-000000000305", key: "INFLUENCE", name: "影响力", nameEn: "Influence", sortOrder: 5 },
+];
+
+const STATIC_PORTFOLIO_RULES = [
+  { id: "00000000-0000-4000-8000-000000000311", dimensionKey: "LEARNING", sourceKind: "ISSUED_CERTIFICATE", predicateJson: {}, reason: "已签发证书", reasonEn: "Issued certificate" },
+  { id: "00000000-0000-4000-8000-000000000312", dimensionKey: "ACTION", sourceKind: "VERIFIED_ACTIVITY_PARTICIPATION", predicateJson: {}, reason: "已验证活动参与", reasonEn: "Verified activity participation" },
+  { id: "00000000-0000-4000-8000-000000000313", dimensionKey: "INNOVATION", sourceKind: "VERIFIED_ACHIEVEMENT", predicateJson: {}, reason: "平台验证成就", reasonEn: "Platform-verified achievement" },
+  { id: "00000000-0000-4000-8000-000000000314", dimensionKey: "ORGANIZATION", sourceKind: "LEARNING_COMPLETION", predicateJson: {}, reason: "已完成学习经历", reasonEn: "Completed learning experience" },
+  { id: "00000000-0000-4000-8000-000000000315", dimensionKey: "INFLUENCE", sourceKind: "VERIFIED_ACHIEVEMENT", predicateJson: { type: "COMMUNICATION" }, reason: "平台验证传播成就", reasonEn: "Platform-verified communication achievement" },
+];
+
+async function restorePortfolioStaticBaseline() {
+  for (const dimension of STATIC_COMPETENCY_DIMENSIONS) {
+    const { id, key, ...fields } = dimension;
+    await prisma.competencyDimension.upsert({ where: { key }, create: { id, key, ...fields }, update: fields });
+  }
+
+  await prisma.portfolioRuleSet.upsert({
+    where: { version: 1 },
+    create: {
+      id: "00000000-0000-4000-8000-000000000310",
+      version: 1,
+      status: "ACTIVE",
+      name: "Initial verified portfolio rules",
+      activatedAt: new Date(),
+    },
+    update: {},
+  });
+
+  const ruleSetId = "00000000-0000-4000-8000-000000000310";
+  for (const rule of STATIC_PORTFOLIO_RULES) {
+    const { id, dimensionKey, ...fields } = rule;
+    const dimensionId = STATIC_COMPETENCY_DIMENSIONS.find((d) => d.key === dimensionKey).id;
+    await prisma.portfolioEvidenceRule.upsert({
+      where: { id },
+      create: { id, ruleSetId, dimensionId, ...fields },
+      update: fields,
+    });
+  }
+}
+
 async function seedPlatformBaseline() {
   const seedPasswordHash = await hash("seeded-password", 10);
 
@@ -1049,6 +1097,7 @@ async function seedPlatformBaseline() {
 
 async function main() {
   await resetDatabase();
+  await restorePortfolioStaticBaseline();
   const counts = await seedPlatformBaseline();
 
   console.log("Climate Passport seed complete");

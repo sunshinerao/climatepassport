@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "cp-governance/1",
+  "eventId": "example-minimal-revoke-2",
+  "bindingId": "00000000-0000-4000-8000-000000000007",
+  "ruleVersionId": "00000000-0000-4000-8000-000000000006",
+  "identity": {
+    "issuer": "https://issuer.example.invalid",
+    "subject": "inert-example-subject"
+  },
+  "sourceRecord": {
+    "id": "example-gca-record",
+    "version": 2
+  },
+  "occurredAt": "2026-10-10T00:00:00Z",
+  "operation": "revoke",
+  "supersedesEventId": "example-gca-event-1"
+}

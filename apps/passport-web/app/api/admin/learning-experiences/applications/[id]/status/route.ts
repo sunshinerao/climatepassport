@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { LearningExperienceApplicationStatus } from "@prisma/client";
 import { learningApplicationStatusOptions } from "@/lib/server/admin-learning-experiences";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { allocateCertificateVerificationCode } from "@/lib/server/certificates";
 import { buildCertificateArtifactWithQr, parseCertificateRenderConfig } from "@/lib/server/certificate-module";
 import { storeBuiltCertificateArtifact } from "@/lib/server/certificate-artifact-storage";
@@ -13,6 +12,7 @@ import {
 } from "@/lib/server/certificate-variables";
 import { grantUserPoints } from "@/lib/server/point-ledger";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const statusTransitionMap: Record<LearningExperienceApplicationStatus, LearningExperienceApplicationStatus[]> = {
   DRAFT: ["SUBMITTED", "WITHDRAWN"],
@@ -38,7 +38,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } },
 ) {
-  const user = await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER"], "/en/admin/learning-experiences");
+  const user = await requireApiRole(["ADMIN", "EVENT_MANAGER"], request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

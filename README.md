@@ -89,3 +89,8 @@ If migration is not applied remotely, runtime can fail with Prisma `P2021` (tabl
 - `packages/passport-contracts` is reserved for shared API and schema contracts
 - `packages/passport-ui-flows` is reserved for reusable branded transaction flows
 - `packages/passport-sdk` is reserved for channel shell integrations
+
+## 2026-10-01 Approved 跨站业务治理
+
+- [CP业务规则主册](docs/CP_BUSINESS_RULES.md)：统一规则ID、适用范围、生效版本、用户决定与实现验收状态；五站共同引用。
+- [治理User Guide](docs/CP_GOVERNANCE_USER_GUIDE.md)：仅已验路径，未实现项显式标记。

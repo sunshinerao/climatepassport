@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  hashUserPassword,
-  requireAuthenticatedUser,
-  verifyUserPassword,
-} from "@/lib/server/auth";
+import { hashUserPassword, verifyUserPassword } from "@/lib/server/auth";
+import { requireApiUser } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 const passwordSchema = z.object({
@@ -13,7 +10,8 @@ const passwordSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/profile");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

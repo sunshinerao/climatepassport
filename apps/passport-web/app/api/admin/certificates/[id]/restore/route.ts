@@ -3,6 +3,7 @@ import { getRequestAuditContext } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
 import { canRestoreCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { CERTIFICATE_LIFECYCLE_DISPATCH_SCOPE, enqueueOutboundDispatch, findDispatchTargets } from "@/lib/server/reliable-dispatch";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const admin = await getCurrentUser();
@@ -30,6 +31,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const restoredAt = new Date();
+  const dispatchTargets = await findDispatchTargets(prisma, CERTIFICATE_LIFECYCLE_DISPATCH_SCOPE);
   try {
     await prisma.$transaction(async (tx) => {
       const updated = await tx.certificateIssue.updateMany({
@@ -48,6 +50,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
           ...getRequestAuditContext(request),
         },
       });
+      for (const target of dispatchTargets) {
+        const enqueued = await enqueueOutboundDispatch(tx, {
+          eventType: "certificate.restored",
+          idempotencyKey: `certificate:${issue.id}:restored:${restoredAt.toISOString()}:${target.id}`,
+          payload: { certificateIssueId: issue.id, status: "ISSUED", occurredAt: restoredAt.toISOString() },
+          channelClientId: target.id,
+        });
+        if (!enqueued.ok) console.error("[dispatch] restore enqueue skipped:", enqueued.error);
+      }
     });
   } catch (error) {
     if (error instanceof CertificateStatusConflict) {

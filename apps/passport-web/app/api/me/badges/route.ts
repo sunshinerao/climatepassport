@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { ensureMvpBadgeDefinitions } from "@/lib/server/achievement-badge";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const querySchema = z.object({
   category: z.string().optional(),
@@ -12,7 +12,8 @@ const querySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/badges");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

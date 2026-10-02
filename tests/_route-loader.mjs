@@ -12,19 +12,58 @@ export function createNextResponseMock() {
     this.status = init?.status ?? 200;
     this.statusText = init?.statusText ?? "";
     this.headers = init?.headers ?? {};
+    // Routes branch on `x instanceof NextResponse`, so helpers must return real
+    // instances; `payload` is kept as the alias tests historically assert on.
+    this.payload = body;
   }
   NextResponse.json = function (payload, init) {
-    return { status: init?.status ?? 200, payload };
+    return new NextResponse(payload, init);
   };
   NextResponse.redirect = function (url, status) {
-    return { status: status ?? 307, payload: { url } };
+    return new NextResponse({ url }, { status: status ?? 307 });
   };
   return NextResponse;
 }
 
+function createApiAuthMock(merged) {
+  const NextResponse = merged["next/server"].NextResponse;
+  const auth = merged["@/lib/server/auth"] ?? {};
+  const unauthorized = () => NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const forbidden = () => NextResponse.json({ error: "Forbidden." }, { status: 403 });
+
+  async function resolveUser() {
+    if (typeof auth.getCurrentUser === "function") {
+      return await auth.getCurrentUser();
+    }
+    const pageGuard = auth.requireAuthenticatedUser ?? auth.requireRoleAccess;
+    if (typeof pageGuard !== "function") {
+      return null;
+    }
+    try {
+      return await pageGuard("en", ["ADMIN", "EVENT_MANAGER", "ATTENDEE", "VERIFIER", "ORGANIZATION"], "/");
+    } catch (error) {
+      if (error?.name === "NEXT_REDIRECT") {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  return {
+    apiUnauthorized: unauthorized,
+    apiForbidden: forbidden,
+    requireApiUser: async () => (await resolveUser()) ?? unauthorized(),
+    requireApiRole: async (roles) => {
+      const user = await resolveUser();
+      if (!user) return unauthorized();
+      return roles.includes(user.role) ? user : forbidden();
+    },
+  };
+}
+
 export function createDefaultMocks(overrides = {}) {
   const NextResponse = createNextResponseMock();
-  return {
+  const merged = {
     "next/server": { NextResponse },
     "next/navigation": {
       redirect: (url) => {
@@ -67,6 +106,19 @@ export function createDefaultMocks(overrides = {}) {
         httpStatus: 400,
         error: "Missing token.",
       }),
+    },
+    "@/lib/server/prisma": { getPrismaClient: () => null },
+    "@/lib/server/reliable-dispatch": {
+      CERTIFICATE_LIFECYCLE_DISPATCH_SCOPE: "dispatch:certificates:lifecycle",
+      findDispatchTargets: async () => [],
+      enqueueOutboundDispatch: async () => ({ ok: true, id: "dispatch-1", deduplicated: false }),
+      processOutboundDispatches: async () => ({ claimed: 0, succeeded: 0, retrying: 0, dead: 0, skipped: 0 }),
+      reconcileOutboundDispatch: async () => ({ ok: false, error: "not mocked", status: 500 }),
+      requeueDeadDispatch: async () => ({ ok: false, error: "not mocked", status: 500 }),
+    },
+    "@/lib/server/channel-client-auth": {
+      authenticateChannelMachine: async () => ({ ok: false, status: 401, code: "UNKNOWN_CLIENT" }),
+      readMachineCredentials: () => null,
     },
     "@/lib/server/verifier-activity": {
       canManageActivity: async () => false,
@@ -177,11 +229,18 @@ export function createDefaultMocks(overrides = {}) {
     },
     ...overrides,
   };
+
+  if (!merged["next/server"]?.NextResponse) {
+    merged["next/server"] = { ...merged["next/server"], NextResponse };
+  }
+  merged["@/lib/server/api-auth"] = overrides["@/lib/server/api-auth"] ?? createApiAuthMock(merged);
+
+  return merged;
 }
 
-export function loadRouteModule(sourcePath, moduleMocks = {}, globals = {}) {
-  const source = fs.readFileSync(sourcePath, "utf8");
-  const compiled = ts.transpileModule(source, {
+/** Transpile one TypeScript module into the test realm, resolving its own `@/` imports for real. */
+function compileTsModule(sourcePath, mocks, globals = {}) {
+  const compiled = ts.transpileModule(fs.readFileSync(sourcePath, "utf8"), {
     compilerOptions: {
       esModuleInterop: true,
       module: ts.ModuleKind.CommonJS,
@@ -189,17 +248,9 @@ export function loadRouteModule(sourcePath, moduleMocks = {}, globals = {}) {
     },
   }).outputText;
 
-  const mocks = createDefaultMocks(moduleMocks);
-
   const sandbox = {
     exports: {},
     module: { exports: {} },
-    require: (id) => {
-      if (Object.prototype.hasOwnProperty.call(mocks, id)) {
-        return mocks[id];
-      }
-      return require(id);
-    },
     URL,
     Request,
     Response,
@@ -216,10 +267,39 @@ export function loadRouteModule(sourcePath, moduleMocks = {}, globals = {}) {
     URLSearchParams,
     encodeURIComponent,
     decodeURIComponent,
+    require: (id) => {
+      if (Object.prototype.hasOwnProperty.call(mocks, id)) return mocks[id];
+      if (id.startsWith("@/")) return loadServerModule(id);
+      return require(id);
+    },
     ...globals,
   };
 
   sandbox.module.exports = sandbox.exports;
   vm.runInNewContext(compiled, sandbox, { filename: sourcePath });
   return sandbox.module.exports;
+}
+
+const serverModuleCache = new Map();
+
+/**
+ * Load a `@/lib/...` module under test with its dependency chain intact — for pure server
+ * helpers that have no route wrapper, where stubbing the helpers away would prove nothing.
+ * Cached because these modules hold no per-test state and each realm re-imports bcryptjs.
+ */
+export function loadServerModule(specifier) {
+  if (!serverModuleCache.has(specifier)) {
+    serverModuleCache.set(specifier, compileTsModule(path.resolve("apps/passport-web", `${specifier.slice(2)}.ts`), {}));
+  }
+  return serverModuleCache.get(specifier);
+}
+
+/** Compile `specifier` fresh with per-test mocks; the dependency chain still loads for real. */
+export function loadConfiguredServerModule(specifier, mocks) {
+  return compileTsModule(path.resolve("apps/passport-web", `${specifier.slice(2)}.ts`), mocks);
+}
+
+export function loadRouteModule(sourcePath, moduleMocks = {}, globals = {}) {
+  const mocks = createDefaultMocks(moduleMocks);
+  return { ...compileTsModule(sourcePath, mocks), ...globals };
 }

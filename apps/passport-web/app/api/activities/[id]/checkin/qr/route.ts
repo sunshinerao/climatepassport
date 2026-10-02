@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { issueQrToken } from "@/lib/server/qr";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 /** Generate an ACTIVITY_CHECKIN QR token for the authenticated user + given activity */
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const user = await requireAuthenticatedUser("en" as any, "/en/dashboard");
+  const user = await requireApiUser(req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

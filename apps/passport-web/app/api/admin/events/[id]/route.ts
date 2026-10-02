@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { adminEventSchema, buildEventWriteData, serializeAdminEvent } from "@/lib/server/admin-events";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER"], "/en/admin/events");
+  const user = await requireApiRole(["ADMIN", "EVENT_MANAGER"], request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

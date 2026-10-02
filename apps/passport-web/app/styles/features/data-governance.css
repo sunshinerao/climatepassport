@@ -1,0 +1,215 @@
+/* CP-TODO-258: 数据治理通用页面与 ui-flows 组件样式（手写 CSS + --cp-* 令牌）。
+ * 四屏宽响应式断点：≤480（手机）、≤760（平板）、≤1024（小桌面）、>1024（桌面）。
+ * 组件只依赖语义类名与 data-tone，主题由宿主 shell 覆盖。 */
+
+.data-gov-screen {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.data-gov-lead {
+  color: var(--cp-text-secondary, #5a6675);
+  margin: 0;
+}
+
+.data-gov-error {
+  color: #b42318;
+  margin: 8px 0 0;
+}
+
+.data-gov-button {
+  appearance: none;
+  border: 1px solid var(--cp-accent, #1663a8);
+  background: var(--cp-accent, #1663a8);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.data-gov-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.data-gov-button--quiet {
+  background: transparent;
+  color: var(--cp-accent, #1663a8);
+}
+
+.data-gov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.data-gov-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  border: 1px solid var(--cp-border, #d9dee5);
+  border-radius: 10px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.data-gov-meta {
+  display: block;
+  font-size: 12px;
+  color: var(--cp-text-secondary, #5a6675);
+}
+
+.data-gov-empty {
+  color: var(--cp-text-secondary, #5a6675);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ── ui-flows 组件 ─────────────────────────────────────────────── */
+
+.ui-flow-card {
+  border: 1px solid var(--cp-border, #d9dee5);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--cp-surface, #fff);
+}
+
+.ui-flow-card--danger {
+  border-color: #f0c4c0;
+  background: #fffafa;
+}
+
+.ui-flow-card__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.ui-flow-card__description {
+  margin: 0 0 16px;
+  color: var(--cp-text-secondary, #5a6675);
+  font-size: 14px;
+}
+
+.ui-flow-confirm-danger {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.ui-flow-confirm-danger__hint {
+  margin: 0;
+  font-size: 14px;
+}
+
+.ui-flow-confirm-danger__label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ui-flow-confirm-danger__label input {
+  border: 1px solid var(--cp-border, #d9dee5);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.ui-flow-confirm-danger__button {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #b42318;
+  color: #fff;
+}
+
+.ui-flow-confirm-danger__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-flow-confirm-danger__error {
+  color: #b42318;
+  margin: 0;
+  font-size: 13px;
+}
+
+.ui-flow-confirm-danger__success {
+  color: #067647;
+}
+
+.ui-flow-confirm-danger__notice {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--cp-text-secondary, #5a6675);
+  font-size: 13px;
+}
+
+.ui-flow-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  border: 1px solid var(--cp-border, #d9dee5);
+}
+
+.ui-flow-pill--success {
+  color: #067647;
+  border-color: #abefc6;
+  background: #ecfdf3;
+}
+
+.ui-flow-pill--warning {
+  color: #b54708;
+  border-color: #fedf89;
+  background: #fffaeb;
+}
+
+.ui-flow-pill--danger {
+  color: #b42318;
+  border-color: #fecdca;
+  background: #fef3f2;
+}
+
+/* ── 四屏宽断点 ────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .data-gov-screen {
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 760px) {
+  .data-gov-screen {
+    padding: 16px 12px 48px;
+  }
+
+  .data-gov-list-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-flow-card {
+    padding: 16px;
+  }
+
+  .data-gov-button,
+  .ui-flow-confirm-danger__button {
+    width: 100%;
+  }
+}

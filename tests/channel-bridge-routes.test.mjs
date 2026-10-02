@@ -94,6 +94,14 @@ function baseMocks({ auth = {}, rateLimit = allowRateLimit, core = {}, contracts
   };
 }
 
+// The bridge route authenticates through the API guard, so a test that needs a
+// session has to stub that guard rather than the page-level redirect helper.
+function apiAuthMock(user) {
+  return { requireApiUser: async () => user, requireApiRole: async () => user };
+}
+
+const authenticatedApiAuth = { "@/lib/server/api-auth": apiAuthMock({ id: "u1" }) };
+
 test("unversioned channel bridge issue route", async (t) => {
   const sourcePath = path.join(apiRoot, "channel/session/bridge/route.ts");
 
@@ -106,16 +114,18 @@ test("unversioned channel bridge issue route", async (t) => {
     assert.equal(response.status, 429);
   });
 
-  await t.test("unauthenticated returns redirect/401", async () => {
+  await t.test("unauthenticated returns 401 JSON", async () => {
     const route = loadRouteModule(sourcePath, baseMocks());
-    await assert.rejects(async () => route.POST(new Request("https://passport.test/api/channel/session/bridge", {
+    const response = await route.POST(new Request("https://passport.test/api/channel/session/bridge", {
       method: "POST",
       body: JSON.stringify({}),
-    })), /redirect/);
+    }));
+    assert.equal(response.status, 401);
+    assert.equal(response.payload.error, "Authentication required.");
   });
 
   await t.test("invalid payload returns 400", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ auth: { requireAuthenticatedUser: async () => ({ id: "u1" }) } }));
+    const route = loadRouteModule(sourcePath, baseMocks({ extra: authenticatedApiAuth }));
     const response = await route.POST(new Request("https://passport.test/api/channel/session/bridge", {
       method: "POST",
       body: JSON.stringify({ channel: "wrong" }),
@@ -124,7 +134,7 @@ test("unversioned channel bridge issue route", async (t) => {
   });
 
   await t.test("issues bridge token with sanitized targetPath", async () => {
-    const route = loadRouteModule(sourcePath, baseMocks({ auth: { requireAuthenticatedUser: async () => ({ id: "u1" }) } }));
+    const route = loadRouteModule(sourcePath, baseMocks({ extra: authenticatedApiAuth }));
     const response = await route.POST(new Request("https://passport.test/api/channel/session/bridge", {
       method: "POST",
       body: JSON.stringify({ targetPath: "/en/dashboard" }),

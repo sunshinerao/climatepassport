@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuthenticatedUser("en" as any);
+    const user = await requireApiUser(req);
+    if (user instanceof NextResponse) return user;
     const prisma = getPrismaClient();
     if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

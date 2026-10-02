@@ -18,6 +18,9 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch { return error("INVALID_REQUEST", 400); }
   const payload = BridgeIssueRequestSchema.safeParse(body);
   if (!payload.success) return error("INVALID_REQUEST", 400);
+  // CP-TODO-241: this v1 route only serves the registered SHCW channel; other registered
+  // clients receive their own endpoints in CP-TODO-243. Unknown channels fail closed.
+  if (payload.data.channel !== "SHCW") return error("CHANNEL_DISABLED", 403);
   const targetPath = sanitizeChannelBridgeTargetPath(payload.data.targetPath, config.targetPathPrefixes);
   if (payload.data.targetPath && !targetPath) return error("INVALID_REQUEST", 400);
   const user = await getCurrentUser();

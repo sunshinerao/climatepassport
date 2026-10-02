@@ -1,16 +1,18 @@
+import { changeGovernanceVisibility } from "@/lib/server/governance-credentials";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { writeCoreAuditLog, getRequestAuditContext } from "@/lib/server/audit";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { canMakeCertificatePublicStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiUser } from "@/lib/server/api-auth";
 
 const visibilitySchema = z.object({
   publicVisible: z.boolean(),
 });
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
-  const user = await requireAuthenticatedUser("en", "/en/dashboard/certificates");
+  const user = await requireApiUser(request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -24,11 +26,23 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const issue = await prisma.certificateIssue.findUnique({
     where: { id: params.id },
-    select: { id: true, userId: true, status: true },
+    select: { id: true, userId: true, status: true, sourceType: true },
   });
 
   if (!issue) {
     return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+  }
+
+  if (issue.sourceType === "GOVERNANCE_REWARD") {
+    if (issue.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const grant = await prisma.governanceRewardGrant.findUnique({ where: { certificateIssueId: issue.id }, select: { id: true } });
+    if (!grant) return NextResponse.json({ error: "Governance reward unavailable." }, { status: 409 });
+    try {
+      const result = await prisma.$transaction(tx => changeGovernanceVisibility(tx, user.id, grant.id, payload.data.publicVisible));
+      return NextResponse.json({ ok: true, certificate: { id: issue.id, publicVisible: result.publicVisible } });
+    } catch {
+      return NextResponse.json({ error: "Certificate is not currently eligible for public display." }, { status: 409 });
+    }
   }
 
   if (issue.userId !== user.id && user.role !== "ADMIN") {

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentSession } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { assertActivityScopeAccess } from "@/lib/server/programme-scope";
 import { canManageActivity } from "@/lib/server/verifier-activity";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+
+  // CP-TODO-241: activities bound to a programme scope require scoped read access;
+  // unscoped legacy activities keep their existing public behavior.
+  const session = await getCurrentSession();
+  const scopeCheck = await assertActivityScopeAccess(prisma, session?.user ?? null, params.id, "read");
+  if (!scopeCheck.ok) return NextResponse.json({ error: scopeCheck.error }, { status: scopeCheck.status });
 
   const institutions = await prisma.activityInstitution.findMany({
     where: { activityId: params.id },
@@ -21,11 +29,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
   if (!(await canManageActivity(prisma, auth, params.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // CP-TODO-241: scoped activities additionally require write access inside their programme scope.
+  const scopeCheck = await assertActivityScopeAccess(prisma, auth, params.id, "write");
+  if (!scopeCheck.ok) return NextResponse.json({ error: scopeCheck.error }, { status: scopeCheck.status });
 
   const body = await req.json().catch(() => ({}));
   const institutionId = body.institutionId as string | undefined;
@@ -67,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });

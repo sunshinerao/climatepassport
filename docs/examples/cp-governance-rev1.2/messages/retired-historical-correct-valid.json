@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "cp-governance/1",
+  "eventId": "example-gca-event-2",
+  "bindingId": "00000000-0000-4000-8000-000000000007",
+  "ruleVersionId": "00000000-0000-4000-8000-000000000006",
+  "identity": {
+    "issuer": "https://issuer.example.invalid",
+    "subject": "inert-example-subject"
+  },
+  "sourceRecord": {
+    "id": "example-gca-record",
+    "version": 2
+  },
+  "occurredAt": "2026-10-02T10:00:00Z",
+  "operation": "correct",
+  "consent": {
+    "receiptId": "00000000-0000-4000-8000-000000000008",
+    "version": 1,
+    "scope": "reward_qualification",
+    "grantedAt": "2026-10-01T02:00:00Z"
+  },
+  "data": {
+    "kind": "learning_completion",
+    "status": "completed",
+    "verificationLevel": "source_verified",
+    "durationMinutes": 30,
+    "score": 75,
+    "evidenceRefs": [
+      "inert-example-evidence-1"
+    ]
+  },
+  "supersedesEventId": "example-gca-event-1"
+}

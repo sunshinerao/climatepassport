@@ -20,7 +20,8 @@ export function checkRateLimit(key: string, options: { limit: number; windowMs: 
 export function getRateLimitSubjectReference(value: string) {
   return `subject-${createHash("sha256").update(value).digest("hex").slice(0, 24)}`;
 }
-function normalizedIp(value: string | null) { const ip = value?.trim().slice(0, 64); return ip && /^[0-9a-fA-F:.]+$/.test(ip) ? ip.toLowerCase() : null; }
+/** Normalize a header-supplied address, rejecting anything that is not IP-shaped. Exported so source allowlists share this parsing. */
+export function normalizedIp(value: string | null) { const ip = value?.trim().slice(0, 64); return ip && /^[0-9a-fA-F:.]+$/.test(ip) ? ip.toLowerCase() : null; }
 export function getRequestRateLimitKey(request: Request, scope: string) {
   const trusted = process.env.RATE_LIMIT_TRUST_PROXY === "true";
   const forwarded = request.headers.get("x-forwarded-for")?.split(",").map((value) => normalizedIp(value)).find(Boolean);

@@ -1,0 +1,8 @@
+{
+  "name": "@climate-passport/passport-ui-flows",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.tsx" },
+  "peerDependencies": { "react": "^18.0.0 || ^19.0.0" }
+}

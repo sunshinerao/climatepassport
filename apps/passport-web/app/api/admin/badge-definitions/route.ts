@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { ensureMvpBadgeDefinitions } from "@/lib/server/achievement-badge";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const createSchema = z.object({
   code: z.string().trim().min(3).max(64),
@@ -35,7 +35,8 @@ const createSchema = z.object({
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
 
 export async function GET() {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/definitions");
+  const apiAuth = await requireApiRole(["ADMIN"]);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -52,7 +53,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/definitions");
+  const apiAuth = await requireApiRole(["ADMIN"], request);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -93,7 +95,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/definitions");
+  const apiAuth = await requireApiRole(["ADMIN"], request);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {

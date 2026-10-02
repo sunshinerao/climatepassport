@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +27,8 @@ export async function GET(
   const locale = (url.searchParams.get("locale") ?? "en") as "zh" | "en";
   const isZh = locale === "zh";
 
-  await requireRoleAccess(locale, ["ADMIN"], `/${locale}/admin`);
+  const apiAuth = await requireApiRole(["ADMIN"], request);
+  if (apiAuth instanceof NextResponse) return apiAuth;
 
   const prisma = getPrismaClient();
   if (!prisma) {

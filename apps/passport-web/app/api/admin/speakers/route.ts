@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { buildSpeakerWhere, serializeSpeaker, speakerListQuerySchema } from "@/lib/server/people-master-data";
 
 export async function GET(req: NextRequest) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/speakers");
+  const auth = await requireApiRole(["ADMIN"], req);
+  if (auth instanceof NextResponse) return auth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

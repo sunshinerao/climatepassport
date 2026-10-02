@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { revokeBadgeAward } from "@/lib/server/achievement-badge";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const payloadSchema = z.object({
   reason: z.string().trim().max(500).optional(),
@@ -11,7 +11,8 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } },
 ) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/awards");
+  const apiAuth = await requireApiRole(["ADMIN"], request);
+  if (apiAuth instanceof NextResponse) return apiAuth;
 
   const payload = payloadSchema.safeParse(await request.json().catch(() => ({})));
 

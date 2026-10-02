@@ -4,6 +4,7 @@ import { getRequestAuditContext } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
 import { canRevokeCertificateStatus } from "@/lib/server/certificates";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { CERTIFICATE_LIFECYCLE_DISPATCH_SCOPE, enqueueOutboundDispatch, findDispatchTargets } from "@/lib/server/reliable-dispatch";
 
 const revokeSchema = z.object({
   reason: z.string().trim().min(3).max(1000),
@@ -42,6 +43,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const revokedAt = new Date();
+  // CP-TODO-244: select dispatch targets before the transaction; enqueue in the same
+  // transaction as the state change so a revoked certificate can never exist without
+  // its outbound event (CP-FR-070, withdrawal/cancellation first).
+  const dispatchTargets = await findDispatchTargets(prisma, CERTIFICATE_LIFECYCLE_DISPATCH_SCOPE);
   try {
     await prisma.$transaction(async (tx) => {
       const updated = await tx.certificateIssue.updateMany({
@@ -67,6 +72,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
           ...getRequestAuditContext(request),
         },
       });
+      for (const target of dispatchTargets) {
+        const enqueued = await enqueueOutboundDispatch(tx, {
+          eventType: "certificate.revoked",
+          idempotencyKey: `certificate:${issue.id}:revoked:${revokedAt.toISOString()}:${target.id}`,
+          payload: { certificateIssueId: issue.id, status: "REVOKED", reason: payload.data.reason, occurredAt: revokedAt.toISOString() },
+          channelClientId: target.id,
+        });
+        if (!enqueued.ok) console.error("[dispatch] revoke enqueue skipped:", enqueued.error);
+      }
     });
   } catch (error) {
     if (error instanceof CertificateStatusConflict) {

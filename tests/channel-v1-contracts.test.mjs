@@ -27,7 +27,7 @@ test("v1 routes gate before service calls and leave legacy routes intact", () =>
   assert.match(bridgeRoute, /getCurrentUser\(\)/);
   assert.match(exchangeRoute, /INVALID_BRIDGE_TOKEN/);
   assert.match(verifyRoute, /SHCW_PUBLIC_API/);
-  assert.match(fs.readFileSync(path.resolve("apps/passport-web/app/api/channel/session/bridge/route.ts"), "utf8"), /requireAuthenticatedUser/);
+  assert.match(fs.readFileSync(path.resolve("apps/passport-web/app/api/channel/session/bridge/route.ts"), "utf8"), /requireApiUser\(request\)/);
 });
 
 test("v1 SDK uses expected credential policies and typed not-found results", () => {

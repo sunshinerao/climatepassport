@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const participant = await prisma.activityParticipation.findUnique({ where: { activityId_userId: { activityId: params.id, userId: user.id } }, select: { id: true } });
   if (!moderator && !participant) return NextResponse.json({ error: "Participant access required" }, { status: 403 });
   if (community.mode !== "OPEN" && !moderator) return NextResponse.json({ error: "Community is read-only" }, { status: 403 });
-  const post = await prisma.activityCommunityPost.findFirst({ where: { id: params.postId, communityId: community.id, OR: moderator ? [{}] : [{ status: "PUBLISHED" }, { authorUserId: user.id }] }, select: { id: true } });
+  const post = await prisma.activityCommunityPost.findFirst({ where: { id: params.postId, communityId: community.id, ...(moderator ? {} : { OR: [{ status: "PUBLISHED" }, { authorUserId: user.id }] }) }, select: { id: true } });
   if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
   const limit = await checkRateLimitAsync(`community-comment:${getRateLimitSubjectReference(user.id)}`, { limit: 16, windowMs: 60_000, sensitive: true });
   if (!limit.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: getRateLimitHeaders(limit) });

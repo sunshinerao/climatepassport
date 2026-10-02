@@ -1,0 +1,18 @@
+{
+  "action": "rule",
+  "projectId": "00000000-0000-4000-8000-000000000001",
+  "version": 1,
+  "condition": {
+    "schemaVersion": "cp-condition/1",
+    "all": [
+      {
+        "field": "score",
+        "op": "eq",
+        "value": "75"
+      }
+    ]
+  },
+  "rewards": [],
+  "validFrom": "2026-10-01T00:00:00Z",
+  "validUntil": "2026-10-05T00:00:00Z"
+}

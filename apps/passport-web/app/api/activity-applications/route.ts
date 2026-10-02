@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser, requireRoleAccess } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import {
@@ -10,6 +11,7 @@ import {
   validateProjectPortfolioShareLink,
 } from "@/lib/server/project-application";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { assertActivityOpenForPublic } from "@/lib/server/source-activity-mapping";
 
 export async function GET(req: NextRequest) {
   const currentUser = await getCurrentUser();
@@ -65,6 +67,19 @@ export async function POST(req: NextRequest) {
   const activity = await prisma.activity.findUnique({ where: { id: activityId } });
   if (!activity) {
     return NextResponse.json({ error: "Activity not found" }, { status: 404 });
+  }
+
+  // A cancelled activity cannot accept new applications, including activities
+  // that have no external source mapping.
+  if (activity.status === "CANCELLED") {
+    return NextResponse.json({ error: "Activity is cancelled.", code: "ACTIVITY_CANCELLED" }, { status: 409 });
+  }
+
+  // CP-TODO-245：已接入来源的活动须由来源发布且未取消才可报名（未发布不可报名、
+  // 取消优先关闭入口）；未映射活动保持原有报名窗口行为。
+  const open = await assertActivityOpenForPublic(prisma, activityId);
+  if (!open.open) {
+    return NextResponse.json({ error: open.error, code: open.code }, { status: open.status });
   }
 
   const isProjectApplicantSubmit =
@@ -192,10 +207,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ application }, { status: 201 });
   }
 
-  // Established non-project behavior: admin/event_manager only.
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
-  if (auth instanceof NextResponse) return auth;
-  if (!(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Applicants may submit their own non-project application. Creating one on someone
+  // else's behalf, or with a review status, stays admin/event-manager only.
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+  const isSelfService = currentUser.id === userId;
+
+  if (!isSelfService) {
+    const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
+    if (auth instanceof NextResponse) return auth;
+    if (!(await canManageActivity(prisma, auth, activityId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const existing = await prisma.activityApplication.findUnique({
     where: { activityId_userId: { activityId, userId } },
@@ -208,9 +232,9 @@ export async function POST(req: NextRequest) {
     data: {
       activityId,
       userId,
-      roleType,
+      roleType: isSelfService ? undefined : roleType,
       formResponseJson,
-      status: status ?? "SUBMITTED",
+      status: isSelfService ? "SUBMITTED" : status ?? "SUBMITTED",
       submittedAt: new Date(),
     },
   });

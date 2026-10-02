@@ -268,3 +268,7 @@ Blockchain anchoring remains a long-term requirement from the platform functiona
 # Controlled PROJECT application update (2026-09-13)
 
 `Activity.type = PROJECT` has a controlled local-only application workflow. Applicants explicitly choose field-level disclosure under `PROJECT_APPLICATION_CONSENT_V1`; owner/admin reviewers see only consented fields and never raw portfolio tokens, Passport IDs, or applicant identifiers. ADMIN is global; only the exact `organizerUserId` otherwise reviews; EVENT_MANAGER is denied by default. PROJECT supports APPROVED, REJECTED, and WAITLISTED only. The additive migration is local-only. No interest-only behavior, team applications, jobs, recruitment/candidate or institution search, matching, AI, or public applicant directory is in scope. See `PROJECT_INTEREST_APPLICATION_PRIVACY_OPERATIONS.md`.
+
+## Approved cross-site governance (2026-10-01)
+
+The user-approved [CP business rules register](CP_BUSINESS_RULES.md) is the canonical ongoing authority for registration, frozen rule versions, source facts, purpose separation and reward compensation. app-outcome/1 APPLIED remains private archive acceptance, never an automatic reward or certificate. New scoped business approval does not derive from technical ADMIN role. Detailed acceptance and supported paths remain separately recorded; no production activation is implied.

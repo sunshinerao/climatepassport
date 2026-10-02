@@ -1,0 +1,8 @@
+{
+  "action": "binding",
+  "sourceId": "00000000-0000-4000-8000-000000000004",
+  "userId": "00000000-0000-4000-8000-000000000005",
+  "subject": "inert-example-subject",
+  "sourceRecordId": "example-gca-record",
+  "verificationRef": "inert-example-mapping-not-a-proof"
+}

@@ -1,11 +1,11 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 export const MAX_EXTERNAL_LEARNING_BODY_BYTES = 64 * 1024;
 export const WEBHOOK_MAX_AGE_SECONDS = 300;
 const SENSITIVE_HEADERS = new Set(["authorization", "cookie", "x-api-key", "x-signature", "signature"]);
 export const sha256Reference = (value: string) => createHash("sha256").update(value).digest("hex");
 export function verifyExternalLearningSignature(rawBody: Buffer, secret: string, supplied: string) {
-  const expected = createHash("sha256").update(secret).update(rawBody).digest("hex");
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
   const a = Buffer.from(expected, "hex"); const b = Buffer.from(supplied.replace(/^sha256=/i, ""), "hex");
   return a.length === b.length && timingSafeEqual(a, b);
 }

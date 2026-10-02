@@ -710,9 +710,11 @@ test("certificate lifecycle routes fail explicitly when the audit write fails (C
 test("certificate download route", async (t) => {
   const sourcePath = path.join(apiRoot, "certificates/[id]/download/route.ts");
 
-  await t.test("unauthenticated redirects", async () => {
+  await t.test("unauthenticated returns 401 JSON", async () => {
     const route = loadRouteModule(sourcePath, baseMocks());
-    await assert.rejects(async () => route.POST(new Request("https://passport.test/api/certificates/issue-1/download", { method: "POST" }), { params: { id: "issue-1" } }), /redirect/);
+    const response = await route.POST(new Request("https://passport.test/api/certificates/issue-1/download", { method: "POST" }), { params: { id: "issue-1" } });
+    assert.equal(response.status, 401);
+    assert.equal(response.payload.error, "Authentication required.");
   });
 
   await t.test("owner succeeds", async () => {

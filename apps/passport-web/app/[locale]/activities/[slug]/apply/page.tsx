@@ -60,6 +60,7 @@ export default async function ActivityApplyPage({ params }: { params: { locale: 
       <div className="page">
         <ActivityApplyClient
           activityId={activity.id}
+          activitySlug={params.slug}
           activityTitle={zh ? activity.title : (activity.titleEn ?? activity.title)}
           formTemplate={null}
           locale={params.locale}

@@ -1,3 +1,4 @@
+import { BadgeVerificationGrade } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getBadgeVerificationPublicPayload } from "@/lib/server/achievement-badge";
 import { getPrismaClient } from "@/lib/server/prisma";
@@ -34,14 +35,22 @@ export async function GET(
     return NextResponse.json({ valid: false, error: "Badge verification record not found." }, { status: 404 });
   }
 
-  return NextResponse.json(
-    getBadgeVerificationPublicPayload({
-      badgeName: award.badgeDefinition.name,
+  const grant = await prisma.governanceRewardGrant.findUnique({ where: { badgeAwardId: award.id }, select: { publicVisible: true, state: true } });
+  if (grant && (!grant.publicVisible || grant.state !== "ACTIVE")) return NextResponse.json({ valid: false, error: "Badge verification record not found." }, { status: 404 });
+  const snapshot = award.evidenceSnapshotJson as Record<string, unknown> | null;
+  const governance = grant ? snapshot : null;
+  const grade = governance?.verificationGrade;
+  const frozenGrade = Object.values(BadgeVerificationGrade).find(value => value === grade);
+  if (grant && (!governance || !frozenGrade)) return NextResponse.json({ valid: false, error: "Badge verification record unavailable." }, { status: 404 });
+  return NextResponse.json({
+    ...getBadgeVerificationPublicPayload({
+      badgeName: governance ? String(governance.badgeName) : award.badgeDefinition.name,
       userDisplayName: award.user.name,
-      issuerName: award.badgeDefinition.issuerName,
+      issuerName: governance ? award.awardedByOrgName ?? String(governance.issuerName) : award.badgeDefinition.issuerName,
       awardedAt: award.awardedAt,
-      verificationGrade: award.badgeDefinition.verificationGrade,
+      verificationGrade: frozenGrade ?? award.badgeDefinition.verificationGrade,
       status: award.status,
     }),
-  );
+    ...(governance ? { credentialClass: governance.credentialClass, assurance: governance.assurance } : {}),
+  });
 }

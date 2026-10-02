@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { normalizeSlug, personUpdateSchema, serializePerson } from "@/lib/server/people-master-data";
+import { resolvePersonId } from "@/lib/server/person-institution-governance";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/people");
+  const apiAuth = await requireApiRole(["ADMIN"], req);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 
+  // CP-TODO-242: merged person records stay resolvable through the merge chain.
+  const personId = await resolvePersonId(prisma, params.id);
+  if (!personId) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const person = await prisma.person.findUnique({
-    where: { id: params.id },
+    where: { id: personId },
     include: {
       affiliations: {
         orderBy: [{ isCurrent: "desc" }, { order: "asc" }, { createdAt: "desc" }],
@@ -33,7 +39,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/people");
+  const user = await requireApiRole(["ADMIN"], req);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
   if (!prisma) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
 

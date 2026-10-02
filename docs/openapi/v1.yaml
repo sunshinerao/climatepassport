@@ -1,0 +1,1599 @@
+openapi: 3.0.3
+info:
+  title: Climate Passport Open API
+  version: "1.0.0-draft"
+  description: |
+    Climate Passport 对外接口（Open API）。控制模式为 **API Key**：调用方以
+    `Authorization: Bearer <clientKey>.<machineKey>` 出示凭据，服务端先按 `clientKey` 定位
+    已登记的 `ChannelClient`（`type = MACHINE`）行，再对该行做密钥校验与策略判定。
+
+    ### 凭据与生命周期
+    - 凭据是登记机器客户端时一次性下发的 machine key，与客户端标识拼成 bearer token
+      （`<clientKey>.<machineKey>`，总长 ≤ 136）。明文只出现在创建响应里。
+    - 库里存的是**带随机盐的 bcrypt**（`machineKeyBcrypt`），不是可反查的摘要——这正是
+      凭据必须自带 `clientKey` 的原因。存量无盐 sha256 列（`machineKeyHash`）只保留到
+      该 key 轮换为止，轮换后清空。
+    - 密钥生命周期可管理：`machineKeyIssuedAt / machineKeyExpiresAt / machineKeyRotatedAt /
+      machineKeyLastUsedAt`，撤销另记 `revokedAt / revokeReason`。过期 → `403 API_KEY_EXPIRED`；
+      撤销或停用 → `401 API_KEY_INVALID`（不区分「不存在」与「已撤销」，避免把接口变成 key 枚举 oracle）。
+    - 每次成功认证都刷新 `lastUsedAt`，用于「这把 key 还有人在用吗」的收口判断。
+
+    ### 判定顺序（任一步失败即 fail-closed，无「不带凭据则退回公开行为」的分支）
+    1. 数据库不可用 → `503 SERVICE_UNAVAILABLE`
+    2. bearer 头缺失 / 形态不对 → `401 API_KEY_MISSING` / `API_KEY_INVALID`
+    3. 客户端定位 + bcrypt 校验 + `isActive` + Programme `isActive` → `401 API_KEY_INVALID`
+    4. 密钥是否过期 → `403 API_KEY_EXPIRED`
+    5. scope 是否授予该端点 → `403 API_KEY_SCOPE_DENIED`
+    6. 来源是否允许（见下）→ `403 API_KEY_ORIGIN_DENIED` / `API_KEY_IP_DENIED`
+    7. 配额 → `429 RATE_LIMITED`（带 `Retry-After`）
+
+    ### 来源约束（Origin + IP 白名单）
+    - **带 `Origin` 头即视为浏览器类调用**：必须命中该 key 的 `allowedOrigins`。
+      `allowedOrigins` 为空 = 浏览器不可达，一律 `403 API_KEY_ORIGIN_DENIED`（静默放行不等于显式允许）。
+    - **不带 `Origin` 视为服务端到服务端**：`allowedIps` 非空时按 IP/CIDR 校验，且来源地址
+      无法归因时同样 fail-closed → `403 API_KEY_IP_DENIED`（不退回「查不到地址就放行」）。
+      `allowedIps` 为空表示不加这一层约束，此时把关的仍是密钥本身 + scope。
+      来源地址只在 `RATE_LIMIT_TRUST_PROXY=true`（可信反代之后）时采信 `x-forwarded-for`，
+      否则只看 `x-real-ip`——与限流分桶共用同一判定。
+      带 Origin 的调用只按 `allowedOrigins` 判定，不再叠加 IP。
+    - `whoami` 的 `access` 字段回显调用方自己的两份白名单，便于自查。
+
+    ### 浏览器 CORS
+    对**已声明该来源**的 key 回显 CORS：`access-control-allow-origin: <origin>` +
+    `vary: Origin` + `access-control-allow-credentials: false`。凭据只走 `Authorization` 头，
+    绝不带 cookie。服务端调用没有 Origin，因此响应里没有任何跨源头。预检（`OPTIONS`）无凭据，
+    判定改为「是否存在启用中的机器客户端允许这个 origin」，绝不回 `*`。
+
+    ### 限流配额
+    - 优先级：**该 key 的登记值**（`rateLimitLimit` / `rateLimitWindowMs`）> 端点默认 > 全局默认
+      `60 次 / 60 秒`。管理台与合作方约定的额度是契约，端点不能在代码里把它压低或抬高。
+    - 窗口键 `open-api:<clientId>:<scope|introspect>`，即可对账、可单独提额或封禁。
+    - 未认证尝试（缺头、错 key）按来源地址计数，`20 次 / 60 秒`，同时约束 bcrypt 校验被强制的频次。
+    - 两类窗口都以 `sensitive` 申请：缺分布式后端时不退回单进程计数放行，而是 `503`。
+    - 注：预检放行的 `Idempotency-Key` 请求头当前**不被读取**，幂等一律靠请求体字段（见下）。
+
+    ### 多 Programme 隔离
+    本接口面向多个 Programme，不是 CP 内部端点。**可见与可写的范围只由 key 自己的
+    `programmeId` 决定，任何另传的 `system` / `programmeId` / `issuer` 都不采信**：
+    - 活动与 Programme 之间只有 `SourceObjectMapping` 这条边：写入前必须证明活动已接入
+      本 Programme（绑定中的活动可被本 Programme 绑定，已被别的 Programme 接入则不可抢占）。
+    - `institution` 需在本 Programme 有 `ACTIVE` 代表授权；`record` 需属于本 Programme
+      （`programmeId` 为空的个人记录对外不可达）；`person` 是跨 Programme 的全局身份，
+      只给公开白名单投影，不按租户切分。
+    - 决定回执按认证的 `issuerKey` 划界，并落上 key 自己的 `programmeId` 供管理台统计。
+    - **跨 Programme 探测一律 `404`，绝不 `403`**：`403` 等于确认「那个 id 存在，只是在别人名下」。
+
+    ### 幂等与归因
+    - 所有写端点的幂等键是请求体字段 `idempotencyKey`：同键同内容 → 去重回执
+      （`deduplicated: true` 或 `applied: false`），同键异内容 → `409 *_CONFLICT`，
+      旧版本覆盖新版本 → `409 *_STALE`。
+    - 每个响应（含错误、含预检拒绝）都带 `x-request-id`，与审计行 `metadataJson.requestId`
+      一一对应；工单报一个 id 即可定位。审计行与响应体都不出现 bearer 原文或其摘要。
+    - 本接口只认 API Key：cookie 会话在此不被接受，也不存在会话与密钥的混合授权。
+
+    路径前缀 `/api/external/**` 已整体并入本契约并删除，**不留别名**。
+servers:
+  - url: https://api.climatepassport.org
+    description: 生产（尚未部署；当前仅测试环境 http://127.0.0.1:3100）
+  - url: http://127.0.0.1:3100
+    description: 隔离测试环境
+
+security:
+  - ApiKeyBearer: []
+
+tags:
+  - name: Introspection
+    description: 密钥自身可见范围、来源白名单与配额
+  - name: Certificates
+    description: 证书验真（最小披露）
+  - name: SourceRefs
+    description: 通用 sourceRef 解析（版本化 schema 契约 + 白名单投影）
+  - name: ActivitySources
+    description: 来源系统活动接入（绑定 / 修订 / 发布 / 取消）
+  - name: ActivityTaxonomy
+    description: 活动外部分类引用的登记与撤回
+  - name: DecisionReceipts
+    description: 外部决定回执提交与回读
+
+paths:
+  /api/v1/open/whoami:
+    get:
+      tags: [Introspection]
+      summary: 查询当前 API Key 的身份、Programme、scope、来源白名单、剩余配额与密钥生命周期
+      description: |
+        不需要额外 scope：它只回调用方自己的信息，绝不返回其他客户端、密钥材料或摘要字段。
+        配额窗口键使用 `introspect` 段，与其他 scope 分开计数。
+      security:
+        - ApiKeyBearer: []
+      responses:
+        "200":
+          description: 调用方身份
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhoamiResponse"
+              example:
+                ok: true
+                clientId: "6f1f2c1e-3f4a-4c55-9b11-2a7f0c0d0e01"
+                clientKey: "CPKAB12CD34EF5"
+                displayName: "Partner systems integration"
+                programmeId: "2b9d7d0a-1111-4c55-9b11-2a7f0c0d0e02"
+                scopes: ["channel:certificates:verify"]
+                requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+                rateLimit:
+                  limit: 60
+                  windowMs: 60000
+                  remaining: 59
+                  resetAt: 1790000000000
+                key:
+                  algorithm: "bcrypt"
+                  issuedAt: "2026-09-01T00:00:00.000Z"
+                  expiresAt: "2027-03-01T00:00:00.000Z"
+                  rotatedAt: null
+                  lastUsedAt: "2026-09-21T08:12:44.310Z"
+                access:
+                  allowedOrigins: ["https://partner.example.org"]
+                  allowedIps: []
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [Introspection]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/certificates/{code}:
+    get:
+      tags: [Certificates]
+      summary: 按验证码核验证书（最小披露投影）
+      description: |
+        需要 scope `channel:certificates:verify`。只返回公开字段：标题、持证人姓名、
+        打码的 Passport ID、签发机构、签发/到期日期、凭证类型、证书编号、核验时间。
+        非 `PUBLIC` 访问级别不返回任何 `certificate` 对象；数据库不可用返回 503。
+      security:
+        - ApiKeyBearer: ["channel:certificates:verify"]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: 证书验证码（如 `CV-8QF3KN2XR7MB1`）
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "200":
+          description: 验证成功（`status = VALID`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateVerification"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: |
+            验证码不存在（`status = NOT_FOUND`）。注意这是**鉴权已通过**的业务结果，
+            与 401/403 不同：401/403 表示调用方根本进不来，且绝不带出 `verificationCode`
+            或任何证书字段。
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateVerification"
+              example:
+                status: NOT_FOUND
+                valid: false
+                verificationCode: "CV-NOPE-12345"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [Certificates]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/source-refs/resolve:
+    post:
+      tags: [SourceRefs]
+      summary: 解析通用 sourceRef（三元组中的 system 由 API Key 决定）
+      description: |
+        需要 scope `channel:source:resolve`。来源系统固定是调用方自己的 `clientKey`，
+        **请求体里没有 `system` 字段可填**（`.strict()`，多填即 400）：允许替别人填 system
+        等于允许替别人解析。可见范围由该 key 自己的 Programme 决定。
+
+        每类对象只暴露固定 `schemaRef` 的白名单投影：
+        - `person` → `cp.person_identity/v1`：`id, slug, displayName, displayNameEn, avatar,
+          countryOrRegion, countryOrRegionEn, verificationStatus`（全局身份，不含 bio / ORCID）
+        - `institution` → `cp.institution_context/v1`：`id, slug, name, nameEn, shortName,
+          shortNameEn, orgType, website`（不含法名、公开联系邮箱）
+        - `activity` → `cp.activity_brief/v1`：`id, slug, title, titleEn, status, startTime, endTime`
+          （不含组织者账号）
+        - `record` → `cp.record_summary/v1`：`id, recordType, title, status, currentRevision`（不含正文）
+
+        `contentHash` 是投影的稳定 sha256，供来源方做版本快照与对账：同一对象内容未变时
+        两次解析哈希一致。`person` 的合并链（`mergedIntoId`）解析到最终目标。
+        未知/停用系统、对象不存在、对象不属于本 Programme → 一律 `404 SOURCE_REF_NOT_FOUND`。
+      security:
+        - ApiKeyBearer: ["channel:source:resolve"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SourceRefResolveRequest"
+            example:
+              objectType: "person"
+              objectId: "9a4d3f2c-2b2b-4c1a-9e11-7a0b1c2d3e4f"
+      responses:
+        "200":
+          description: 解析成功
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SourceRefResolveResponse"
+        "400":
+          description: 请求体不符合契约（含多填 `system`、未知 `objectType`）→ `INVALID_REQUEST` / `SOURCE_SCHEMA_UNKNOWN`
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 对象不可见或不存在（`SOURCE_REF_NOT_FOUND`）——跨 Programme 与「不存在」同形
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [SourceRefs]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-mappings:
+    post:
+      tags: [ActivitySources]
+      summary: 绑定来源对象与 CP 活动（幂等、唯一、并发安全）
+      description: |
+        需要 scope `channel:activities:source`。**绑定即归属**：成功之后该活动在本 Programme
+        之外不可见，所以先把关——已属于别的 Programme 的活动不可抢占，也不回 403 承认它存在。
+        `editionId` 必须属于本 Programme，否则 409。`authoritativeFields` 是来源权威字段白名单，
+        CP 受控字段（如报名/签到状态、`status`）不可声明为权威。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityBindRequest"
+      responses:
+        "201":
+          description: "绑定成功，或同键同内容重放（`deduplicated: true`，返回同一 `mappingId`）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityBindResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 活动已属于别的 Programme（`SOURCE_MAPPING_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: |
+            `SOURCE_MAPPING_CONFLICT`：同幂等键异内容 / 来源对象已绑到别的活动 /
+            活动已被别的来源对象绑定 / edition 不属于本 Programme
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivitySources]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-mappings/revisions:
+    post:
+      tags: [ActivitySources]
+      summary: 按版本序应用来源字段修订（白名单内）
+      description: |
+        需要 scope `channel:activities:source`。映射按 `sourceSystem = 调用方自己的 key` 定位，
+        一把 key 只能修订自己接入的对象，跨 Programme 无从寻址。
+        同版本同内容 → `applied: false`；同版本异内容 → 409；比已应用版本更旧 → 409 STALE；
+        白名单外或 CP 受控字段 → 400 且活动不被改动。审计落 `source_mapping.apply`。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityRevisionRequest"
+      responses:
+        "200":
+          description: "已处理（`applied: true` 写入，`applied: false` 表示该内容已应用过）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityRevisionResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 本 key 名下没有该来源对象的映射（`SOURCE_MAPPING_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: '`SOURCE_MAPPING_STALE`（更旧版本）/ `SOURCE_MAPPING_CONFLICT`（同版本异内容、并发写入、同键异内容）'
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivitySources]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-mappings/publish:
+    post:
+      tags: [ActivitySources]
+      summary: 发布活动投影版本（不可变、幂等、撤回版本禁止复活）
+      description: |
+        需要 scope `channel:activities:source`。版本按 `sourceSystem = 调用方自己的 key`
+        定位映射行，无需额外的 Programme 断言。发布走对外派发通道
+        （`outbound_dispatch` 的 `publication.published` 行），payload 只带可对账字段，
+        不外发 `projectionJson` 正文。`sourceVersion` 必须是整数。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityPublishRequest"
+      responses:
+        "201":
+          description: "发布成功，或同键同内容重放（`deduplicated: true`）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityPublishResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 本 key 名下没有该来源对象的映射（`SOURCE_MAPPING_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: |
+            `PUBLICATION_CONFLICT`（同版本异投影）/ `PUBLICATION_RESTORE_FORBIDDEN`
+            （重新发布已撤回版本）/ `SOURCE_MAPPING_STALE`（比已发布更旧）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivitySources]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-mappings/cancel:
+    post:
+      tags: [ActivitySources]
+      summary: 来源取消：关闭报名入口并撤回全部已发布版本
+      description: |
+        需要 scope `channel:activities:source`。优先关闭入口（活动转 `CANCELLED`）再撤回版本；
+        幂等——重复取消返回 `cancelled: false` 且 `withdrawnVersions: []`。取消范围以
+        `sourceSystem = 调用方自己的 key` 为界。审计落 `source_mapping.cancel` 与
+        `outbound_dispatch` 的 `publication.withdrawn` / `activity.cancelled` 行。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityCancelRequest"
+      responses:
+        "200":
+          description: "已处理（`cancelled: true` 首次生效；`false` 表示此前已取消）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityCancelResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 本 key 名下没有该来源对象的映射（`SOURCE_MAPPING_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivitySources]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-taxonomy:
+    post:
+      tags: [ActivityTaxonomy]
+      summary: 登记活动外部分类引用（幂等 + 版本护栏）
+      description: |
+        需要 scope `channel:activities:source`。`ActivityExternalClassification` 行本身没有
+        Programme 列，隔离只能靠活动：分类挂在哪个活动上就归那个活动的 Programme 管，
+        所以写入前必须证明该活动已接入本 Programme，否则 404（不回 403）。
+        首次 201，去重重放 200。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaxonomySetRequest"
+      responses:
+        "200":
+          description: "去重命中（`deduplicated: true`）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxonomySetResponse"
+        "201":
+          description: "登记成功（`deduplicated: false`）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxonomySetResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 活动不存在或不属于本 Programme（`SOURCE_MAPPING_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: '`TAXONOMY_STALE`（版本更旧）/ `TAXONOMY_CONFLICT`（同版本异内容、同幂等键异内容、并发写入）'
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivityTaxonomy]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/activity-taxonomy/withdraw:
+    post:
+      tags: [ActivityTaxonomy]
+      summary: 撤回活动外部分类引用（撤回后可用更高版本重新登记）
+      description: |
+        需要 scope `channel:activities:source`。与登记走同一道 Programme 门：撤回是写操作，
+        不能拿别的 Programme 的活动来试 id。幂等。
+      security:
+        - ApiKeyBearer: ["channel:activities:source"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaxonomyWithdrawRequest"
+      responses:
+        "200":
+          description: 已撤回或幂等重放
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxonomySetResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "404":
+          description: 活动不可见（`SOURCE_MAPPING_NOT_FOUND`）或分类不存在（`TAXONOMY_NOT_FOUND`）
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "409":
+          description: '`TAXONOMY_STALE` / `TAXONOMY_CONFLICT`'
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [ActivityTaxonomy]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+  /api/v1/open/decision-receipts:
+    post:
+      tags: [DecisionReceipts]
+      summary: 提交外部决定回执（最小化、幂等、防陈旧覆盖）
+      description: |
+        需要 scope `channel:decisions:submit`。`issuerKey` 与 `programmeId` 都取自认证出来的
+        那把 key，**请求体里没有这两个字段可填**。回执只存 issuer、对象版本、purpose 与
+        最小 JSON——业务队列与评审标准留在 Programme 自己的系统里。
+      security:
+        - ApiKeyBearer: ["channel:decisions:submit"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionReceiptSubmitRequest"
+      responses:
+        "201":
+          description: "已接收，或同键同内容重放（`deduplicated: true`，同一 `receiptId`，不新增记录与审计）"
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionReceiptSubmitResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "409":
+          description: '`RECEIPT_CONFLICT`（同键异内容 / 同 revision 异决定）/ `RECEIPT_STALE`（旧 revision 覆盖新决定）'
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    get:
+      tags: [DecisionReceipts]
+      summary: 回读本 key 提交的回执（游标分页）
+      description: |
+        需要 scope `channel:decisions:submit`。可见范围固定为认证出来的 `issuerKey` 自己，
+        query 里另传 issuer 不采信。按 `receivedAt` 倒序返回**可对账字段**：
+        `minimalJson` 与 `signature` 不外发（提交方本来就有自己的副本，公开只会扩大泄漏面）。
+        分页用 keyset 游标（`receivedAt + id`）而非 offset：对外数据是持续增长的时间序，
+        offset 在翻页途中插入新行会让调用方重复或漏读。`nextCursor` 为 null 即末页；
+        游标是不透明串，格式将来可变，调用方不得依赖其内部结构。
+      security:
+        - ApiKeyBearer: ["channel:decisions:submit"]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - name: objectType
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 64
+        - name: objectId
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 128
+        - name: purpose
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+      responses:
+        "200":
+          description: 回执列表
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionReceiptListResponse"
+        "400":
+          description: '`limit` 非 1–200 的整数，或 `cursor` 不是本页返回过的值（`INVALID_REQUEST`）'
+          headers:
+            x-request-id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ForbiddenKey"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+    options:
+      tags: [DecisionReceipts]
+      summary: 预检（无凭据；按来源白名单判定）
+      responses:
+        "204":
+          $ref: "#/components/responses/PreflightAllowed"
+        "403":
+          $ref: "#/components/responses/PreflightDenied"
+        "405":
+          $ref: "#/components/responses/PreflightNoOrigin"
+        "503":
+          $ref: "#/components/responses/PreflightUnavailable"
+
+components:
+  securitySchemes:
+    ApiKeyBearer:
+      type: http
+      scheme: bearer
+      description: |
+        `<clientKey>.<machineKey>`：`clientKey` 是登记时下发的客户端标识，`machineKey`
+        是形如 `cpmk_…` 的机密（16–72 字符，上限来自 bcrypt 的输入截断边界）。
+        仅接受 `Authorization: Bearer <key>`；不支持查询串携带（避免落入访问日志），
+        不接受 `Basic`，不接受 cookie 会话。
+      x-capabilities:
+        scopes:
+          channel:certificates:verify: 证书验真
+          channel:source:resolve: 通用 sourceRef 解析
+          channel:activities:source: 来源系统活动接入与分类引用
+          channel:decisions:submit: 外部决定回执提交与回读
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: 每页条数，默认 50，上限 200；非法值按 400 拒绝而不是回到默认
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: 上一页的 `page.nextCursor`（不透明串）
+      schema:
+        type: string
+        maxLength: 200
+
+  headers:
+    XRequestId:
+      description: 与审计行 `metadataJson.requestId` 对应的请求标识
+      schema:
+        type: string
+        format: uuid
+    RetryAfter:
+      description: 建议的重试等待秒数
+      schema:
+        type: integer
+    AccessControlAllowOrigin:
+      description: 回显已声明该来源的 key 命中的 Origin（绝不回 `*`）
+      schema:
+        type: string
+    Vary:
+      description: 响应随 Origin 变化
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: 缺少 API Key、形态不对、密钥未知、客户端已撤销或停用、Programme 停用
+      headers:
+        x-request-id:
+          $ref: "#/components/headers/XRequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            missing:
+              value:
+                error:
+                  code: API_KEY_MISSING
+                  message: "Missing API key. Send it as Authorization: Bearer <api key>."
+                  requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+            invalid:
+              value:
+                error:
+                  code: API_KEY_INVALID
+                  message: "Invalid API key."
+                  requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+    ForbiddenKey:
+      description: |
+        密钥有效但被该 key 自己的策略拒绝：`API_KEY_SCOPE_DENIED`（未授予 scope）、
+        `API_KEY_EXPIRED`（已过期，需轮换）、`API_KEY_ORIGIN_DENIED`（浏览器来源不在
+        `allowedOrigins`，含白名单为空的情况）、`API_KEY_IP_DENIED`（服务端来源不在
+        `allowedIps`，或来源地址不可归因）。
+      headers:
+        x-request-id:
+          $ref: "#/components/headers/XRequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            error:
+              code: API_KEY_SCOPE_DENIED
+              message: "The API key does not grant this scope."
+              requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+    InvalidRequest:
+      description: 请求体未通过契约校验（`INVALID_REQUEST`，文案取第一条 issue，最长 300 字符）
+      headers:
+        x-request-id:
+          $ref: "#/components/headers/XRequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    RateLimited:
+      description: 超出该 key 在当前窗口（scope 维度）的配额
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+        x-request-id:
+          $ref: "#/components/headers/XRequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            error:
+              code: RATE_LIMITED
+              message: "Too many requests for this API key."
+              requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+              retryAfter: 42
+    Unavailable:
+      description: |
+        数据库不可用，或分布式限流后端不可用（两类限流窗口都以 sensitive 申请，
+        缺共享后端时失败关闭，绝不退回单进程计数后放行）。
+      headers:
+        x-request-id:
+          $ref: "#/components/headers/XRequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          example:
+            error:
+              code: SERVICE_UNAVAILABLE
+              message: "Service temporarily unavailable."
+              requestId: "3f0d9d2e-9c1b-4b7a-8f2a-1d2e3f405a6b"
+    PreflightAllowed:
+      description: 该来源被某个启用中的机器客户端显式允许
+      headers:
+        access-control-allow-origin:
+          $ref: "#/components/headers/AccessControlAllowOrigin"
+        access-control-allow-methods:
+          description: "固定 `GET, POST, PATCH, OPTIONS`"
+          schema:
+            type: string
+        access-control-allow-headers:
+          description: "固定 `authorization, content-type, idempotency-key`（后者当前仅作预留，服务端不读取）"
+          schema:
+            type: string
+        access-control-expose-headers:
+          description: "固定 `x-request-id, retry-after`"
+          schema:
+            type: string
+        access-control-max-age:
+          description: 预检结果缓存秒数
+          schema:
+            type: integer
+        vary:
+          $ref: "#/components/headers/Vary"
+    PreflightDenied:
+      description: 来源不在任何启用中的机器客户端白名单里（不回 CORS 头，也不透露该来源是否在别的 key 上登记过）
+      headers:
+        vary:
+          $ref: "#/components/headers/Vary"
+    PreflightNoOrigin:
+      description: 预检请求不带 `Origin`——非浏览器调用没有预检语义
+    PreflightUnavailable:
+      description: 数据库不可用，无法判定来源白名单
+
+  schemas:
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: 机器可判读的稳定的错误码（只增不减）
+              enum:
+                - API_KEY_MISSING
+                - API_KEY_INVALID
+                - API_KEY_EXPIRED
+                - API_KEY_SCOPE_DENIED
+                - API_KEY_ORIGIN_DENIED
+                - API_KEY_IP_DENIED
+                - RATE_LIMITED
+                - SERVICE_UNAVAILABLE
+                - INVALID_REQUEST
+                - INTERNAL_ERROR
+                - SOURCE_REF_NOT_FOUND
+                - SOURCE_SCHEMA_UNKNOWN
+                - SOURCE_MAPPING_NOT_FOUND
+                - SOURCE_MAPPING_CONFLICT
+                - SOURCE_MAPPING_STALE
+                - PUBLICATION_CONFLICT
+                - PUBLICATION_RESTORE_FORBIDDEN
+                - TAXONOMY_NOT_FOUND
+                - TAXONOMY_CONFLICT
+                - TAXONOMY_STALE
+                - RECEIPT_CONFLICT
+                - RECEIPT_STALE
+            message:
+              type: string
+              description: 人类可读说明；不泄漏密钥是否存在、客户端身份等内部信息
+            requestId:
+              type: string
+              format: uuid
+            retryAfter:
+              type: integer
+              description: 仅 429 出现，秒
+
+    PageMeta:
+      type: object
+      additionalProperties: false
+      required: [limit, nextCursor]
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        nextCursor:
+          type: string
+          nullable: true
+          description: null 表示已到末页；不透明串，不要解析
+
+    WhoamiResponse:
+      type: object
+      additionalProperties: false
+      required: [ok, clientId, clientKey, displayName, programmeId, scopes, requestId, rateLimit, key, access]
+      properties:
+        ok:
+          type: boolean
+          const: true
+        clientId:
+          type: string
+          format: uuid
+        clientKey:
+          type: string
+          description: 客户端标识（不是密钥）
+        displayName:
+          type: string
+        programmeId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            type: string
+        requestId:
+          type: string
+          format: uuid
+        rateLimit:
+          type: object
+          additionalProperties: false
+          required: [limit, windowMs, remaining, resetAt]
+          description: 该 key 的**生效**配额（登记值优先），不是服务端默认
+          properties:
+            limit:
+              type: integer
+            windowMs:
+              type: integer
+            remaining:
+              type: integer
+            resetAt:
+              type: integer
+              description: 窗口重置的 epoch 毫秒
+        key:
+          type: object
+          additionalProperties: false
+          required: [algorithm, issuedAt, expiresAt, rotatedAt, lastUsedAt]
+          properties:
+            algorithm:
+              type: string
+              enum: [bcrypt, sha256-legacy]
+              description: sha256-legacy 行早于 bcrypt 存储，轮换后即失效
+            issuedAt:
+              type: string
+              format: date-time
+              nullable: true
+            expiresAt:
+              type: string
+              format: date-time
+              nullable: true
+              description: null 表示早于过期策略；轮换一律写入新值
+            rotatedAt:
+              type: string
+              format: date-time
+              nullable: true
+            lastUsedAt:
+              type: string
+              format: date-time
+              nullable: true
+        access:
+          type: object
+          additionalProperties: false
+          required: [allowedOrigins, allowedIps]
+          description: 调用方自己的白名单；`allowedOrigins` 为空即浏览器完全不可达
+          properties:
+            allowedOrigins:
+              type: array
+              items:
+                type: string
+            allowedIps:
+              type: array
+              items:
+                type: string
+              description: IP / CIDR，只用于不带 Origin 的服务端调用
+
+    CertificateVerification:
+      type: object
+      additionalProperties: false
+      required: [status, valid, verificationCode]
+      properties:
+        status:
+          type: string
+          enum: [PREVIEW, NOT_FOUND, VALID, REVOKED, EXPIRED, INVALID]
+        valid:
+          type: boolean
+        verificationCode:
+          type: string
+        message:
+          type: string
+        certificate:
+          type: object
+          description: 仅在访问级别为 PUBLIC 时出现
+          additionalProperties: false
+          required:
+            - title
+            - holderName
+            - maskedPassportId
+            - issuingOrganization
+            - issuedAt
+            - expiryDate
+            - credentialType
+            - certificateNumber
+            - verifiedAt
+          properties:
+            title:
+              type: string
+            holderName:
+              type: string
+            maskedPassportId:
+              type: string
+              nullable: true
+            issuingOrganization:
+              type: string
+            issuedAt:
+              type: string
+              nullable: true
+            expiryDate:
+              type: string
+              nullable: true
+            credentialType:
+              type: string
+            certificateNumber:
+              type: string
+              nullable: true
+            verifiedAt:
+              type: string
+
+    SourceRefResolveRequest:
+      type: object
+      additionalProperties: false
+      required: [objectType, objectId]
+      description: 没有 `system` 字段——来源系统就是调用方自己的 clientKey
+      properties:
+        objectType:
+          type: string
+          enum: [person, institution, activity, record]
+        objectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    SourceRefResolveResponse:
+      type: object
+      additionalProperties: false
+      required: [ok, system, objectType, objectId, schemaRef, locator, contentHash, projection]
+      properties:
+        ok:
+          type: boolean
+          const: true
+        system:
+          type: string
+          description: 回显调用方自己的 clientKey
+        objectType:
+          type: string
+          enum: [person, institution, activity, record]
+        objectId:
+          type: string
+        schemaRef:
+          type: string
+          enum:
+            - cp.person_identity/v1
+            - cp.institution_context/v1
+            - cp.activity_brief/v1
+            - cp.record_summary/v1
+        locator:
+          type: string
+          description: CP 侧定位符（读取仍需相应授权）
+        contentHash:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+          description: 投影的稳定 sha256，用于版本快照与对账
+        projection:
+          type: object
+          additionalProperties: true
+          description: 按 schemaRef 固定的字段白名单；内部字段（联系方式、法名、ORCID、bio、正文）绝不出现
+
+    ActivityBindRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceObjectId, activityId, authoritativeFields, idempotencyKey]
+      properties:
+        sourceEditionRef:
+          type: string
+          maxLength: 120
+          description: 来源侧的版次/edition 标识（可选）
+        sourceObjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        activityId:
+          type: string
+          format: uuid
+        editionId:
+          type: string
+          format: uuid
+          description: 必须属于本 Programme
+        authoritativeFields:
+          type: array
+          minItems: 1
+          maxItems: 40
+          items:
+            type: string
+            pattern: "^[a-zA-Z][a-zA-Z0-9_]{0,40}$"
+          description: 来源权威字段白名单；CP 受控字段不可声明为权威
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ActivityBindResponse:
+      type: object
+      additionalProperties: false
+      required: [mappingId, deduplicated]
+      properties:
+        mappingId:
+          type: string
+        deduplicated:
+          type: boolean
+
+    ActivityRevisionRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceObjectId, sourceVersion, fields, idempotencyKey]
+      properties:
+        sourceObjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sourceEditionRef:
+          type: string
+          maxLength: 120
+        sourceVersion:
+          type: string
+          minLength: 1
+          maxLength: 40
+        fields:
+          type: object
+          additionalProperties: true
+          description: 键必须落在该映射的 authoritativeFields 内，且不得是 CP 受控字段
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ActivityRevisionResponse:
+      type: object
+      additionalProperties: false
+      required: [mappingId, applied]
+      properties:
+        mappingId:
+          type: string
+        applied:
+          type: boolean
+          description: false 表示同版本同内容已应用过（幂等重放）
+
+    ActivityPublishRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceObjectId, sourceVersion, projectionJson, idempotencyKey]
+      properties:
+        sourceObjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sourceEditionRef:
+          type: string
+          maxLength: 120
+        sourceVersion:
+          type: string
+          minLength: 1
+          maxLength: 40
+        projectionJson:
+          type: object
+          additionalProperties: true
+        channel:
+          type: string
+          maxLength: 80
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ActivityPublishResponse:
+      type: object
+      additionalProperties: false
+      required: [publicationId, deduplicated]
+      properties:
+        publicationId:
+          type: string
+        deduplicated:
+          type: boolean
+
+    ActivityCancelRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceObjectId, idempotencyKey]
+      properties:
+        sourceObjectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sourceEditionRef:
+          type: string
+          maxLength: 120
+        reason:
+          type: string
+          maxLength: 300
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ActivityCancelResponse:
+      type: object
+      additionalProperties: false
+      required: [activityId, withdrawnVersions, cancelled]
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        withdrawnVersions:
+          type: array
+          items:
+            type: integer
+          description: 本次撤回的来源版本；幂等重放时为空数组
+        cancelled:
+          type: boolean
+
+    TaxonomySetRequest:
+      type: object
+      additionalProperties: false
+      required: [activityId, taxonomySystem, taxonomyRef, idempotencyKey]
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        taxonomySystem:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_.-]{0,62}$"
+        taxonomyRef:
+          type: string
+          minLength: 1
+          maxLength: 128
+        labelJson:
+          type: object
+          additionalProperties: true
+        sourceVersion:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          default: 1
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    TaxonomyWithdrawRequest:
+      type: object
+      additionalProperties: false
+      required: [activityId, taxonomySystem, taxonomyRef, sourceVersion, idempotencyKey]
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        taxonomySystem:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_.-]{0,62}$"
+        taxonomyRef:
+          type: string
+          minLength: 1
+          maxLength: 128
+        sourceVersion:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ActivityClassification:
+      type: object
+      additionalProperties: false
+      required: [id, activityId, taxonomySystem, taxonomyRef, sourceVersion, status]
+      properties:
+        id:
+          type: string
+        activityId:
+          type: string
+          format: uuid
+        taxonomySystem:
+          type: string
+        taxonomyRef:
+          type: string
+        labelJson:
+          nullable: true
+        sourceVersion:
+          type: integer
+        status:
+          type: string
+          description: ACTIVE / WITHDRAWN
+        contentHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaxonomySetResponse:
+      type: object
+      additionalProperties: false
+      required: [classification, deduplicated]
+      properties:
+        classification:
+          $ref: "#/components/schemas/ActivityClassification"
+        deduplicated:
+          type: boolean
+
+    DecisionReceiptSubmitRequest:
+      type: object
+      additionalProperties: false
+      required: [objectType, objectId, objectRevision, purpose, decision, minimalJson, idempotencyKey]
+      description: 没有 `issuerKey` / `programmeId` 字段——提交方身份与归属 Programme 由 API Key 决定
+      properties:
+        objectType:
+          type: string
+          minLength: 1
+          maxLength: 64
+        objectId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        objectRevision:
+          type: integer
+          minimum: 1
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 80
+        decision:
+          type: string
+          enum: [APPROVED, REJECTED, REVOKED]
+        minimalJson:
+          type: object
+          additionalProperties: true
+          description: 最小化决定内容；不外发字段，业务评审标准留在调用方系统
+        signature:
+          type: string
+          maxLength: 500
+        validUntil:
+          type: string
+          format: date-time
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    DecisionReceiptSubmitResponse:
+      type: object
+      additionalProperties: false
+      required: [receiptId, deduplicated]
+      properties:
+        receiptId:
+          type: string
+        deduplicated:
+          type: boolean
+
+    DecisionReceipt:
+      type: object
+      additionalProperties: false
+      required: [id, issuerKey, programmeId, objectType, objectId, objectRevision, purpose, decision, contentHash, validUntil, status, receivedAt]
+      description: 对外投影只含可对账字段；`minimalJson` 与 `signature` 不外发
+      properties:
+        id:
+          type: string
+        issuerKey:
+          type: string
+        programmeId:
+          type: string
+          format: uuid
+          nullable: true
+        objectType:
+          type: string
+        objectId:
+          type: string
+        objectRevision:
+          type: integer
+        purpose:
+          type: string
+        decision:
+          type: string
+          enum: [APPROVED, REJECTED, REVOKED]
+        contentHash:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+          nullable: true
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+
+    DecisionReceiptListResponse:
+      type: object
+      additionalProperties: false
+      required: [ok, receipts, page]
+      properties:
+        ok:
+          type: boolean
+          const: true
+        receipts:
+          type: array
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/DecisionReceipt"
+        page:
+          $ref: "#/components/schemas/PageMeta"

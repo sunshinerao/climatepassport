@@ -20,7 +20,7 @@ async function access(id: string) {
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   const ctx = await access(params.id); if ("response" in ctx) return ctx.response;
-  const posts = await ctx.prisma.activityCommunityPost.findMany({ where: { communityId: ctx.community.id, OR: [{ status: "PUBLISHED" }, { authorUserId: ctx.user.id }, ...(ctx.moderator ? [{}] : [])] }, include: { author: { select: { id: true, name: true, avatar: true } }, comments: { where: ctx.moderator ? {} : { OR: [{ status: "PUBLISHED" }, { authorUserId: ctx.user.id }] }, include: { author: { select: { id: true, name: true, avatar: true } } }, orderBy: { createdAt: "asc" } } }, orderBy: { createdAt: "desc" }, take: 100 });
+  const posts = await ctx.prisma.activityCommunityPost.findMany({ where: { communityId: ctx.community.id, ...(ctx.moderator ? {} : { OR: [{ status: "PUBLISHED" }, { authorUserId: ctx.user.id }] }) }, include: { author: { select: { id: true, name: true, avatar: true } }, comments: { where: ctx.moderator ? {} : { OR: [{ status: "PUBLISHED" }, { authorUserId: ctx.user.id }] }, include: { author: { select: { id: true, name: true, avatar: true } } }, orderBy: { createdAt: "asc" } } }, orderBy: { createdAt: "desc" }, take: 100 });
   return NextResponse.json({ community: { id: ctx.community.id, mode: ctx.community.mode }, posts });
 }
 

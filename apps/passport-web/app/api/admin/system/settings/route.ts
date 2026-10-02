@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { PLATFORM_SITE_SETTING_KEY } from "@/lib/server/site-settings";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const dataImagePattern = /^data:image\/(png|jpeg|jpg|webp|svg\+xml);base64,[A-Za-z0-9+/=\r\n]+$/;
 
@@ -65,7 +65,8 @@ const updateSchema = z.object({
 });
 
 export async function GET() {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/system");
+  const apiAuth = await requireApiRole(["ADMIN"]);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -80,7 +81,8 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const user = await requireRoleAccess("en", ["ADMIN"], "/en/admin/system");
+  const user = await requireApiRole(["ADMIN"], request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

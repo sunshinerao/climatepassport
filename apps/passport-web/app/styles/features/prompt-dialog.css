@@ -1,0 +1,105 @@
+.cp-prompt {
+  align-items: center;
+  backdrop-filter: blur(4px);
+  background: rgba(10, 26, 22, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 130;
+}
+
+.cp-prompt-dialog {
+  background: #fff;
+  border: 1px solid rgba(11, 61, 46, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 30px 70px rgba(8, 30, 24, 0.42);
+  max-width: min(94vw, 560px);
+  width: 100%;
+}
+
+.cp-prompt-head {
+  border-bottom: 1px solid rgba(11, 61, 46, 0.1);
+  display: grid;
+  gap: 4px;
+  padding: 14px 18px;
+}
+
+.cp-prompt-head strong {
+  color: var(--cpca-forest-deep, #0b3d2e);
+  font-size: var(--cp-fs-15, 15px);
+}
+
+.cp-prompt-head small {
+  color: var(--cpca-ink-soft, #5b6b64);
+  font-size: var(--cp-fs-12, 12px);
+}
+
+.cp-prompt-body {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.cp-prompt-field {
+  border: 1px solid rgba(11, 61, 46, 0.22);
+  border-radius: 10px;
+  color: var(--cpca-ink, #12241f);
+  font: inherit;
+  padding: 10px 12px;
+  resize: vertical;
+  width: 100%;
+}
+
+.cp-prompt-field:focus-visible {
+  outline: 2px solid var(--cpca-forest-deep, #0b3d2e);
+  outline-offset: 2px;
+}
+
+.cp-prompt-error {
+  color: #a4262c;
+  font-size: var(--cp-fs-13, 13px);
+  margin: 0;
+}
+
+.cp-prompt-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cp-prompt-button {
+  background: #fff;
+  border: 1px solid rgba(11, 61, 46, 0.22);
+  border-radius: 999px;
+  color: var(--cpca-forest-deep, #0b3d2e);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--cp-fs-14, 14px);
+  padding: 8px 16px;
+}
+
+.cp-prompt-button:hover {
+  background: #f2f7f4;
+}
+
+.cp-prompt-button-primary {
+  background: var(--cpca-forest-deep, #0b3d2e);
+  border-color: var(--cpca-forest-deep, #0b3d2e);
+  color: #fff;
+}
+
+.cp-prompt-button-primary:hover {
+  background: #0e4a38;
+}
+
+@media (max-width: 640px) {
+  .cp-prompt {
+    padding: 12px;
+  }
+
+  .cp-prompt-actions {
+    flex-direction: column-reverse;
+  }
+}

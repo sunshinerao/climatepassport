@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { adminEventSchema, buildEventWriteData, createEventSecret, serializeAdminEvent } from "@/lib/server/admin-events";
-import { requireRoleAccess } from "@/lib/server/auth";
+import { requireApiRole } from "@/lib/server/api-auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 
 export async function GET() {
-  const user = await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER"], "/en/admin/events");
+  const user = await requireApiRole(["ADMIN", "EVENT_MANAGER"]);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -24,7 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await requireRoleAccess("en", ["ADMIN", "EVENT_MANAGER"], "/en/admin/events");
+  const user = await requireApiRole(["ADMIN", "EVENT_MANAGER"], request);
+  if (user instanceof NextResponse) return user;
   const prisma = getPrismaClient();
 
   if (!prisma) {

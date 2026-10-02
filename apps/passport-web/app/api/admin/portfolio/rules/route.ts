@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticatedUser } from "@/lib/server/auth";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { apiForbidden, requireApiUser } from "@/lib/server/api-auth";
 
-async function admin(request: Request) { const user = await requireAuthenticatedUser("en", "/en/admin"); return user.role === "ADMIN" ? user : null; }
-export async function GET(request: Request) { const user = await admin(request); if (!user) return NextResponse.json({ error: "Forbidden." }, { status: 403 }); const prisma = getPrismaClient(); if (!prisma) return NextResponse.json({ error: "Database unavailable." }, { status: 503 }); return NextResponse.json(await prisma.portfolioRuleSet.findMany({ include: { evidenceRules: { include: { dimension: true } } }, orderBy: { version: "desc" } })); }
+async function requireAdminApi() {
+  const user = await requireApiUser();
+  if (user instanceof NextResponse) return user;
+  return user.role === "ADMIN" ? user : apiForbidden();
+}
+
+export async function GET(request: Request) { const user = await requireAdminApi(); if (user instanceof NextResponse) return user; const prisma = getPrismaClient(); if (!prisma) return NextResponse.json({ error: "Database unavailable." }, { status: 503 }); return NextResponse.json(await prisma.portfolioRuleSet.findMany({ include: { evidenceRules: { include: { dimension: true } } }, orderBy: { version: "desc" } })); }
 export async function POST(request: Request) {
-  const user = await admin(request); const prisma = getPrismaClient(); if (!user) return NextResponse.json({ error: "Forbidden." }, { status: 403 }); if (!prisma) return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
+  const user = await requireAdminApi(); if (user instanceof NextResponse) return user; const prisma = getPrismaClient(); if (!prisma) return NextResponse.json({ error: "Database unavailable." }, { status: 503 });
   const body = await request.json().catch(() => null); if (!body || typeof body.name !== "string" || !Array.isArray(body.rules) || body.rules.length === 0) return NextResponse.json({ error: "Invalid rules." }, { status: 400 });
   const dimensions = await prisma.competencyDimension.findMany({ select: { id: true, key: true } }); const validKinds = new Set(["ISSUED_CERTIFICATE", "VERIFIED_ACHIEVEMENT", "LEARNING_COMPLETION", "VERIFIED_ACTIVITY_PARTICIPATION"]);
   const invalidRule = body.rules.some((rule: any) => !dimensions.some((d) => d.key === rule.dimensionKey)

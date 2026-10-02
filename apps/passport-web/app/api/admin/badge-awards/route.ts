@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { issueManualBadgeAward } from "@/lib/server/achievement-badge";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 const createSchema = z.object({
   userId: z.string().uuid(),
@@ -12,7 +12,8 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/awards");
+  const apiAuth = await requireApiRole(["ADMIN"]);
+  if (apiAuth instanceof NextResponse) return apiAuth;
   const prisma = getPrismaClient();
 
   if (!prisma) {
@@ -32,7 +33,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const admin = await requireRoleAccess("en", ["ADMIN"], "/en/admin/badges/awards");
+  const admin = await requireApiRole(["ADMIN"], request);
+  if (admin instanceof NextResponse) return admin;
 
   const payload = createSchema.safeParse(await request.json());
 

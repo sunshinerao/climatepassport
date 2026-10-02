@@ -678,6 +678,9 @@
 .cpca-filter-row > label {
   display: grid;
   gap: 0;
+  /* Flex items default to min-width:auto, which pins the row to the widest <option>
+     of the select inside it and blows past a 360px viewport. */
+  min-width: 0;
 }
 
 .cpca-form-grid input:focus,
@@ -1054,6 +1057,11 @@
   background: var(--cpca-cream);
   border: 1px solid rgba(11, 61, 46, 0.06);
   border-radius: 14px;
+  /* A wrapped flex row still measures its widest control as its min-content (a <select>
+     is as wide as its longest option), so on a phone the toolbar widened the document.
+     Scroll inside itself instead. */
+  min-width: 0;
+  overflow-x: auto;
 }
 
 /* Responsive */

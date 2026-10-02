@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 /** GET /api/activities/[id]/detail  — fetch type-specific config */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 /** PATCH /api/activities/[id]/detail  — upsert type-specific config (admin/manager only) */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"], "/en/admin");
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const prisma = getPrismaClient();

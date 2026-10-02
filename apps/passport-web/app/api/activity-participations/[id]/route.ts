@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRoleAccess } from "@/lib/server/auth";
 import { getPrismaClient } from "@/lib/server/prisma";
 import { triggerActivityRewards, syncParticipationToPassport } from "@/lib/server/activity-rewards";
 import { getRequestAuditContext, writeCoreAuditLog } from "@/lib/server/audit";
 import { canTransitionActivityParticipation, isActivityParticipationStatus } from "@/lib/server/activity-participation";
 import { canManageActivity } from "@/lib/server/verifier-activity";
+import { requireApiRole } from "@/lib/server/api-auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = await requireRoleAccess("en" as any, ["ADMIN", "EVENT_MANAGER"]);
+  const auth = await requireApiRole(["ADMIN", "EVENT_MANAGER"], req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json().catch(() => null);
