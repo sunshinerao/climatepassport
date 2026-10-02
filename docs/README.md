@@ -1,6 +1,6 @@
 # Climate Passport Docs
 
-Last organized: 2026-09-18
+Last organized: 2026-10-02 (remote master directive and partner requirements merged)
 
 ## Current Development Entry Point
 
@@ -15,7 +15,9 @@ These documents refine execution and acceptance; they do not override product/pr
 
 ## Current Authority
 
-Read these files first for current product and architecture decisions:
+Read [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md) first. Effective 2026-09-22, it is the highest-priority product and development authority for this repository. It contains conclusions, requirements, boundaries, delivery order, and acceptance criteria. All documents below are subordinate; conflicting historical text or prototypes must not override it.
+
+Then read the relevant detailed requirements and implementation records:
 
 1. `CURRENT_PRODUCT_REQUIREMENTS.md`
 2. `CURRENT_ARCHITECTURE_DECISIONS.md`
@@ -25,8 +27,11 @@ Read these files first for current product and architecture decisions:
 6. `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`
 7. `CURRENT_IMPLEMENTATION_STATUS.md`
 8. `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`
+9. `PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md`
 
 V2 incorporates programme inputs under the user's latest boundary: CP develops reusable digital infrastructure only; all programme-specific business systems are independently developed by their respective teams and integrated through contracts. This supersedes source suggestions to host programme business modules inside CP. Passport ID and topic safety requirements remain valid. V1 retains original IDs/history; `ref_docx/` remains read-only input, not development authorization for bespoke modules.
+
+The partner requirements provide detailed identity/trust rules under the master directive. Requirements are not release-completion claims. Exact trust tiers and reward amounts require approval before implementation; blockchain anchoring remains outside the current development plan.
 
 Supporting current references:
 
@@ -51,6 +56,8 @@ SHCW owns CMS/brand presentation plus its private annual operations: event-host 
 
 SHCW and future partner channels must call Climate Passport through API, SDK, or embedded flows instead of reimplementing Core capabilities.
 
+Independent partner systems may retain their own business workflows, databases, and passwords. They submit authorized confirmed facts and invoke CP services through Open API; they are not all thin shells. Optional CP provisioning and later account activation do not require redirecting the partner's business operations into CP.
+
 ## Archive Policy
 
 `docs/archive/` contains old implementation notes, migration notes, fragmented trackers, and superseded requirement documents. Archived files are preserved for history but are not current requirements unless a current authority document explicitly points back to them.
@@ -59,9 +66,10 @@ Do not use archived files to override current decisions.
 
 ## Maintenance Rules
 
-- New product decisions should update `CURRENT_PRODUCT_REQUIREMENTS.md` and `CURRENT_ARCHITECTURE_DECISIONS.md` first.
+- Approved product decisions must first update `CP_MASTER_DEVELOPMENT_DIRECTIVE.md`, then the affected product, architecture, module requirements, and tracker documents. Keep the master directive conclusion-only; put analysis and implementation evidence in separate records.
 - New ID or QR work should update `PASSPORT_ID_AND_QR_SPEC.md`.
 - New channel integration work should update `CHANNEL_SHELL_INTEGRATION_SPEC.md`.
+- Partner provisioning, trust assessment, and reward-policy changes should also update `PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md` and the main tracker. Do not describe requirements as implemented without code and acceptance evidence.
 - New certificate product decisions should update `CERTIFICATE_MODULE_PRODUCT_REQUIREMENTS.md`.
 - New implementation progress should update `CURRENT_IMPLEMENTATION_STATUS.md` and `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`.
 - New UI prototype/page alignment decisions should update `UI_PROTOTYPE_ALIGNMENT_AUDIT.md`.

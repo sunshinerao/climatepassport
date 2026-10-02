@@ -1,6 +1,8 @@
 # Current Product Requirements
 
-Last updated: 2026-09-18
+Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This document provides subordinate product detail; the master directive prevails in any conflict.
+
+Last updated: 2026-10-02 (master directive and independent-partner scope incorporated)
 
 ## Execution And Acceptance Addendum (2026-09-18)
 
@@ -9,7 +11,6 @@ Use [the current gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) f
 All resource routes, including legacy, export and batch endpoints, must enforce scoped authorization and authoritative state transitions. Certificate delivery requires real PDF generation, immutable issuance data, unique opaque verification codes, minimum public disclosure, Unicode download filenames and reliable lifecycle audit; printable HTML alone does not fulfill the final PDF requirement. Public portfolio access uses consent-based revocable tokens, never enumerable account IDs. Mock regression success and local migrations are not full browser or production acceptance.
 
 The current documented menu order is preserved pending reconciliation with the earlier user-specified ordering; this is not authorization to reorder navigation. Domain examples are architectural targets, not deployed endpoints: production host/callback/cookie/allowlist settings require a verified configuration inventory.
-
 ## 1. Product Definition
 
 Climate Passport is the shared digital foundation for trusted identity, scoped programme participation and collaboration, versioned evidence, authorized publication, certificates, points, achievements, milestones, verification, and long-term cross-channel records.
@@ -70,6 +71,10 @@ Private/Public author intent, version review, publication state and channel/use 
 
 Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the conflicting CP-plus-12-character suggestion in the Convener input is not adopted. Summer school remains frozen. Security gates are shared, but a programme not enabling certificates need not wait for the entire certificate roadmap; any enabled PDF download still requires real PDF acceptance.
 
+Independent third-party systems are not necessarily channel shells. They retain their UI, business data, passwords, and approval workflows; CP receives authorized confirmed facts and provides scoped Core capabilities without requiring partner business operations to redirect into CP. The Core-owned registration/application lifecycle below applies to CP-native projects and thin shells, not to every partner's internal workflow.
+
+Every CP module must plan authorized Open API access for its relevant capabilities and records. Integration is more than write-only ingestion; CP check-in, credential decisions, wallets, authorized reads, and correction/revocation remain controlled services. Detailed requirements live in [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md).
+
 ## 3. Core User Roles
 
 - Individual user: owns a Climate Passport identity, applies for learning experiences, registers for events, receives certificates, earns points, and builds a long-term record.
@@ -88,6 +93,9 @@ Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the co
 - Role and status model.
 - User profile and Climate Passport identity.
 - Channel bridge support for trusted shell handoff.
+- Independent partners retain their own passwords; CP never receives or synchronizes partner passwords or hashes.
+- Explicit optional consent to also register with CP creates a private, unclaimed Passport for a new identity, not an authenticated account or public profile. Verify ownership before first CP password setup or linkage to an existing account. Existing CP credentials are never overwritten by partner provisioning.
+- First access must offer activation/password setup; ordinary password reset may share secure primitives but must not bypass claim, account-state, or MFA checks. Email equality alone is not authorization to merge identities.
 
 ### Climate Passport ID
 
@@ -101,6 +109,7 @@ Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the co
 ### QR And Verification
 
 - A plain URL or identifier must not be treated as a trusted QR credential. An HTTPS verification URL may carry an opaque token/code; trust comes from server-side validation, not from URL structure. See `PASSPORT_ID_AND_QR_SPEC.md`.
+- Public profile URLs and verification URLs are allowed only under the opaque-token, privacy, and server-side validation rules in `PASSPORT_ID_AND_QR_SPEC.md`.
 - QR Code must not expose name, email, phone, or other personal data in cleartext.
 - Opaque tokens are the default QR strategy.
 - QR codes must not contain raw JSON payloads, internal database IDs, emails, phone numbers, or personal data.
@@ -121,7 +130,7 @@ Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the co
 
 ### Event And Participation
 
-- Core owns event registration, registration status, attendance, check-in, participation record, verifier assignment, and points linkage.
+- For CP-native projects and thin shells, Core owns event registration, registration status, attendance, check-in, participation record, verifier assignment, and points linkage. Independent partners own their approval process and submit confirmed participation facts, including subsequent corrections or cancellations.
 - Channel shells may display agenda and event pages, but must call Core for registration and participation actions.
 
 ### People And Institutions
@@ -139,7 +148,7 @@ Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the co
 - Learning Experiences must remain an independent Program/Application domain.
 - Learning Experiences must not be collapsed into Event.
 - Events can be linked to a program for orientation, demo day, graduation, ceremony, or public session.
-- Learning Experiences own application, review, admission, participation, completion, and outcome records.
+- CP-native Learning Experiences own application, review, admission, participation, completion, and outcome records. External learning providers retain their internal workflows and submit authorized confirmed outcomes/evidence.
 - Completion can write certificates, points, milestones, and achievements back into Climate Passport.
 
 ### Certificate Hub
@@ -154,6 +163,9 @@ Passport IDs retain the current no-prefix `XXXXXXX-XXXXXX` specification; the co
 - Core owns the points ledger and user-visible summaries.
 - Achievements and milestones are long-term Passport records.
 - Certificates, learning completion, attendance, and other verified actions may write to these records according to Core rules.
+- Institution trust and activity trust must be assessed separately; individual evidence and authorized issuer status are additional reward gates. Higher institution trust does not automatically qualify every activity or participant for rewards.
+- Versioned policies map eligible verified facts to certificate categories, points, badges, and other rewards. Preserve source evidence and decision snapshots; support caps, review, correction, revocation, and compensating point entries. Final tier names and numerical mappings remain to be approved.
+- User-facing source/reward explanations, admin trust registers and policy management, and scoped partner APIs are required. See [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md).
 
 ### Channel Shell Integration
 
@@ -239,6 +251,12 @@ The public verification page should verify the credential, not expose the person
 8. Learning Experience application and review lifecycle.
 9. Points, achievements, and milestones writeback rules.
 10. Audit logs, regression checks, and launch criteria.
+
+The next partner-integration work must include consent-based provisioning/claim, institution and activity trust assessment, and versioned reward eligibility. See the dated priority block in `CLIMATE_PASSPORT_PLATFORM_PENDING_FEATURES_TRACKER.md`; documentation approval does not mean those capabilities are implemented.
+
+## 7.1 Long-Term Requirement Outside The Current Plan
+
+Blockchain anchoring remains a long-term requirement from the platform functional requirements PDF, but is not included in the current development plan or release prerequisites. Do not schedule chain selection, smart contracts, blockchain wallets, or anchoring jobs now, and do not display blockchain-verification claims without a delivered mechanism. This does not change the off-chain points wallet, opaque QR, online server validation, or current credential verification requirements.
 
 ## 8. Non-Goals
 

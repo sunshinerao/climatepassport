@@ -1,6 +1,8 @@
 # Current Implementation Status
 
-Last updated: 2026-09-19
+Product baseline: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). This file records implementation evidence and gaps; it does not override the master directive or establish completion by restating requirements.
+
+Last updated: 2026-10-02 (authority reference merged; implementation evidence remains dated per section)
 
 ## Current Review Snapshot (2026-09-18)
 
@@ -38,6 +40,16 @@ Agent handoff: development resumed after CP-TODO-227 and CP-TODO-228 (durable ba
 - Certificate categories, templates, applications and records have substantive implementation. Issuing rules now persist only the bounded supported Activity check-in trigger; Course, Learning Experience, Points and manual-review triggers remain explicitly unavailable pending their own accepted service contracts.
 - Public portfolio now uses consent-based revocable tokens; legacy UUID/Passport ID profile lookup remains 404. Person/Institution compatibility models already exist locally.
 - Summer-school behavior remains frozen. No production deployment, commit or push is part of this review.
+
+## Decision Addendum: 2026-09-22
+
+This dated addendum does not revalidate the older implementation inventory below. [Partner Identity And Trust Requirements](PARTNER_IDENTITY_AND_TRUST_REQUIREMENTS.md) adds requirements, not shipped functionality:
+
+- Pending: partner opt-in provisioning, verified account claim/first password setup, consent evidence, safe existing-account linkage, and independent password ownership.
+- Pending: independent institution/activity trust assessments, versioned reward eligibility, admin policy operations, scoped partner APIs, and correction/revocation impact handling.
+- Existing email/reset primitives are only a starting point. The current reset endpoint requires `ACTIVE`; ordinary registration's `PENDING` handling is not an accepted secure partner claim flow. Partner lifecycle and concurrency acceptance tests are required before reuse.
+- Blockchain anchoring: retained long-term, explicitly excluded from the current development plan, not an implementation blocker or current backlog task.
+- No business code, database schema, API, or page changed as part of this requirements update.
 
 ## 1. Implemented
 
