@@ -14,6 +14,14 @@ Last updated: 2026-10-02 (master directive and independent-partner scope incorpo
 4. **会中服务**：主办方维护或同步分会场、议程时间地点、议题和嘉宾简介。持有人可查看当前与下一场议程、查询嘉宾、加入对应频道，选择实时翻译字幕语言。变更议程、换会场和切换语言后，显示内容须与所选场次一致。
 
 
+### PPA 现场购买与 Fast Pass
+
+每个活动现场提供购买码，扫码后可查看 PPA 商品、完成购买并查看订单及领取说明。购买码对应商品与订单，设备二维码对应手中这台 PPA。支付成功后允许稍后继续激活。
+
+领取后可扫描 PPA 内置二维码，或点击设备屏幕的 Fast Pass 入口发起快速注册。新用户按 CP 账户规则完成必要验证，已有用户直接登录。确认所持设备后绑定，手机与 PPA 显示同一结果。中断后可继续，重复操作不重复建号或绑定。已经绑定的设备提示持有人处理，不覆盖原绑定。静态二维码只用于进入流程，绑定时须核对当前持有设备。触控与无触控样机的操作分别记录。
+
+完成绑定后查询当前活动的报名与入场状态，并显示签到入口或报名指引。设备购买、账户激活与活动准入分别记录。
+
 ## Execution And Acceptance Addendum (2026-09-18)
 
 Use [the current gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) for implementation evidence and [the development requirements and plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md) for remaining delivery and acceptance requirements. Existing modules must be completed rather than recreated. Summer-school flows remain frozen; changes to shared dependencies require compatibility regression without expanding summer-school scope.
