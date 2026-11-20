@@ -6,6 +6,13 @@ Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVEL
 
 Last updated: 2026-10-02 (Activity A/P permission slice verified locally; historical completion claims not re-audited)
 
+### PPA 场景验收（2026-11-20，待实现与验证）
+
+- [ ] 两个独立 CP 登录应用完成 PPA 认证，覆盖拒绝、超时及设备挂失。
+- [ ] 固定 NFC 读卡器和志愿者手机分别实测入场核验；验证重复签到、到场名单和个人座位／用餐安排回传。
+- [ ] 同场议程、嘉宾信息及个人语言字幕联动，验证跨会场切换与议程更新。
+
+
 ## 2026-10-02 FigJam Activity A/P permission slice
 
 - Locally implemented the first Activity P0 boundary: EVENT_MANAGER list access requires organizer ownership plus active Programme-scope read authorization; create, lifecycle transition, and verifier assignment are ADMIN-only. The detail UI and verifier management page reflect the same boundary; unmapped legacy Activity behavior is preserved.
