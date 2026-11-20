@@ -6,6 +6,14 @@ Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVEL
 
 Last updated: 2026-10-02 (master directive and independent-partner scope incorporated)
 
+### PPA 登录、入场与参会需求（2026-11-20）
+
+1. **统一登录**：每个调用 CP 登录的应用入口都可使用已绑定且支持认证的 PPA。CP 显示请求应用并取得持有人确认，将认证结果返回发起应用；各应用继续判断自身业务权限。验收覆盖两个独立应用、拒绝、超时、挂失及恢复登录。仅手机完成的认证应明确标示。硬件独立认证能力待真机验证。
+2. **NFC 入场**：工作人员选择本场活动及入口，使用固定读卡器或经授权且兼容的志愿者 NFC 手机读取 PPA。CP 核验报名或入场资格并记录到场时间，向工作人员显示必要姓名与核验结果，向主办方更新到场名单。重复触碰仅计一次；未报名、场次不符或网络中断时显示明确状态。读取卡片标识本身不能作为账户登录证明。
+3. **个人接待安排**：签到成功后，持有人在 PPA 上看到本人座位（厅、区、排、座号）及用餐地点、时段等主办方已配置的信息。手机可同步查看。未分配时显示服务台指引；调整后以主办方最新安排为准。在仅支持读取的 NFC 模式下，通过已配对手机同步至 PPA，分别验证读取与回传。
+4. **会中服务**：主办方维护或同步分会场、议程时间地点、议题和嘉宾简介。持有人可查看当前与下一场议程、查询嘉宾、加入对应频道，选择实时翻译字幕语言。变更议程、换会场和切换语言后，显示内容须与所选场次一致。
+
+
 ## Execution And Acceptance Addendum (2026-09-18)
 
 Use [the current gap audit](REQUIREMENTS_IMPLEMENTATION_GAP_AUDIT_20260918.md) for implementation evidence and [the development requirements and plan](DEVELOPMENT_REQUIREMENTS_AND_PLAN_20260918.md) for remaining delivery and acceptance requirements. Existing modules must be completed rather than recreated. Summer-school flows remain frozen; changes to shared dependencies require compatibility regression without expanding summer-school scope.
