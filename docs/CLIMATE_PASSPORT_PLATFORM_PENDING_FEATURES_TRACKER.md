@@ -2,6 +2,8 @@
 
 Governing authority: [Climate Passport 最高开发指导纲领](CP_MASTER_DEVELOPMENT_DIRECTIVE.md). Task scope and priorities must follow the master directive; tracker entries do not override product decisions or substitute for acceptance evidence.
 
+2026-11-20 — Approved product scope: CP is the shared digital foundation. Physical Passport Assistant (PPA) is the holder’s physical terminal. See [master directive §2.4](CP_MASTER_DEVELOPMENT_DIRECTIVE.md#24-实体护照助手ppa) for naming, authentication, personal AI, multilingual live captions and authorized device integration. Implementation and release are pending.
+
 Last updated: 2026-10-02 (Activity A/P permission slice verified locally; historical completion claims not re-audited)
 
 ## 2026-10-02 FigJam Activity A/P permission slice
