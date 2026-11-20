@@ -13,6 +13,8 @@ Last updated: 2026-10-02 (Activity A/P permission slice verified locally; histor
 - [ ] 同场议程、嘉宾信息及个人语言字幕联动，验证跨会场切换与议程更新。
 
 
+- [ ] 验收现场购买与 Fast Pass：购买后即刻或稍后激活，扫码及屏幕两种入口，新用户注册及已有账户绑定，覆盖重复操作、已绑定设备和未报名参加者。
+
 ## 2026-10-02 FigJam Activity A/P permission slice
 
 - Locally implemented the first Activity P0 boundary: EVENT_MANAGER list access requires organizer ownership plus active Programme-scope read authorization; create, lifecycle transition, and verifier assignment are ADMIN-only. The detail UI and verifier management page reflect the same boundary; unmapped legacy Activity behavior is preserved.
